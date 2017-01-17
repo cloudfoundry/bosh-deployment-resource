@@ -3,7 +3,7 @@
 
 # BOSH Deployment Resource
 
-An output only resource (at the moment) that will deploy releases and stemcells.
+A resource that will deploy releases and stemcells.
 
 ## Source Configuration
 
@@ -27,13 +27,16 @@ An output only resource (at the moment) that will deploy releases and stemcells.
     ca_cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"
 ```
 
-``` yaml
-- put: staging
-  params:
-    manifest: path/to/manifest.yml
-```
-
 ## Behaviour
+
+### `in`: Deploy a BOSH deployment
+
+This will download the deployment manifest. It will place two files in the target directory:
+
+- `manifest.yml`: The deployment manifest
+- `target`: The hostname for the director
+
+_Note_: Only the most recent version is fetchable
 
 ### `out`: Deploy a BOSH deployment
 
@@ -42,3 +45,9 @@ This will deploy the deployment provided.
 #### Parameters
 
 * `manifest`: *Required.* Path to a BOSH deployment manifest file.
+
+``` yaml
+- put: staging
+  params:
+    manifest: path/to/manifest.yml
+```

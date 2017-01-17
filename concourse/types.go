@@ -32,6 +32,11 @@ type CheckRequest struct {
 	Version Version `json:"version"`
 }
 
+type InRequest struct {
+	Source  Source    `json:"source"`
+	Version Version `json:"version"`
+}
+
 func NewVersion(bytesToSha1 []byte, target string) Version {
 	return Version{
 		ManifestSha1: fmt.Sprintf("%x", sha1.Sum(bytesToSha1)),
