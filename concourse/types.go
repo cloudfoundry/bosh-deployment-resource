@@ -8,6 +8,11 @@ type Source struct {
 	CACert       string `json:"ca_cert"`
 }
 
+type Version struct {
+	ManifestSha1 string `json:"manifest_sha1"`
+	Target       string `json:"target"`
+}
+
 type OutParams struct {
 	Manifest string `json:"manifest"`
 }
@@ -15,4 +20,9 @@ type OutParams struct {
 type OutRequest struct {
 	Params OutParams `json:"params"`
 	Source Source    `json:"source"`
+}
+
+type CheckRequest struct {
+	Source  Source    `json:"source"`
+	Version Version `json:"version"`
 }

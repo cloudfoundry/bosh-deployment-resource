@@ -8,16 +8,11 @@ import (
 )
 
 type OutResponse struct {
-	Version Version `json:"version"`
+	Version concourse.Version `json:"version"`
 }
 
 type OutCommand struct {
 	director bosh.Director
-}
-
-type Version struct {
-	ManifestSha1 string `json:"manifest_sha1"`
-	Target       string `json:"target"`
 }
 
 func NewOutCommand(director bosh.Director) OutCommand {
@@ -39,7 +34,7 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error){
 	byteSum := sha1.Sum(manifest)
 
 	concourseOutput := OutResponse{
-		Version: Version{
+		Version: concourse.Version{
 			ManifestSha1: fmt.Sprintf("%x", byteSum),
 			Target: outRequest.Source.Target,
 		},

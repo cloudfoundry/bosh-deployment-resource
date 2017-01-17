@@ -50,7 +50,7 @@ var _ = Describe("OutCommand", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(outResponse).To(Equal(out.OutResponse{
-				Version: out.Version{
+				Version: concourse.Version{
 					ManifestSha1: "33bf00cb7a45258748f833a47230124fcc8fa3a4",
 					Target: "director.example.com",
 				},
