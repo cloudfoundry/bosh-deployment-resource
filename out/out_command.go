@@ -3,8 +3,6 @@ package out
 import (
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
-	"fmt"
-	"crypto/sha1"
 )
 
 type OutResponse struct {
@@ -31,13 +29,8 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error){
 		return OutResponse{}, err
 	}
 
-	byteSum := sha1.Sum(manifest)
-
 	concourseOutput := OutResponse{
-		Version: concourse.Version{
-			ManifestSha1: fmt.Sprintf("%x", byteSum),
-			Target: outRequest.Source.Target,
-		},
+		Version: concourse.NewVersion(manifest, outRequest.Source.Target),
 	}
 
 	return concourseOutput, nil

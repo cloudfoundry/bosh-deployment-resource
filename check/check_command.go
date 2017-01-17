@@ -3,8 +3,6 @@ package check
 import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-	"crypto/sha1"
-	"fmt"
 )
 
 type CheckCommand struct {
@@ -23,12 +21,7 @@ func (c CheckCommand) Run(checkRequest concourse.CheckRequest) ([]concourse.Vers
 		return []concourse.Version{}, err
 	}
 
-	byteSum := sha1.Sum(manifest)
-
-	version := concourse.Version{
-		ManifestSha1: fmt.Sprintf("%x", byteSum),
-		Target: checkRequest.Source.Target,
-	}
+	version := concourse.NewVersion(manifest, checkRequest.Source.Target)
 
 	var concourseOutput = []concourse.Version{}
 	if version != checkRequest.Version {

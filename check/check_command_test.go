@@ -29,7 +29,7 @@ var _ = Describe("CheckCommand", func() {
 			director.DownloadManifestReturns(manifestContents, nil)
 		})
 
-		Context("When the manifest sha is a mismatch with the version provided", func() {
+		Context("When the manifest SHA does not match with the version provided", func() {
 			BeforeEach(func() {
 				checkRequest = concourse.CheckRequest{
 					Source: concourse.Source{
@@ -38,7 +38,8 @@ var _ = Describe("CheckCommand", func() {
 					Version: concourse.Version{},
 				}
 			})
-			It("returns the sha1 of the manifest", func() {
+
+			It("returns the SHA1 of the manifest", func() {
 				checkResponse, err := checkCommand.Run(checkRequest)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -52,7 +53,7 @@ var _ = Describe("CheckCommand", func() {
 			})
 		})
 
-		Context("When the manifest sha matches the version provided to the check", func() {
+		Context("When the manifest SHA matches the version provided to the check", func() {
 			BeforeEach(func() {
 				checkRequest = concourse.CheckRequest{
 					Source: concourse.Source{
@@ -64,7 +65,8 @@ var _ = Describe("CheckCommand", func() {
 					},
 				}
 			})
-			It("an empty versions array", func() {
+
+			It("retuns an empty versions array", func() {
 				checkResponse, err := checkCommand.Run(checkRequest)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -72,6 +74,7 @@ var _ = Describe("CheckCommand", func() {
 				Expect(checkResponse).To(Equal([]concourse.Version{}))
 			})
 		})
+
 		Context("When the there is an error downloading the manifest", func() {
 			BeforeEach(func() {
 				director.DownloadManifestReturns([]byte{}, errors.New("No manifest for you"))
