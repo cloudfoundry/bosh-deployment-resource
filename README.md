@@ -3,7 +3,17 @@
 
 # BOSH Deployment Resource
 
-A resource that will deploy releases and stemcells.
+A resource that will deploy releases and stemcells using the [BOSH CLI v2](https://bosh.io/docs/cli-v2.html). 
+
+## Differences from original BOSH Deployment Resource
+
+The original [BOSH Deployment Resource](https://github.com/concourse/bosh-deployment-resource)
+uses the Ruby CLI and does not support newer BOSH features.
+
+### Breaking Changes
+
+* This resource requires that the target director's SSL certificate is trusted. If the director's certificate is not
+ already trusted by normal root authorities, a custom CA certificate must be provided.
 
 ## Source Configuration
 
