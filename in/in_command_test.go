@@ -4,18 +4,18 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/in"
+	"errors"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
+	"github.com/cloudfoundry/bosh-deployment-resource/in"
 	"io/ioutil"
 	"path/filepath"
-	"errors"
 )
 
 var _ = Describe("InCommand", func() {
 	var (
 		inCommand in.InCommand
-		director *boshfakes.FakeDirector
+		director  *boshfakes.FakeDirector
 	)
 
 	BeforeEach(func() {
@@ -37,7 +37,7 @@ var _ = Describe("InCommand", func() {
 				},
 				Version: concourse.Version{
 					ManifestSha1: sillyBytesSha1,
-					Target: "director.example.com",
+					Target:       "director.example.com",
 				},
 			}
 

@@ -25,7 +25,7 @@ func (c CheckCommand) Run(checkRequest concourse.CheckRequest) ([]concourse.Vers
 
 	var concourseOutput = []concourse.Version{}
 	if version != checkRequest.Version {
-		 concourseOutput = append(concourseOutput, version)
+		concourseOutput = append(concourseOutput, version)
 	}
 
 	return concourseOutput, nil

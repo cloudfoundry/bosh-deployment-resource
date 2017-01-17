@@ -4,16 +4,16 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/check"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"errors"
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
+	"github.com/cloudfoundry/bosh-deployment-resource/check"
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 )
 
 var _ = Describe("CheckCommand", func() {
 	var (
 		checkCommand check.CheckCommand
-		director *boshfakes.FakeDirector
+		director     *boshfakes.FakeDirector
 	)
 
 	BeforeEach(func() {
@@ -47,7 +47,7 @@ var _ = Describe("CheckCommand", func() {
 				Expect(checkResponse).To(Equal([]concourse.Version{
 					{
 						ManifestSha1: "33bf00cb7a45258748f833a47230124fcc8fa3a4",
-						Target: "director.example.com",
+						Target:       "director.example.com",
 					},
 				}))
 			})
@@ -61,7 +61,7 @@ var _ = Describe("CheckCommand", func() {
 					},
 					Version: concourse.Version{
 						ManifestSha1: "33bf00cb7a45258748f833a47230124fcc8fa3a4",
-						Target: "director.example.com",
+						Target:       "director.example.com",
 					},
 				}
 			})

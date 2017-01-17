@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-	"encoding/json"
 
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/in"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 )
 
 func main() {

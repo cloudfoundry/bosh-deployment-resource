@@ -1,29 +1,29 @@
 package bosh_test
 
 import (
-	"io"
 	"bytes"
+	"io"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
+	"errors"
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	"io/ioutil"
 	"path/filepath"
-	"errors"
 )
 
 var _ = Describe("BoshDirector", func() {
 	var (
-		director bosh.BoshDirector
-		out io.Writer
+		director      bosh.BoshDirector
+		out           io.Writer
 		commandRunner *boshfakes.FakeRunner
-		tempDir string
-		sillyBytes = []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
+		tempDir       string
+		sillyBytes    = []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
 	)
 
 	BeforeEach(func() {

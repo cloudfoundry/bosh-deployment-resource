@@ -1,8 +1,8 @@
 package out
 
 import (
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 )
 
 type OutResponse struct {
@@ -19,7 +19,7 @@ func NewOutCommand(director bosh.Director) OutCommand {
 	}
 }
 
-func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error){
+func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 	if err := c.director.Deploy(outRequest.Params.Manifest); err != nil {
 		return OutResponse{}, err
 	}

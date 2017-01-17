@@ -1,9 +1,9 @@
 package in
 
 import (
+	"errors"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-	"errors"
 	"io/ioutil"
 	"path/filepath"
 )

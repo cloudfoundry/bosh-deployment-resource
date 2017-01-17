@@ -5,11 +5,11 @@ import (
 	boshui "github.com/cloudfoundry/bosh-cli/ui"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
-	goflags "github.com/jessevdk/go-flags"
+	"bytes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
+	goflags "github.com/jessevdk/go-flags"
 	"io"
 	"io/ioutil"
-	"bytes"
 )
 
 type Runner interface {
@@ -18,14 +18,14 @@ type Runner interface {
 }
 
 type CommandRunner struct {
-	source             concourse.Source
-	out io.Writer
+	source concourse.Source
+	out    io.Writer
 }
 
 func NewCommandRunner(source concourse.Source, out io.Writer) CommandRunner {
 	return CommandRunner{
 		source: source,
-		out: out,
+		out:    out,
 	}
 }
 
@@ -47,11 +47,11 @@ func (c CommandRunner) GetResult(commandOpts interface{}) ([]byte, error) {
 func (c CommandRunner) internalExecute(commandOpts interface{}, deps boshcmd.BasicDeps) error {
 	globalOpts := &boshcmd.BoshOpts{
 		NonInteractiveOpt: true,
-		CACertOpt: boshcmd.CACertArg{Content: c.source.CACert},
-		ClientOpt: c.source.Client,
-		ClientSecretOpt: c.source.ClientSecret,
-		EnvironmentOpt: c.source.Target,
-		DeploymentOpt: c.source.Deployment,
+		CACertOpt:         boshcmd.CACertArg{Content: c.source.CACert},
+		ClientOpt:         c.source.Client,
+		ClientSecretOpt:   c.source.ClientSecret,
+		EnvironmentOpt:    c.source.Target,
+		DeploymentOpt:     c.source.Deployment,
 	}
 
 	setDefaults(globalOpts)

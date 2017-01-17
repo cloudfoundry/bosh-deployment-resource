@@ -25,10 +25,10 @@ type BoshDirector struct {
 
 func NewBoshDirector(source concourse.Source, commandRunner Runner, resourcesDirectory string, out io.Writer) BoshDirector {
 	return BoshDirector{
-		source: source,
-		commandRunner: commandRunner,
+		source:             source,
+		commandRunner:      commandRunner,
 		resourcesDirectory: resourcesDirectory,
-		out: out,
+		out:                out,
 	}
 }
 
@@ -52,4 +52,3 @@ func (d BoshDirector) DownloadManifest() ([]byte, error) {
 
 	return bytes, nil
 }
-
