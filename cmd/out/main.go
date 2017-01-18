@@ -19,8 +19,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	var outRequest concourse.OutRequest
-	if err := json.NewDecoder(os.Stdin).Decode(&outRequest); err != nil {
+	outRequest, err := concourse.NewOutRequest(os.Stdin)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
 		os.Exit(1)
 	}

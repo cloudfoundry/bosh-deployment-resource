@@ -19,12 +19,8 @@ type Version struct {
 }
 
 type OutParams struct {
-	Manifest string `json:"manifest"`
-}
-
-type OutRequest struct {
-	Params OutParams `json:"params"`
-	Source Source    `json:"source"`
+	Manifest   string `json:"manifest"`
+	TargetFile string `json:"target_file,omitempty"`
 }
 
 type CheckRequest struct {
