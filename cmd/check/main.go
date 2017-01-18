@@ -8,11 +8,26 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/check"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
+	"io/ioutil"
 )
 
 func main() {
-	var checkRequest concourse.CheckRequest
-	if err := json.NewDecoder(os.Stdin).Decode(&checkRequest); err != nil {
+	if len(os.Args) < 2 {
+		fmt.Fprintf(os.Stderr,
+			"not enough args - usage: %s <sources directory>\n",
+			os.Args[0],
+		)
+		os.Exit(1)
+	}
+
+	stdin, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
+		os.Exit(1)
+	}
+
+	checkRequest, err := concourse.NewCheckRequest(stdin)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
 		os.Exit(1)
 	}

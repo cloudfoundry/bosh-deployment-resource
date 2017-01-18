@@ -6,41 +6,31 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io/ioutil"
-	"strings"
 )
 
-var _ = Describe("NewOutRequest", func() {
-	It("converts the reader into an OutRequest", func() {
-		reader := strings.NewReader(`{
-  "params": {
-    "manifest": "/tmp/manifest.yml"
-  },
+var _ = Describe("NewDynamicSource", func() {
+	It("converts the config into a Source", func() {
+		config := []byte(`{
   "source": {
     "deployment": "mydeployment",
     "target": "director.example.com"
   }
 }`)
 
-		outRequest, err := concourse.NewOutRequest(reader)
+		source, err := concourse.NewDynamicSource(config)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(outRequest).To(Equal(concourse.OutRequest{
-			Params: concourse.OutParams{
-				Manifest: "/tmp/manifest.yml",
-			},
-			Source: concourse.Source{
-				Deployment: "mydeployment",
-				Target:     "director.example.com",
-			},
+		Expect(source).To(Equal(concourse.Source{
+			Deployment: "mydeployment",
+			Target:     "director.example.com",
 		}))
 	})
 
-	Context("when the reader has a target_file", func() {
+	Context("when the config has a target_file", func() {
 		var (
 			targetFilePath      string
 			requestJsonTemplate string = `{
   "params": {
-    "manifest": "/tmp/manifest.yml",
     "target_file": "%s"
   },
   "source": {
@@ -59,23 +49,23 @@ var _ = Describe("NewOutRequest", func() {
 		})
 
 		It("uses the contents of that file instead of the target parameter", func() {
-			reader := strings.NewReader(fmt.Sprintf(requestJsonTemplate, targetFilePath))
+			reader := []byte(fmt.Sprintf(requestJsonTemplate, targetFilePath))
 
-			outRequest, err := concourse.NewOutRequest(reader)
+			source, err := concourse.NewDynamicSource(reader)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(outRequest.Source.Target).To(Equal("director.example.net"))
+			Expect(source.Target).To(Equal("director.example.net"))
 		})
 
-		Context("when the targetfile cannot be read", func() {
+		Context("when the target_file cannot be read", func() {
 			BeforeEach(func() {
 				targetFilePath = "not-a-real-file"
 			})
 
 			It("errors", func() {
-				reader := strings.NewReader(fmt.Sprintf(requestJsonTemplate, targetFilePath))
+				reader := []byte(fmt.Sprintf(requestJsonTemplate, targetFilePath))
 
-				_, err := concourse.NewOutRequest(reader)
+				_, err := concourse.NewDynamicSource(reader)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -83,9 +73,9 @@ var _ = Describe("NewOutRequest", func() {
 
 	Context("when decoding fails", func() {
 		It("errors", func() {
-			reader := strings.NewReader(`not-json`)
+			reader := []byte("not-json")
 
-			_, err := concourse.NewOutRequest(reader)
+			_, err := concourse.NewDynamicSource(reader)
 			Expect(err).To(HaveOccurred())
 		})
 	})

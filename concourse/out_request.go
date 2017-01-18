@@ -1,9 +1,9 @@
 package concourse
 
 import (
+	"bytes"
 	"encoding/json"
-	"io"
-	"io/ioutil"
+	"fmt"
 )
 
 type OutRequest struct {
@@ -11,20 +11,18 @@ type OutRequest struct {
 	Source Source    `json:"source"`
 }
 
-func NewOutRequest(r io.Reader) (OutRequest, error) {
+func NewOutRequest(request []byte) (OutRequest, error) {
 	var outRequest OutRequest
-	if err := json.NewDecoder(r).Decode(&outRequest); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(request)).Decode(&outRequest); err != nil {
+		return OutRequest{}, fmt.Errorf("Invalid parameters: %s\n", err)
+	}
+
+	dynamicSource, err := NewDynamicSource(request)
+	if err != nil {
 		return OutRequest{}, err
 	}
 
-	if outRequest.Params.TargetFile != "" {
-		target, err := ioutil.ReadFile(outRequest.Params.TargetFile)
-		if err != nil {
-			return OutRequest{}, err
-		}
-
-		outRequest.Source.Target = string(target)
-	}
+	outRequest.Source = dynamicSource
 
 	return outRequest, nil
 }

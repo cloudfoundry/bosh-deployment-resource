@@ -8,6 +8,7 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/in"
+	"io/ioutil"
 )
 
 func main() {
@@ -19,8 +20,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	var inRequest concourse.InRequest
-	if err := json.NewDecoder(os.Stdin).Decode(&inRequest); err != nil {
+	stdin, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
+		os.Exit(1)
+	}
+
+	inRequest, err := concourse.NewInRequest(stdin)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
 		os.Exit(1)
 	}
