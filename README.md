@@ -73,6 +73,7 @@ This will deploy the deployment provided.
 #### Parameters
 
 * `manifest`: *Required.* Path to a BOSH deployment manifest file.
+* `no_redact`: *Optional* Removes redacted from Bosh output. Defaults to false.
 
 ``` yaml
 - put: staging

@@ -8,10 +8,11 @@ import (
 )
 
 type FakeDirector struct {
-	DeployStub        func(manifest string) error
+	DeployStub        func(manifest string, noRedact bool) error
 	deployMutex       sync.RWMutex
 	deployArgsForCall []struct {
 		manifest string
+		noRedact bool
 	}
 	deployReturns struct {
 		result1 error
@@ -27,15 +28,16 @@ type FakeDirector struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDirector) Deploy(manifest string) error {
+func (fake *FakeDirector) Deploy(manifest string, noRedact bool) error {
 	fake.deployMutex.Lock()
 	fake.deployArgsForCall = append(fake.deployArgsForCall, struct {
 		manifest string
-	}{manifest})
-	fake.recordInvocation("Deploy", []interface{}{manifest})
+		noRedact bool
+	}{manifest, noRedact})
+	fake.recordInvocation("Deploy", []interface{}{manifest, noRedact})
 	fake.deployMutex.Unlock()
 	if fake.DeployStub != nil {
-		return fake.DeployStub(manifest)
+		return fake.DeployStub(manifest, noRedact)
 	}
 	return fake.deployReturns.result1
 }
@@ -46,10 +48,10 @@ func (fake *FakeDirector) DeployCallCount() int {
 	return len(fake.deployArgsForCall)
 }
 
-func (fake *FakeDirector) DeployArgsForCall(i int) string {
+func (fake *FakeDirector) DeployArgsForCall(i int) (string, bool) {
 	fake.deployMutex.RLock()
 	defer fake.deployMutex.RUnlock()
-	return fake.deployArgsForCall[i].manifest
+	return fake.deployArgsForCall[i].manifest, fake.deployArgsForCall[i].noRedact
 }
 
 func (fake *FakeDirector) DeployReturns(result1 error) {

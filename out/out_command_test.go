@@ -30,6 +30,7 @@ var _ = Describe("OutCommand", func() {
 				},
 				Params: concourse.OutParams{
 					Manifest: "path/to/manifest.yml",
+					NoRedact: true,
 				},
 			}
 		})
@@ -39,7 +40,9 @@ var _ = Describe("OutCommand", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(director.DeployCallCount()).To(Equal(1))
-			Expect(director.DeployArgsForCall(0)).To(Equal("path/to/manifest.yml"))
+			actualManifestPath, actualNoRedact := director.DeployArgsForCall(0)
+			Expect(actualManifestPath).To(Equal("path/to/manifest.yml"))
+			Expect(actualNoRedact).To(Equal(true))
 		})
 
 		It("returns the new version", func() {

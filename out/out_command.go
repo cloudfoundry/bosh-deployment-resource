@@ -20,7 +20,7 @@ func NewOutCommand(director bosh.Director) OutCommand {
 }
 
 func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
-	if err := c.director.Deploy(outRequest.Params.Manifest); err != nil {
+	if err := c.director.Deploy(outRequest.Params.Manifest, outRequest.Params.NoRedact); err != nil {
 		return OutResponse{}, err
 	}
 

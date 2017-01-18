@@ -46,21 +46,23 @@ var _ = Describe("BoshDirector", func() {
 			manifestPath = filepath.Base(manifest.Name())
 		})
 
-		It("tells BOSH to deploy the given manifest", func() {
-			err := director.Deploy(manifestPath)
+		It("tells BOSH to deploy the given manifest and parameters", func() {
+			noRedact := true
+			err := director.Deploy(manifestPath, noRedact)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
 
 			deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
 			Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+			Expect(deployOpts.NoRedact).To(Equal(noRedact))
 		})
 
 		Context("when deploying fails", func() {
 			It("returns an error", func() {
 				commandRunner.ExecuteReturns(errors.New("Your deploy failed"))
 
-				err := director.Deploy(manifestPath)
+				err := director.Deploy(manifestPath, false)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Your deploy failed"))
 			})
