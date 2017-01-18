@@ -37,6 +37,24 @@ uses the Ruby CLI and does not support newer BOSH features.
     ca_cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"
 ```
 
+### Dynamic Source Configuration
+
+Sometimes source configuration cannot be known ahead of time, such as when a BOSH director is created as part of your
+pipeline. In these scenarios, it is helpful to be able to have a dynamic source configuration. In addition to the
+normal parameters for `get` and `put`, the following parameters can be provided to redefine the source:
+
+* `target_file`: *Optional.* Path to a file containing a BOSH director address. This allows the target to be determined
+  at runtime, e.g. by acquiring a BOSH lite instance using the
+  [Pool resource](https://github.com/concourse/pool-resource).
+
+#### Example
+
+```
+- put: staging
+  params:
+    target_file: path/to/target_file
+```
+
 ## Behaviour
 
 ### `in`: Deploy a BOSH deployment
@@ -55,9 +73,6 @@ This will deploy the deployment provided.
 #### Parameters
 
 * `manifest`: *Required.* Path to a BOSH deployment manifest file.
-* `target_file`: *Optional.* Path to a file containing a BOSH director address. This allows the target to be determined
-  at runtime, e.g. by acquiring a BOSH lite instance using the
-  [Pool resource](https://github.com/concourse/pool-resource).
 
 ``` yaml
 - put: staging
