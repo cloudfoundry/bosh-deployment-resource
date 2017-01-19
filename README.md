@@ -22,7 +22,8 @@ uses the Ruby CLI and does not support newer BOSH features.
   must be specified via out parameters, as documented below.
 * `client`: *Required.* The UAA client ID for the BOSH director.
 * `client_secret`: *Required.* The UAA client secret for the BOSH director.
-* `ca_cert`: *Required.* CA certificate used to validate SSL connections to Director and UAA.
+* `ca_cert`: *Optional.* CA certificate used to validate SSL connections to Director and UAA. If omitted, the director's
+  certificate must be already trusted.
 
 ### Example
 
