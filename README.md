@@ -1,6 +1,3 @@
-- client: Username or UAA client
-- client-secret: Password or UAA client secret
-
 # BOSH Deployment Resource
 
 A resource that will deploy releases and stemcells using the [BOSH CLI v2](https://bosh.io/docs/cli-v2.html). 
@@ -20,8 +17,8 @@ uses the Ruby CLI and does not support newer BOSH features.
 * `deployment`: *Required.* The name of the deployment.
 * `target`: *Optional.* The address of the BOSH director which will be used for the deployment. If omitted, target_file
   must be specified via out parameters, as documented below.
-* `client`: *Required.* The UAA client ID for the BOSH director.
-* `client_secret`: *Required.* The UAA client secret for the BOSH director.
+* `client`: *Required.* The username or UAA client ID for the BOSH director.
+* `client_secret`: *Required.* The password or UAA client secret for the BOSH director.
 * `ca_cert`: *Optional.* CA certificate used to validate SSL connections to Director and UAA. If omitted, the director's
   certificate must be already trusted.
 
