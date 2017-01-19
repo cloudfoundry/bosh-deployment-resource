@@ -65,7 +65,7 @@ func checkRequiredSourceParameters(source Source) error {
 	}
 
 	if len(missingParameters) > 0 {
-		parametersString := "parameters"
+		parametersString := "parameter"
 		if len(missingParameters) > 2 {
 			parametersString = parametersString + "s"
 		}
