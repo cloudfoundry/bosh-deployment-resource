@@ -55,9 +55,9 @@ var _ = Describe("NewDynamicSource", func() {
 		})
 
 		It("uses the contents of that file instead of the target parameter", func() {
-			reader := []byte(fmt.Sprintf(requestJsonTemplate, targetFilePath))
+			config := []byte(fmt.Sprintf(requestJsonTemplate, targetFilePath))
 
-			source, err := concourse.NewDynamicSource(reader)
+			source, err := concourse.NewDynamicSource(config)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(source.Target).To(Equal("director.example.net"))
@@ -69,9 +69,9 @@ var _ = Describe("NewDynamicSource", func() {
 			})
 
 			It("errors", func() {
-				reader := []byte(fmt.Sprintf(requestJsonTemplate, targetFilePath))
+				config := []byte(fmt.Sprintf(requestJsonTemplate, targetFilePath))
 
-				_, err := concourse.NewDynamicSource(reader)
+				_, err := concourse.NewDynamicSource(config)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -88,9 +88,9 @@ var _ = Describe("NewDynamicSource", func() {
 
 	Context("when a required parameter is missing", func() {
 		It("returns an error with each missing parameter", func() {
-			reader := []byte("{}")
+			config := []byte("{}")
 
-			_, err := concourse.NewDynamicSource(reader)
+			_, err := concourse.NewDynamicSource(config)
 			Expect(err).To(HaveOccurred())
 
 			Expect(err.Error()).To(ContainSubstring("deployment"))
