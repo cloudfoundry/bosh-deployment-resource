@@ -69,6 +69,21 @@ var _ = Describe("BoshDirector", func() {
 				Expect(err.Error()).To(ContainSubstring("Your deploy failed"))
 			})
 		})
+
+		Context("when cleanup is specified", func() {
+			It("runs a cleanup before the deploy", func() {
+				err := director.Deploy(manifestPath, bosh.DeployParams{Cleanup: true})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(commandRunner.ExecuteCallCount()).To(Equal(2))
+
+				cleanUpOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.CleanUpOpts)
+				Expect(cleanUpOpts.All).To(Equal(false))
+
+				deployOpts := commandRunner.ExecuteArgsForCall(1).(*boshcmd.DeployOpts)
+				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+			})
+		})
 	})
 
 	Describe("DownloadManifest", func() {

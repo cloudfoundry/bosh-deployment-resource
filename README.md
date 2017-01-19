@@ -73,6 +73,8 @@ This will deploy the deployment provided.
 #### Parameters
 
 * `manifest`: *Required.* Path to a BOSH deployment manifest file.
+* `cleanup`: *Optional* An boolean that specifies if a bosh cleanup should be
+  run before deployment. Defaults to false.
 * `no_redact`: *Optional* Removes redacted from Bosh output. Defaults to false.
 
 ``` yaml

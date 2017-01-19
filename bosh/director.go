@@ -40,6 +40,10 @@ func NewBoshDirector(source concourse.Source, commandRunner Runner, resourcesDir
 func (d BoshDirector) Deploy(manifest string, deployParams DeployParams) error {
 	manifestBytes, _ := ioutil.ReadFile(path.Join(d.resourcesDirectory, manifest))
 
+	if deployParams.Cleanup {
+		d.commandRunner.Execute(&boshcmd.CleanUpOpts{})
+	}
+
 	err := d.commandRunner.Execute(&boshcmd.DeployOpts{
 		Args: boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact: deployParams.NoRedact,
