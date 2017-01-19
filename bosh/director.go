@@ -13,7 +13,7 @@ import (
 
 type DeployParams struct {
 	NoRedact bool
-	Cleanup bool
+	Cleanup  bool
 }
 
 type Director interface {
@@ -45,7 +45,7 @@ func (d BoshDirector) Deploy(manifest string, deployParams DeployParams) error {
 	}
 
 	err := d.commandRunner.Execute(&boshcmd.DeployOpts{
-		Args: boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
+		Args:     boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact: deployParams.NoRedact,
 	})
 	if err != nil {

@@ -13,7 +13,9 @@ var _ = Describe("NewDynamicSource", func() {
 		config := []byte(`{
   "source": {
     "deployment": "mydeployment",
-    "target": "director.example.com"
+    "target": "director.example.com",
+    "client": "foo",
+    "client_secret": "foobar"
   }
 }`)
 
@@ -21,8 +23,10 @@ var _ = Describe("NewDynamicSource", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(source).To(Equal(concourse.Source{
-			Deployment: "mydeployment",
-			Target:     "director.example.com",
+			Deployment:   "mydeployment",
+			Target:       "director.example.com",
+			Client:       "foo",
+			ClientSecret: "foobar",
 		}))
 	})
 
@@ -35,7 +39,9 @@ var _ = Describe("NewDynamicSource", func() {
   },
   "source": {
     "deployment": "mydeployment",
-    "target": "director.example.com"
+    "target": "director.example.com",
+    "client": "foo",
+    "client_secret": "foobar"
   }
 }`
 		)
@@ -77,6 +83,20 @@ var _ = Describe("NewDynamicSource", func() {
 
 			_, err := concourse.NewDynamicSource(reader)
 			Expect(err).To(HaveOccurred())
+		})
+	})
+
+	Context("when a required parameter is missing", func() {
+		It("returns an error with each missing parameter", func() {
+			reader := []byte("{}")
+
+			_, err := concourse.NewDynamicSource(reader)
+			Expect(err).To(HaveOccurred())
+
+			Expect(err.Error()).To(ContainSubstring("deployment"))
+			Expect(err.Error()).To(ContainSubstring("target"))
+			Expect(err.Error()).To(ContainSubstring("client"))
+			Expect(err.Error()).To(ContainSubstring("client_secret"))
 		})
 	})
 })

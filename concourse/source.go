@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/cloudfoundry/cli/cf/errors"
 	"io/ioutil"
+	"strings"
 )
 
 type Source struct {
@@ -39,5 +41,37 @@ func NewDynamicSource(config []byte) (Source, error) {
 		sourceRequest.Source.Target = string(target)
 	}
 
+	if err := checkRequiredParameters(sourceRequest.Source); err != nil {
+		return Source{}, err
+	}
+
 	return sourceRequest.Source, nil
+}
+
+func checkRequiredParameters(source Source) error {
+	missingParameters := []string{}
+
+	if source.Deployment == "" {
+		missingParameters = append(missingParameters, "deployment")
+	}
+	if source.Target == "" {
+		missingParameters = append(missingParameters, "target")
+	}
+	if source.Client == "" {
+		missingParameters = append(missingParameters, "client")
+	}
+	if source.ClientSecret == "" {
+		missingParameters = append(missingParameters, "client_secret")
+	}
+
+	if len(missingParameters) > 0 {
+		parametersString := "parameters"
+		if len(missingParameters) > 2 {
+			parametersString = parametersString + "s"
+		}
+		errorMessage := fmt.Sprintf("Missing required source %s: %s", parametersString, strings.Join(missingParameters, ", "))
+		return errors.New(errorMessage)
+	}
+
+	return nil
 }
