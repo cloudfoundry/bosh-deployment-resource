@@ -41,14 +41,14 @@ func NewDynamicSource(config []byte) (Source, error) {
 		sourceRequest.Source.Target = string(target)
 	}
 
-	if err := checkRequiredParameters(sourceRequest.Source); err != nil {
+	if err := checkRequiredSourceParameters(sourceRequest.Source); err != nil {
 		return Source{}, err
 	}
 
 	return sourceRequest.Source, nil
 }
 
-func checkRequiredParameters(source Source) error {
+func checkRequiredSourceParameters(source Source) error {
 	missingParameters := []string{}
 
 	if source.Deployment == "" {
