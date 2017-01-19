@@ -8,11 +8,11 @@ import (
 )
 
 type FakeDirector struct {
-	DeployStub        func(manifest string, noRedact bool) error
+	DeployStub        func(manifest string, deployParams bosh.DeployParams) error
 	deployMutex       sync.RWMutex
 	deployArgsForCall []struct {
-		manifest string
-		noRedact bool
+		manifest     string
+		deployParams bosh.DeployParams
 	}
 	deployReturns struct {
 		result1 error
@@ -28,16 +28,16 @@ type FakeDirector struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDirector) Deploy(manifest string, noRedact bool) error {
+func (fake *FakeDirector) Deploy(manifest string, deployParams bosh.DeployParams) error {
 	fake.deployMutex.Lock()
 	fake.deployArgsForCall = append(fake.deployArgsForCall, struct {
-		manifest string
-		noRedact bool
-	}{manifest, noRedact})
-	fake.recordInvocation("Deploy", []interface{}{manifest, noRedact})
+		manifest     string
+		deployParams bosh.DeployParams
+	}{manifest, deployParams})
+	fake.recordInvocation("Deploy", []interface{}{manifest, deployParams})
 	fake.deployMutex.Unlock()
 	if fake.DeployStub != nil {
-		return fake.DeployStub(manifest, noRedact)
+		return fake.DeployStub(manifest, deployParams)
 	}
 	return fake.deployReturns.result1
 }
@@ -48,10 +48,10 @@ func (fake *FakeDirector) DeployCallCount() int {
 	return len(fake.deployArgsForCall)
 }
 
-func (fake *FakeDirector) DeployArgsForCall(i int) (string, bool) {
+func (fake *FakeDirector) DeployArgsForCall(i int) (string, bosh.DeployParams) {
 	fake.deployMutex.RLock()
 	defer fake.deployMutex.RUnlock()
-	return fake.deployArgsForCall[i].manifest, fake.deployArgsForCall[i].noRedact
+	return fake.deployArgsForCall[i].manifest, fake.deployArgsForCall[i].deployParams
 }
 
 func (fake *FakeDirector) DeployReturns(result1 error) {

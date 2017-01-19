@@ -7,6 +7,7 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 )
 
 var _ = Describe("OutCommand", func() {
@@ -40,9 +41,9 @@ var _ = Describe("OutCommand", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(director.DeployCallCount()).To(Equal(1))
-			actualManifestPath, actualNoRedact := director.DeployArgsForCall(0)
+			actualManifestPath, actualDeployParams := director.DeployArgsForCall(0)
 			Expect(actualManifestPath).To(Equal("path/to/manifest.yml"))
-			Expect(actualNoRedact).To(Equal(true))
+			Expect(actualDeployParams).To(Equal(bosh.DeployParams{NoRedact: true}))
 		})
 
 		It("returns the new version", func() {

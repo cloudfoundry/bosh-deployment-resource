@@ -48,7 +48,9 @@ var _ = Describe("BoshDirector", func() {
 
 		It("tells BOSH to deploy the given manifest and parameters", func() {
 			noRedact := true
-			err := director.Deploy(manifestPath, noRedact)
+			err := director.Deploy(manifestPath, bosh.DeployParams{
+				NoRedact: noRedact,
+			})
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
@@ -62,7 +64,7 @@ var _ = Describe("BoshDirector", func() {
 			It("returns an error", func() {
 				commandRunner.ExecuteReturns(errors.New("Your deploy failed"))
 
-				err := director.Deploy(manifestPath, false)
+				err := director.Deploy(manifestPath, bosh.DeployParams{})
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Your deploy failed"))
 			})

@@ -11,8 +11,13 @@ import (
 	"path"
 )
 
+type DeployParams struct {
+	NoRedact bool
+	Cleanup bool
+}
+
 type Director interface {
-	Deploy(manifest string, noRedact bool) error
+	Deploy(manifest string, deployParams DeployParams) error
 	DownloadManifest() ([]byte, error)
 }
 
@@ -32,12 +37,12 @@ func NewBoshDirector(source concourse.Source, commandRunner Runner, resourcesDir
 	}
 }
 
-func (d BoshDirector) Deploy(manifest string, noRedact bool) error {
+func (d BoshDirector) Deploy(manifest string, deployParams DeployParams) error {
 	manifestBytes, _ := ioutil.ReadFile(path.Join(d.resourcesDirectory, manifest))
 
 	err := d.commandRunner.Execute(&boshcmd.DeployOpts{
 		Args: boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
-		NoRedact: noRedact,
+		NoRedact: deployParams.NoRedact,
 	})
 	if err != nil {
 		return fmt.Errorf("Could not deploy: %s\n", err)
