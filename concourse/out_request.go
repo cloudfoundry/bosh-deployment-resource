@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"errors"
 )
 
 type OutRequest struct {
@@ -24,5 +26,28 @@ func NewOutRequest(request []byte) (OutRequest, error) {
 
 	outRequest.Source = dynamicSource
 
+	if err := checkRequiredOutParameters(outRequest.Params); err != nil {
+		return OutRequest{}, err
+	}
+
 	return outRequest, nil
+}
+
+func checkRequiredOutParameters(params OutParams) error {
+	missingParameters := []string{}
+
+	if params.Manifest == "" {
+		missingParameters = append(missingParameters, "manifest")
+	}
+
+	if len(missingParameters) > 0 {
+		parametersString := "parameter"
+		if len(missingParameters) > 2 {
+			parametersString = parametersString + "s"
+		}
+		errorMessage := fmt.Sprintf("Missing required source %s: %s", parametersString, strings.Join(missingParameters, ", "))
+		return errors.New(errorMessage)
+	}
+
+	return nil
 }
