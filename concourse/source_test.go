@@ -11,13 +11,13 @@ import (
 var _ = Describe("NewDynamicSource", func() {
 	It("converts the config into a Source", func() {
 		config := []byte(`{
-  "source": {
-    "deployment": "mydeployment",
-    "target": "director.example.com",
-    "client": "foo",
-    "client_secret": "foobar"
-  }
-}`)
+			"source": {
+				"deployment": "mydeployment",
+				"target": "director.example.com",
+				"client": "foo",
+				"client_secret": "foobar"
+			}
+		}`)
 
 		source, err := concourse.NewDynamicSource(config)
 		Expect(err).NotTo(HaveOccurred())
@@ -34,16 +34,16 @@ var _ = Describe("NewDynamicSource", func() {
 		var (
 			targetFilePath      string
 			requestJsonTemplate string = `{
-  "params": {
-    "target_file": "%s"
-  },
-  "source": {
-    "deployment": "mydeployment",
-    "target": "director.example.com",
-    "client": "foo",
-    "client_secret": "foobar"
-  }
-}`
+				"params": {
+					"target_file": "%s"
+				},
+				"source": {
+					"deployment": "mydeployment",
+					"target": "director.example.com",
+					"client": "foo",
+					"client_secret": "foobar"
+				}
+			}`
 		)
 
 		BeforeEach(func() {
