@@ -24,6 +24,14 @@ type FakeDirector struct {
 		result1 []byte
 		result2 error
 	}
+	UploadReleaseStub        func(releaseURL string) error
+	uploadReleaseMutex       sync.RWMutex
+	uploadReleaseArgsForCall []struct {
+		releaseURL string
+	}
+	uploadReleaseReturns struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -86,6 +94,38 @@ func (fake *FakeDirector) DownloadManifestReturns(result1 []byte, result2 error)
 	}{result1, result2}
 }
 
+func (fake *FakeDirector) UploadRelease(releaseURL string) error {
+	fake.uploadReleaseMutex.Lock()
+	fake.uploadReleaseArgsForCall = append(fake.uploadReleaseArgsForCall, struct {
+		releaseURL string
+	}{releaseURL})
+	fake.recordInvocation("UploadRelease", []interface{}{releaseURL})
+	fake.uploadReleaseMutex.Unlock()
+	if fake.UploadReleaseStub != nil {
+		return fake.UploadReleaseStub(releaseURL)
+	}
+	return fake.uploadReleaseReturns.result1
+}
+
+func (fake *FakeDirector) UploadReleaseCallCount() int {
+	fake.uploadReleaseMutex.RLock()
+	defer fake.uploadReleaseMutex.RUnlock()
+	return len(fake.uploadReleaseArgsForCall)
+}
+
+func (fake *FakeDirector) UploadReleaseArgsForCall(i int) string {
+	fake.uploadReleaseMutex.RLock()
+	defer fake.uploadReleaseMutex.RUnlock()
+	return fake.uploadReleaseArgsForCall[i].releaseURL
+}
+
+func (fake *FakeDirector) UploadReleaseReturns(result1 error) {
+	fake.UploadReleaseStub = nil
+	fake.uploadReleaseReturns = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -93,6 +133,8 @@ func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	defer fake.deployMutex.RUnlock()
 	fake.downloadManifestMutex.RLock()
 	defer fake.downloadManifestMutex.RUnlock()
+	fake.uploadReleaseMutex.RLock()
+	defer fake.uploadReleaseMutex.RUnlock()
 	return fake.invocations
 }
 

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/cloudfoundry/cli/cf/errors"
+	"errors"
 	"io/ioutil"
 	"strings"
 )

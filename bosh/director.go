@@ -19,6 +19,7 @@ type DeployParams struct {
 type Director interface {
 	Deploy(manifest string, deployParams DeployParams) error
 	DownloadManifest() ([]byte, error)
+	UploadRelease(releaseURL string) error
 }
 
 type BoshDirector struct {
@@ -63,4 +64,16 @@ func (d BoshDirector) DownloadManifest() ([]byte, error) {
 	}
 
 	return bytes, nil
+}
+
+func (d BoshDirector) UploadRelease(URL string) error {
+	err := d.commandRunner.Execute(&boshcmd.UploadReleaseOpts{
+		Args:     boshcmd.UploadReleaseArgs{URL: boshcmd.URLArg(URL)},
+	})
+
+	if err != nil {
+		return fmt.Errorf("Could not upload release %s: %s\n", URL, err)
+	}
+
+	return nil
 }

@@ -1,6 +1,10 @@
 package out_test
 
 import (
+	"fmt"
+	"os"
+	"io/ioutil"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -59,6 +63,52 @@ var _ = Describe("OutCommand", func() {
 					Target:       "director.example.com",
 				},
 			}))
+		})
+
+		Context("when releases are provided", func() {
+			var (
+				releaseOne, releaseTwo, releaseThree *os.File
+			)
+
+			BeforeEach(func() {
+				primaryReleaseDir, _ := ioutil.TempDir("", "")
+
+				releaseOne, _ = ioutil.TempFile(primaryReleaseDir, "release-one")
+				releaseOne.Close()
+
+				releaseTwo, _ = ioutil.TempFile(primaryReleaseDir, "release-two")
+				releaseTwo.Close()
+
+				secondaryReleaseDir, _ := ioutil.TempDir("", "")
+
+				releaseThree, _ = ioutil.TempFile(secondaryReleaseDir, "release-three")
+				releaseThree.Close()
+
+				outRequest.Params.Releases = []string{
+					fmt.Sprintf("%s/release-*", primaryReleaseDir),
+					releaseThree.Name(),
+				}
+			})
+
+			It("uploads all of the releases", func() {
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(director.UploadReleaseCallCount()).To(Equal(3))
+				Expect(director.UploadReleaseArgsForCall(0)).To(Equal(releaseOne.Name()))
+				Expect(director.UploadReleaseArgsForCall(1)).To(Equal(releaseTwo.Name()))
+				Expect(director.UploadReleaseArgsForCall(2)).To(Equal(releaseThree.Name()))
+			})
+
+			Context("when a release glob is bad", func() {
+				It("gives a useful error", func() {
+					outRequest.Params.Releases = []string{"/["}
+					_, err := outCommand.Run(outRequest)
+
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("Invalid release name: /["))
+				})
+			})
 		})
 	})
 })

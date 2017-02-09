@@ -3,6 +3,8 @@ package out
 import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
+	"fmt"
 )
 
 type OutResponse struct {
@@ -20,7 +22,15 @@ func NewOutCommand(director bosh.Director) OutCommand {
 }
 
 func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
-	err := c.director.Deploy(outRequest.Params.Manifest, bosh.DeployParams{
+	releasePaths, err := tools.UnfurlGlobs(outRequest.Params.Releases...)
+	if err != nil {
+		return OutResponse{}, fmt.Errorf("Invalid release name: %s", err)
+	}
+	for _, releasePath := range releasePaths {
+		c.director.UploadRelease(releasePath)
+	}
+
+	err = c.director.Deploy(outRequest.Params.Manifest, bosh.DeployParams{
 		NoRedact: outRequest.Params.NoRedact,
 		Cleanup:  outRequest.Params.Cleanup,
 	})

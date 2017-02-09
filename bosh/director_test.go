@@ -106,4 +106,26 @@ var _ = Describe("BoshDirector", func() {
 			})
 		})
 	})
+
+	Describe("UploadRelease", func() {
+		It("uploads the given release", func() {
+			err := director.UploadRelease("my-cool-release")
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
+
+			uploadReleaseOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.UploadReleaseOpts)
+			Expect(string(uploadReleaseOpts.Args.URL)).To(Equal("my-cool-release"))
+		})
+
+		Context("when uploading the release fails", func() {
+			It("returns an error", func() {
+				commandRunner.ExecuteReturns(errors.New("failed communicating with director"))
+
+				err := director.UploadRelease("my-cool-release")
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Could not upload release my-cool-release: failed communicating with director"))
+			})
+		})
+	})
 })
