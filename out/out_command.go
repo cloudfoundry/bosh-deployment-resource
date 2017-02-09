@@ -30,6 +30,14 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		c.director.UploadRelease(releasePath)
 	}
 
+	stemcellPaths, err := tools.UnfurlGlobs(outRequest.Params.Stemcells...)
+	if err != nil {
+		return OutResponse{}, fmt.Errorf("Invalid stemcell name: %s", err)
+	}
+	for _, stemcellPath := range stemcellPaths {
+		c.director.UploadStemcell(stemcellPath)
+	}
+
 	err = c.director.Deploy(outRequest.Params.Manifest, bosh.DeployParams{
 		NoRedact: outRequest.Params.NoRedact,
 		Cleanup:  outRequest.Params.Cleanup,

@@ -32,6 +32,14 @@ type FakeDirector struct {
 	uploadReleaseReturns struct {
 		result1 error
 	}
+	UploadStemcellStub        func(stemcellURL string) error
+	uploadStemcellMutex       sync.RWMutex
+	uploadStemcellArgsForCall []struct {
+		stemcellURL string
+	}
+	uploadStemcellReturns struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -126,6 +134,38 @@ func (fake *FakeDirector) UploadReleaseReturns(result1 error) {
 	}{result1}
 }
 
+func (fake *FakeDirector) UploadStemcell(stemcellURL string) error {
+	fake.uploadStemcellMutex.Lock()
+	fake.uploadStemcellArgsForCall = append(fake.uploadStemcellArgsForCall, struct {
+		stemcellURL string
+	}{stemcellURL})
+	fake.recordInvocation("UploadStemcell", []interface{}{stemcellURL})
+	fake.uploadStemcellMutex.Unlock()
+	if fake.UploadStemcellStub != nil {
+		return fake.UploadStemcellStub(stemcellURL)
+	}
+	return fake.uploadStemcellReturns.result1
+}
+
+func (fake *FakeDirector) UploadStemcellCallCount() int {
+	fake.uploadStemcellMutex.RLock()
+	defer fake.uploadStemcellMutex.RUnlock()
+	return len(fake.uploadStemcellArgsForCall)
+}
+
+func (fake *FakeDirector) UploadStemcellArgsForCall(i int) string {
+	fake.uploadStemcellMutex.RLock()
+	defer fake.uploadStemcellMutex.RUnlock()
+	return fake.uploadStemcellArgsForCall[i].stemcellURL
+}
+
+func (fake *FakeDirector) UploadStemcellReturns(result1 error) {
+	fake.UploadStemcellStub = nil
+	fake.uploadStemcellReturns = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -135,6 +175,8 @@ func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	defer fake.downloadManifestMutex.RUnlock()
 	fake.uploadReleaseMutex.RLock()
 	defer fake.uploadReleaseMutex.RUnlock()
+	fake.uploadStemcellMutex.RLock()
+	defer fake.uploadStemcellMutex.RUnlock()
 	return fake.invocations
 }
 

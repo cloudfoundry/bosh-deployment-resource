@@ -20,6 +20,7 @@ type Director interface {
 	Deploy(manifest string, deployParams DeployParams) error
 	DownloadManifest() ([]byte, error)
 	UploadRelease(releaseURL string) error
+	UploadStemcell(stemcellURL string) error
 }
 
 type BoshDirector struct {
@@ -73,6 +74,18 @@ func (d BoshDirector) UploadRelease(URL string) error {
 
 	if err != nil {
 		return fmt.Errorf("Could not upload release %s: %s\n", URL, err)
+	}
+
+	return nil
+}
+
+func (d BoshDirector) UploadStemcell(URL string) error {
+	err := d.commandRunner.Execute(&boshcmd.UploadStemcellOpts{
+		Args:     boshcmd.UploadStemcellArgs{URL: boshcmd.URLArg(URL)},
+	})
+
+	if err != nil {
+		return fmt.Errorf("Could not upload stemcell %s: %s\n", URL, err)
 	}
 
 	return nil

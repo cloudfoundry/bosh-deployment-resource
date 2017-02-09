@@ -95,9 +95,16 @@ var _ = Describe("OutCommand", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(director.UploadReleaseCallCount()).To(Equal(3))
-				Expect(director.UploadReleaseArgsForCall(0)).To(Equal(releaseOne.Name()))
-				Expect(director.UploadReleaseArgsForCall(1)).To(Equal(releaseTwo.Name()))
-				Expect(director.UploadReleaseArgsForCall(2)).To(Equal(releaseThree.Name()))
+
+				uploadedReleases := []string{}
+				uploadedReleases = append(uploadedReleases,
+					director.UploadReleaseArgsForCall(0),
+					director.UploadReleaseArgsForCall(1),
+					director.UploadReleaseArgsForCall(2),
+				)
+				Expect(uploadedReleases).To(ContainElement(releaseOne.Name()))
+				Expect(uploadedReleases).To(ContainElement(releaseTwo.Name()))
+				Expect(uploadedReleases).To(ContainElement(releaseThree.Name()))
 			})
 
 			Context("when a release glob is bad", func() {
@@ -107,6 +114,59 @@ var _ = Describe("OutCommand", func() {
 
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("Invalid release name: /["))
+				})
+			})
+		})
+
+		Context("when stemcells are provided", func() {
+			var (
+				stemcellOne, stemcellTwo, stemcellThree *os.File
+			)
+
+			BeforeEach(func() {
+				primaryStemcellDir, _ := ioutil.TempDir("", "")
+
+				stemcellOne, _ = ioutil.TempFile(primaryStemcellDir, "stemcell-one")
+				stemcellOne.Close()
+
+				stemcellTwo, _ = ioutil.TempFile(primaryStemcellDir, "stemcell-two")
+				stemcellTwo.Close()
+
+				secondaryStemcellDir, _ := ioutil.TempDir("", "")
+
+				stemcellThree, _ = ioutil.TempFile(secondaryStemcellDir, "stemcell-three")
+				stemcellThree.Close()
+
+				outRequest.Params.Stemcells = []string{
+					fmt.Sprintf("%s/stemcell-*", primaryStemcellDir),
+					stemcellThree.Name(),
+				}
+			})
+
+			It("uploads all of the stemcells", func() {
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(director.UploadStemcellCallCount()).To(Equal(3))
+
+				uploadedStemcells := []string{}
+				uploadedStemcells = append(uploadedStemcells,
+					director.UploadStemcellArgsForCall(0),
+					director.UploadStemcellArgsForCall(1),
+					director.UploadStemcellArgsForCall(2),
+				)
+				Expect(uploadedStemcells).To(ContainElement(stemcellOne.Name()))
+				Expect(uploadedStemcells).To(ContainElement(stemcellTwo.Name()))
+				Expect(uploadedStemcells).To(ContainElement(stemcellThree.Name()))
+			})
+
+			Context("when a stemcell glob is bad", func() {
+				It("gives a useful error", func() {
+					outRequest.Params.Stemcells = []string{"/["}
+					_, err := outCommand.Run(outRequest)
+
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("Invalid stemcell name: /["))
 				})
 			})
 		})

@@ -128,4 +128,26 @@ var _ = Describe("BoshDirector", func() {
 			})
 		})
 	})
+
+	Describe("UploadStemcell", func() {
+		It("uploads the given stemcell", func() {
+			err := director.UploadStemcell("my-cool-stemcell")
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
+
+			uploadStemcellOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.UploadStemcellOpts)
+			Expect(string(uploadStemcellOpts.Args.URL)).To(Equal("my-cool-stemcell"))
+		})
+
+		Context("when uploading the stemcell fails", func() {
+			It("returns an error", func() {
+				commandRunner.ExecuteReturns(errors.New("failed communicating with director"))
+
+				err := director.UploadStemcell("my-cool-stemcell")
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Could not upload stemcell my-cool-stemcell: failed communicating with director"))
+			})
+		})
+	})
 })
