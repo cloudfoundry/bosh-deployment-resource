@@ -12,17 +12,32 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
+	"io"
+	"bytes"
+	"strings"
 )
 
 var _ = Describe("OutCommand", func() {
 	var (
-		outCommand out.OutCommand
-		director   *boshfakes.FakeDirector
+		outCommand   out.OutCommand
+		director     *boshfakes.FakeDirector
+		manifest     *os.File
+		manifestYaml []byte
 	)
 
 	BeforeEach(func() {
 		director = new(boshfakes.FakeDirector)
-		outCommand = out.NewOutCommand(director)
+		outCommand = out.NewOutCommand(director, "")
+		manifest, _ = ioutil.TempFile("", "manifest")
+		manifestYaml = properYaml(`
+			releases:
+			- name: small-release
+			  version: latest
+			  url: file://release.tgz
+			  sha1: SHA1FORMAT
+		`)
+		manifest.Write(manifestYaml)
+		manifest.Close()
 	})
 
 	Describe("Run", func() {
@@ -34,7 +49,7 @@ var _ = Describe("OutCommand", func() {
 					Target: "director.example.com",
 				},
 				Params: concourse.OutParams{
-					Manifest: "path/to/manifest.yml",
+					Manifest: manifest.Name(),
 					NoRedact: true,
 				},
 			}
@@ -45,8 +60,8 @@ var _ = Describe("OutCommand", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(director.DeployCallCount()).To(Equal(1))
-			actualManifestPath, actualDeployParams := director.DeployArgsForCall(0)
-			Expect(actualManifestPath).To(Equal("path/to/manifest.yml"))
+			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
+			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{NoRedact: true}))
 		})
 
@@ -71,17 +86,23 @@ var _ = Describe("OutCommand", func() {
 			)
 
 			BeforeEach(func() {
+				// Update release generation to yield expected bosh release format
 				primaryReleaseDir, _ := ioutil.TempDir("", "")
 
+				smallRelease, _ := ioutil.ReadFile("fixtures/small-release.tgz")
+
 				releaseOne, _ = ioutil.TempFile(primaryReleaseDir, "release-one")
+				io.Copy(releaseOne, bytes.NewReader(smallRelease))
 				releaseOne.Close()
 
 				releaseTwo, _ = ioutil.TempFile(primaryReleaseDir, "release-two")
+				io.Copy(releaseTwo, bytes.NewReader(smallRelease))
 				releaseTwo.Close()
 
 				secondaryReleaseDir, _ := ioutil.TempDir("", "")
 
 				releaseThree, _ = ioutil.TempFile(secondaryReleaseDir, "release-three")
+				io.Copy(releaseThree, bytes.NewReader(smallRelease))
 				releaseThree.Close()
 
 				outRequest.Params.Releases = []string{
@@ -105,6 +126,22 @@ var _ = Describe("OutCommand", func() {
 				Expect(uploadedReleases).To(ContainElement(releaseOne.Name()))
 				Expect(uploadedReleases).To(ContainElement(releaseTwo.Name()))
 				Expect(uploadedReleases).To(ContainElement(releaseThree.Name()))
+			})
+
+			It("updates the version information in the manifest", func() {
+				outRequest.Params.Releases = []string{"fixtures/small-release.tgz"}
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				updatedManifest, _ := director.DeployArgsForCall(0)
+
+				Expect(updatedManifest).To(MatchYAML(properYaml(`
+					releases:
+						- name: small-release
+						  version: "53"
+						  url: file://release.tgz
+						  sha1: SHA1FORMAT
+				`)))
 			})
 
 			Context("when a release glob is bad", func() {
@@ -172,3 +209,7 @@ var _ = Describe("OutCommand", func() {
 		})
 	})
 })
+
+func properYaml(improperYaml string) []byte {
+	return []byte(strings.Replace(improperYaml, "\t", "  ", -1))
+}

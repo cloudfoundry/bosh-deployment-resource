@@ -5,6 +5,8 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	"fmt"
+	"io/ioutil"
+	"path"
 )
 
 type OutResponse struct {
@@ -12,12 +14,14 @@ type OutResponse struct {
 }
 
 type OutCommand struct {
-	director bosh.Director
+	director           bosh.Director
+	resourcesDirectory string
 }
 
-func NewOutCommand(director bosh.Director) OutCommand {
+func NewOutCommand(director bosh.Director, resourcesDirectory string) OutCommand {
 	return OutCommand{
 		director: director,
+		resourcesDirectory: resourcesDirectory,
 	}
 }
 
@@ -38,7 +42,22 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		c.director.UploadStemcell(stemcellPath)
 	}
 
-	err = c.director.Deploy(outRequest.Params.Manifest, bosh.DeployParams{
+	manifestBytes, err := ioutil.ReadFile(path.Join(c.resourcesDirectory, outRequest.Params.Manifest))
+	if err != nil {
+		return OutResponse{}, err
+	}
+
+	manifest, err := bosh.NewDeploymentManifest(manifestBytes)
+	if err != nil {
+		return OutResponse{}, err
+	}
+
+	err = updateReleasesInManifest(&manifest, releasePaths)
+	if err != nil {
+		return OutResponse{}, err
+	}
+
+	err = c.director.Deploy(manifest.Manifest(), bosh.DeployParams{
 		NoRedact: outRequest.Params.NoRedact,
 		Cleanup:  outRequest.Params.Cleanup,
 	})
@@ -46,14 +65,34 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		return OutResponse{}, err
 	}
 
-	manifest, err := c.director.DownloadManifest()
+	uploadedManifest, err := c.director.DownloadManifest()
 	if err != nil {
 		return OutResponse{}, err
 	}
 
 	concourseOutput := OutResponse{
-		Version: concourse.NewVersion(manifest, outRequest.Source.Target),
+		Version: concourse.NewVersion(uploadedManifest, outRequest.Source.Target),
 	}
 
 	return concourseOutput, nil
+}
+
+type ReleaseFile struct {
+	Name string
+	Version string
+}
+
+func updateReleasesInManifest(manifest *bosh.DeploymentManifest, releasePaths []string) error {
+	for _, releasePath := range releasePaths {
+		release, err := bosh.NewRelease(releasePath)
+		if err != nil {
+			return err
+		}
+
+		if err = manifest.UseReleaseVersion(release.Name, release.Version); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

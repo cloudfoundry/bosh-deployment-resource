@@ -14,7 +14,6 @@ import (
 	"errors"
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	"io/ioutil"
-	"path/filepath"
 )
 
 var _ = Describe("BoshDirector", func() {
@@ -34,21 +33,9 @@ var _ = Describe("BoshDirector", func() {
 	})
 
 	Describe("Deploy", func() {
-		var (
-			manifestPath string
-		)
-
-		BeforeEach(func() {
-			manifest, _ := ioutil.TempFile(tempDir, "")
-			manifest.Write(sillyBytes)
-			manifest.Close()
-
-			manifestPath = filepath.Base(manifest.Name())
-		})
-
 		It("tells BOSH to deploy the given manifest and parameters", func() {
 			noRedact := true
-			err := director.Deploy(manifestPath, bosh.DeployParams{
+			err := director.Deploy(sillyBytes, bosh.DeployParams{
 				NoRedact: noRedact,
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -64,7 +51,7 @@ var _ = Describe("BoshDirector", func() {
 			It("returns an error", func() {
 				commandRunner.ExecuteReturns(errors.New("Your deploy failed"))
 
-				err := director.Deploy(manifestPath, bosh.DeployParams{})
+				err := director.Deploy(sillyBytes, bosh.DeployParams{})
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Your deploy failed"))
 			})
@@ -72,7 +59,7 @@ var _ = Describe("BoshDirector", func() {
 
 		Context("when cleanup is specified", func() {
 			It("runs a cleanup before the deploy", func() {
-				err := director.Deploy(manifestPath, bosh.DeployParams{Cleanup: true})
+				err := director.Deploy(sillyBytes, bosh.DeployParams{Cleanup: true})
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(commandRunner.ExecuteCallCount()).To(Equal(2))

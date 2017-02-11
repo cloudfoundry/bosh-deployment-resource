@@ -7,8 +7,6 @@ import (
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	"io"
-	"io/ioutil"
-	"path"
 )
 
 type DeployParams struct {
@@ -17,7 +15,7 @@ type DeployParams struct {
 }
 
 type Director interface {
-	Deploy(manifest string, deployParams DeployParams) error
+	Deploy(manifestBytes []byte, deployParams DeployParams) error
 	DownloadManifest() ([]byte, error)
 	UploadRelease(releaseURL string) error
 	UploadStemcell(stemcellURL string) error
@@ -39,9 +37,7 @@ func NewBoshDirector(source concourse.Source, commandRunner Runner, resourcesDir
 	}
 }
 
-func (d BoshDirector) Deploy(manifest string, deployParams DeployParams) error {
-	manifestBytes, _ := ioutil.ReadFile(path.Join(d.resourcesDirectory, manifest))
-
+func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) error {
 	if deployParams.Cleanup {
 		d.commandRunner.Execute(&boshcmd.CleanUpOpts{})
 	}

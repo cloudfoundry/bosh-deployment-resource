@@ -8,11 +8,11 @@ import (
 )
 
 type FakeDirector struct {
-	DeployStub        func(manifest string, deployParams bosh.DeployParams) error
+	DeployStub        func(manifestBytes []byte, deployParams bosh.DeployParams) error
 	deployMutex       sync.RWMutex
 	deployArgsForCall []struct {
-		manifest     string
-		deployParams bosh.DeployParams
+		manifestBytes []byte
+		deployParams  bosh.DeployParams
 	}
 	deployReturns struct {
 		result1 error
@@ -44,16 +44,21 @@ type FakeDirector struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDirector) Deploy(manifest string, deployParams bosh.DeployParams) error {
+func (fake *FakeDirector) Deploy(manifestBytes []byte, deployParams bosh.DeployParams) error {
+	var manifestBytesCopy []byte
+	if manifestBytes != nil {
+		manifestBytesCopy = make([]byte, len(manifestBytes))
+		copy(manifestBytesCopy, manifestBytes)
+	}
 	fake.deployMutex.Lock()
 	fake.deployArgsForCall = append(fake.deployArgsForCall, struct {
-		manifest     string
-		deployParams bosh.DeployParams
-	}{manifest, deployParams})
-	fake.recordInvocation("Deploy", []interface{}{manifest, deployParams})
+		manifestBytes []byte
+		deployParams  bosh.DeployParams
+	}{manifestBytesCopy, deployParams})
+	fake.recordInvocation("Deploy", []interface{}{manifestBytesCopy, deployParams})
 	fake.deployMutex.Unlock()
 	if fake.DeployStub != nil {
-		return fake.DeployStub(manifest, deployParams)
+		return fake.DeployStub(manifestBytes, deployParams)
 	}
 	return fake.deployReturns.result1
 }
@@ -64,10 +69,10 @@ func (fake *FakeDirector) DeployCallCount() int {
 	return len(fake.deployArgsForCall)
 }
 
-func (fake *FakeDirector) DeployArgsForCall(i int) (string, bosh.DeployParams) {
+func (fake *FakeDirector) DeployArgsForCall(i int) ([]byte, bosh.DeployParams) {
 	fake.deployMutex.RLock()
 	defer fake.deployMutex.RUnlock()
-	return fake.deployArgsForCall[i].manifest, fake.deployArgsForCall[i].deployParams
+	return fake.deployArgsForCall[i].manifestBytes, fake.deployArgsForCall[i].deployParams
 }
 
 func (fake *FakeDirector) DeployReturns(result1 error) {
