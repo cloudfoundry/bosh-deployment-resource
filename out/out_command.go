@@ -57,6 +57,11 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		return OutResponse{}, err
 	}
 
+	err = updateStemcellsInManifest(&manifest, stemcellPaths)
+	if err != nil {
+		return OutResponse{}, err
+	}
+
 	err = c.director.Deploy(manifest.Manifest(), bosh.DeployParams{
 		NoRedact: outRequest.Params.NoRedact,
 		Cleanup:  outRequest.Params.Cleanup,
@@ -90,6 +95,21 @@ func updateReleasesInManifest(manifest *bosh.DeploymentManifest, releasePaths []
 		}
 
 		if err = manifest.UseReleaseVersion(release.Name, release.Version); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func updateStemcellsInManifest(manifest *bosh.DeploymentManifest, stemcellPaths []string) error {
+	for _, stemcellPath := range stemcellPaths {
+		stemcell, err := bosh.NewStemcell(stemcellPath)
+		if err != nil {
+			return err
+		}
+
+		if err = manifest.UseStemcellVersion(stemcell.Name, stemcell.OperatingSystem, stemcell.Version); err != nil {
 			return err
 		}
 	}

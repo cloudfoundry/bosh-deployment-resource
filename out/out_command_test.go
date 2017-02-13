@@ -35,6 +35,10 @@ var _ = Describe("OutCommand", func() {
 			  version: latest
 			  url: file://release.tgz
 			  sha1: SHA1FORMAT
+			stemcells:
+			- name: small-stemcell
+			  alias: super-awesome-stemcell
+			  version: latest
 		`)
 		manifest.Write(manifestYaml)
 		manifest.Close()
@@ -141,6 +145,10 @@ var _ = Describe("OutCommand", func() {
 						  version: "53"
 						  url: file://release.tgz
 						  sha1: SHA1FORMAT
+					stemcells:
+						- name: small-stemcell
+						  alias: super-awesome-stemcell
+						  version: latest
 				`)))
 			})
 
@@ -163,15 +171,20 @@ var _ = Describe("OutCommand", func() {
 			BeforeEach(func() {
 				primaryStemcellDir, _ := ioutil.TempDir("", "")
 
+				smallStemcell, _ := ioutil.ReadFile("fixtures/small-stemcell.tgz")
+
 				stemcellOne, _ = ioutil.TempFile(primaryStemcellDir, "stemcell-one")
+				io.Copy(stemcellOne, bytes.NewReader(smallStemcell))
 				stemcellOne.Close()
 
 				stemcellTwo, _ = ioutil.TempFile(primaryStemcellDir, "stemcell-two")
+				io.Copy(stemcellTwo, bytes.NewReader(smallStemcell))
 				stemcellTwo.Close()
 
 				secondaryStemcellDir, _ := ioutil.TempDir("", "")
 
 				stemcellThree, _ = ioutil.TempFile(secondaryStemcellDir, "stemcell-three")
+				io.Copy(stemcellThree, bytes.NewReader(smallStemcell))
 				stemcellThree.Close()
 
 				outRequest.Params.Stemcells = []string{
@@ -195,6 +208,26 @@ var _ = Describe("OutCommand", func() {
 				Expect(uploadedStemcells).To(ContainElement(stemcellOne.Name()))
 				Expect(uploadedStemcells).To(ContainElement(stemcellTwo.Name()))
 				Expect(uploadedStemcells).To(ContainElement(stemcellThree.Name()))
+			})
+
+			It("updates the version information in the manifest", func() {
+				outRequest.Params.Stemcells = []string{"fixtures/small-stemcell.tgz"}
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				updatedManifest, _ := director.DeployArgsForCall(0)
+
+				Expect(updatedManifest).To(MatchYAML(properYaml(`
+					releases:
+						- name: small-release
+						  version: latest
+						  url: file://release.tgz
+						  sha1: SHA1FORMAT
+					stemcells:
+						- alias: super-awesome-stemcell
+						  name: small-stemcell
+						  version: "8675309"
+				`)))
 			})
 
 			Context("when a stemcell glob is bad", func() {
