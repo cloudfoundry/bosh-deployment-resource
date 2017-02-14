@@ -14,4 +14,4 @@ outputs:
 - name: built-binaries
 
 run:
-  path: bosh-deployment-resource-ci/tasks/build.sh
+  path: bosh-deployment-resource-ci/ci/tasks/build.sh

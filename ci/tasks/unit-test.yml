@@ -11,4 +11,4 @@ inputs:
   path: gopath/src/github.com/cloudfoundry/bosh-deployment-resource
 
 run:
-  path: bosh-deployment-resource-ci/tasks/unit-test.sh
+  path: bosh-deployment-resource-ci/ci/tasks/unit-test.sh
