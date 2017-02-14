@@ -66,17 +66,38 @@ _Note_: Only the most recent version is fetchable
 
 ### `out`: Deploy a BOSH deployment
 
-This will deploy the deployment provided.
+This will upload any given stemcells and releases, lock them down in the
+deployment manifest and then deploy.
 
 #### Parameters
 
 * `manifest`: *Required.* Path to a BOSH deployment manifest file.
+
+* `stemcells`: *Required.* An array of globs that should point to where the
+  stemcells used in the deployment can be found. Stemcell entries in the
+  manifest with version 'latest' will be updated to the actual provided
+  stemcell versions.
+
+* `releases`: *Required.* An array of globs that should point to where the
+  releases used in the deployment can be found.
+
 * `cleanup`: *Optional* An boolean that specifies if a bosh cleanup should be
   run before deployment. Defaults to false.
 * `no_redact`: *Optional* Removes redacted from Bosh output. Defaults to false.
+* `target_file`: *Optional.* Path to a file containing a BOSH director address.
+  This allows the target to be determined at runtime, e.g. by acquiring a BOSH
+  lite instance using the [Pool
+  resource](https://github.com/concourse/pool-resource).
+
+  If both `target_file` and `target` are specified, `target_file` takes
+  precedence.
 
 ``` yaml
 - put: staging
   params:
     manifest: path/to/manifest.yml
+    stemcells:
+    - path/to/stemcells-*
+    releases:
+    - path/to/releases-*
 ```
