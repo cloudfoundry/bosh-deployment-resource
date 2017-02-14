@@ -15,7 +15,7 @@ type Stemcell struct {
 func NewStemcell(filePath string) (Stemcell, error) {
 	stemcell := Stemcell{}
 
-	readStemcellCommand := exec.Command("tar", "-Oxzf", filePath, "stemcell.MF")
+	readStemcellCommand := exec.Command("tar", "-Oxzf", filePath, "./stemcell.MF")
 	stemcellFileContents, err := readStemcellCommand.Output()
 	if err != nil {
 		return Stemcell{}, fmt.Errorf("Could not read stemcell %s", filePath)

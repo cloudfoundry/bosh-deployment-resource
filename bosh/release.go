@@ -14,7 +14,7 @@ type Release struct {
 func NewRelease(filePath string) (Release, error) {
 	release := Release{}
 
-	readReleaseCommand := exec.Command("tar", "-Oxzf", filePath, "release.MF")
+	readReleaseCommand := exec.Command("tar", "-Oxzf", filePath, "./release.MF")
 	releaseFileContents, err := readReleaseCommand.Output()
 	if err != nil {
 		return Release{}, fmt.Errorf("Could not read release %s", filePath)
