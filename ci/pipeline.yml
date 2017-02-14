@@ -12,7 +12,7 @@ resources:
   source:
     username: {{dockerhub_username}}
     password: {{dockerhub_password}}
-    repository:  &bosh-deployment-resource-image-repo pcfbosh/bosh-deployment-resource
+    repository:  &bosh-deployment-resource-image-repo cloudfoundry/bosh-deployment-resource
 
 - name: version
   type: semver
