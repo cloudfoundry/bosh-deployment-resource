@@ -10,7 +10,8 @@ import (
 )
 
 type OutResponse struct {
-	Version concourse.Version `json:"version"`
+	Version  concourse.Version    `json:"version"`
+	Metadata []concourse.Metadata `json:"metadata"`
 }
 
 type OutCommand struct {
@@ -52,12 +53,22 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		return OutResponse{}, err
 	}
 
-	err = updateReleasesInManifest(&manifest, releasePaths)
+	releases, err := globbedReleases(releasePaths)
 	if err != nil {
 		return OutResponse{}, err
 	}
 
-	err = updateStemcellsInManifest(&manifest, stemcellPaths)
+	err = updateReleasesInManifest(&manifest, releases)
+	if err != nil {
+		return OutResponse{}, err
+	}
+
+	stemcells, err := globbedStemcells(stemcellPaths)
+	if err != nil {
+		return OutResponse{}, err
+	}
+
+	err = updateStemcellsInManifest(&manifest, stemcells)
 	if err != nil {
 		return OutResponse{}, err
 	}
@@ -79,6 +90,22 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		Version: concourse.NewVersion(uploadedManifest, outRequest.Source.Target),
 	}
 
+	for _, release := range releases {
+		metadata := concourse.Metadata{
+			Name: "release",
+			Value: fmt.Sprintf("%s v%s", release.Name, release.Version),
+		}
+		concourseOutput.Metadata = append(concourseOutput.Metadata, metadata)
+	}
+
+	for _, stemcell := range stemcells {
+		metadata := concourse.Metadata{
+			Name: "stemcell",
+			Value: fmt.Sprintf("%s v%s", stemcell.Name, stemcell.Version),
+		}
+		concourseOutput.Metadata = append(concourseOutput.Metadata, metadata)
+	}
+
 	return concourseOutput, nil
 }
 
@@ -87,14 +114,35 @@ type ReleaseFile struct {
 	Version string
 }
 
-func updateReleasesInManifest(manifest *bosh.DeploymentManifest, releasePaths []string) error {
+func globbedReleases(releasePaths []string) ([]bosh.Release, error) {
+	releases := []bosh.Release{}
 	for _, releasePath := range releasePaths {
 		release, err := bosh.NewRelease(releasePath)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		releases = append(releases, release)
+	}
 
-		if err = manifest.UseReleaseVersion(release.Name, release.Version); err != nil {
+	return releases, nil
+}
+
+func globbedStemcells(stemcellPaths []string) ([]bosh.Stemcell, error) {
+	stemcells := []bosh.Stemcell{}
+	for _, stemcellPath := range stemcellPaths {
+		stemcell, err := bosh.NewStemcell(stemcellPath)
+		if err != nil {
+			return nil, err
+		}
+		stemcells = append(stemcells, stemcell)
+	}
+
+	return stemcells, nil
+}
+
+func updateReleasesInManifest(manifest *bosh.DeploymentManifest, releases []bosh.Release) error {
+	for _, release := range releases {
+		if err := manifest.UseReleaseVersion(release.Name, release.Version); err != nil {
 			return err
 		}
 	}
@@ -102,14 +150,9 @@ func updateReleasesInManifest(manifest *bosh.DeploymentManifest, releasePaths []
 	return nil
 }
 
-func updateStemcellsInManifest(manifest *bosh.DeploymentManifest, stemcellPaths []string) error {
-	for _, stemcellPath := range stemcellPaths {
-		stemcell, err := bosh.NewStemcell(stemcellPath)
-		if err != nil {
-			return err
-		}
-
-		if err = manifest.UseStemcellVersion(stemcell.Name, stemcell.OperatingSystem, stemcell.Version); err != nil {
+func updateStemcellsInManifest(manifest *bosh.DeploymentManifest, stemcells []bosh.Stemcell) error {
+	for _, stemcell := range stemcells {
+		if err := manifest.UseStemcellVersion(stemcell.Name, stemcell.OperatingSystem, stemcell.Version); err != nil {
 			return err
 		}
 	}

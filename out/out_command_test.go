@@ -152,6 +152,26 @@ var _ = Describe("OutCommand", func() {
 				`)))
 			})
 
+			It("includes the provided releases in the metadata", func() {
+				outResponse, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(outResponse.Metadata).To(Equal([]concourse.Metadata{
+					{
+						Name: "release",
+						Value: "small-release v53",
+					},
+					{
+						Name: "release",
+						Value: "small-release v53",
+					},
+					{
+						Name: "release",
+						Value: "small-release v53",
+					},
+				}))
+			})
+
 			Context("when a release glob is bad", func() {
 				It("gives a useful error", func() {
 					outRequest.Params.Releases = []string{"/["}
@@ -228,6 +248,26 @@ var _ = Describe("OutCommand", func() {
 						  name: small-stemcell
 						  version: "8675309"
 				`)))
+			})
+
+			It("includes the provided stemcells in the metadata", func() {
+				outResponse, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(outResponse.Metadata).To(Equal([]concourse.Metadata{
+					{
+						Name: "stemcell",
+						Value: "small-stemcell v8675309",
+					},
+					{
+						Name: "stemcell",
+						Value: "small-stemcell v8675309",
+					},
+					{
+						Name: "stemcell",
+						Value: "small-stemcell v8675309",
+					},
+				}))
 			})
 
 			Context("when a stemcell glob is bad", func() {
