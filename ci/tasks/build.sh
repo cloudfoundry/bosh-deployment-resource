@@ -12,3 +12,5 @@ cd gopath/src/github.com/cloudfoundry/bosh-deployment-resource
 go build -o "$BUILT_BINARIES_DIR/check" ./cmd/check
 go build -o "$BUILT_BINARIES_DIR/in" ./cmd/in
 go build -o "$BUILT_BINARIES_DIR/out" ./cmd/out
+
+cp Dockerfile "$BUILT_BINARIES_DIR"
