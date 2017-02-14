@@ -27,7 +27,7 @@ func NewOutCommand(director bosh.Director, resourcesDirectory string) OutCommand
 }
 
 func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
-	releasePaths, err := tools.UnfurlGlobs(outRequest.Params.Releases...)
+	releasePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.Releases)
 	if err != nil {
 		return OutResponse{}, fmt.Errorf("Invalid release name: %s", err)
 	}
@@ -35,7 +35,7 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		c.director.UploadRelease(releasePath)
 	}
 
-	stemcellPaths, err := tools.UnfurlGlobs(outRequest.Params.Stemcells...)
+	stemcellPaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.Stemcells)
 	if err != nil {
 		return OutResponse{}, fmt.Errorf("Invalid stemcell name: %s", err)
 	}

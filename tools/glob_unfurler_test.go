@@ -6,34 +6,33 @@ import (
 	"os"
 	"io/ioutil"
 	"github.com/cloudfoundry/bosh-deployment-resource/tools"
-	"fmt"
 )
 
 var _ = Describe("GlobUnfurler", func() {
 	var (
 		releaseOne, releaseTwo, releaseThree *os.File
-		primaryReleaseDir string
+		releaseDir string
 	)
 
 	BeforeEach(func() {
-		primaryReleaseDir, _ = ioutil.TempDir("", "primary-releases")
+		releaseDir, _ = ioutil.TempDir("", "primary-releases")
 
-		releaseOne, _ = ioutil.TempFile(primaryReleaseDir, "release-one")
+		releaseOne, _ = ioutil.TempFile(releaseDir, "release-one")
 		releaseOne.Close()
 
-		releaseTwo, _ = ioutil.TempFile(primaryReleaseDir, "release-two")
+		releaseTwo, _ = ioutil.TempFile(releaseDir, "release-two")
 		releaseTwo.Close()
 
-		secondaryReleaseDir, _ := ioutil.TempDir("", "secondary-releases")
-
-		releaseThree, _ = ioutil.TempFile(secondaryReleaseDir, "release-three")
+		releaseThree, _ = ioutil.TempFile(releaseDir, "coolio-three")
 		releaseThree.Close()
 	})
 
 	It("returns all filepaths matching the globs", func() {
 		filepaths, err := tools.UnfurlGlobs(
-			fmt.Sprintf("%s/release-*", primaryReleaseDir),
-			releaseThree.Name(),
+			releaseDir, []string{
+				"release-*",
+				"coolio-three*",
+			},
 		)
 
 		Expect(err).ToNot(HaveOccurred())
@@ -47,8 +46,10 @@ var _ = Describe("GlobUnfurler", func() {
 	Context("when some globs unfurl to the same file", func() {
 		It("removes duplicate filepaths", func() {
 			filepaths, err := tools.UnfurlGlobs(
-				fmt.Sprintf("%s/release-*", primaryReleaseDir),
-				fmt.Sprintf("%s/rel*se-*", primaryReleaseDir),
+				releaseDir, []string{
+					"release-*",
+					"rel*se-*",
+				},
 			)
 
 			Expect(err).ToNot(HaveOccurred())
@@ -61,7 +62,7 @@ var _ = Describe("GlobUnfurler", func() {
 
 	Context("when a bad glob is passed", func() {
 		It("returns an error", func() {
-			_, err := tools.UnfurlGlobs("/[")
+			_, err := tools.UnfurlGlobs(releaseDir, []string{"/["})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("/[ is not a valid file glob"))
 		})
