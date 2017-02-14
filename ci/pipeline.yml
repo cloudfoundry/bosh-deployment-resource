@@ -7,7 +7,7 @@ resources:
     uri: https://github.com/cloudfoundry/bosh-deployment-resource
     ignore_paths: [ci/*]
 
-- name: bosh-deployment-resource-docker-image
+- name: bosh-deployment-resource-image
   type: docker-image
   source:
     username: {{dockerhub_username}}
@@ -19,8 +19,8 @@ resources:
   source:
     bucket: bosh-deployment-resource
     key: current-version
-    access_key_id: {{aws-access-key-id}}
-    secret_access_key: {{aws-secret-access-key}}
+    access_key_id: {{bosh_deployment_resource_aws_access_key_id}}
+    secret_access_key: {{bosh_deployment_resource_aws_secret_access_key}}
     initial_version: 0.0.1
 
 - name: bosh-deployment-resource-github-release
