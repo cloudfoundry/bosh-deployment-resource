@@ -34,10 +34,10 @@ func main() {
 
 	sourcesDir := os.Args[1]
 
-	commandRunner := bosh.NewCommandRunner(outRequest.Source, sourcesDir, os.Stderr)
+	commandRunner := bosh.NewCommandRunner(outRequest.Source, os.Stderr)
 	director := bosh.NewBoshDirector(outRequest.Source, commandRunner, sourcesDir, os.Stderr)
 
-	outCommand := out.NewOutCommand(director)
+	outCommand := out.NewOutCommand(director, sourcesDir)
 	outResponse, err := outCommand.Run(outRequest)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
