@@ -50,7 +50,7 @@ var _ = Describe("NewDynamicSource", func() {
 
 		BeforeEach(func() {
 			targetFile, _ := ioutil.TempFile("", "")
-			targetFile.WriteString("director.example.net")
+			targetFile.WriteString("\n director.example.net \n")
 			targetFile.Close()
 
 			sourcesDir = filepath.Dir(targetFile.Name())

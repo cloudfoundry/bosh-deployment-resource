@@ -39,7 +39,7 @@ func NewDynamicSource(config []byte, sourcesDir string) (Source, error) {
 			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
 		}
 
-		sourceRequest.Source.Target = string(target)
+		sourceRequest.Source.Target = strings.TrimSpace(string(target))
 	}
 
 	if err := checkRequiredSourceParameters(sourceRequest.Source); err != nil {
