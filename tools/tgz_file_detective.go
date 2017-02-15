@@ -24,7 +24,7 @@ func ReadTgzFile(tgzFilePath, tarredFile string) ([]byte, error) {
 
 	tr := tar.NewReader(gzf)
 
-	tarredFileRegex, err := regexp.Compile(fmt.Sprintf("^(.\\/)?%s$", tarredFile))
+	tarredFileRegex, err := regexp.Compile(fmt.Sprintf("^(.\\/)?%s$", regexp.QuoteMeta(tarredFile)))
 	if err != nil {
 		return nil, err
 	}
