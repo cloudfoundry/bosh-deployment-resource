@@ -12,6 +12,14 @@ import (
 )
 
 func main() {
+	fakeStdout, _ := ioutil.TempFile("", "stdout")
+	realStdout := os.Stdout
+	os.Stdout = fakeStdout
+
+	fakeStderr, _ := ioutil.TempFile("", "stderr")
+	realStderr := os.Stderr
+	os.Stderr = fakeStderr
+
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
 			"not enough args - usage: %s <sources directory>\n",
@@ -52,4 +60,11 @@ func main() {
 
 	fmt.Fprintf(os.Stderr, "%s", concourseOutputFormatted)
 	fmt.Printf("%s", concourseOutputFormatted)
+
+	fakeStdout.Close()
+	os.Stdout = realStdout
+	outContents, _ := ioutil.ReadFile(realStdout.Name())
+	fmt.Print(string(outContents))
+
+	fakeStderr.Close()
 }
