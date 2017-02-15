@@ -24,7 +24,7 @@ var _ = Describe("Stemcell", func() {
 				_, err := bosh.NewStemcell("fixtures/not-a-file.tgz")
 				Expect(err).To(HaveOccurred())
 
-				Expect(err.Error()).To(ContainSubstring("Could not read stemcell fixtures/not-a-file.tgz"))
+				Expect(err.Error()).To(ContainSubstring("Could not read stemcell:"))
 			})
 		})
 

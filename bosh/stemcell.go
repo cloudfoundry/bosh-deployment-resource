@@ -1,9 +1,9 @@
 package bosh
 
 import (
-	"os/exec"
 	"fmt"
 	"gopkg.in/yaml.v2"
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 )
 
 type Stemcell struct {
@@ -15,10 +15,9 @@ type Stemcell struct {
 func NewStemcell(filePath string) (Stemcell, error) {
 	stemcell := Stemcell{}
 
-	readStemcellCommand := exec.Command("tar", "-Oxzf", filePath, "./stemcell.MF")
-	stemcellFileContents, err := readStemcellCommand.Output()
+	stemcellFileContents, err := tools.ReadTgzFile(filePath, "stemcell.MF")
 	if err != nil {
-		return Stemcell{}, fmt.Errorf("Could not read stemcell %s", filePath)
+		return Stemcell{}, fmt.Errorf("Could not read stemcell: %s", err)
 	}
 
 	err = yaml.Unmarshal(stemcellFileContents, &stemcell)

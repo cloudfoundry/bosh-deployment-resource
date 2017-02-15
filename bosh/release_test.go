@@ -23,7 +23,7 @@ var _ = Describe("Release", func() {
 				_, err := bosh.NewRelease("fixtures/not-a-file.tgz")
 				Expect(err).To(HaveOccurred())
 
-				Expect(err.Error()).To(ContainSubstring("Could not read release fixtures/not-a-file.tgz"))
+				Expect(err.Error()).To(ContainSubstring("Could not read release:"))
 			})
 		})
 
