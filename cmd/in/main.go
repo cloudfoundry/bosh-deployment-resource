@@ -12,10 +12,9 @@ import (
 )
 
 func main() {
+	//remove when https://github.com/cloudfoundry/bosh-cli/pull/135
 	realStdout := os.Stdout
-	devNull, _ := os.Open(os.DevNull)
-	defer devNull.Close()
-	os.Stdout = devNull
+	os.Stdout = os.Stderr
 
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
