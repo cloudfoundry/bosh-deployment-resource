@@ -42,7 +42,6 @@ func main() {
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
-
 	}
 
 	concourseOutputFormatted, err := json.MarshalIndent(outResponse, "", "  ")
@@ -51,5 +50,6 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Fprintf(os.Stderr, "%s", concourseOutputFormatted)
 	fmt.Printf("%s", concourseOutputFormatted)
 }
