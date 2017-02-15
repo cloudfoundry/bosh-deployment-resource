@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"strings"
+	"path/filepath"
 )
 
 type Source struct {
@@ -26,14 +27,14 @@ type dynamicSourceParams struct {
 	TargetFile string `json:"target_file,omitempty"`
 }
 
-func NewDynamicSource(config []byte) (Source, error) {
+func NewDynamicSource(config []byte, sourcesDir string) (Source, error) {
 	var sourceRequest sourceRequest
 	if err := json.NewDecoder(bytes.NewReader(config)).Decode(&sourceRequest); err != nil {
 		return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
 	}
 
 	if sourceRequest.Params.TargetFile != "" {
-		target, err := ioutil.ReadFile(sourceRequest.Params.TargetFile)
+		target, err := ioutil.ReadFile(filepath.Join(sourcesDir, sourceRequest.Params.TargetFile))
 		if err != nil {
 			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
 		}

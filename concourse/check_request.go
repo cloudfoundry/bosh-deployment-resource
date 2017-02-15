@@ -17,7 +17,7 @@ func NewCheckRequest(request []byte) (CheckRequest, error) {
 		return CheckRequest{}, fmt.Errorf("Invalid parameters: %s\n", err)
 	}
 
-	dynamicSource, err := NewDynamicSource(request)
+	dynamicSource, err := NewDynamicSource(request, "")
 	if err != nil {
 		return CheckRequest{}, err
 	}

@@ -1,6 +1,10 @@
 package concourse_test
 
 import (
+	"io/ioutil"
+	"fmt"
+	"path/filepath"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
@@ -8,8 +12,13 @@ import (
 
 var _ = Describe("NewOutRequest", func() {
 	It("converts the config into an OutRequest", func() {
-		config := []byte(`{
+		targetFile, _ := ioutil.TempFile("", "")
+		targetFile.WriteString("director.example.net")
+		targetFile.Close()
+
+		configTemplate := `{
 			"params": {
+				"target_file": "%s",
 				"manifest": "path/to/manifest.yml"
 			},
 			"source": {
@@ -18,15 +27,16 @@ var _ = Describe("NewOutRequest", func() {
 				"client": "foo",
 				"client_secret": "foobar"
 			}
-		}`)
+		}`
+		config := []byte(fmt.Sprintf(configTemplate, filepath.Base(targetFile.Name())))
 
-		source, err := concourse.NewOutRequest(config)
+		source, err := concourse.NewOutRequest(config, filepath.Dir(targetFile.Name()))
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(source).To(Equal(concourse.OutRequest{
 			Source: concourse.Source{
 				Deployment: "mydeployment",
-				Target: "director.example.com",
+				Target: "director.example.net",
 				Client: "foo",
 				ClientSecret: "foobar",
 			},
@@ -40,7 +50,7 @@ var _ = Describe("NewOutRequest", func() {
 		It("errors", func() {
 			config := []byte("not-json")
 
-			_, err := concourse.NewOutRequest(config)
+			_, err := concourse.NewOutRequest(config, "")
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -56,7 +66,7 @@ var _ = Describe("NewOutRequest", func() {
 				}
 			}`)
 
-			_, err := concourse.NewOutRequest(config)
+			_, err := concourse.NewOutRequest(config, "")
 			Expect(err).To(HaveOccurred())
 
 			Expect(err.Error()).To(ContainSubstring("manifest"))

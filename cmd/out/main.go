@@ -24,19 +24,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	sourcesDir := os.Args[1]
+
 	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
 		os.Exit(1)
 	}
 
-	outRequest, err := concourse.NewOutRequest(stdin)
+	outRequest, err := concourse.NewOutRequest(stdin, sourcesDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
 		os.Exit(1)
 	}
-
-	sourcesDir := os.Args[1]
 
 	commandRunner := bosh.NewCommandRunner(outRequest.Source, os.Stderr)
 	director := bosh.NewBoshDirector(outRequest.Source, commandRunner, os.Stderr)

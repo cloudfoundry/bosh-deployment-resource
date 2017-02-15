@@ -13,13 +13,13 @@ type OutRequest struct {
 	Source Source    `json:"source"`
 }
 
-func NewOutRequest(request []byte) (OutRequest, error) {
+func NewOutRequest(request []byte, sourcesDir string) (OutRequest, error) {
 	var outRequest OutRequest
 	if err := json.NewDecoder(bytes.NewReader(request)).Decode(&outRequest); err != nil {
 		return OutRequest{}, fmt.Errorf("Invalid parameters: %s\n", err)
 	}
 
-	dynamicSource, err := NewDynamicSource(request)
+	dynamicSource, err := NewDynamicSource(request, sourcesDir)
 	if err != nil {
 		return OutRequest{}, err
 	}

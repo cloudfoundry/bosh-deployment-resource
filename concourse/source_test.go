@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io/ioutil"
+	"path/filepath"
 )
 
 var _ = Describe("NewDynamicSource", func() {
@@ -19,7 +20,7 @@ var _ = Describe("NewDynamicSource", func() {
 			}
 		}`)
 
-		source, err := concourse.NewDynamicSource(config)
+		source, err := concourse.NewDynamicSource(config, "")
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(source).To(Equal(concourse.Source{
@@ -32,7 +33,8 @@ var _ = Describe("NewDynamicSource", func() {
 
 	Context("when the config has a target_file", func() {
 		var (
-			targetFilePath      string
+			sourcesDir          string
+			targetFileName      string
 			requestJsonTemplate string = `{
 				"params": {
 					"target_file": "%s"
@@ -51,13 +53,14 @@ var _ = Describe("NewDynamicSource", func() {
 			targetFile.WriteString("director.example.net")
 			targetFile.Close()
 
-			targetFilePath = targetFile.Name()
+			sourcesDir = filepath.Dir(targetFile.Name())
+			targetFileName = filepath.Base(targetFile.Name())
 		})
 
 		It("uses the contents of that file instead of the target parameter", func() {
-			config := []byte(fmt.Sprintf(requestJsonTemplate, targetFilePath))
+			config := []byte(fmt.Sprintf(requestJsonTemplate, targetFileName))
 
-			source, err := concourse.NewDynamicSource(config)
+			source, err := concourse.NewDynamicSource(config, sourcesDir)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(source.Target).To(Equal("director.example.net"))
@@ -65,13 +68,13 @@ var _ = Describe("NewDynamicSource", func() {
 
 		Context("when the target_file cannot be read", func() {
 			BeforeEach(func() {
-				targetFilePath = "not-a-real-file"
+				targetFileName = "not-a-real-file"
 			})
 
 			It("errors", func() {
-				config := []byte(fmt.Sprintf(requestJsonTemplate, targetFilePath))
+				config := []byte(fmt.Sprintf(requestJsonTemplate, targetFileName))
 
-				_, err := concourse.NewDynamicSource(config)
+				_, err := concourse.NewDynamicSource(config, sourcesDir)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -81,7 +84,7 @@ var _ = Describe("NewDynamicSource", func() {
 		It("errors", func() {
 			reader := []byte("not-json")
 
-			_, err := concourse.NewDynamicSource(reader)
+			_, err := concourse.NewDynamicSource(reader, "")
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -90,7 +93,7 @@ var _ = Describe("NewDynamicSource", func() {
 		It("returns an error with each missing parameter", func() {
 			config := []byte("{}")
 
-			_, err := concourse.NewDynamicSource(config)
+			_, err := concourse.NewDynamicSource(config, "")
 			Expect(err).To(HaveOccurred())
 
 			Expect(err.Error()).To(ContainSubstring("deployment"))
