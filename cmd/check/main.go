@@ -12,6 +12,11 @@ import (
 )
 
 func main() {
+	realStdout := os.Stdout
+	devNull, _ := os.Open(os.DevNull)
+	defer devNull.Close()
+	os.Stdout = devNull
+
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
 			"not enough args - usage: %s <sources directory>\n",
@@ -51,5 +56,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s", concourseOutputFormatted)
+	fmt.Fprintf(realStdout, "%s", concourseOutputFormatted)
 }
