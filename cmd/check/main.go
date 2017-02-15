@@ -16,14 +16,6 @@ func main() {
 	realStdout := os.Stdout
 	os.Stdout = os.Stderr
 
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr,
-			"not enough args - usage: %s <sources directory>\n",
-			os.Args[0],
-		)
-		os.Exit(1)
-	}
-
 	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
@@ -36,10 +28,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	sourcesDir := os.Args[1]
-
 	commandRunner := bosh.NewCommandRunner(checkRequest.Source, os.Stderr)
-	director := bosh.NewBoshDirector(checkRequest.Source, commandRunner, sourcesDir, os.Stderr)
+	director := bosh.NewBoshDirector(checkRequest.Source, commandRunner, os.Stderr)
 
 	checkCommand := check.NewCheckCommand(director)
 	checkResponse, err := checkCommand.Run(checkRequest)

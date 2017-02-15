@@ -24,15 +24,13 @@ type Director interface {
 type BoshDirector struct {
 	source             concourse.Source
 	commandRunner      Runner
-	resourcesDirectory string
 	out                io.Writer
 }
 
-func NewBoshDirector(source concourse.Source, commandRunner Runner, resourcesDirectory string, out io.Writer) BoshDirector {
+func NewBoshDirector(source concourse.Source, commandRunner Runner, out io.Writer) BoshDirector {
 	return BoshDirector{
 		source:             source,
 		commandRunner:      commandRunner,
-		resourcesDirectory: resourcesDirectory,
 		out:                out,
 	}
 }

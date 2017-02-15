@@ -13,7 +13,6 @@ import (
 
 	"errors"
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
-	"io/ioutil"
 )
 
 var _ = Describe("BoshDirector", func() {
@@ -21,15 +20,13 @@ var _ = Describe("BoshDirector", func() {
 		director      bosh.BoshDirector
 		out           io.Writer
 		commandRunner *boshfakes.FakeRunner
-		tempDir       string
 		sillyBytes    = []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
 	)
 
 	BeforeEach(func() {
 		commandRunner = new(boshfakes.FakeRunner)
 		out = bytes.NewBufferString("")
-		tempDir, _ = ioutil.TempDir("", "")
-		director = bosh.NewBoshDirector(concourse.Source{}, commandRunner, tempDir, out)
+		director = bosh.NewBoshDirector(concourse.Source{}, commandRunner, out)
 	})
 
 	Describe("Deploy", func() {
