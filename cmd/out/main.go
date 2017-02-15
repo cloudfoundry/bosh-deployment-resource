@@ -12,12 +12,10 @@ import (
 )
 
 func main() {
-	fakeStdout, _ := ioutil.TempFile("", "stdout")
 	realStdout := os.Stdout
-	os.Stdout = fakeStdout
-
-	fakeStderr, _ := ioutil.TempFile("", "stderr")
-	os.Stderr = fakeStderr
+	devNull, _ := os.Open(os.DevNull)
+	defer devNull.Close()
+	os.Stdout = devNull
 
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
@@ -57,13 +55,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stderr, "%s", concourseOutputFormatted)
-	fmt.Printf("%s", concourseOutputFormatted)
-
-	fakeStdout.Close()
-	os.Stdout = realStdout
-	outContents, _ := ioutil.ReadFile(realStdout.Name())
-	fmt.Print(string(outContents))
-
-	fakeStderr.Close()
+	fmt.Fprintf(realStdout, "%s", concourseOutputFormatted)
 }
