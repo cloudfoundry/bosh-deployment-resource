@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"fmt"
+	"regexp"
 )
 
 func ReadTgzFile(tgzFilePath, tarredFile string) ([]byte, error) {
@@ -23,6 +24,11 @@ func ReadTgzFile(tgzFilePath, tarredFile string) ([]byte, error) {
 
 	tr := tar.NewReader(gzf)
 
+	tarredFileRegex, err := regexp.Compile(fmt.Sprintf("^(.\\/)?%s$", tarredFile))
+	if err != nil {
+		return nil, err
+	}
+
 	// Iterate through the files in the archive.
 	for {
 		hdr, err := tr.Next()
@@ -34,7 +40,7 @@ func ReadTgzFile(tgzFilePath, tarredFile string) ([]byte, error) {
 			return nil, fmt.Errorf("%s is not a valid tar", tgzFilePath)
 		}
 
-		if hdr.Name == tarredFile {
+		if tarredFileRegex.Match([]byte(hdr.Name)) {
 			stemcellFileContents, err := ioutil.ReadAll(tr)
 			if err != nil {
 				return nil, fmt.Errorf("%s does not contain a valid file %s", tgzFilePath, tarredFile)
