@@ -17,7 +17,6 @@ func main() {
 	os.Stdout = fakeStdout
 
 	fakeStderr, _ := ioutil.TempFile("", "stderr")
-	realStderr := os.Stderr
 	os.Stderr = fakeStderr
 
 	if len(os.Args) < 2 {
