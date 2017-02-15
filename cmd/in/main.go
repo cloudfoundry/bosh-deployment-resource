@@ -18,7 +18,7 @@ func main() {
 
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
-			"not enough args - usage: %s <sources directory>\n",
+			"not enough args - usage: %s <target directory>\n",
 			os.Args[0],
 		)
 		os.Exit(1)
@@ -36,13 +36,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	sourcesDir := os.Args[1]
+	targetDir := os.Args[1]
 
 	commandRunner := bosh.NewCommandRunner(inRequest.Source, os.Stderr)
 	director := bosh.NewBoshDirector(inRequest.Source, commandRunner, os.Stderr)
 
 	inCommand := in.NewInCommand(director)
-	inResponse, err := inCommand.Run(inRequest, sourcesDir)
+	inResponse, err := inCommand.Run(inRequest, targetDir)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
