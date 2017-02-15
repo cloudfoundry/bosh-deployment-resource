@@ -17,12 +17,5 @@ func NewInRequest(request []byte) (InRequest, error) {
 		return InRequest{}, fmt.Errorf("Invalid parameters: %s\n", err)
 	}
 
-	dynamicSource, err := NewDynamicSource(request, "")
-	if err != nil {
-		return InRequest{}, err
-	}
-
-	inRequest.Source = dynamicSource
-
 	return inRequest, nil
 }
