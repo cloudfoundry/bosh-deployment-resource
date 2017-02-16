@@ -28,10 +28,10 @@ type requestRetryable struct {
 	bodyBytes []byte // buffer request body to memory for retries
 	response  *http.Response
 
-	uuidGenerator       boshuuid.Generator
-	seekableRequestBody io.ReadCloser
-	logger              boshlog.Logger
-	logTag              string
+	uuidGenerator         boshuuid.Generator
+	seekableRequestBody   io.ReadCloser
+	logger                boshlog.Logger
+	logTag                string
 	isResponseAttemptable func(*http.Response, error) (bool, error)
 }
 
@@ -46,18 +46,14 @@ func NewRequestRetryable(
 	}
 
 	return &requestRetryable{
-		request:       request,
-		delegate:      delegate,
-		attempt:       0,
-		uuidGenerator: boshuuid.NewGenerator(),
-		logger:        logger,
-		logTag:        "clientRetryable",
+		request:               request,
+		delegate:              delegate,
+		attempt:               0,
+		uuidGenerator:         boshuuid.NewGenerator(),
+		logger:                logger,
+		logTag:                "clientRetryable",
 		isResponseAttemptable: isResponseAttemptable,
 	}
-}
-
-type Seekable interface {
-	Seek(offset int64, whence int) (ret int64, err error)
 }
 
 func (r *requestRetryable) Attempt() (bool, error) {
@@ -70,18 +66,18 @@ func (r *requestRetryable) Attempt() (bool, error) {
 		}
 	}
 
-	_, implementsSeekable := r.request.Body.(Seekable)
+	_, implementsSeekable := r.request.Body.(io.ReadSeeker)
 	if r.seekableRequestBody != nil || implementsSeekable {
 		if r.seekableRequestBody == nil {
 			r.seekableRequestBody = r.request.Body
 		}
 
-		seekable, ok := r.seekableRequestBody.(Seekable)
+		seekable, ok := r.seekableRequestBody.(io.ReadSeeker)
 		if !ok {
 			return false, errors.New("Should never happen")
 		}
 		_, err := seekable.Seek(0, 0)
-		r.request.Body = ioutil.NopCloser(r.seekableRequestBody)
+		r.request.Body = ioutil.NopCloser(seekable)
 
 		if err != nil {
 			return false, bosherr.WrapErrorf(err, "Seeking to begining of seekable request body during attempt %d", r.attempt)
@@ -111,7 +107,12 @@ func (r *requestRetryable) Attempt() (bool, error) {
 	r.logger.Debug(r.logTag, "[requestID=%s] Requesting (attempt=%d): %s", r.requestID, r.attempt, formatRequest(r.request))
 	r.response, err = r.delegate.Do(r.request)
 
-	return r.isResponseAttemptable(r.response, err)
+	attemptable, err := r.isResponseAttemptable(r.response, err)
+	if !attemptable && r.seekableRequestBody != nil {
+		r.seekableRequestBody.Close()
+	}
+
+	return attemptable, err
 }
 
 func (r *requestRetryable) Response() *http.Response {

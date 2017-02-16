@@ -5,16 +5,16 @@
 			"importpath": "github.com/cloudfoundry/bosh-cli",
 			"repository": "https://github.com/cloudfoundry/bosh-cli",
 			"vcs": "git",
-			"revision": "11140a1205cc11018f982e968e273e574f16acf1",
-			"branch": "HEAD",
+			"revision": "fbaa9034bd06a51090f74765c32c21860216c805",
+			"branch": "master",
 			"notests": true
 		},
 		{
 			"importpath": "github.com/cloudfoundry/bosh-utils",
 			"repository": "https://github.com/cloudfoundry/bosh-utils",
 			"vcs": "git",
-			"revision": "e4a207f7f8d72ce016ed2a989bbd933fc08f1b16",
-			"branch": "master",
+			"revision": "7bc7ab327a6b95a05de60840d207c778b7e9bdb4",
+			"branch": "HEAD",
 			"notests": true
 		},
 		{

@@ -6,6 +6,7 @@ import (
 	"github.com/cppforlife/go-patch/patch"
 
 	cmdconf "github.com/cloudfoundry/bosh-cli/cmd/config"
+	"github.com/cloudfoundry/bosh-cli/crypto"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 	boshrel "github.com/cloudfoundry/bosh-cli/release"
@@ -13,6 +14,9 @@ import (
 	boshssh "github.com/cloudfoundry/bosh-cli/ssh"
 	boshui "github.com/cloudfoundry/bosh-cli/ui"
 	boshuit "github.com/cloudfoundry/bosh-cli/ui/task"
+
+	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
+	boshfu "github.com/cloudfoundry/bosh-utils/fileutil"
 )
 
 type Cmd struct {
@@ -44,6 +48,10 @@ func (c Cmd) Execute() (cmdErr error) {
 
 	c.configureUI()
 	c.configureFS()
+
+	if c.BoshOpts.Sha2 {
+		c.deps = c.deps.WithSha2CheckSumming()
+	}
 
 	deps := c.deps
 
@@ -171,7 +179,7 @@ func (c Cmd) Execute() (cmdErr error) {
 
 	case *RunErrandOpts:
 		director, deployment := c.directorAndDeployment()
-		downloader := NewUIDownloader(director, deps.SHA1Calc, deps.Time, deps.FS, deps.UI)
+		downloader := NewUIDownloader(director, deps.Time, deps.FS, deps.UI)
 		return NewRunErrandCmd(deployment, downloader, deps.UI).Run(*opts)
 
 	case *AttachDiskOpts:
@@ -270,7 +278,7 @@ func (c Cmd) Execute() (cmdErr error) {
 
 	case *LogsOpts:
 		director, deployment := c.directorAndDeployment()
-		downloader := NewUIDownloader(director, deps.SHA1Calc, deps.Time, deps.FS, deps.UI)
+		downloader := NewUIDownloader(director, deps.Time, deps.FS, deps.UI)
 		sshProvider := boshssh.NewProvider(deps.CmdRunner, deps.FS, deps.UI, deps.Logger)
 		nonIntSSHRunner := sshProvider.NewSSHRunner(false)
 		return NewLogsCmd(deployment, downloader, deps.UUIDGen, nonIntSSHRunner).Run(*opts)
@@ -289,7 +297,7 @@ func (c Cmd) Execute() (cmdErr error) {
 
 	case *ExportReleaseOpts:
 		director, deployment := c.directorAndDeployment()
-		downloader := NewUIDownloader(director, deps.SHA1Calc, deps.Time, deps.FS, deps.UI)
+		downloader := NewUIDownloader(director, deps.Time, deps.FS, deps.UI)
 		return NewExportReleaseCmd(deployment, downloader).Run(*opts)
 
 	case *InitReleaseOpts:
@@ -319,8 +327,20 @@ func (c Cmd) Execute() (cmdErr error) {
 			return releaseReader, releaseDir
 		}
 
-		_, err := NewCreateReleaseCmd(releaseDirFactory, relProv.NewArchiveWriter(), c.deps.FS, deps.UI).Run(*opts)
+		_, err := NewCreateReleaseCmd(releaseDirFactory, relProv.NewArchiveWriter(), c.deps.FS, c.deps.UI).Run(*opts)
 		return err
+
+	case *Sha2ifyReleaseOpts:
+		relProv, _ := c.releaseProviders()
+
+		return NewSha2ifyReleaseCmd(
+			relProv.NewArchiveReader(),
+			relProv.NewArchiveWriter(),
+			crypto.NewDigestCalculator(c.deps.FS, []boshcrypto.Algorithm{boshcrypto.DigestAlgorithmSHA256}),
+			boshfu.NewFileMover(c.deps.FS),
+			c.deps.FS,
+			c.deps.UI,
+		).Run(opts.Args)
 
 	case *BlobsOpts:
 		return NewBlobsCmd(c.blobsDir(opts.Directory), deps.UI).Run()
@@ -348,7 +368,6 @@ func (c Cmd) Execute() (cmdErr error) {
 		return fmt.Errorf("Unhandled command: %#v", c.Opts)
 	}
 }
-
 func (c Cmd) configureUI() {
 	c.deps.UI.EnableTTY(c.BoshOpts.TTYOpt)
 
@@ -416,11 +435,11 @@ func (c Cmd) releaseProviders() (boshrel.Provider, boshreldir.Provider) {
 	releaseIndexReporter := boshui.NewReleaseIndexReporter(c.deps.UI)
 
 	releaseProvider := boshrel.NewProvider(
-		c.deps.CmdRunner, c.deps.Compressor, c.deps.SHA1Calc, c.deps.FS, c.deps.Logger)
+		c.deps.CmdRunner, c.deps.Compressor, c.deps.DigestCalculator, c.deps.FS, c.deps.Logger)
 
 	releaseDirProvider := boshreldir.NewProvider(
 		indexReporter, releaseIndexReporter, blobsReporter, releaseProvider,
-		c.deps.SHA1Calc, c.deps.CmdRunner, c.deps.UUIDGen, c.deps.Time, c.deps.FS, c.deps.Logger)
+		c.deps.DigestCalculator, c.deps.CmdRunner, c.deps.UUIDGen, c.deps.Time, c.deps.FS, c.deps.DigestCreationAlgorithms, c.deps.Logger)
 
 	return releaseProvider, releaseDirProvider
 }

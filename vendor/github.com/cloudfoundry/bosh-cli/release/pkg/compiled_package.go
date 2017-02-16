@@ -3,7 +3,10 @@ package pkg
 import (
 	"fmt"
 
+	"github.com/cloudfoundry/bosh-cli/crypto"
+	crypto2 "github.com/cloudfoundry/bosh-utils/crypto"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"os"
 )
 
 type CompiledPackage struct {
@@ -92,3 +95,23 @@ func (p *CompiledPackage) Deps() []Compilable {
 }
 
 func (p *CompiledPackage) IsCompiled() bool { return true }
+
+func (p *CompiledPackage) RehashWithCalculator(digestCalculator crypto.DigestCalculator, archiveFileReader crypto2.ArchiveDigestFilePathReader) (*CompiledPackage, error) {
+	pkgFile, err := archiveFileReader.OpenFile(p.archivePath, os.O_RDONLY, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	digest := crypto2.NewDigest(crypto2.DigestAlgorithmSHA1, p.archiveSHA1)
+	err = digest.Verify(pkgFile)
+	if err != nil {
+		return nil, err
+	}
+
+	sha256Archive, err := digestCalculator.Calculate(p.archivePath)
+
+	newP := *p
+	newP.archiveSHA1 = sha256Archive
+
+	return &newP, err
+}
