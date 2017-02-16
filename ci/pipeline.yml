@@ -40,7 +40,6 @@ resources:
 
 jobs:
 - name: test
-  public: true
   plan:
   - do:
     - aggregate:
@@ -52,7 +51,6 @@ jobs:
 
 - name: rc
   serial_groups: [version]
-  public: true
   plan:
   - do:
     - aggregate:
@@ -84,7 +82,6 @@ jobs:
 
 - name: shipit
   serial_groups: [version]
-  public: true
   plan:
   - do:
     - aggregate:
