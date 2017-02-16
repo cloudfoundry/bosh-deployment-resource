@@ -6,7 +6,7 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry/bosh-deployment-resource
     ignore_paths: [ci/*]
-    private_key: {{bosh-deployment-resource-github-release-access-token}}
+    private_key: {{bosh-deployment-resource-git-deploy-private-key}}
 
 - name: bosh-deployment-resource-image
   type: docker-image
