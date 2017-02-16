@@ -55,6 +55,9 @@ var _ = Describe("OutCommand", func() {
 				Params: concourse.OutParams{
 					Manifest: manifest.Name(),
 					NoRedact: true,
+					Vars: map[string]interface{}{
+						"foo": "bar",
+					},
 				},
 			}
 		})
@@ -66,7 +69,12 @@ var _ = Describe("OutCommand", func() {
 			Expect(director.DeployCallCount()).To(Equal(1))
 			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
 			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
-			Expect(actualDeployParams).To(Equal(bosh.DeployParams{NoRedact: true}))
+			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
+				NoRedact: true,
+				Vars: map[string]interface{}{
+					"foo": "bar",
+				},
+			}))
 		})
 
 		It("returns the new version", func() {

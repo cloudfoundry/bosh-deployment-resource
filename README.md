@@ -83,9 +83,13 @@ deployment manifest and then deploy.
 * `releases`: *Optional.* An array of globs that should point to where the
   releases used in the deployment can be found.
 
+* `vars`: *Optional.* A collection of variables to be set in the deployment manifest.
+
 * `cleanup`: *Optional* An boolean that specifies if a bosh cleanup should be
   run before deployment. Defaults to false.
+
 * `no_redact`: *Optional* Removes redacted from Bosh output. Defaults to false.
+
 * `target_file`: *Optional.* Path to a file containing a BOSH director address.
   This allows the target to be determined at runtime, e.g. by acquiring a BOSH
   lite instance using the [Pool
@@ -102,4 +106,10 @@ deployment manifest and then deploy.
     - path/to/stemcells-*
     releases:
     - path/to/releases-*
+    vars:
+      enable_ssl: true
+      domains: ["example.com", "example.net"]
+      smtp:
+        server: example.com
+        port: 25
 ```

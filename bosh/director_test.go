@@ -13,6 +13,7 @@ import (
 
 	"errors"
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
+	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 )
 
 var _ = Describe("BoshDirector", func() {
@@ -31,9 +32,17 @@ var _ = Describe("BoshDirector", func() {
 
 	Describe("Deploy", func() {
 		It("tells BOSH to deploy the given manifest and parameters", func() {
+			vars := map[string]interface{}{"foo": "bar"}
+			varKVs := []boshtpl.VarKV{
+				{
+					Name: "foo",
+					Value: "bar",
+				},
+			}
 			noRedact := true
 			err := director.Deploy(sillyBytes, bosh.DeployParams{
 				NoRedact: noRedact,
+				Vars: vars,
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -42,6 +51,7 @@ var _ = Describe("BoshDirector", func() {
 			deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
 			Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 			Expect(deployOpts.NoRedact).To(Equal(noRedact))
+			Expect(deployOpts.VarKVs).To(Equal(varKVs))
 		})
 
 		Context("when deploying fails", func() {

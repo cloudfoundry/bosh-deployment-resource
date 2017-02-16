@@ -19,7 +19,11 @@ var _ = Describe("NewOutRequest", func() {
 		configTemplate := `{
 			"params": {
 				"target_file": "%s",
-				"manifest": "path/to/manifest.yml"
+				"manifest": "path/to/manifest.yml",
+				"vars": {
+					"foo": "bar",
+					"slice": [1, "two"]
+				}
 			},
 			"source": {
 				"deployment": "mydeployment",
@@ -42,6 +46,10 @@ var _ = Describe("NewOutRequest", func() {
 			},
 			Params: concourse.OutParams {
 				Manifest: "path/to/manifest.yml",
+				Vars: map[string]interface{} {
+					"foo": "bar",
+					"slice": []interface{}{float64(1), "two"},
+				},
 			},
 		}))
 	})

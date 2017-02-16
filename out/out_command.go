@@ -76,6 +76,7 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 	err = c.director.Deploy(manifest.Manifest(), bosh.DeployParams{
 		NoRedact: outRequest.Params.NoRedact,
 		Cleanup:  outRequest.Params.Cleanup,
+		Vars:  outRequest.Params.Vars,
 	})
 	if err != nil {
 		return OutResponse{}, err

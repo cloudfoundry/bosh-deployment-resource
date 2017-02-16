@@ -1,15 +1,17 @@
 package bosh
 
 import (
+	"io"
 	"fmt"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
-	"io"
+	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 )
 
 type DeployParams struct {
+	Vars     map[string]interface{}
 	NoRedact bool
 	Cleanup  bool
 }
@@ -43,6 +45,9 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 	err := d.commandRunner.Execute(&boshcmd.DeployOpts{
 		Args:     boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact: deployParams.NoRedact,
+		VarFlags: boshcmd.VarFlags{
+			VarKVs: varKVsFromVars(deployParams.Vars),
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("Could not deploy: %s\n", err)
@@ -83,4 +88,12 @@ func (d BoshDirector) UploadStemcell(URL string) error {
 	}
 
 	return nil
+}
+
+func varKVsFromVars(vars map[string]interface{}) []boshtpl.VarKV {
+	varKVs := []boshtpl.VarKV{}
+	for k, v := range vars {
+		varKVs = append(varKVs, boshtpl.VarKV{Name: k, Value: v})
+	}
+	return varKVs
 }
