@@ -3,6 +3,8 @@ package out_test
 import (
 	"fmt"
 	"os"
+	"io"
+	"bytes"
 	"io/ioutil"
 
 	. "github.com/onsi/ginkgo"
@@ -12,9 +14,6 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
-	"io"
-	"bytes"
-	"strings"
 )
 
 var _ = Describe("OutCommand", func() {
@@ -290,7 +289,3 @@ var _ = Describe("OutCommand", func() {
 		})
 	})
 })
-
-func properYaml(improperYaml string) []byte {
-	return []byte(strings.Replace(improperYaml, "\t", "  ", -1))
-}

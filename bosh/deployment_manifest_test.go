@@ -5,7 +5,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
-	"strings"
 )
 
 var _ = Describe("DeploymentManifest", func() {
@@ -147,7 +146,3 @@ var _ = Describe("DeploymentManifest", func() {
 		})
 	})
 })
-
-func properYaml(improperYaml string) []byte {
-	return []byte(strings.Replace(improperYaml, "\t", "  ", -1))
-}
