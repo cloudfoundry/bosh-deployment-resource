@@ -8,12 +8,16 @@ import (
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	"io/ioutil"
 )
 
 type DeployParams struct {
-	Vars     map[string]interface{}
-	NoRedact bool
-	Cleanup  bool
+	Vars      map[string]interface{}
+	VarsFiles []string
+	NoRedact  bool
+	Cleanup   bool
 }
 
 type Director interface {
@@ -42,11 +46,17 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		d.commandRunner.Execute(&boshcmd.CleanUpOpts{})
 	}
 
-	err := d.commandRunner.Execute(&boshcmd.DeployOpts{
+	boshVarsFiles, err := parsedVarsFiles(deployParams.VarsFiles)
+	if err != nil {
+		return err
+	}
+
+	err = d.commandRunner.Execute(&boshcmd.DeployOpts{
 		Args:     boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact: deployParams.NoRedact,
 		VarFlags: boshcmd.VarFlags{
 			VarKVs: varKVsFromVars(deployParams.Vars),
+			VarsFiles: boshVarsFiles,
 		},
 	})
 	if err != nil {
@@ -96,4 +106,19 @@ func varKVsFromVars(vars map[string]interface{}) []boshtpl.VarKV {
 		varKVs = append(varKVs, boshtpl.VarKV{Name: k, Value: v})
 	}
 	return varKVs
+}
+
+func parsedVarsFiles(varsFiles []string) ([]boshtpl.VarsFileArg, error) {
+	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard, ioutil.Discard)
+	boshFS := boshsys.NewOsFileSystemWithStrictTempRoot(nullLogger)
+
+	varsFileArgs := []boshtpl.VarsFileArg{}
+	for _, varsFile := range varsFiles {
+		varsFileArg := boshtpl.VarsFileArg{FS: boshFS}
+		if err := varsFileArg.UnmarshalFlag(varsFile); err != nil {
+			return nil, err
+		}
+		varsFileArgs = append(varsFileArgs, varsFileArg)
+	}
+	return varsFileArgs, nil
 }

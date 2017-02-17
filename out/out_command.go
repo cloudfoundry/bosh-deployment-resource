@@ -43,6 +43,11 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		c.director.UploadStemcell(stemcellPath)
 	}
 
+	varFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.VarsFiles)
+	if err != nil {
+		return OutResponse{}, fmt.Errorf("Invalid var_file name: %s", err)
+	}
+
 	manifestBytes, err := ioutil.ReadFile(path.Join(c.resourcesDirectory, outRequest.Params.Manifest))
 	if err != nil {
 		return OutResponse{}, err
@@ -77,6 +82,7 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		NoRedact: outRequest.Params.NoRedact,
 		Cleanup:  outRequest.Params.Cleanup,
 		Vars:  outRequest.Params.Vars,
+		VarsFiles:  varFilePaths,
 	})
 	if err != nil {
 		return OutResponse{}, err

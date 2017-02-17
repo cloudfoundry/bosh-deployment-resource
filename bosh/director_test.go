@@ -3,6 +3,7 @@ package bosh_test
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -39,10 +40,17 @@ var _ = Describe("BoshDirector", func() {
 					Value: "bar",
 				},
 			}
+			varFileContents := properYaml(`
+				baz: "best-bar"
+			`)
+			varFile, _ := ioutil.TempFile("", "var-file-1")
+			varFile.Write(varFileContents)
+
 			noRedact := true
 			err := director.Deploy(sillyBytes, bosh.DeployParams{
 				NoRedact: noRedact,
 				Vars: vars,
+				VarsFiles: []string{varFile.Name()},
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -52,6 +60,10 @@ var _ = Describe("BoshDirector", func() {
 			Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 			Expect(deployOpts.NoRedact).To(Equal(noRedact))
 			Expect(deployOpts.VarKVs).To(Equal(varKVs))
+			Expect(len(deployOpts.VarsFiles)).To(Equal(1))
+			Expect(deployOpts.VarsFiles[0].Vars).To(Equal(boshtpl.StaticVariables{
+				"baz": "best-bar",
+			}))
 		})
 
 		Context("when deploying fails", func() {

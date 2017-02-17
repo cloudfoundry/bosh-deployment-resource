@@ -7,4 +7,5 @@ type OutParams struct {
 	Releases  []string                `json:"releases,omitempty"`
 	Stemcells []string                `json:"stemcells,omitempty"`
 	Vars      map[string]interface{}  `json:"vars,omitempty"`
+	VarsFiles []string                `json:"vars_files,omitempty"`
 }

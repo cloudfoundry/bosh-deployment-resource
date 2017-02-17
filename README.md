@@ -85,6 +85,8 @@ deployment manifest and then deploy.
 
 * `vars`: *Optional.* A collection of variables to be set in the deployment manifest.
 
+* `vars_files`: *Optional.* A collection of vars files to be interpolated into the deployment manifest.
+
 * `cleanup`: *Optional* An boolean that specifies if a bosh cleanup should be
   run before deployment. Defaults to false.
 

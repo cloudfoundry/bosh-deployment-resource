@@ -23,7 +23,11 @@ var _ = Describe("NewOutRequest", func() {
 				"vars": {
 					"foo": "bar",
 					"slice": [1, "two"]
-				}
+				},
+				"vars_files": [
+					"path/to/file",
+					"second/path/to/file"
+				]
 			},
 			"source": {
 				"deployment": "mydeployment",
@@ -49,6 +53,10 @@ var _ = Describe("NewOutRequest", func() {
 				Vars: map[string]interface{} {
 					"foo": "bar",
 					"slice": []interface{}{float64(1), "two"},
+				},
+				VarsFiles: []string {
+					"path/to/file",
+					"second/path/to/file",
 				},
 			},
 		}))

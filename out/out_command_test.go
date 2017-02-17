@@ -70,6 +70,7 @@ var _ = Describe("OutCommand", func() {
 			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
 				NoRedact: true,
+				VarsFiles: []string{},
 				Vars: map[string]interface{}{
 					"foo": "bar",
 				},
@@ -91,6 +92,57 @@ var _ = Describe("OutCommand", func() {
 			}))
 		})
 
+		Context("when varFiles are provided", func() {
+			var (
+				varFileOne, varFileTwo, varFileThree *os.File
+				varFiles []string
+			)
+
+			BeforeEach(func() {
+				// Update varFile generation to yield expected bosh varFile format
+				primaryVarFileDir, _ := ioutil.TempDir("", "")
+
+				varFileOne, _ = ioutil.TempFile(primaryVarFileDir, "varFile-one")
+				varFileOne.Close()
+
+				varFileTwo, _ = ioutil.TempFile(primaryVarFileDir, "varFile-two")
+				varFileTwo.Close()
+
+				secondaryVarFileDir, _ := ioutil.TempDir("", "")
+
+				varFileThree, _ = ioutil.TempFile(secondaryVarFileDir, "varFile-three")
+				varFileThree.Close()
+
+				varFiles =[]string{
+					varFileThree.Name(),
+					fmt.Sprintf("%s/varFile-*", primaryVarFileDir),
+				}
+				outRequest.Params.VarsFiles = varFiles
+			})
+
+			It("specifies the varFiles in the deploy command", func() {
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, actualDeployParams := director.DeployArgsForCall(0)
+				Expect(actualDeployParams.VarsFiles).To(ConsistOf(
+					varFileThree.Name(),
+					varFileOne.Name(),
+					varFileTwo.Name(),
+				))
+			})
+
+			Context("when a varFile glob is bad", func() {
+				It("gives a useful error", func() {
+					outRequest.Params.VarsFiles = []string{"/["}
+					_, err := outCommand.Run(outRequest)
+
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("Invalid var_file name: /["))
+				})
+			})
+		})
+		
 		Context("when releases are provided", func() {
 			var (
 				releaseOne, releaseTwo, releaseThree *os.File
