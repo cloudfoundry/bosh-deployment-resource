@@ -87,6 +87,8 @@ deployment manifest and then deploy.
 
 * `vars_files`: *Optional.* A collection of vars files to be interpolated into the deployment manifest.
 
+* `ops_files`: *Optional.* A collection of ops files to be applied over the deployment manifest.
+
 * `cleanup`: *Optional* An boolean that specifies if a bosh cleanup should be
   run before deployment. Defaults to false.
 

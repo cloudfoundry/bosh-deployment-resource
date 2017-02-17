@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
+	"errors"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,7 +13,8 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
-	"errors"
+	"github.com/cppforlife/go-patch/patch"
+
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 )
@@ -46,11 +48,20 @@ var _ = Describe("BoshDirector", func() {
 			varFile, _ := ioutil.TempFile("", "var-file-1")
 			varFile.Write(varFileContents)
 
+			opsFileContents := properYaml(`
+				- type: replace
+				  path: /my?/new_key
+				  value: awesome
+			`)
+			opsFile, _ := ioutil.TempFile("", "ops-file-1")
+			opsFile.Write(opsFileContents)
+
 			noRedact := true
 			err := director.Deploy(sillyBytes, bosh.DeployParams{
 				NoRedact: noRedact,
 				Vars: vars,
 				VarsFiles: []string{varFile.Name()},
+				OpsFiles: []string{opsFile.Name()},
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -63,6 +74,15 @@ var _ = Describe("BoshDirector", func() {
 			Expect(len(deployOpts.VarsFiles)).To(Equal(1))
 			Expect(deployOpts.VarsFiles[0].Vars).To(Equal(boshtpl.StaticVariables{
 				"baz": "best-bar",
+			}))
+			Expect(len(deployOpts.OpsFiles)).To(Equal(1))
+
+			pathPointer, _ := patch.NewPointerFromString("/my?/new_key")
+			Expect(deployOpts.OpsFiles[0].Ops).To(Equal(patch.Ops{
+				patch.ReplaceOp{
+					Path: pathPointer,
+					Value: "awesome",
+				},
 			}))
 		})
 

@@ -71,6 +71,7 @@ var _ = Describe("OutCommand", func() {
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
 				NoRedact: true,
 				VarsFiles: []string{},
+				OpsFiles: []string{},
 				Vars: map[string]interface{}{
 					"foo": "bar",
 				},
@@ -142,7 +143,58 @@ var _ = Describe("OutCommand", func() {
 				})
 			})
 		})
-		
+
+		Context("when opsFiles are provided", func() {
+			var (
+				opsFileOne, opsFileTwo, opsFileThree *os.File
+				opsFiles []string
+			)
+
+			BeforeEach(func() {
+				// Update opsFile generation to yield expected bosh opsFile format
+				primaryopsFileDir, _ := ioutil.TempDir("", "")
+
+				opsFileOne, _ = ioutil.TempFile(primaryopsFileDir, "opsFile-one")
+				opsFileOne.Close()
+
+				opsFileTwo, _ = ioutil.TempFile(primaryopsFileDir, "opsFile-two")
+				opsFileTwo.Close()
+
+				secondaryopsFileDir, _ := ioutil.TempDir("", "")
+
+				opsFileThree, _ = ioutil.TempFile(secondaryopsFileDir, "opsFile-three")
+				opsFileThree.Close()
+
+				opsFiles =[]string{
+					opsFileThree.Name(),
+					fmt.Sprintf("%s/opsFile-*", primaryopsFileDir),
+				}
+				outRequest.Params.OpsFiles = opsFiles
+			})
+
+			It("specifies the opsFiles in the deploy command", func() {
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, actualDeployParams := director.DeployArgsForCall(0)
+				Expect(actualDeployParams.OpsFiles).To(ConsistOf(
+					opsFileThree.Name(),
+					opsFileOne.Name(),
+					opsFileTwo.Name(),
+				))
+			})
+
+			Context("when a opsFile glob is bad", func() {
+				It("gives a useful error", func() {
+					outRequest.Params.OpsFiles = []string{"/["}
+					_, err := outCommand.Run(outRequest)
+
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("Invalid ops_file name: /["))
+				})
+			})
+		})
+
 		Context("when releases are provided", func() {
 			var (
 				releaseOne, releaseTwo, releaseThree *os.File

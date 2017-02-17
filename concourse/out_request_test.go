@@ -27,6 +27,10 @@ var _ = Describe("NewOutRequest", func() {
 				"vars_files": [
 					"path/to/file",
 					"second/path/to/file"
+				],
+				"ops_files": [
+					"ops-file1",
+					"path/to/ops-file2"
 				]
 			},
 			"source": {
@@ -57,6 +61,10 @@ var _ = Describe("NewOutRequest", func() {
 				VarsFiles: []string {
 					"path/to/file",
 					"second/path/to/file",
+				},
+				OpsFiles: []string {
+					"ops-file1",
+					"path/to/ops-file2",
 				},
 			},
 		}))

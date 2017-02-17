@@ -48,6 +48,11 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		return OutResponse{}, fmt.Errorf("Invalid var_file name: %s", err)
 	}
 
+	opsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.OpsFiles)
+	if err != nil {
+		return OutResponse{}, fmt.Errorf("Invalid ops_file name: %s", err)
+	}
+	
 	manifestBytes, err := ioutil.ReadFile(path.Join(c.resourcesDirectory, outRequest.Params.Manifest))
 	if err != nil {
 		return OutResponse{}, err
@@ -83,6 +88,7 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		Cleanup:  outRequest.Params.Cleanup,
 		Vars:  outRequest.Params.Vars,
 		VarsFiles:  varFilePaths,
+		OpsFiles:  opsFilePaths,
 	})
 	if err != nil {
 		return OutResponse{}, err
