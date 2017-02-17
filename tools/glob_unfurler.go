@@ -16,13 +16,12 @@ func UnfurlGlobs(baseDirectory string, globs []string) ([]string, error) {
 		}
 
 		for _, nextPath := range nextPaths {
-			uniquePaths[nextPath] = true
+			if !uniquePaths[nextPath] {
+				allPaths = append(allPaths, nextPath)
+				uniquePaths[nextPath] = true
+			}
 		}
 	}
-	for key := range uniquePaths {
-		allPaths = append(allPaths, key)
-	}
+
 	return allPaths, nil
 }
-
-

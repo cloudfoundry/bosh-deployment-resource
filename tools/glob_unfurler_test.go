@@ -43,6 +43,23 @@ var _ = Describe("GlobUnfurler", func() {
 		))
 	})
 
+	It("returns all filepaths in order", func() {
+		filepaths, err := tools.UnfurlGlobs(
+			releaseDir, []string{
+				"release-two*",
+				"coolio-three*",
+				"release-one*",
+			},
+		)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(filepaths).To(Equal([]string{
+			releaseTwo.Name(),
+			releaseThree.Name(),
+			releaseOne.Name(),
+		}))
+	})
+
 	Context("when some globs unfurl to the same file", func() {
 		It("removes duplicate filepaths", func() {
 			filepaths, err := tools.UnfurlGlobs(
