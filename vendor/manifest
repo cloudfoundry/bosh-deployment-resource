@@ -34,6 +34,15 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/cppforlife/go-patch/patch",
+			"repository": "https://github.com/cppforlife/go-patch",
+			"vcs": "git",
+			"revision": "37a72c69d59809d4d5aa0b2aff033e74b8014390",
+			"branch": "HEAD",
+			"path": "/patch",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/golang/protobuf/proto",
 			"repository": "https://github.com/golang/protobuf",
 			"vcs": "git",
