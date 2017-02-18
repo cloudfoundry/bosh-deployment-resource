@@ -90,6 +90,7 @@ var _ = Describe("OutCommand", func() {
 					ManifestSha1: "33bf00cb7a45258748f833a47230124fcc8fa3a4",
 					Target:       "director.example.com",
 				},
+				Metadata: []concourse.Metadata{},
 			}))
 		})
 
@@ -282,16 +283,6 @@ var _ = Describe("OutCommand", func() {
 					},
 				}))
 			})
-
-			Context("when a release glob is bad", func() {
-				It("gives a useful error", func() {
-					outRequest.Params.Releases = []string{"/["}
-					_, err := outCommand.Run(outRequest)
-
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("Invalid release name: /["))
-				})
-			})
 		})
 
 		Context("when stemcells are provided", func() {
@@ -379,16 +370,6 @@ var _ = Describe("OutCommand", func() {
 						Value: "small-stemcell v8675309",
 					},
 				}))
-			})
-
-			Context("when a stemcell glob is bad", func() {
-				It("gives a useful error", func() {
-					outRequest.Params.Stemcells = []string{"/["}
-					_, err := outCommand.Run(outRequest)
-
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("Invalid stemcell name: /["))
-				})
 			})
 		})
 	})

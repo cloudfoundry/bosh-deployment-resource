@@ -7,33 +7,45 @@ import (
 )
 
 var _ = Describe("Stemcell", func() {
-	Describe("NewStemcell", func() {
+	Describe("NewStemcells", func() {
 		It("parses the stemcell tar", func() {
-			stemcell, err := bosh.NewStemcell("fixtures/small-stemcell.tgz")
+			stemcell, err := bosh.NewStemcells("fixtures", []string{"small-stemcell.tgz"})
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(stemcell).To(Equal(bosh.Stemcell{
-				Name: "small-stemcell",
-				OperatingSystem: "ubuntu-trusty",
-				Version: "8675309",
+			Expect(stemcell).To(Equal([]bosh.Stemcell{
+				{
+					Name: "small-stemcell",
+					OperatingSystem: "ubuntu-trusty",
+					Version: "8675309",
+					FilePath: "fixtures/small-stemcell.tgz",
+				},
 			}))
 		})
 
-		Context("when the stemcell doesn't exist", func() {
+		Context("when the tgz is not a stemcell", func() {
 			It("returns an error", func() {
-				_, err := bosh.NewStemcell("fixtures/not-a-file.tgz")
+				_, err := bosh.NewStemcells("fixtures", []string{"small-release.tgz"})
 				Expect(err).To(HaveOccurred())
 
 				Expect(err.Error()).To(ContainSubstring("Could not read stemcell:"))
 			})
 		})
 
-		Context("when the stemcell is malformed exist", func() {
+		Context("when the stemcell is malformed", func() {
 			It("returns an error", func() {
-				_, err := bosh.NewStemcell("fixtures/malformed-stemcell.tgz")
+				_, err := bosh.NewStemcells("fixtures", []string{"malformed-stemcell.tgz"})
 				Expect(err).To(HaveOccurred())
 
 				Expect(err.Error()).To(ContainSubstring("Stemcell fixtures/malformed-stemcell.tgz is not a valid stemcell"))
+			})
+		})
+
+		Context("when a stemcell glob is bad", func() {
+			It("gives a useful error", func() {
+				_, err := bosh.NewStemcells("fixtures", []string{"/["})
+				Expect(err).To(HaveOccurred())
+
+				Expect(err.Error()).To(ContainSubstring("Invalid stemcell name: /["))
 			})
 		})
 	})

@@ -27,32 +27,6 @@ func NewOutCommand(director bosh.Director, resourcesDirectory string) OutCommand
 }
 
 func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
-	releasePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.Releases)
-	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid release name: %s", err)
-	}
-	for _, releasePath := range releasePaths {
-		c.director.UploadRelease(releasePath)
-	}
-
-	stemcellPaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.Stemcells)
-	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid stemcell name: %s", err)
-	}
-	for _, stemcellPath := range stemcellPaths {
-		c.director.UploadStemcell(stemcellPath)
-	}
-
-	varFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.VarsFiles)
-	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid var_file name: %s", err)
-	}
-
-	opsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.OpsFiles)
-	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid ops_file name: %s", err)
-	}
-	
 	manifestBytes, err := ioutil.ReadFile(path.Join(c.resourcesDirectory, outRequest.Params.Manifest))
 	if err != nil {
 		return OutResponse{}, err
@@ -63,34 +37,34 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		return OutResponse{}, err
 	}
 
-	releases, err := globbedReleases(releasePaths)
+	releaseMetadata, err := c.consumeReleases(manifest, outRequest.Params.Releases)
 	if err != nil {
 		return OutResponse{}, err
 	}
 
-	err = updateReleasesInManifest(&manifest, releases)
+	stemcellMetadata, err := c.consumeStemcells(manifest, outRequest.Params.Stemcells)
 	if err != nil {
 		return OutResponse{}, err
 	}
 
-	stemcells, err := globbedStemcells(stemcellPaths)
+	varsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.VarsFiles)
 	if err != nil {
-		return OutResponse{}, err
+		return OutResponse{}, fmt.Errorf("Invalid var_file name: %s", err)
 	}
 
-	err = updateStemcellsInManifest(&manifest, stemcells)
+	opsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.OpsFiles)
 	if err != nil {
-		return OutResponse{}, err
+		return OutResponse{}, fmt.Errorf("Invalid ops_file name: %s", err)
 	}
 
-	err = c.director.Deploy(manifest.Manifest(), bosh.DeployParams{
+	deployParams := bosh.DeployParams{
 		NoRedact: outRequest.Params.NoRedact,
 		Cleanup:  outRequest.Params.Cleanup,
 		Vars:  outRequest.Params.Vars,
-		VarsFiles:  varFilePaths,
+		VarsFiles:  varsFilePaths,
 		OpsFiles:  opsFilePaths,
-	})
-	if err != nil {
+	}
+	if err := c.director.Deploy(manifest.Manifest(), deployParams); err != nil {
 		return OutResponse{}, err
 	}
 
@@ -101,74 +75,62 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 
 	concourseOutput := OutResponse{
 		Version: concourse.NewVersion(uploadedManifest, outRequest.Source.Target),
-	}
-
-	for _, release := range releases {
-		metadata := concourse.Metadata{
-			Name: "release",
-			Value: fmt.Sprintf("%s v%s", release.Name, release.Version),
-		}
-		concourseOutput.Metadata = append(concourseOutput.Metadata, metadata)
-	}
-
-	for _, stemcell := range stemcells {
-		metadata := concourse.Metadata{
-			Name: "stemcell",
-			Value: fmt.Sprintf("%s v%s", stemcell.Name, stemcell.Version),
-		}
-		concourseOutput.Metadata = append(concourseOutput.Metadata, metadata)
+		Metadata: append(releaseMetadata, stemcellMetadata...),
 	}
 
 	return concourseOutput, nil
 }
 
-type ReleaseFile struct {
-	Name string
-	Version string
-}
-
-func globbedReleases(releasePaths []string) ([]bosh.Release, error) {
-	releases := []bosh.Release{}
-	for _, releasePath := range releasePaths {
-		release, err := bosh.NewRelease(releasePath)
-		if err != nil {
-			return nil, err
-		}
-		releases = append(releases, release)
+func (c OutCommand) consumeReleases(manifest bosh.DeploymentManifest, releaseGlobs []string) ([]concourse.Metadata, error) {
+	releases, err := bosh.NewReleases(c.resourcesDirectory, releaseGlobs)
+	if err != nil {
+		return nil, err
 	}
 
-	return releases, nil
-}
+	metadata := []concourse.Metadata{}
 
-func globbedStemcells(stemcellPaths []string) ([]bosh.Stemcell, error) {
-	stemcells := []bosh.Stemcell{}
-	for _, stemcellPath := range stemcellPaths {
-		stemcell, err := bosh.NewStemcell(stemcellPath)
-		if err != nil {
-			return nil, err
-		}
-		stemcells = append(stemcells, stemcell)
-	}
-
-	return stemcells, nil
-}
-
-func updateReleasesInManifest(manifest *bosh.DeploymentManifest, releases []bosh.Release) error {
 	for _, release := range releases {
-		if err := manifest.UseReleaseVersion(release.Name, release.Version); err != nil {
-			return err
+		if err := c.director.UploadRelease(release.FilePath); err != nil {
+			return nil, err
 		}
+
+		if err := manifest.UseReleaseVersion(release.Name, release.Version); err != nil {
+			return nil, err
+		}
+
+		metadatum := concourse.Metadata{
+			Name: "release",
+			Value: fmt.Sprintf("%s v%s", release.Name, release.Version),
+		}
+		metadata = append(metadata, metadatum)
 	}
 
-	return nil
+	return metadata, nil
 }
 
-func updateStemcellsInManifest(manifest *bosh.DeploymentManifest, stemcells []bosh.Stemcell) error {
-	for _, stemcell := range stemcells {
-		if err := manifest.UseStemcellVersion(stemcell.Name, stemcell.OperatingSystem, stemcell.Version); err != nil {
-			return err
-		}
+func (c OutCommand) consumeStemcells(manifest bosh.DeploymentManifest, stemcellGlobs []string) ([]concourse.Metadata, error) {
+	stemcells, err := bosh.NewStemcells(c.resourcesDirectory, stemcellGlobs)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	metadata := []concourse.Metadata{}
+
+	for _, stemcell := range stemcells {
+		if err := c.director.UploadStemcell(stemcell.FilePath); err != nil {
+			return nil, err
+		}
+
+		if err := manifest.UseStemcellVersion(stemcell.Name, stemcell.OperatingSystem, stemcell.Version); err != nil {
+			return nil, err
+		}
+
+		metadatum := concourse.Metadata{
+			Name: "stemcell",
+			Value: fmt.Sprintf("%s v%s", stemcell.Name, stemcell.Version),
+		}
+		metadata = append(metadata, metadatum)
+	}
+
+	return metadata, nil
 }
