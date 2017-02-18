@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
+	"github.com/cloudfoundry/bosh-deployment-resource/storage"
+	"os"
 )
 
 type OutResponse struct {
@@ -16,12 +18,14 @@ type OutResponse struct {
 
 type OutCommand struct {
 	director           bosh.Director
+	storageClient      storage.StorageClient
 	resourcesDirectory string
 }
 
-func NewOutCommand(director bosh.Director, resourcesDirectory string) OutCommand {
+func NewOutCommand(director bosh.Director, storageClient storage.StorageClient, resourcesDirectory string) OutCommand {
 	return OutCommand{
 		director: director,
+		storageClient: storageClient,
 		resourcesDirectory: resourcesDirectory,
 	}
 }
@@ -64,8 +68,28 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		VarsFiles:  varsFilePaths,
 		OpsFiles:  opsFilePaths,
 	}
+
+	var varsStoreFile *os.File
+	if c.storageClient != nil {
+		varsStoreFile, err = ioutil.TempFile("", "vars-store")
+		if err != nil {
+			return OutResponse{}, err
+		}
+		defer varsStoreFile.Close()
+
+		if err = c.storageClient.Download(varsStoreFile.Name()); err != nil {
+			return OutResponse{}, err
+		}
+
+		deployParams.VarsStore = varsStoreFile.Name()
+	}
+
 	if err := c.director.Deploy(manifest.Manifest(), deployParams); err != nil {
 		return OutResponse{}, err
+	}
+
+	if c.storageClient != nil {
+		c.storageClient.Upload(varsStoreFile.Name())
 	}
 
 	uploadedManifest, err := c.director.DownloadManifest()

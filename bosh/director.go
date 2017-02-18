@@ -19,6 +19,7 @@ type DeployParams struct {
 	OpsFiles  []string
 	NoRedact  bool
 	Cleanup   bool
+	VarsStore string
 }
 
 type Director interface {

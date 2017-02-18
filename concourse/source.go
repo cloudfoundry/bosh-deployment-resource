@@ -16,6 +16,7 @@ type Source struct {
 	ClientSecret string `json:"client_secret"`
 	Target       string `json:"target"`
 	CACert       string `json:"ca_cert"`
+	VarsStore    VarsStore `json:"vars_store"`
 }
 
 type sourceRequest struct {

@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
 	"io/ioutil"
+	"github.com/cloudfoundry/bosh-deployment-resource/storage"
 )
 
 func main() {
@@ -40,8 +41,13 @@ func main() {
 
 	commandRunner := bosh.NewCommandRunner(outRequest.Source, os.Stderr)
 	director := bosh.NewBoshDirector(outRequest.Source, commandRunner, os.Stderr)
+	storageClient, err := storage.NewStorageClient(outRequest.Source)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid vars store: %s\n", err)
+		os.Exit(1)
+	}
 
-	outCommand := out.NewOutCommand(director, sourcesDir)
+	outCommand := out.NewOutCommand(director, storageClient, sourcesDir)
 	outResponse, err := outCommand.Run(outRequest)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)

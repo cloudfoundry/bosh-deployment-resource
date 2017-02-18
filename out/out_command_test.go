@@ -14,6 +14,7 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
+	"github.com/cloudfoundry/bosh-deployment-resource/storage/storagefakes"
 )
 
 var _ = Describe("OutCommand", func() {
@@ -26,7 +27,7 @@ var _ = Describe("OutCommand", func() {
 
 	BeforeEach(func() {
 		director = new(boshfakes.FakeDirector)
-		outCommand = out.NewOutCommand(director, "")
+		outCommand = out.NewOutCommand(director, nil, "")
 		manifest, _ = ioutil.TempFile("", "manifest")
 		manifestYaml = properYaml(`
 			releases:
@@ -370,6 +371,29 @@ var _ = Describe("OutCommand", func() {
 						Value: "small-stemcell v8675309",
 					},
 				}))
+			})
+		})
+
+		Context("when a vars store config is provided", func() {
+			var (
+				fakeStorageClient *storagefakes.FakeStorageClient
+			)
+
+			It("downloads the vars store, uses it, and uploads it", func() {
+				director = new(boshfakes.FakeDirector)
+				fakeStorageClient = new(storagefakes.FakeStorageClient)
+				outCommand = out.NewOutCommand(director, fakeStorageClient, "")
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(fakeStorageClient.DownloadCallCount()).To(Equal(1))
+				filePath := fakeStorageClient.DownloadArgsForCall(0)
+
+				Expect(fakeStorageClient.UploadCallCount()).To(Equal(1))
+				Expect(fakeStorageClient.UploadArgsForCall(0)).To(Equal(filePath))
+
+				_, actualDeployParams := director.DeployArgsForCall(0)
+				Expect(actualDeployParams.VarsStore).To(Equal(filePath))
 			})
 		})
 	})
