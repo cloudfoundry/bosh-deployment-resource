@@ -98,11 +98,10 @@ func (c OutCommand) consumeReleases(manifest bosh.DeploymentManifest, releaseGlo
 			return nil, err
 		}
 
-		metadatum := concourse.Metadata{
+		metadata = append(metadata, concourse.Metadata{
 			Name: "release",
 			Value: fmt.Sprintf("%s v%s", release.Name, release.Version),
-		}
-		metadata = append(metadata, metadatum)
+		})
 	}
 
 	return metadata, nil
@@ -125,11 +124,10 @@ func (c OutCommand) consumeStemcells(manifest bosh.DeploymentManifest, stemcellG
 			return nil, err
 		}
 
-		metadatum := concourse.Metadata{
+		metadata = append(metadata, concourse.Metadata{
 			Name: "stemcell",
 			Value: fmt.Sprintf("%s v%s", stemcell.Name, stemcell.Version),
-		}
-		metadata = append(metadata, metadatum)
+		})
 	}
 
 	return metadata, nil
