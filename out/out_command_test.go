@@ -1,11 +1,11 @@
 package out_test
 
 import (
-	"fmt"
-	"os"
-	"io"
 	"bytes"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -70,9 +70,9 @@ var _ = Describe("OutCommand", func() {
 			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
 			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
-				NoRedact: true,
+				NoRedact:  true,
 				VarsFiles: []string{},
-				OpsFiles: []string{},
+				OpsFiles:  []string{},
 				Vars: map[string]interface{}{
 					"foo": "bar",
 				},
@@ -98,7 +98,7 @@ var _ = Describe("OutCommand", func() {
 		Context("when varFiles are provided", func() {
 			var (
 				varFileOne, varFileTwo, varFileThree *os.File
-				varFiles []string
+				varFiles                             []string
 			)
 
 			BeforeEach(func() {
@@ -116,7 +116,7 @@ var _ = Describe("OutCommand", func() {
 				varFileThree, _ = ioutil.TempFile(secondaryVarFileDir, "varFile-three")
 				varFileThree.Close()
 
-				varFiles =[]string{
+				varFiles = []string{
 					varFileThree.Name(),
 					fmt.Sprintf("%s/varFile-*", primaryVarFileDir),
 				}
@@ -149,7 +149,7 @@ var _ = Describe("OutCommand", func() {
 		Context("when opsFiles are provided", func() {
 			var (
 				opsFileOne, opsFileTwo, opsFileThree *os.File
-				opsFiles []string
+				opsFiles                             []string
 			)
 
 			BeforeEach(func() {
@@ -167,7 +167,7 @@ var _ = Describe("OutCommand", func() {
 				opsFileThree, _ = ioutil.TempFile(secondaryopsFileDir, "opsFile-three")
 				opsFileThree.Close()
 
-				opsFiles =[]string{
+				opsFiles = []string{
 					opsFileThree.Name(),
 					fmt.Sprintf("%s/opsFile-*", primaryopsFileDir),
 				}
@@ -271,15 +271,15 @@ var _ = Describe("OutCommand", func() {
 
 				Expect(outResponse.Metadata).To(Equal([]concourse.Metadata{
 					{
-						Name: "release",
+						Name:  "release",
 						Value: "small-release v53",
 					},
 					{
-						Name: "release",
+						Name:  "release",
 						Value: "small-release v53",
 					},
 					{
-						Name: "release",
+						Name:  "release",
 						Value: "small-release v53",
 					},
 				}))
@@ -359,15 +359,15 @@ var _ = Describe("OutCommand", func() {
 
 				Expect(outResponse.Metadata).To(Equal([]concourse.Metadata{
 					{
-						Name: "stemcell",
+						Name:  "stemcell",
 						Value: "small-stemcell v8675309",
 					},
 					{
-						Name: "stemcell",
+						Name:  "stemcell",
 						Value: "small-stemcell v8675309",
 					},
 					{
-						Name: "stemcell",
+						Name:  "stemcell",
 						Value: "small-stemcell v8675309",
 					},
 				}))

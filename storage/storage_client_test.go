@@ -1,11 +1,11 @@
 package storage_test
 
 import (
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
+	"github.com/cloudfoundry/bosh-deployment-resource/gcp"
+	"github.com/cloudfoundry/bosh-deployment-resource/storage"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-	"github.com/cloudfoundry/bosh-deployment-resource/storage"
-	"github.com/cloudfoundry/bosh-deployment-resource/gcp"
 )
 
 var _ = Describe("StorageClient", func() {
@@ -15,7 +15,7 @@ var _ = Describe("StorageClient", func() {
 				source := concourse.Source{
 					VarsStore: concourse.VarsStore{
 						Provider: "gcs",
-						Config: []byte("{\"json_key\": \"{\\\"type\\\": \\\"service_account\\\"}\", \"file_name\": \"bar\", \"bucket\": \"baz\"}"),
+						Config:   []byte("{\"json_key\": \"{\\\"type\\\": \\\"service_account\\\"}\", \"file_name\": \"bar\", \"bucket\": \"baz\"}"),
 					},
 				}
 
@@ -30,7 +30,7 @@ var _ = Describe("StorageClient", func() {
 				source := concourse.Source{
 					VarsStore: concourse.VarsStore{
 						Provider: "unknown",
-						Config: []byte{},
+						Config:   []byte{},
 					},
 				}
 

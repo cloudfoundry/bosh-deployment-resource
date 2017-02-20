@@ -1,13 +1,13 @@
 package concourse_test
 
 import (
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 )
 
 var _ = Describe("NewOutRequest", func() {
@@ -47,22 +47,22 @@ var _ = Describe("NewOutRequest", func() {
 
 		Expect(source).To(Equal(concourse.OutRequest{
 			Source: concourse.Source{
-				Deployment: "mydeployment",
-				Target: "director.example.net",
-				Client: "foo",
+				Deployment:   "mydeployment",
+				Target:       "director.example.net",
+				Client:       "foo",
 				ClientSecret: "foobar",
 			},
-			Params: concourse.OutParams {
+			Params: concourse.OutParams{
 				Manifest: "path/to/manifest.yml",
-				Vars: map[string]interface{} {
-					"foo": "bar",
+				Vars: map[string]interface{}{
+					"foo":   "bar",
 					"slice": []interface{}{float64(1), "two"},
 				},
-				VarsFiles: []string {
+				VarsFiles: []string{
 					"path/to/file",
 					"second/path/to/file",
 				},
-				OpsFiles: []string {
+				OpsFiles: []string{
 					"ops-file1",
 					"path/to/ops-file2",
 				},

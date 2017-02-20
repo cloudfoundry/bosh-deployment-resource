@@ -1,9 +1,9 @@
 package bosh
 
 import (
-	"gopkg.in/yaml.v2"
-	"fmt"
 	"errors"
+	"fmt"
+	"gopkg.in/yaml.v2"
 )
 
 type DeploymentManifest struct {

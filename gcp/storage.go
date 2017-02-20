@@ -1,19 +1,19 @@
 package gcp
 
 import (
-	"os"
-	"net/http"
 	"golang.org/x/oauth2"
 	oauthgoogle "golang.org/x/oauth2/google"
-	"google.golang.org/api/storage/v1"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/storage/v1"
+	"net/http"
+	"os"
 
 	"io/ioutil"
 )
 
 type Storage struct {
-	bucket   string
-	objectPath string
+	bucket         string
+	objectPath     string
 	storageService *storage.Service
 }
 
@@ -35,8 +35,8 @@ func NewStorage(jsonKey, bucket, objectPath string) (Storage, error) {
 	storageService.UserAgent = userAgent
 
 	return Storage{
-		bucket: bucket,
-		objectPath: objectPath,
+		bucket:         bucket,
+		objectPath:     objectPath,
 		storageService: storageService,
 	}, nil
 }

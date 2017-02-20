@@ -8,8 +8,8 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
-	"io/ioutil"
 	"github.com/cloudfoundry/bosh-deployment-resource/storage"
+	"io/ioutil"
 )
 
 func main() {

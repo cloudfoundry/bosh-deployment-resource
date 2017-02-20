@@ -1,17 +1,17 @@
 package tools_test
 
 import (
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"os"
 	"io/ioutil"
-	"github.com/cloudfoundry/bosh-deployment-resource/tools"
+	"os"
 )
 
 var _ = Describe("GlobUnfurler", func() {
 	var (
 		releaseOne, releaseTwo, releaseThree *os.File
-		releaseDir string
+		releaseDir                           string
 	)
 
 	BeforeEach(func() {

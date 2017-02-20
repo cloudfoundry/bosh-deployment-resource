@@ -1,9 +1,9 @@
 package bosh_test
 
 import (
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 )
 
 var _ = Describe("Release", func() {
@@ -14,8 +14,8 @@ var _ = Describe("Release", func() {
 
 			Expect(release).To(Equal([]bosh.Release{
 				{
-					Name: "small-release",
-					Version: "53",
+					Name:     "small-release",
+					Version:  "53",
 					FilePath: "fixtures/small-release.tgz",
 				},
 			}))

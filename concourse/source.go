@@ -3,19 +3,19 @@ package concourse
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"errors"
+	"fmt"
 	"io/ioutil"
-	"strings"
 	"path/filepath"
+	"strings"
 )
 
 type Source struct {
-	Deployment   string `json:"deployment"`
-	Client       string `json:"client"`
-	ClientSecret string `json:"client_secret"`
-	Target       string `json:"target"`
-	CACert       string `json:"ca_cert"`
+	Deployment   string    `json:"deployment"`
+	Client       string    `json:"client"`
+	ClientSecret string    `json:"client_secret"`
+	Target       string    `json:"target"`
+	CACert       string    `json:"ca_cert"`
 	VarsStore    VarsStore `json:"vars_store"`
 }
 

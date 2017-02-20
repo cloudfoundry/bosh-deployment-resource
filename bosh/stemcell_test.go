@@ -1,9 +1,9 @@
 package bosh_test
 
 import (
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 )
 
 var _ = Describe("Stemcell", func() {
@@ -14,10 +14,10 @@ var _ = Describe("Stemcell", func() {
 
 			Expect(stemcell).To(Equal([]bosh.Stemcell{
 				{
-					Name: "small-stemcell",
+					Name:            "small-stemcell",
 					OperatingSystem: "ubuntu-trusty",
-					Version: "8675309",
-					FilePath: "fixtures/small-stemcell.tgz",
+					Version:         "8675309",
+					FilePath:        "fixtures/small-stemcell.tgz",
 				},
 			}))
 		})

@@ -4,8 +4,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestBosh(t *testing.T) {

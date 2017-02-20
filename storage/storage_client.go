@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"encoding/json"
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/gcp"
 )
 
@@ -14,7 +14,7 @@ type GCSConfig struct {
 
 type StorageClient interface {
 	Download(filePath string) error
-	Upload(filePath string)   error
+	Upload(filePath string) error
 }
 
 func NewStorageClient(source concourse.Source) (StorageClient, error) {

@@ -1,15 +1,15 @@
 package bosh
 
 import (
-	"io"
 	"fmt"
+	"io"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
-	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	"io/ioutil"
 )
 
@@ -30,16 +30,16 @@ type Director interface {
 }
 
 type BoshDirector struct {
-	source             concourse.Source
-	commandRunner      Runner
-	out                io.Writer
+	source        concourse.Source
+	commandRunner Runner
+	out           io.Writer
 }
 
 func NewBoshDirector(source concourse.Source, commandRunner Runner, out io.Writer) BoshDirector {
 	return BoshDirector{
-		source:             source,
-		commandRunner:      commandRunner,
-		out:                out,
+		source:        source,
+		commandRunner: commandRunner,
+		out:           out,
 	}
 }
 
@@ -62,7 +62,7 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		Args:     boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact: deployParams.NoRedact,
 		VarFlags: boshcmd.VarFlags{
-			VarKVs: varKVsFromVars(deployParams.Vars),
+			VarKVs:    varKVsFromVars(deployParams.Vars),
 			VarsFiles: boshVarsFiles,
 		},
 		OpsFlags: boshcmd.OpsFlags{
@@ -88,7 +88,7 @@ func (d BoshDirector) DownloadManifest() ([]byte, error) {
 
 func (d BoshDirector) UploadRelease(URL string) error {
 	err := d.commandRunner.Execute(&boshcmd.UploadReleaseOpts{
-		Args:     boshcmd.UploadReleaseArgs{URL: boshcmd.URLArg(URL)},
+		Args: boshcmd.UploadReleaseArgs{URL: boshcmd.URLArg(URL)},
 	})
 
 	if err != nil {
@@ -100,7 +100,7 @@ func (d BoshDirector) UploadRelease(URL string) error {
 
 func (d BoshDirector) UploadStemcell(URL string) error {
 	err := d.commandRunner.Execute(&boshcmd.UploadStemcellOpts{
-		Args:     boshcmd.UploadStemcellArgs{URL: boshcmd.URLArg(URL)},
+		Args: boshcmd.UploadStemcellArgs{URL: boshcmd.URLArg(URL)},
 	})
 
 	if err != nil {

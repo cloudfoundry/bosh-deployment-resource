@@ -2,9 +2,9 @@ package bosh_test
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"io/ioutil"
-	"errors"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -38,7 +38,7 @@ var _ = Describe("BoshDirector", func() {
 			vars := map[string]interface{}{"foo": "bar"}
 			varKVs := []boshtpl.VarKV{
 				{
-					Name: "foo",
+					Name:  "foo",
 					Value: "bar",
 				},
 			}
@@ -58,10 +58,10 @@ var _ = Describe("BoshDirector", func() {
 
 			noRedact := true
 			err := director.Deploy(sillyBytes, bosh.DeployParams{
-				NoRedact: noRedact,
-				Vars: vars,
+				NoRedact:  noRedact,
+				Vars:      vars,
 				VarsFiles: []string{varFile.Name()},
-				OpsFiles: []string{opsFile.Name()},
+				OpsFiles:  []string{opsFile.Name()},
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -80,7 +80,7 @@ var _ = Describe("BoshDirector", func() {
 			pathPointer, _ := patch.NewPointerFromString("/my?/new_key")
 			Expect(deployOpts.OpsFiles[0].Ops).To(Equal(patch.Ops{
 				patch.ReplaceOp{
-					Path: pathPointer,
+					Path:  pathPointer,
 					Value: "awesome",
 				},
 			}))

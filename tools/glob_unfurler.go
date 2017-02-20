@@ -1,9 +1,9 @@
 package tools
 
 import (
-	"path/filepath"
 	"fmt"
 	"path"
+	"path/filepath"
 )
 
 func UnfurlGlobs(baseDirectory string, globs []string) ([]string, error) {

@@ -1,14 +1,14 @@
 package out
 
 import (
+	"fmt"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-	"github.com/cloudfoundry/bosh-deployment-resource/tools"
-	"fmt"
-	"io/ioutil"
-	"path"
 	"github.com/cloudfoundry/bosh-deployment-resource/storage"
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
+	"io/ioutil"
 	"os"
+	"path"
 )
 
 type OutResponse struct {
@@ -24,8 +24,8 @@ type OutCommand struct {
 
 func NewOutCommand(director bosh.Director, storageClient storage.StorageClient, resourcesDirectory string) OutCommand {
 	return OutCommand{
-		director: director,
-		storageClient: storageClient,
+		director:           director,
+		storageClient:      storageClient,
 		resourcesDirectory: resourcesDirectory,
 	}
 }
@@ -62,10 +62,10 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 	}
 
 	deployParams := bosh.DeployParams{
-		NoRedact: outRequest.Params.NoRedact,
-		Cleanup:  outRequest.Params.Cleanup,
-		Vars:  outRequest.Params.Vars,
-		VarsFiles:  varsFilePaths,
+		NoRedact:  outRequest.Params.NoRedact,
+		Cleanup:   outRequest.Params.Cleanup,
+		Vars:      outRequest.Params.Vars,
+		VarsFiles: varsFilePaths,
 		OpsFiles:  opsFilePaths,
 	}
 
@@ -98,7 +98,7 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 	}
 
 	concourseOutput := OutResponse{
-		Version: concourse.NewVersion(uploadedManifest, outRequest.Source.Target),
+		Version:  concourse.NewVersion(uploadedManifest, outRequest.Source.Target),
 		Metadata: append(releaseMetadata, stemcellMetadata...),
 	}
 
@@ -123,7 +123,7 @@ func (c OutCommand) consumeReleases(manifest bosh.DeploymentManifest, releaseGlo
 		}
 
 		metadata = append(metadata, concourse.Metadata{
-			Name: "release",
+			Name:  "release",
 			Value: fmt.Sprintf("%s v%s", release.Name, release.Version),
 		})
 	}
@@ -149,7 +149,7 @@ func (c OutCommand) consumeStemcells(manifest bosh.DeploymentManifest, stemcellG
 		}
 
 		metadata = append(metadata, concourse.Metadata{
-			Name: "stemcell",
+			Name:  "stemcell",
 			Value: fmt.Sprintf("%s v%s", stemcell.Name, stemcell.Version),
 		})
 	}

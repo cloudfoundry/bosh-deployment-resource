@@ -2,12 +2,12 @@ package bosh
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"github.com/cloudfoundry/bosh-deployment-resource/tools"
+	"gopkg.in/yaml.v2"
 )
 
 type Release struct {
-	Name     string
+	Name string
 
 	Version  string
 	FilePath string

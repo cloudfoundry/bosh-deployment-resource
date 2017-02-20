@@ -3,9 +3,9 @@ package concourse
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
-	"errors"
 )
 
 type OutRequest struct {

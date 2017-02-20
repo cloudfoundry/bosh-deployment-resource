@@ -1,12 +1,12 @@
 package tools
 
 import (
-	"os"
-	"compress/gzip"
 	"archive/tar"
+	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"fmt"
+	"os"
 	"regexp"
 )
 

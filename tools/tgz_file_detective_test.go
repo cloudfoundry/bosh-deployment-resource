@@ -1,12 +1,12 @@
 package tools_test
 
 import (
+	"compress/gzip"
+	"fmt"
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	"io/ioutil"
-	"fmt"
-	"compress/gzip"
 )
 
 var _ = Describe("ReadTgzFile", func() {
@@ -18,7 +18,7 @@ var _ = Describe("ReadTgzFile", func() {
 	})
 
 	Describe("when the archive does not exist", func() {
-		It("returns an error", func(){
+		It("returns an error", func() {
 			_, err := tools.ReadTgzFile("fixtures/does-not-exist.nope", "release.MF")
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("Could not read archive fixtures/does-not-exist.nope"))
@@ -26,7 +26,7 @@ var _ = Describe("ReadTgzFile", func() {
 	})
 
 	Describe("when the archive is not a valid gzip", func() {
-		It("returns an error", func(){
+		It("returns an error", func() {
 			notArchive, _ := ioutil.TempFile("", "release-one")
 			notArchive.Close()
 
@@ -39,7 +39,7 @@ var _ = Describe("ReadTgzFile", func() {
 	})
 
 	Describe("when the gzip archive does not contain a valid tar", func() {
-		It("returns an error", func(){
+		It("returns an error", func() {
 			notArchive, _ := ioutil.TempFile("", "release-one")
 			gzipWriter := gzip.NewWriter(notArchive)
 			gzipWriter.Write([]byte("hello"))
@@ -55,7 +55,7 @@ var _ = Describe("ReadTgzFile", func() {
 	})
 
 	Describe("when file is not in the archive", func() {
-		It("returns an error", func(){
+		It("returns an error", func() {
 			_, err := tools.ReadTgzFile("fixtures/small-release.tgz", "not-a-file.nope")
 			Expect(err).To(HaveOccurred())
 
