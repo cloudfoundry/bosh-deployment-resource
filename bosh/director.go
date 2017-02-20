@@ -6,11 +6,12 @@ import (
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
+	"io/ioutil"
+
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"io/ioutil"
 )
 
 type DeployParams struct {

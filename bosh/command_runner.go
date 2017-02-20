@@ -6,10 +6,11 @@ import (
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	"bytes"
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-	goflags "github.com/jessevdk/go-flags"
 	"io"
 	"io/ioutil"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
+	goflags "github.com/jessevdk/go-flags"
 )
 
 type Runner interface {

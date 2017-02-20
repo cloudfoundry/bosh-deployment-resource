@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"errors"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/check"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"

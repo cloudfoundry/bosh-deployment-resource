@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	"io/ioutil"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/check"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-	"io/ioutil"
 )
 
 func main() {

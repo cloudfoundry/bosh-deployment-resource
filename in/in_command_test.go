@@ -5,11 +5,12 @@ import (
 	. "github.com/onsi/gomega"
 
 	"errors"
+	"io/ioutil"
+	"path/filepath"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/in"
-	"io/ioutil"
-	"path/filepath"
 )
 
 var _ = Describe("InCommand", func() {

@@ -2,13 +2,14 @@ package out
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/storage"
 	"github.com/cloudfoundry/bosh-deployment-resource/tools"
-	"io/ioutil"
-	"os"
-	"path"
 )
 
 type OutResponse struct {

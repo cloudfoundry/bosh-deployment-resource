@@ -3,10 +3,11 @@ package tools_test
 import (
 	"compress/gzip"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io/ioutil"
 )
 
 var _ = Describe("ReadTgzFile", func() {

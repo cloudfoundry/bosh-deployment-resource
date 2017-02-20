@@ -1,12 +1,13 @@
 package gcp
 
 import (
+	"net/http"
+	"os"
+
 	"golang.org/x/oauth2"
 	oauthgoogle "golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
-	"net/http"
-	"os"
 
 	"io/ioutil"
 )

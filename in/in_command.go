@@ -2,10 +2,11 @@ package in
 
 import (
 	"errors"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"io/ioutil"
 	"path/filepath"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 )
 
 type InCommand struct {

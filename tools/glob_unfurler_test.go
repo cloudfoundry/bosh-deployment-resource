@@ -1,11 +1,12 @@
 package tools_test
 
 import (
+	"io/ioutil"
+	"os"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io/ioutil"
-	"os"
 )
 
 var _ = Describe("GlobUnfurler", func() {
