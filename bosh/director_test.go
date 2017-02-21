@@ -86,6 +86,31 @@ var _ = Describe("BoshDirector", func() {
 			}))
 		})
 
+		Describe("VarsStore", func() {
+			Context("when one is provided", func() {
+				It("is used", func() {
+					varsStore, _ := ioutil.TempFile("", "vars-store")
+					err := director.Deploy(sillyBytes, bosh.DeployParams{
+						VarsStore: varsStore.Name(),
+					})
+					Expect(err).ToNot(HaveOccurred())
+
+					deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+					Expect(deployOpts.VarsFSStore.FS).ToNot(BeNil())
+				})
+			})
+
+			Context("when one is not provided", func() {
+				It("is not used", func() {
+					err := director.Deploy(sillyBytes, bosh.DeployParams{})
+					Expect(err).ToNot(HaveOccurred())
+
+					deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+					Expect(deployOpts.VarsFSStore.FS).To(BeNil())
+				})
+			})
+		})
+
 		Context("when deploying fails", func() {
 			It("returns an error", func() {
 				commandRunner.ExecuteReturns(errors.New("Your deploy failed"))

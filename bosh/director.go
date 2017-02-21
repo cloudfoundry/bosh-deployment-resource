@@ -59,7 +59,7 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		return err
 	}
 
-	err = d.commandRunner.Execute(&boshcmd.DeployOpts{
+	deployOpts := boshcmd.DeployOpts{
 		Args:     boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact: deployParams.NoRedact,
 		VarFlags: boshcmd.VarFlags{
@@ -69,7 +69,16 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		OpsFlags: boshcmd.OpsFlags{
 			OpsFiles: boshOpsFiles,
 		},
-	})
+	}
+
+	if deployParams.VarsStore != "" {
+		varsFSStore := boshcmd.VarsFSStore{}
+		varsFSStore.FS = boshFileSystem()
+		varsFSStore.UnmarshalFlag(deployParams.VarsStore)
+		deployOpts.VarsFSStore = varsFSStore
+	}
+
+	err = d.commandRunner.Execute(&deployOpts)
 	if err != nil {
 		return fmt.Errorf("Could not deploy: %s\n", err)
 	}
@@ -120,12 +129,9 @@ func varKVsFromVars(vars map[string]interface{}) []boshtpl.VarKV {
 }
 
 func parsedVarsFiles(varsFiles []string) ([]boshtpl.VarsFileArg, error) {
-	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard, ioutil.Discard)
-	boshFS := boshsys.NewOsFileSystemWithStrictTempRoot(nullLogger)
-
 	varsFileArgs := []boshtpl.VarsFileArg{}
 	for _, varsFile := range varsFiles {
-		varsFileArg := boshtpl.VarsFileArg{FS: boshFS}
+		varsFileArg := boshtpl.VarsFileArg{FS: boshFileSystem()}
 		if err := varsFileArg.UnmarshalFlag(varsFile); err != nil {
 			return nil, err
 		}
@@ -148,4 +154,9 @@ func parsedOpsFiles(opsFiles []string) ([]boshcmd.OpsFileArg, error) {
 	}
 
 	return opsFileArgs, nil
+}
+
+func boshFileSystem() boshsys.FileSystem {
+	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard, ioutil.Discard)
+	return boshsys.NewOsFileSystemWithStrictTempRoot(nullLogger)
 }

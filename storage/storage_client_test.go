@@ -15,7 +15,10 @@ var _ = Describe("StorageClient", func() {
 				source := concourse.Source{
 					VarsStore: concourse.VarsStore{
 						Provider: "gcs",
-						Config:   []byte("{\"json_key\": \"{\\\"type\\\": \\\"service_account\\\"}\", \"file_name\": \"bar\", \"bucket\": \"baz\"}"),
+						Config: map[string]interface{}{
+							"json_key":  "{\"type\": \"service_account\"}",
+							"file_name": "bar", "bucket": "baz",
+						},
 					},
 				}
 
@@ -30,7 +33,7 @@ var _ = Describe("StorageClient", func() {
 				source := concourse.Source{
 					VarsStore: concourse.VarsStore{
 						Provider: "unknown",
-						Config:   []byte{},
+						Config:   map[string]interface{}{},
 					},
 				}
 

@@ -37,7 +37,14 @@ var _ = Describe("NewOutRequest", func() {
 				"deployment": "mydeployment",
 				"target": "director.example.com",
 				"client": "foo",
-				"client_secret": "foobar"
+				"client_secret": "foobar",
+				"vars_store": {
+					"provider": "gcs",
+					"config": {
+						"some": "dynamic",
+						"keys": "per-provider"
+					}
+				}
 			}
 		}`
 		config := []byte(fmt.Sprintf(configTemplate, filepath.Base(targetFile.Name())))
@@ -51,6 +58,13 @@ var _ = Describe("NewOutRequest", func() {
 				Target:       "director.example.net",
 				Client:       "foo",
 				ClientSecret: "foobar",
+				VarsStore: concourse.VarsStore{
+					Provider: "gcs",
+					Config: map[string]interface{}{
+						"some": "dynamic",
+						"keys": "per-provider",
+					},
+				},
 			},
 			Params: concourse.OutParams{
 				Manifest: "path/to/manifest.yml",
