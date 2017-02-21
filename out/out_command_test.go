@@ -10,6 +10,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"errors"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
@@ -394,6 +396,32 @@ var _ = Describe("OutCommand", func() {
 
 				_, actualDeployParams := director.DeployArgsForCall(0)
 				Expect(actualDeployParams.VarsStore).To(Equal(filePath))
+			})
+
+			Describe("when the download fails", func() {
+				It("returns an error", func() {
+					director = new(boshfakes.FakeDirector)
+					fakeStorageClient = new(storagefakes.FakeStorageClient)
+					fakeStorageClient.DownloadReturns(errors.New("Failed to download"))
+
+					outCommand = out.NewOutCommand(director, fakeStorageClient, "")
+					_, err := outCommand.Run(outRequest)
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(Equal("Failed to download"))
+				})
+			})
+
+			Describe("when the upload fails", func() {
+				It("returns an error", func() {
+					director = new(boshfakes.FakeDirector)
+					fakeStorageClient = new(storagefakes.FakeStorageClient)
+					fakeStorageClient.UploadReturns(errors.New("Failed to upload"))
+
+					outCommand = out.NewOutCommand(director, fakeStorageClient, "")
+					_, err := outCommand.Run(outRequest)
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(Equal("Failed to upload"))
+				})
 			})
 		})
 	})

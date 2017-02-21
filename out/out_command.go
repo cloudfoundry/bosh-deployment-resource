@@ -90,7 +90,9 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 	}
 
 	if c.storageClient != nil {
-		c.storageClient.Upload(varsStoreFile.Name())
+		if err := c.storageClient.Upload(varsStoreFile.Name()); err != nil {
+			return OutResponse{}, err
+		}
 	}
 
 	uploadedManifest, err := c.director.DownloadManifest()
