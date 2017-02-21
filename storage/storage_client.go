@@ -3,7 +3,14 @@ package storage
 import (
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/gcp"
+	"encoding/json"
 )
+
+type GCSConfig struct {
+	FileName string `json:"file_name"`
+	Bucket   string `json:"bucket"`
+	JSONKey  string `json:"json_key"`
+}
 
 type StorageClient interface {
 	Download(filePath string) error
@@ -12,10 +19,20 @@ type StorageClient interface {
 
 func NewStorageClient(source concourse.Source) (StorageClient, error) {
 	if source.VarsStore.Provider == "gcs" {
+		gcsConfigJson, err := json.Marshal(source.VarsStore.Config)
+		if err != nil {
+			return nil, err
+		}
+
+		gcsConfig := GCSConfig{}
+		if err := json.Unmarshal(gcsConfigJson, &gcsConfig); err != nil {
+			return nil, err
+		}
+
 		return gcp.NewStorage(
-			source.VarsStore.Config["json_key"].(string),
-			source.VarsStore.Config["bucket"].(string),
-			source.VarsStore.Config["file_name"].(string),
+			gcsConfig.JSONKey,
+			gcsConfig.Bucket,
+			gcsConfig.FileName,
 		)
 	}
 
