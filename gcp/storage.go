@@ -9,6 +9,7 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
 
+	"fmt"
 	"io/ioutil"
 )
 
@@ -50,7 +51,7 @@ func (s Storage) Download(filePath string) error {
 		switch err.(type) {
 		case *googleapi.Error:
 			if err.(*googleapi.Error).Code == 404 {
-				return nil
+				return s.Upload(filePath)
 			}
 		}
 
@@ -73,7 +74,8 @@ func (s Storage) Download(filePath string) error {
 		return err
 	}
 
-	return nil
+	// Check that we can not only read the file, but can also write it
+	return s.Upload(filePath)
 }
 
 func (s Storage) Upload(filePath string) error {
@@ -87,7 +89,7 @@ func (s Storage) Upload(filePath string) error {
 	}
 
 	if _, err = s.storageService.Objects.Insert(s.bucket, object).Media(f).Do(); err != nil {
-		return err
+		return fmt.Errorf("Can not write to %s in bucket %s", s.objectPath, s.bucket)
 	}
 
 	return nil
