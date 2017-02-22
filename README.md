@@ -12,6 +12,18 @@ uses the Ruby CLI and does not support newer BOSH features.
 * This resource requires that the target director's SSL certificate is trusted. If the director's certificate is not
  already trusted by normal root authorities, a custom CA certificate must be provided.
 
+## Adding to your pipeline
+
+To use the BOSH Deployment Resource, you must declare it in your pipeline as a resource type:
+
+```
+resource_types:
+- name: bosh-deployment
+  type: docker-image
+  source:
+    repository: cloudfoundry/bosh-deployment-resource
+```
+
 ## Source Configuration
 
 * `deployment`: *Required.* The name of the deployment.
