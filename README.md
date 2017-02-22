@@ -21,6 +21,16 @@ uses the Ruby CLI and does not support newer BOSH features.
 * `client_secret`: *Required.* The password or UAA client secret for the BOSH director.
 * `ca_cert`: *Optional.* CA certificate used to validate SSL connections to Director and UAA. If omitted, the director's
   certificate must be already trusted.
+* `vars_store`: *Optional.* Configuration for a persisted variables store. Currently only the Google Cloud Storage (GCS)
+  provider is supported. `json_key` must be the the JSON key for your service account. Example:
+
+  ```
+  provider: gcs
+    config:
+      bucket: my-bucket
+      file_name: path/to/vars-store.yml
+      json_key: "{\"type\": \"service_account\"}"
+  ```
 
 ### Example
 
