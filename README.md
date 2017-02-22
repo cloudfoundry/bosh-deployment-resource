@@ -51,9 +51,11 @@ Sometimes source configuration cannot be known ahead of time, such as when a BOS
 pipeline. In these scenarios, it is helpful to be able to have a dynamic source configuration. In addition to the
 normal parameters for `put`, the following parameters can be provided to redefine the source:
 
-* `target_file`: *Optional.* Path to a file containing a BOSH director address. This allows the target to be determined
+* `source_file`: *Optional.* Path to a file containing a JSON source config. This allows the target to be determined
   at runtime, e.g. by acquiring a BOSH lite instance using the
-  [Pool resource](https://github.com/concourse/pool-resource).
+  [Pool resource](https://github.com/concourse/pool-resource). The content of the `source_file` should have the same
+  structure as the source configuration for the resource itself. The `source_file` will be merged into the exist source
+  configuration.
 
 _Note_: This is only supported for a `put`.
 
@@ -62,7 +64,21 @@ _Note_: This is only supported for a `put`.
 ```
 - put: staging
   params:
-    target_file: path/to/target_file
+    source_file: path/to/sourcefile
+```
+
+Sample source file:
+
+```
+{
+    "target": "dynamic-director.example.com",
+    "client_secret": "generated-secret",
+    "vars_store": {
+        "config": {
+            "bucket": "my-bucket"
+        }
+    }
+}
 ```
 
 ## Behaviour

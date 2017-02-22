@@ -32,48 +32,82 @@ var _ = Describe("NewDynamicSource", func() {
 		}))
 	})
 
-	Context("when the config has a target_file", func() {
+	Context("when source_file param is passed", func() {
 		var (
 			sourcesDir          string
-			targetFileName      string
+			sourceFileName      string
 			requestJsonTemplate string = `{
 				"params": {
-					"target_file": "%s"
+					"source_file": "%s"
 				},
 				"source": {
 					"deployment": "mydeployment",
 					"target": "director.example.com",
-					"client": "foo",
-					"client_secret": "foobar"
+					"client": "original_client",
+					"client_secret": "foobar",
+					"vars_store": {
+						"provider": "gcs",
+						"config": {
+							"some": "dynamic",
+							"keys": "per-provider"
+						}
+					}
 				}
 			}`
 		)
 
 		BeforeEach(func() {
-			targetFile, _ := ioutil.TempFile("", "")
-			targetFile.WriteString("\n director.example.net \n")
-			targetFile.Close()
+			sourceFile, _ := ioutil.TempFile("", "")
+			sourceFile.WriteString(`{
+				"deployment": "fileDeployment",
+				"target": "fileDirector.com",
+				"client_secret": "fileSecret",
+				"vars_store": {
+					"provider": "fileProvider",
+					"config": {
+						"file": "vars",
+						"keys": "dynamic-keys"
+					}
+				}
+			}`)
+			sourceFile.Close()
 
-			sourcesDir = filepath.Dir(targetFile.Name())
-			targetFileName = filepath.Base(targetFile.Name())
+			sourcesDir = filepath.Dir(sourceFile.Name())
+			sourceFileName = filepath.Base(sourceFile.Name())
 		})
 
-		It("uses the contents of that file instead of the target parameter", func() {
-			config := []byte(fmt.Sprintf(requestJsonTemplate, targetFileName))
+		It("overrides source with the values in the source_file", func() {
+			config := []byte(fmt.Sprintf(
+				requestJsonTemplate,
+				filepath.Base(sourceFileName),
+			))
 
 			source, err := concourse.NewDynamicSource(config, sourcesDir)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(source.Target).To(Equal("director.example.net"))
+			Expect(source).To(Equal(concourse.Source{
+				Deployment:   "fileDeployment",
+				Target:       "fileDirector.com",
+				Client:       "original_client",
+				ClientSecret: "fileSecret",
+				VarsStore: concourse.VarsStore{
+					Provider: "fileProvider",
+					Config: map[string]interface{}{
+						"file": "vars",
+						"some": "dynamic",
+						"keys": "dynamic-keys",
+					},
+				},
+			}))
 		})
 
 		Context("when the target_file cannot be read", func() {
 			BeforeEach(func() {
-				targetFileName = "not-a-real-file"
+				sourceFileName = "not-a-real-file"
 			})
 
 			It("errors", func() {
-				config := []byte(fmt.Sprintf(requestJsonTemplate, targetFileName))
+				config := []byte(fmt.Sprintf(requestJsonTemplate, sourceFileName))
 
 				_, err := concourse.NewDynamicSource(config, sourcesDir)
 				Expect(err).To(HaveOccurred())

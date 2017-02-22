@@ -12,13 +12,8 @@ import (
 
 var _ = Describe("NewOutRequest", func() {
 	It("converts the config into an OutRequest", func() {
-		targetFile, _ := ioutil.TempFile("", "")
-		targetFile.WriteString("director.example.net")
-		targetFile.Close()
-
-		configTemplate := `{
+		config := []byte(`{
 			"params": {
-				"target_file": "%s",
 				"manifest": "path/to/manifest.yml",
 				"vars": {
 					"foo": "bar",
@@ -46,16 +41,15 @@ var _ = Describe("NewOutRequest", func() {
 					}
 				}
 			}
-		}`
-		config := []byte(fmt.Sprintf(configTemplate, filepath.Base(targetFile.Name())))
+		}`)
 
-		source, err := concourse.NewOutRequest(config, filepath.Dir(targetFile.Name()))
+		source, err := concourse.NewOutRequest(config, "")
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(source).To(Equal(concourse.OutRequest{
 			Source: concourse.Source{
 				Deployment:   "mydeployment",
-				Target:       "director.example.net",
+				Target:       "director.example.com",
 				Client:       "foo",
 				ClientSecret: "foobar",
 				VarsStore: concourse.VarsStore{
@@ -82,6 +76,71 @@ var _ = Describe("NewOutRequest", func() {
 				},
 			},
 		}))
+	})
+
+	Context("when source_file param is passed", func() {
+		It("overrides source with the values in the source_file", func() {
+			sourceFile, _ := ioutil.TempFile("", "")
+			sourceFile.WriteString(`{
+				"deployment": "fileDeployment",
+				"target": "fileDirector.com",
+				"client_secret": "fileSecret",
+				"vars_store": {
+					"provider": "fileProvider",
+					"config": {
+						"file": "vars"
+					}
+				}
+			}`)
+			sourceFile.Close()
+
+			configTemplate := `{
+				"params": {
+					"manifest": "path/to/manifest.yml",
+					"source_file": "%s"
+				},
+				"source": {
+					"deployment": "mydeployment",
+					"target": "director.example.com",
+					"client": "original_client",
+					"client_secret": "foobar",
+					"vars_store": {
+						"provider": "gcs",
+						"config": {
+							"some": "dynamic",
+							"keys": "per-provider"
+						}
+					}
+				}
+			}`
+			config := []byte(fmt.Sprintf(
+				configTemplate,
+				filepath.Base(sourceFile.Name()),
+			))
+
+			source, err := concourse.NewOutRequest(config, filepath.Dir(sourceFile.Name()))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(source).To(Equal(concourse.OutRequest{
+				Source: concourse.Source{
+					Deployment:   "fileDeployment",
+					Target:       "fileDirector.com",
+					Client:       "original_client",
+					ClientSecret: "fileSecret",
+					VarsStore: concourse.VarsStore{
+						Provider: "fileProvider",
+						Config: map[string]interface{}{
+							"file": "vars",
+							"some": "dynamic",
+							"keys": "per-provider",
+						},
+					},
+				},
+				Params: concourse.OutParams{
+					Manifest: "path/to/manifest.yml",
+				},
+			}))
+		})
 	})
 
 	Context("when decoding fails", func() {

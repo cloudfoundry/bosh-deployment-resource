@@ -25,7 +25,7 @@ type sourceRequest struct {
 }
 
 type dynamicSourceParams struct {
-	TargetFile string `json:"target_file,omitempty"`
+	SourceFile string `json:"source_file,omitempty"`
 }
 
 func NewDynamicSource(config []byte, sourcesDir string) (Source, error) {
@@ -34,13 +34,15 @@ func NewDynamicSource(config []byte, sourcesDir string) (Source, error) {
 		return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
 	}
 
-	if sourceRequest.Params.TargetFile != "" {
-		target, err := ioutil.ReadFile(filepath.Join(sourcesDir, sourceRequest.Params.TargetFile))
+	if sourceRequest.Params.SourceFile != "" {
+		source, err := ioutil.ReadFile(filepath.Join(sourcesDir, sourceRequest.Params.SourceFile))
 		if err != nil {
 			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
 		}
 
-		sourceRequest.Source.Target = strings.TrimSpace(string(target))
+		if err := json.Unmarshal(source, &sourceRequest.Source); err != nil {
+			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
+		}
 	}
 
 	if err := checkRequiredSourceParameters(sourceRequest.Source); err != nil {
