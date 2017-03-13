@@ -114,6 +114,7 @@ jobs:
           repository: bosh-deployment-resource
           tag: version/version
           tag_prefix: v
+          only_tag: true
     - aggregate:
       - put: bosh-deployment-resource-github-release
         params:
