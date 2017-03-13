@@ -18,11 +18,11 @@ resources:
 - name: version
   type: semver
   source:
-    bucket: bosh-deployment-resource
-    key: current-version
-    access_key_id: {{bosh_deployment_resource_aws_access_key_id}}
-    secret_access_key: {{bosh_deployment_resource_aws_secret_access_key}}
-    initial_version: 0.0.1
+    driver: git
+    uri: git@github.com:cloudfoundry/bosh-deployment-resource
+    branch: version
+    file: version
+    private_key: {{bosh-deployment-resource-git-deploy-private-key}}
 
 - name: bosh-deployment-resource-github-release
   type: github-release
