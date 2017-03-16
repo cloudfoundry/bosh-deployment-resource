@@ -70,6 +70,15 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/cppforlife/go-semi-semantic/version",
+			"repository": "https://github.com/cppforlife/go-semi-semantic",
+			"vcs": "git",
+			"revision": "576b6af77ae4f3ccef356902fb3b9a9ae22e0b11",
+			"branch": "HEAD",
+			"path": "/version",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/golang/glog",
 			"repository": "https://github.com/golang/glog",
 			"vcs": "git",
