@@ -24,6 +24,15 @@ type FakeDirector struct {
 		result1 []byte
 		result2 error
 	}
+	ExportReleasesStub        func(targetDirectory string, releases []string) error
+	exportReleasesMutex       sync.RWMutex
+	exportReleasesArgsForCall []struct {
+		targetDirectory string
+		releases        []string
+	}
+	exportReleasesReturns struct {
+		result1 error
+	}
 	UploadReleaseStub        func(releaseURL string) error
 	uploadReleaseMutex       sync.RWMutex
 	uploadReleaseArgsForCall []struct {
@@ -107,6 +116,44 @@ func (fake *FakeDirector) DownloadManifestReturns(result1 []byte, result2 error)
 	}{result1, result2}
 }
 
+func (fake *FakeDirector) ExportReleases(targetDirectory string, releases []string) error {
+	var releasesCopy []string
+	if releases != nil {
+		releasesCopy = make([]string, len(releases))
+		copy(releasesCopy, releases)
+	}
+	fake.exportReleasesMutex.Lock()
+	fake.exportReleasesArgsForCall = append(fake.exportReleasesArgsForCall, struct {
+		targetDirectory string
+		releases        []string
+	}{targetDirectory, releasesCopy})
+	fake.recordInvocation("ExportReleases", []interface{}{targetDirectory, releasesCopy})
+	fake.exportReleasesMutex.Unlock()
+	if fake.ExportReleasesStub != nil {
+		return fake.ExportReleasesStub(targetDirectory, releases)
+	}
+	return fake.exportReleasesReturns.result1
+}
+
+func (fake *FakeDirector) ExportReleasesCallCount() int {
+	fake.exportReleasesMutex.RLock()
+	defer fake.exportReleasesMutex.RUnlock()
+	return len(fake.exportReleasesArgsForCall)
+}
+
+func (fake *FakeDirector) ExportReleasesArgsForCall(i int) (string, []string) {
+	fake.exportReleasesMutex.RLock()
+	defer fake.exportReleasesMutex.RUnlock()
+	return fake.exportReleasesArgsForCall[i].targetDirectory, fake.exportReleasesArgsForCall[i].releases
+}
+
+func (fake *FakeDirector) ExportReleasesReturns(result1 error) {
+	fake.ExportReleasesStub = nil
+	fake.exportReleasesReturns = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeDirector) UploadRelease(releaseURL string) error {
 	fake.uploadReleaseMutex.Lock()
 	fake.uploadReleaseArgsForCall = append(fake.uploadReleaseArgsForCall, struct {
@@ -178,6 +225,8 @@ func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	defer fake.deployMutex.RUnlock()
 	fake.downloadManifestMutex.RLock()
 	defer fake.downloadManifestMutex.RUnlock()
+	fake.exportReleasesMutex.RLock()
+	defer fake.exportReleasesMutex.RUnlock()
 	fake.uploadReleaseMutex.RLock()
 	defer fake.uploadReleaseMutex.RUnlock()
 	fake.uploadStemcellMutex.RLock()

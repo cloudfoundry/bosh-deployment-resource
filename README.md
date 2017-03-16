@@ -104,6 +104,18 @@ This will download the deployment manifest. It will place two files in the targe
 
 _Note_: Only the most recent version is fetchable
 
+#### Parameters
+
+* `compiled_releases`: *Optional.* List of compiled releases to download. Deployment can only have one stemcell.
+
+``` yaml
+- get: staging
+  params:
+    compiled_releases:
+    - name: release-one
+    - name: release-two
+```
+
 ### `out`: Deploy a BOSH deployment
 
 This will upload any given stemcells and releases, lock them down in the

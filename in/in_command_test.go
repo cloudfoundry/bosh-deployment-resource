@@ -4,7 +4,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"crypto/sha1"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -103,6 +105,48 @@ var _ = Describe("InCommand", func() {
 				_, err := inCommand.Run(inRequest, targetDir)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal("Requested deployment director is different than configured source"))
+			})
+		})
+
+		Context("when requesting compiled_releases", func() {
+			manifest := properYaml(`
+				releases:
+				- name: real-one
+				  version: "1"
+				- name: real-two
+				  version: "2.2"
+				stemcells:
+				- alias: default
+				  os: ubuntu-trusty
+				  version: "3309.8"
+			`)
+
+			BeforeEach(func() {
+				director.DownloadManifestReturns(manifest, nil)
+				inRequest.Version.ManifestSha1 = fmt.Sprintf("%x", sha1.Sum(manifest))
+				inRequest.Params.CompiledReleases = []concourse.CompiledRelease{
+					{Name: "real-one"},
+					{Name: "real-two"},
+				}
+			})
+
+			It("downloads each release with the version specified in the manifest", func() {
+				_, err := inCommand.Run(inRequest, targetDir)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(director.ExportReleasesCallCount()).To(Equal(1))
+
+				targetDir, releases := director.ExportReleasesArgsForCall(0)
+				Expect(targetDir).To(Equal(targetDir))
+				Expect(releases).To(Equal([]string{"real-one", "real-two"}))
+			})
+
+			Context("when exporting releases fails", func() {
+				It("errors", func() {
+					director.ExportReleasesReturns(errors.New("could not export"))
+					_, err := inCommand.Run(inRequest, targetDir)
+					Expect(err).To(MatchError(ContainSubstring("could not export")))
+				})
 			})
 		})
 	})

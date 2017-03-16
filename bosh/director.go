@@ -1,6 +1,7 @@
 package bosh
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -25,6 +26,7 @@ type DeployParams struct {
 type Director interface {
 	Deploy(manifestBytes []byte, deployParams DeployParams) error
 	DownloadManifest() ([]byte, error)
+	ExportReleases(targetDirectory string, releases []string) error
 	UploadRelease(releaseURL string) error
 	UploadStemcell(stemcellURL string) error
 }
@@ -107,6 +109,44 @@ func (d BoshDirector) UploadRelease(URL string) error {
 	return nil
 }
 
+func (d BoshDirector) ExportReleases(targetDirectory string, releases []string) error {
+	deploymentReleases, stemcell, err := d.releasesAndStemcell()
+	if err != nil {
+		return fmt.Errorf("could not export releases: %s", err)
+	}
+
+	releasesToDownload := []boshdir.Release{}
+
+	for _, release := range releases {
+		foundRelease := false
+		for _, deploymentRelease := range deploymentReleases {
+			if deploymentRelease.Name() == release {
+				releasesToDownload = append(releasesToDownload, deploymentRelease)
+				foundRelease = true
+			}
+		}
+
+		if !foundRelease {
+			return fmt.Errorf("could not find release %s in deployment", release)
+		}
+	}
+
+	for _, deploymentRelease := range releasesToDownload {
+		releaseSlug := boshdir.NewReleaseSlug(deploymentRelease.Name(), deploymentRelease.Version().AsString())
+		osVersionSlug := boshdir.NewOSVersionSlug(stemcell.OSName(), stemcell.Version().AsString())
+
+		err = d.commandRunner.Execute(&boshcmd.ExportReleaseOpts{
+			Args:      boshcmd.ExportReleaseArgs{ReleaseSlug: releaseSlug, OSVersionSlug: osVersionSlug},
+			Directory: boshcmd.DirOrCWDArg{Path: targetDirectory},
+		})
+		if err != nil {
+			return fmt.Errorf("could not export release %s: %s", deploymentRelease.Name(), err)
+		}
+	}
+
+	return nil
+}
+
 func (d BoshDirector) UploadStemcell(URL string) error {
 	err := d.commandRunner.Execute(&boshcmd.UploadStemcellOpts{
 		Args: boshcmd.UploadStemcellArgs{URL: boshcmd.URLArg(URL)},
@@ -117,6 +157,37 @@ func (d BoshDirector) UploadStemcell(URL string) error {
 	}
 
 	return nil
+}
+
+func (d BoshDirector) deployment() (boshdir.Deployment, error) {
+	deployment, err := d.cliDirector.FindDeployment(d.source.Deployment)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch deployment %s: %s", d.source.Deployment, err)
+	}
+
+	return deployment, nil
+}
+
+func (d BoshDirector) releasesAndStemcell() ([]boshdir.Release, boshdir.Stemcell, error) {
+	deployment, err := d.deployment()
+	if err != nil {
+		return []boshdir.Release{}, nil, err
+	}
+
+	releases, err := deployment.Releases()
+	if err != nil {
+		return []boshdir.Release{}, nil, fmt.Errorf("could not fetch releases: %s", err)
+	}
+
+	stemcells, err := deployment.Stemcells()
+	if err != nil {
+		return []boshdir.Release{}, nil, fmt.Errorf("could not fetch stemcells: %s", err)
+	}
+	if len(stemcells) > 1 {
+		return []boshdir.Release{}, nil, errors.New("exporting releases from a deployment with multiple stemcells is unsupported")
+	}
+
+	return releases, stemcells[0], nil
 }
 
 func varKVsFromVars(vars map[string]interface{}) []boshtpl.VarKV {

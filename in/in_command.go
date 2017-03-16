@@ -40,6 +40,14 @@ func (c InCommand) Run(inRequest concourse.InRequest, targetDir string) (InRespo
 		return InResponse{}, errors.New("Requested deployment version is not available")
 	}
 
+	releases := []string{}
+	for _, compiledRelease := range inRequest.Params.CompiledReleases {
+		releases = append(releases, compiledRelease.Name)
+	}
+	if err := c.director.ExportReleases(targetDir, releases); err != nil {
+		return InResponse{}, err
+	}
+
 	err = ioutil.WriteFile(filepath.Join(targetDir, "manifest.yml"), manifest, 0644)
 	if err != nil {
 		return InResponse{}, err

@@ -7,8 +7,9 @@ import (
 )
 
 type InRequest struct {
-	Source  Source  `json:"source"`
-	Version Version `json:"version"`
+	Source  Source   `json:"source"`
+	Version Version  `json:"version"`
+	Params  InParams `json:"params"`
 }
 
 func NewInRequest(request []byte) (InRequest, error) {

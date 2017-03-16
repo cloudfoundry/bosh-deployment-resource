@@ -13,8 +13,11 @@ import (
 	"github.com/cppforlife/go-patch/patch"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
+	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshdirfakes "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
+
+	"github.com/cppforlife/go-semi-semantic/version"
 )
 
 var _ = Describe("BoshDirector", func() {
@@ -189,6 +192,123 @@ var _ = Describe("BoshDirector", func() {
 				err := director.UploadRelease("my-cool-release")
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Could not upload release my-cool-release: failed communicating with director"))
+			})
+		})
+	})
+
+	Describe("ExportReleases", func() {
+		fakeDeployment := new(boshdirfakes.FakeDeployment)
+		var fakeStemcell *boshdirfakes.FakeStemcell
+
+		BeforeEach(func() {
+			version1, err := version.NewVersionFromString("123.45")
+			Expect(err).ToNot(HaveOccurred())
+			version2, err := version.NewVersionFromString("987.65")
+			Expect(err).ToNot(HaveOccurred())
+			version3, err := version.NewVersionFromString("abc.de")
+			Expect(err).ToNot(HaveOccurred())
+			stemcellVersion, err := version.NewVersionFromString("3.4.0")
+			Expect(err).ToNot(HaveOccurred())
+
+			fakeRelease1 := new(boshdirfakes.FakeRelease)
+			fakeRelease1.NameReturns("cool-release")
+			fakeRelease1.VersionReturns(version1)
+
+			fakeRelease2 := new(boshdirfakes.FakeRelease)
+			fakeRelease2.NameReturns("awesome-release")
+			fakeRelease2.VersionReturns(version2)
+
+			fakeRelease3 := new(boshdirfakes.FakeRelease)
+			fakeRelease3.NameReturns("not-requested")
+			fakeRelease3.VersionReturns(version3)
+
+			fakeDeployment.ReleasesReturns([]boshdir.Release{fakeRelease1, fakeRelease2, fakeRelease3}, nil)
+
+			fakeStemcell = new(boshdirfakes.FakeStemcell)
+			fakeStemcell.OSNameReturns("minix")
+			fakeStemcell.VersionReturns(stemcellVersion)
+			fakeDeployment.StemcellsReturns([]boshdir.Stemcell{fakeStemcell}, nil)
+
+			fakeBoshDirector.FindDeploymentReturns(fakeDeployment, nil)
+		})
+
+		It("downloads the given releases", func() {
+			err := director.ExportReleases("/tmp/foo", []string{"cool-release", "awesome-release"})
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(fakeBoshDirector.FindDeploymentCallCount()).To(Equal(1))
+			Expect(fakeBoshDirector.FindDeploymentArgsForCall(0)).To(Equal("cool-deployment"))
+
+			Expect(commandRunner.ExecuteCallCount()).To(Equal(2))
+
+			exportReleaseOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.ExportReleaseOpts)
+			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("cool-release"))
+			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("123.45"))
+			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
+			Expect(string(exportReleaseOpts.Args.OSVersionSlug.Version())).To(Equal("3.4.0"))
+			Expect(string(exportReleaseOpts.Directory.Path)).To(Equal("/tmp/foo"))
+
+			exportReleaseOpts = commandRunner.ExecuteArgsForCall(1).(*boshcmd.ExportReleaseOpts)
+			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("awesome-release"))
+			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("987.65"))
+			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
+			Expect(string(exportReleaseOpts.Args.OSVersionSlug.Version())).To(Equal("3.4.0"))
+			Expect(string(exportReleaseOpts.Directory.Path)).To(Equal("/tmp/foo"))
+		})
+
+		Context("when requesting a release not in the manifest", func() {
+			It("errors before downloading any releases", func() {
+				err := director.ExportReleases("/tmp/foo", []string{"cool-release", "awesome-release", "missing-release"})
+				Expect(err).To(MatchError(ContainSubstring("could not find release missing-release")))
+
+				Expect(commandRunner.ExecuteCallCount()).To(Equal(0))
+			})
+		})
+
+		Context("when there is more than one stemcell in the manifest", func() {
+			It("errors before downloading any releases", func() {
+				fakeDeployment.StemcellsReturns([]boshdir.Stemcell{fakeStemcell, fakeStemcell}, nil)
+
+				err := director.ExportReleases("/tmp/foo", []string{"cool-release", "awesome-release"})
+				Expect(err).To(MatchError(ContainSubstring("exporting releases from a deployment with multiple stemcells is unsupported")))
+
+				Expect(commandRunner.ExecuteCallCount()).To(Equal(0))
+			})
+		})
+
+		Context("when getting the deployment fails", func() {
+			It("returns an error", func() {
+				fakeBoshDirector.FindDeploymentReturns(fakeDeployment, errors.New("foo"))
+
+				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+				Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch deployment cool-deployment: foo")))
+			})
+		})
+
+		Context("when exporting releases fails", func() {
+			It("returns an error", func() {
+				commandRunner.ExecuteReturns(errors.New("failed communicating with director"))
+
+				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+				Expect(err).To(MatchError(ContainSubstring("could not export release cool-release: failed communicating with director")))
+			})
+		})
+
+		Context("when getting releases fails", func() {
+			It("returns an error", func() {
+				fakeDeployment.ReleasesReturns([]boshdir.Release{}, errors.New("foo"))
+
+				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+				Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch releases: foo")))
+			})
+		})
+
+		Context("when getting stemcells fails", func() {
+			It("returns an error", func() {
+				fakeDeployment.StemcellsReturns([]boshdir.Stemcell{}, errors.New("foo"))
+
+				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+				Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch stemcells: foo")))
 			})
 		})
 	})
