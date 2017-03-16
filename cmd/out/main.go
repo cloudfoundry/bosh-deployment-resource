@@ -40,8 +40,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	commandRunner := bosh.NewCommandRunner(outRequest.Source, os.Stderr)
-	director := bosh.NewBoshDirector(outRequest.Source, commandRunner, os.Stderr)
+	cliCoordinator := bosh.NewCLICoordinator(outRequest.Source, os.Stderr)
+	commandRunner := bosh.NewCommandRunner(cliCoordinator)
+	cliDirector, err := cliCoordinator.Director()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
+	}
+	director := bosh.NewBoshDirector(outRequest.Source, commandRunner, cliDirector)
+
 	storageClient, err := storage.NewStorageClient(outRequest.Source)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid vars store: %s\n", err)

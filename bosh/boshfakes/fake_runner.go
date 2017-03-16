@@ -16,15 +16,6 @@ type FakeRunner struct {
 	executeReturns struct {
 		result1 error
 	}
-	GetResultStub        func(commandOpts interface{}) ([]byte, error)
-	getResultMutex       sync.RWMutex
-	getResultArgsForCall []struct {
-		commandOpts interface{}
-	}
-	getResultReturns struct {
-		result1 []byte
-		result2 error
-	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -61,46 +52,11 @@ func (fake *FakeRunner) ExecuteReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeRunner) GetResult(commandOpts interface{}) ([]byte, error) {
-	fake.getResultMutex.Lock()
-	fake.getResultArgsForCall = append(fake.getResultArgsForCall, struct {
-		commandOpts interface{}
-	}{commandOpts})
-	fake.recordInvocation("GetResult", []interface{}{commandOpts})
-	fake.getResultMutex.Unlock()
-	if fake.GetResultStub != nil {
-		return fake.GetResultStub(commandOpts)
-	}
-	return fake.getResultReturns.result1, fake.getResultReturns.result2
-}
-
-func (fake *FakeRunner) GetResultCallCount() int {
-	fake.getResultMutex.RLock()
-	defer fake.getResultMutex.RUnlock()
-	return len(fake.getResultArgsForCall)
-}
-
-func (fake *FakeRunner) GetResultArgsForCall(i int) interface{} {
-	fake.getResultMutex.RLock()
-	defer fake.getResultMutex.RUnlock()
-	return fake.getResultArgsForCall[i].commandOpts
-}
-
-func (fake *FakeRunner) GetResultReturns(result1 []byte, result2 error) {
-	fake.GetResultStub = nil
-	fake.getResultReturns = struct {
-		result1 []byte
-		result2 error
-	}{result1, result2}
-}
-
 func (fake *FakeRunner) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
-	fake.getResultMutex.RLock()
-	defer fake.getResultMutex.RUnlock()
 	return fake.invocations
 }
 

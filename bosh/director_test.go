@@ -1,9 +1,7 @@
 package bosh_test
 
 import (
-	"bytes"
 	"errors"
-	"io"
 	"io/ioutil"
 
 	. "github.com/onsi/ginkgo"
@@ -12,25 +10,26 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-
 	"github.com/cppforlife/go-patch/patch"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
+	boshdirfakes "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 )
 
 var _ = Describe("BoshDirector", func() {
 	var (
-		director      bosh.BoshDirector
-		out           io.Writer
-		commandRunner *boshfakes.FakeRunner
-		sillyBytes    = []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
+		director         bosh.BoshDirector
+		commandRunner    *boshfakes.FakeRunner
+		sillyBytes       = []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
+		fakeBoshDirector *boshdirfakes.FakeDirector
 	)
 
 	BeforeEach(func() {
 		commandRunner = new(boshfakes.FakeRunner)
-		out = bytes.NewBufferString("")
-		director = bosh.NewBoshDirector(concourse.Source{}, commandRunner, out)
+		fakeBoshDirector = new(boshdirfakes.FakeDirector)
+
+		director = bosh.NewBoshDirector(concourse.Source{Deployment: "cool-deployment"}, commandRunner, fakeBoshDirector)
 	})
 
 	Describe("Deploy", func() {
@@ -139,21 +138,35 @@ var _ = Describe("BoshDirector", func() {
 
 	Describe("DownloadManifest", func() {
 		It("gets the deployment manifest", func() {
-			commandRunner.GetResultReturns(sillyBytes, nil)
+			fakeDeployment := boshdirfakes.FakeDeployment{}
+			fakeBoshDirector.FindDeploymentReturns(&fakeDeployment, nil)
+			fakeDeployment.ManifestReturns(string(sillyBytes), nil)
 
 			manifestBytes, err := director.DownloadManifest()
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(manifestBytes).To(Equal(sillyBytes))
+			Expect(fakeBoshDirector.FindDeploymentArgsForCall(0)).To(Equal("cool-deployment"))
+		})
+
+		Context("when getting the deployment fails", func() {
+			It("returns an error", func() {
+				fakeDeployment := boshdirfakes.FakeDeployment{}
+				fakeBoshDirector.FindDeploymentReturns(&fakeDeployment, errors.New("Your deployment is missing"))
+
+				_, err := director.DownloadManifest()
+				Expect(err).To(MatchError(ContainSubstring("Your deployment is missing")))
+			})
 		})
 
 		Context("when getting the manifest fails", func() {
 			It("returns an error", func() {
-				commandRunner.GetResultReturns(nil, errors.New("Your manifest is missing"))
+				fakeDeployment := boshdirfakes.FakeDeployment{}
+				fakeBoshDirector.FindDeploymentReturns(&fakeDeployment, nil)
+				fakeDeployment.ManifestReturns(string(sillyBytes), errors.New("Your manifest could not be found"))
 
 				_, err := director.DownloadManifest()
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("Your manifest is missing"))
+				Expect(err).To(MatchError(ContainSubstring("Your manifest could not be found")))
 			})
 		})
 	})

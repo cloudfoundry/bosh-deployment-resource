@@ -39,15 +39,20 @@ func main() {
 
 	targetDir := os.Args[1]
 
-	commandRunner := bosh.NewCommandRunner(inRequest.Source, os.Stderr)
-	director := bosh.NewBoshDirector(inRequest.Source, commandRunner, os.Stderr)
+	cliCoordinator := bosh.NewCLICoordinator(inRequest.Source, os.Stderr)
+	commandRunner := bosh.NewCommandRunner(cliCoordinator)
+	cliDirector, err := cliCoordinator.Director()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
+	}
+	director := bosh.NewBoshDirector(inRequest.Source, commandRunner, cliDirector)
 
 	inCommand := in.NewInCommand(director)
 	inResponse, err := inCommand.Run(inRequest, targetDir)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
-
 	}
 
 	concourseInputFormatted, err := json.MarshalIndent(inResponse, "", "  ")

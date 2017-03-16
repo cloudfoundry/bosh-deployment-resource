@@ -2,13 +2,12 @@ package bosh
 
 import (
 	"fmt"
-	"io"
+	"io/ioutil"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
-	"io/ioutil"
-
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
+	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
@@ -33,14 +32,14 @@ type Director interface {
 type BoshDirector struct {
 	source        concourse.Source
 	commandRunner Runner
-	out           io.Writer
+	cliDirector   boshdir.Director
 }
 
-func NewBoshDirector(source concourse.Source, commandRunner Runner, out io.Writer) BoshDirector {
+func NewBoshDirector(source concourse.Source, commandRunner Runner, cliDirector boshdir.Director) BoshDirector {
 	return BoshDirector{
 		source:        source,
 		commandRunner: commandRunner,
-		out:           out,
+		cliDirector:   cliDirector,
 	}
 }
 
@@ -87,13 +86,13 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 }
 
 func (d BoshDirector) DownloadManifest() ([]byte, error) {
-	bytes, err := d.commandRunner.GetResult(&boshcmd.ManifestOpts{})
-
+	desiredDeployment, err := d.cliDirector.FindDeployment(d.source.Deployment)
 	if err != nil {
 		return nil, fmt.Errorf("Could not get deployment manifest: %s\n", err)
 	}
 
-	return bytes, nil
+	manifest, err := desiredDeployment.Manifest()
+	return []byte(manifest), err
 }
 
 func (d BoshDirector) UploadRelease(URL string) error {

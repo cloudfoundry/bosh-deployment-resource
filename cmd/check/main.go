@@ -29,15 +29,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	commandRunner := bosh.NewCommandRunner(checkRequest.Source, os.Stderr)
-	director := bosh.NewBoshDirector(checkRequest.Source, commandRunner, os.Stderr)
+	cliCoordinator := bosh.NewCLICoordinator(checkRequest.Source, os.Stderr)
+	commandRunner := bosh.NewCommandRunner(cliCoordinator)
+	cliDirector, err := cliCoordinator.Director()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
+	}
+	director := bosh.NewBoshDirector(checkRequest.Source, commandRunner, cliDirector)
 
 	checkCommand := check.NewCheckCommand(director)
 	checkResponse, err := checkCommand.Run(checkRequest)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
-
 	}
 
 	concourseOutputFormatted, err := json.MarshalIndent(checkResponse, "", "  ")
