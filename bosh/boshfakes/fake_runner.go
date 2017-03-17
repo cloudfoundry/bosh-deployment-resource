@@ -16,6 +16,15 @@ type FakeRunner struct {
 	executeReturns struct {
 		result1 error
 	}
+	ExecuteWithDefaultOverrideStub        func(commandOpts interface{}, override func(interface{}) (interface{}, error)) error
+	executeWithDefaultOverrideMutex       sync.RWMutex
+	executeWithDefaultOverrideArgsForCall []struct {
+		commandOpts interface{}
+		override    func(interface{}) (interface{}, error)
+	}
+	executeWithDefaultOverrideReturns struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -52,11 +61,46 @@ func (fake *FakeRunner) ExecuteReturns(result1 error) {
 	}{result1}
 }
 
+func (fake *FakeRunner) ExecuteWithDefaultOverride(commandOpts interface{}, override func(interface{}) (interface{}, error)) error {
+	fake.executeWithDefaultOverrideMutex.Lock()
+	fake.executeWithDefaultOverrideArgsForCall = append(fake.executeWithDefaultOverrideArgsForCall, struct {
+		commandOpts interface{}
+		override    func(interface{}) (interface{}, error)
+	}{commandOpts, override})
+	fake.recordInvocation("ExecuteWithDefaultOverride", []interface{}{commandOpts, override})
+	fake.executeWithDefaultOverrideMutex.Unlock()
+	if fake.ExecuteWithDefaultOverrideStub != nil {
+		return fake.ExecuteWithDefaultOverrideStub(commandOpts, override)
+	}
+	return fake.executeWithDefaultOverrideReturns.result1
+}
+
+func (fake *FakeRunner) ExecuteWithDefaultOverrideCallCount() int {
+	fake.executeWithDefaultOverrideMutex.RLock()
+	defer fake.executeWithDefaultOverrideMutex.RUnlock()
+	return len(fake.executeWithDefaultOverrideArgsForCall)
+}
+
+func (fake *FakeRunner) ExecuteWithDefaultOverrideArgsForCall(i int) (interface{}, func(interface{}) (interface{}, error)) {
+	fake.executeWithDefaultOverrideMutex.RLock()
+	defer fake.executeWithDefaultOverrideMutex.RUnlock()
+	return fake.executeWithDefaultOverrideArgsForCall[i].commandOpts, fake.executeWithDefaultOverrideArgsForCall[i].override
+}
+
+func (fake *FakeRunner) ExecuteWithDefaultOverrideReturns(result1 error) {
+	fake.ExecuteWithDefaultOverrideStub = nil
+	fake.executeWithDefaultOverrideReturns = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeRunner) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
+	fake.executeWithDefaultOverrideMutex.RLock()
+	defer fake.executeWithDefaultOverrideMutex.RUnlock()
 	return fake.invocations
 }
 

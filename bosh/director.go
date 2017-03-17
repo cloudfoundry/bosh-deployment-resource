@@ -135,10 +135,20 @@ func (d BoshDirector) ExportReleases(targetDirectory string, releases []string) 
 		releaseSlug := boshdir.NewReleaseSlug(deploymentRelease.Name(), deploymentRelease.Version().AsString())
 		osVersionSlug := boshdir.NewOSVersionSlug(stemcell.OSName(), stemcell.Version().AsString())
 
-		err = d.commandRunner.Execute(&boshcmd.ExportReleaseOpts{
+		directory := boshcmd.DirOrCWDArg{}
+		directoryFixFunction := func(defaultedOps interface{}) (interface{}, error) {
+			switch v := defaultedOps.(type) {
+			case (*boshcmd.ExportReleaseOpts):
+				v.Directory.Path = targetDirectory
+			default:
+				panic("todo")
+			}
+			return defaultedOps, nil
+		}
+		err = d.commandRunner.ExecuteWithDefaultOverride(&boshcmd.ExportReleaseOpts{
 			Args:      boshcmd.ExportReleaseArgs{ReleaseSlug: releaseSlug, OSVersionSlug: osVersionSlug},
-			Directory: boshcmd.DirOrCWDArg{Path: targetDirectory},
-		})
+			Directory: directory,
+		}, directoryFixFunction)
 		if err != nil {
 			return fmt.Errorf("could not export release %s: %s", deploymentRelease.Name(), err)
 		}
@@ -186,7 +196,7 @@ func (d BoshDirector) releasesAndStemcell() ([]boshdir.Release, boshdir.Stemcell
 	if len(deploymentStemcells) > 1 {
 		return []boshdir.Release{}, nil, errors.New("exporting releases from a deployment with multiple stemcells is unsupported")
 	}
-	directorStemcells, err :=  d.cliDirector.Stemcells()
+	directorStemcells, err := d.cliDirector.Stemcells()
 	if err != nil {
 		return []boshdir.Release{}, nil, fmt.Errorf("could not fetch stemcells: %s", err)
 	}

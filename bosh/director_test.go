@@ -247,21 +247,25 @@ var _ = Describe("BoshDirector", func() {
 			Expect(fakeBoshDirector.FindDeploymentCallCount()).To(Equal(1))
 			Expect(fakeBoshDirector.FindDeploymentArgsForCall(0)).To(Equal("cool-deployment"))
 
-			Expect(commandRunner.ExecuteCallCount()).To(Equal(2))
+			Expect(commandRunner.ExecuteWithDefaultOverrideCallCount()).To(Equal(2))
 
-			exportReleaseOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.ExportReleaseOpts)
+			opts, optFunc := commandRunner.ExecuteWithDefaultOverrideArgsForCall(0)
+			exportReleaseOpts, _ := opts.(*boshcmd.ExportReleaseOpts)
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("cool-release"))
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("123.45"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.Version())).To(Equal("3.4.0"))
-			Expect(string(exportReleaseOpts.Directory.Path)).To(Equal("/tmp/foo"))
 
-			exportReleaseOpts = commandRunner.ExecuteArgsForCall(1).(*boshcmd.ExportReleaseOpts)
+			fixedOpts, err := optFunc(&boshcmd.ExportReleaseOpts{Directory: boshcmd.DirOrCWDArg{Path: "wrong-path"}})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(fixedOpts.(*boshcmd.ExportReleaseOpts).Directory.Path).To(Equal("/tmp/foo"))
+
+			opts, optFunc = commandRunner.ExecuteWithDefaultOverrideArgsForCall(1)
+			exportReleaseOpts, _ = opts.(*boshcmd.ExportReleaseOpts)
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("awesome-release"))
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("987.65"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.Version())).To(Equal("3.4.0"))
-			Expect(string(exportReleaseOpts.Directory.Path)).To(Equal("/tmp/foo"))
 		})
 
 		Context("when requesting a release not in the manifest", func() {
@@ -295,7 +299,7 @@ var _ = Describe("BoshDirector", func() {
 
 		Context("when exporting releases fails", func() {
 			It("returns an error", func() {
-				commandRunner.ExecuteReturns(errors.New("failed communicating with director"))
+				commandRunner.ExecuteWithDefaultOverrideReturns(errors.New("failed communicating with director"))
 
 				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
 				Expect(err).To(MatchError(ContainSubstring("could not export release cool-release: failed communicating with director")))
