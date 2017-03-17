@@ -179,15 +179,27 @@ func (d BoshDirector) releasesAndStemcell() ([]boshdir.Release, boshdir.Stemcell
 		return []boshdir.Release{}, nil, fmt.Errorf("could not fetch releases: %s", err)
 	}
 
-	stemcells, err := deployment.Stemcells()
+	deploymentStemcells, err := deployment.Stemcells()
 	if err != nil {
 		return []boshdir.Release{}, nil, fmt.Errorf("could not fetch stemcells: %s", err)
 	}
-	if len(stemcells) > 1 {
+	if len(deploymentStemcells) > 1 {
 		return []boshdir.Release{}, nil, errors.New("exporting releases from a deployment with multiple stemcells is unsupported")
 	}
+	directorStemcells, err :=  d.cliDirector.Stemcells()
+	if err != nil {
+		return []boshdir.Release{}, nil, fmt.Errorf("could not fetch stemcells: %s", err)
+	}
 
-	return releases, stemcells[0], nil
+	var stemcell boshdir.Stemcell
+	for _, directorStemcell := range directorStemcells {
+		if directorStemcell.Name() == deploymentStemcells[0].Name() && directorStemcell.Version().IsEq(deploymentStemcells[0].Version()) {
+			stemcell = directorStemcell
+			break
+		}
+	}
+
+	return releases, stemcell, nil
 }
 
 func varKVsFromVars(vars map[string]interface{}) []boshtpl.VarKV {

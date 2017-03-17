@@ -198,7 +198,8 @@ var _ = Describe("BoshDirector", func() {
 
 	Describe("ExportReleases", func() {
 		fakeDeployment := new(boshdirfakes.FakeDeployment)
-		var fakeStemcell *boshdirfakes.FakeStemcell
+		var fakeDeploymentStemcell *boshdirfakes.FakeStemcell
+		var fakeDirectorStemcell *boshdirfakes.FakeStemcell
 
 		BeforeEach(func() {
 			version1, err := version.NewVersionFromString("123.45")
@@ -224,10 +225,17 @@ var _ = Describe("BoshDirector", func() {
 
 			fakeDeployment.ReleasesReturns([]boshdir.Release{fakeRelease1, fakeRelease2, fakeRelease3}, nil)
 
-			fakeStemcell = new(boshdirfakes.FakeStemcell)
-			fakeStemcell.OSNameReturns("minix")
-			fakeStemcell.VersionReturns(stemcellVersion)
-			fakeDeployment.StemcellsReturns([]boshdir.Stemcell{fakeStemcell}, nil)
+			fakeDeploymentStemcell = new(boshdirfakes.FakeStemcell)
+			fakeDeploymentStemcell.NameReturns("bosh-monkey-minix-go_agent")
+			fakeDeploymentStemcell.VersionReturns(stemcellVersion)
+			fakeDeployment.StemcellsReturns([]boshdir.Stemcell{fakeDeploymentStemcell}, nil)
+
+			fakeDirectorStemcell = new(boshdirfakes.FakeStemcell)
+			fakeDirectorStemcell.NameReturns("bosh-monkey-minix-go_agent")
+			fakeDirectorStemcell.OSNameReturns("minix")
+			fakeDirectorStemcell.VersionReturns(stemcellVersion)
+			fakeBoshDirector.StemcellsReturns([]boshdir.Stemcell{fakeDirectorStemcell}, nil)
+
 
 			fakeBoshDirector.FindDeploymentReturns(fakeDeployment, nil)
 		})
@@ -267,7 +275,7 @@ var _ = Describe("BoshDirector", func() {
 
 		Context("when there is more than one stemcell in the manifest", func() {
 			It("errors before downloading any releases", func() {
-				fakeDeployment.StemcellsReturns([]boshdir.Stemcell{fakeStemcell, fakeStemcell}, nil)
+				fakeDeployment.StemcellsReturns([]boshdir.Stemcell{fakeDeploymentStemcell, fakeDeploymentStemcell}, nil)
 
 				err := director.ExportReleases("/tmp/foo", []string{"cool-release", "awesome-release"})
 				Expect(err).To(MatchError(ContainSubstring("exporting releases from a deployment with multiple stemcells is unsupported")))
@@ -304,12 +312,24 @@ var _ = Describe("BoshDirector", func() {
 		})
 
 		Context("when getting stemcells fails", func() {
-			It("returns an error", func() {
-				fakeDeployment.StemcellsReturns([]boshdir.Stemcell{}, errors.New("foo"))
+			Context("from the deployment", func(){
+				It("returns an error", func() {
+					fakeDeployment.StemcellsReturns([]boshdir.Stemcell{}, errors.New("foo"))
 
-				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
-				Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch stemcells: foo")))
+					err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+					Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch stemcells: foo")))
+				})
 			})
+
+			Context("from the director", func(){
+				It("returns an error", func() {
+					fakeBoshDirector.StemcellsReturns([]boshdir.Stemcell{}, errors.New("foo"))
+
+					err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+					Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch stemcells: foo")))
+				})
+			})
+
 		})
 	})
 
