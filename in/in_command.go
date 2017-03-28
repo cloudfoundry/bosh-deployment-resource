@@ -24,12 +24,14 @@ func NewInCommand(director bosh.Director) InCommand {
 }
 
 func (c InCommand) Run(inRequest concourse.InRequest, targetDir string) (InResponse, error) {
+	if inRequest.Source.Target == "" {
+		return InResponse{Version: inRequest.Version}, nil
+	}
 	manifest, err := c.director.DownloadManifest()
 
 	if err != nil {
 		return InResponse{}, err
 	}
-
 	actualVersion := concourse.NewVersion(manifest, inRequest.Source.Target)
 
 	if actualVersion.Target != inRequest.Version.Target {
