@@ -72,9 +72,9 @@ var _ = Describe("InCommand", func() {
 			}))
 		})
 
-		Context("when no target is provided", func() {
+		Context("when the target is missing", func() {
 			BeforeEach(func() {
-				inRequest.Source.Target = ""
+				inRequest.Source.Target = concourse.MissingTarget
 			})
 
 			It("no-ops assuming this is an implicit get after using a dynamic source file", func() {
