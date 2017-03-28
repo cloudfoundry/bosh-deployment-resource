@@ -13,10 +13,6 @@ import (
 )
 
 func main() {
-	//remove when https://github.com/cloudfoundry/bosh-cli/pull/135
-	realStdout := os.Stdout
-	os.Stdout = os.Stderr
-
 	stdin, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
@@ -51,5 +47,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(realStdout, "%s", concourseOutputFormatted)
+	fmt.Fprintf(os.Stdout, "%s", concourseOutputFormatted)
 }

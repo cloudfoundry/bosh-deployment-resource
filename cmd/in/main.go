@@ -3,11 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-
 	"io/ioutil"
-
-	"io"
+	"os"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
@@ -15,10 +12,6 @@ import (
 )
 
 func main() {
-	//remove when https://github.com/cloudfoundry/bosh-cli/pull/135
-	realStdout := os.Stdout
-	os.Stdout = os.Stderr
-
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
 			"not enough args - usage: %s <target directory>\n",
@@ -43,7 +36,7 @@ func main() {
 
 	if inRequest.Source.Target == concourse.MissingTarget {
 		inResponse := in.InResponse{Version: inRequest.Version}
-		printResponse(realStdout, inResponse)
+		printResponse(inResponse)
 		os.Exit(0)
 	}
 
@@ -63,15 +56,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	printResponse(realStdout, inResponse)
+	printResponse(inResponse)
 }
 
-func printResponse(realStdout io.Writer, inResponse in.InResponse) {
+func printResponse(inResponse in.InResponse) {
 	concourseInputFormatted, err := json.MarshalIndent(inResponse, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not generate version: %s\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(realStdout, "%s", concourseInputFormatted)
+	fmt.Fprintf(os.Stdout, "%s", concourseInputFormatted)
 }

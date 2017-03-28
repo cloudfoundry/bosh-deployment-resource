@@ -14,10 +14,6 @@ import (
 )
 
 func main() {
-	//remove when https://github.com/cloudfoundry/bosh-cli/pull/135
-	realStdout := os.Stdout
-	os.Stdout = os.Stderr
-
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
 			"not enough args - usage: %s <sources directory>\n",
@@ -68,5 +64,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(realStdout, "%s", concourseOutputFormatted)
+	fmt.Fprintf(os.Stdout, "%s", concourseOutputFormatted)
 }
