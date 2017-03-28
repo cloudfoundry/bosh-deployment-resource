@@ -236,7 +236,6 @@ var _ = Describe("BoshDirector", func() {
 			fakeDirectorStemcell.VersionReturns(stemcellVersion)
 			fakeBoshDirector.StemcellsReturns([]boshdir.Stemcell{fakeDirectorStemcell}, nil)
 
-
 			fakeBoshDirector.FindDeploymentReturns(fakeDeployment, nil)
 		})
 
@@ -316,7 +315,7 @@ var _ = Describe("BoshDirector", func() {
 		})
 
 		Context("when getting stemcells fails", func() {
-			Context("from the deployment", func(){
+			Context("from the deployment", func() {
 				It("returns an error", func() {
 					fakeDeployment.StemcellsReturns([]boshdir.Stemcell{}, errors.New("foo"))
 
@@ -325,7 +324,7 @@ var _ = Describe("BoshDirector", func() {
 				})
 			})
 
-			Context("from the director", func(){
+			Context("from the director", func() {
 				It("returns an error", func() {
 					fakeBoshDirector.StemcellsReturns([]boshdir.Stemcell{}, errors.New("foo"))
 
