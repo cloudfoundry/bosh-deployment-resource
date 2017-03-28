@@ -24,9 +24,6 @@ func NewInCommand(director bosh.Director) InCommand {
 }
 
 func (c InCommand) Run(inRequest concourse.InRequest, targetDir string) (InResponse, error) {
-	if inRequest.Source.Target == concourse.MissingTarget {
-		return InResponse{Version: inRequest.Version}, nil
-	}
 	manifest, err := c.director.DownloadManifest()
 
 	if err != nil {

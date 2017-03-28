@@ -72,28 +72,6 @@ var _ = Describe("InCommand", func() {
 			}))
 		})
 
-		Context("when the target is missing", func() {
-			BeforeEach(func() {
-				inRequest.Source.Target = concourse.MissingTarget
-			})
-
-			It("no-ops assuming this is an implicit get after using a dynamic source file", func() {
-				inResponse, err := inCommand.Run(inRequest, targetDir)
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(director.DownloadManifestCallCount()).To(Equal(0))
-				_, err = ioutil.ReadFile(filepath.Join(targetDir, "manifest.yml"))
-				Expect(err).To(HaveOccurred())
-
-				_, err = ioutil.ReadFile(filepath.Join(targetDir, "target"))
-				Expect(err).To(HaveOccurred())
-
-				Expect(inResponse).To(Equal(in.InResponse{
-					Version: inRequest.Version,
-				}))
-			})
-		})
-
 		Context("when the manifest download fails", func() {
 			BeforeEach(func() {
 				director.DownloadManifestReturns(nil, errors.New("could not download manifest"))

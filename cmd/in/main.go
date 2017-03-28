@@ -7,6 +7,8 @@ import (
 
 	"io/ioutil"
 
+	"io"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/in"
@@ -39,6 +41,12 @@ func main() {
 
 	targetDir := os.Args[1]
 
+	if inRequest.Source.Target == concourse.MissingTarget {
+		inResponse := in.InResponse{Version: inRequest.Version}
+		printResponse(realStdout, inResponse)
+		os.Exit(0)
+	}
+
 	cliCoordinator := bosh.NewCLICoordinator(inRequest.Source, os.Stderr)
 	commandRunner := bosh.NewCommandRunner(cliCoordinator)
 	cliDirector, err := cliCoordinator.Director()
@@ -55,6 +63,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	printResponse(realStdout, inResponse)
+}
+
+func printResponse(realStdout io.Writer, inResponse in.InResponse) {
 	concourseInputFormatted, err := json.MarshalIndent(inResponse, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not generate version: %s\n", err)
