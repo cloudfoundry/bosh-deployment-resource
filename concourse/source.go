@@ -8,15 +8,17 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 type Source struct {
-	Deployment   string    `json:"deployment"`
-	Client       string    `json:"client"`
-	ClientSecret string    `json:"client_secret"`
-	Target       string    `json:"target"`
-	CACert       string    `json:"ca_cert"`
-	VarsStore    VarsStore `json:"vars_store"`
+	Deployment   string    `json:"deployment,omitempty" yaml:"deployment"`
+	Client       string    `json:"client,omitempty" yaml:"client"`
+	ClientSecret string    `json:"client_secret,omitempty" yaml:"client_secret"`
+	Target       string    `json:"target,omitempty" yaml:"target"`
+	CACert       string    `json:"ca_cert,omitempty" yaml:"ca_cert"`
+	VarsStore    VarsStore `json:"vars_store,omitempty" yaml:"vars_store"`
 }
 
 type sourceRequest struct {
@@ -40,7 +42,15 @@ func NewDynamicSource(config []byte, sourcesDir string) (Source, error) {
 			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
 		}
 
-		if err := json.Unmarshal(source, &sourceRequest.Source); err != nil {
+		var tempSource Source
+		yaml.Unmarshal(source, &tempSource)
+
+		jsonBytes, err := json.Marshal(tempSource)
+		if err != nil {
+			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
+		}
+
+		if err := json.Unmarshal(jsonBytes, &sourceRequest.Source); err != nil {
 			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
 		}
 	}

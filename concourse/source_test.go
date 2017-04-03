@@ -58,18 +58,16 @@ var _ = Describe("NewDynamicSource", func() {
 
 		BeforeEach(func() {
 			sourceFile, _ := ioutil.TempFile("", "")
-			sourceFile.WriteString(`{
-				"deployment": "fileDeployment",
-				"target": "fileDirector.com",
-				"client_secret": "fileSecret",
-				"vars_store": {
-					"provider": "fileProvider",
-					"config": {
-						"file": "vars",
-						"keys": "dynamic-keys"
-					}
-				}
-			}`)
+			sourceFile.Write(properYaml(`
+				deployment: fileDeployment
+				target: fileDirector.com
+				client_secret: fileSecret
+				vars_store:
+					provider: fileProvider
+					config:
+						file: vars
+						keys: dynamic-keys
+			`))
 			sourceFile.Close()
 
 			sourcesDir = filepath.Dir(sourceFile.Name())
