@@ -1,4 +1,4 @@
-FROM concourse/buildroot:base
+FROM concourse/buildroot:git
 MAINTAINER https://github.com/cloudfoundry/bosh-deployment-resource
 
 ADD check /opt/resource/check
