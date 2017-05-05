@@ -85,4 +85,12 @@ var _ = Describe("GlobUnfurler", func() {
 			Expect(err.Error()).To(ContainSubstring("/[ is not a valid file glob"))
 		})
 	})
+
+	Context("when a glob matches no files", func() {
+		It("returns an error", func() {
+			_, err := tools.UnfurlGlobs(releaseDir, []string{"zzzzz"})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("zzzzz does not match any files"))
+		})
+	})
 })
