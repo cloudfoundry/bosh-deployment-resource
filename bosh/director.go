@@ -46,10 +46,6 @@ func NewBoshDirector(source concourse.Source, commandRunner Runner, cliDirector 
 }
 
 func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) error {
-	if deployParams.Cleanup {
-		d.commandRunner.Execute(&boshcmd.CleanUpOpts{})
-	}
-
 	boshVarsFiles, err := parsedVarsFiles(deployParams.VarsFiles)
 	if err != nil {
 		return err
@@ -82,6 +78,10 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 	err = d.commandRunner.Execute(&deployOpts)
 	if err != nil {
 		return fmt.Errorf("Could not deploy: %s\n", err)
+	}
+
+	if deployParams.Cleanup {
+		d.commandRunner.Execute(&boshcmd.CleanUpOpts{})
 	}
 
 	return nil
