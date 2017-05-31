@@ -38,10 +38,10 @@ resource_types:
 
   ```
   provider: gcs
-    config:
-      bucket: my-bucket
-      file_name: path/to/vars-store.yml
-      json_key: "{\"type\": \"service_account\"}"
+  config:
+    bucket: my-bucket
+    file_name: path/to/vars-store.yml
+    json_key: "{\"type\": \"service_account\"}"
   ```
 
 ### Example
