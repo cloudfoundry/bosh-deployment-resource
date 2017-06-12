@@ -78,6 +78,39 @@ var _ = Describe("NewOutRequest", func() {
 		}))
 	})
 
+	Context("when the dry run flag is true", func() {
+		It("set dryrun to true in OutParams", func() {
+			config := []byte(`{
+				"params": {
+					"manifest": "path/to/manifest.yml",
+					"dry_run": true
+				},
+				"source": {
+					"deployment": "mydeployment",
+					"target": "director.example.com",
+					"client": "foo",
+					"client_secret": "foobar"
+				}
+			}`)
+
+			source, err := concourse.NewOutRequest(config, "")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(source).To(Equal(concourse.OutRequest{
+				Source: concourse.Source{
+					Deployment:   "mydeployment",
+					Target:       "director.example.com",
+					Client:       "foo",
+					ClientSecret: "foobar",
+				},
+				Params: concourse.OutParams{
+					Manifest: "path/to/manifest.yml",
+					DryRun:   true,
+				},
+			}))
+		})
+	})
+
 	Context("when source_file param is passed", func() {
 		It("overrides source with the values in the source_file", func() {
 			sourceFile, _ := ioutil.TempFile("", "")

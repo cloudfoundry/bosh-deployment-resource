@@ -59,8 +59,10 @@ var _ = Describe("BoshDirector", func() {
 			opsFile.Write(opsFileContents)
 
 			noRedact := true
+			dryRun := false
 			err := director.Deploy(sillyBytes, bosh.DeployParams{
 				NoRedact:  noRedact,
+				DryRun:    dryRun,
 				Vars:      vars,
 				VarsFiles: []string{varFile.Name()},
 				OpsFiles:  []string{opsFile.Name()},
@@ -72,6 +74,7 @@ var _ = Describe("BoshDirector", func() {
 			deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
 			Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 			Expect(deployOpts.NoRedact).To(Equal(noRedact))
+			Expect(deployOpts.DryRun).To(Equal(dryRun))
 			Expect(deployOpts.VarKVs).To(Equal(varKVs))
 			Expect(len(deployOpts.VarsFiles)).To(Equal(1))
 			Expect(deployOpts.VarsFiles[0].Vars).To(Equal(boshtpl.StaticVariables{
@@ -135,6 +138,22 @@ var _ = Describe("BoshDirector", func() {
 
 				deployOpts := commandRunner.ExecuteArgsForCall(1).(*boshcmd.DeployOpts)
 				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+			})
+		})
+
+		Context("when dryrun is specified", func() {
+			It("use dry-run flags", func() {
+				dryRun := true
+				err := director.Deploy(sillyBytes, bosh.DeployParams{
+					DryRun: dryRun,
+				})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
+
+				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+				Expect(deployOpts.DryRun).To(Equal(dryRun))
 			})
 		})
 	})
