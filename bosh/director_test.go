@@ -127,17 +127,17 @@ var _ = Describe("BoshDirector", func() {
 		})
 
 		Context("when cleanup is specified", func() {
-			It("runs a cleanup before the deploy", func() {
+			It("runs a cleanup after the deploy", func() {
 				err := director.Deploy(sillyBytes, bosh.DeployParams{Cleanup: true})
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(commandRunner.ExecuteCallCount()).To(Equal(2))
 
-				cleanUpOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.CleanUpOpts)
-				Expect(cleanUpOpts.All).To(Equal(false))
-
-				deployOpts := commandRunner.ExecuteArgsForCall(1).(*boshcmd.DeployOpts)
+				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
 				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+
+				cleanUpOpts := commandRunner.ExecuteArgsForCall(1).(*boshcmd.CleanUpOpts)
+				Expect(cleanUpOpts.All).To(Equal(false))
 			})
 		})
 
