@@ -81,6 +81,27 @@ var _ = Describe("OutCommand", func() {
 			}))
 		})
 
+		It("dryrun deploys", func() {
+
+			outRequest.Params.DryRun = true
+
+			_, err := outCommand.Run(outRequest)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(director.DeployCallCount()).To(Equal(1))
+			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
+			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
+			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
+				NoRedact:  true,
+				DryRun:    true,
+				VarsFiles: []string{},
+				OpsFiles:  []string{},
+				Vars: map[string]interface{}{
+					"foo": "bar",
+				},
+			}))
+		})
+
 		It("returns the new version", func() {
 			sillyBytes := []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
 			director.DownloadManifestReturns(sillyBytes, nil)

@@ -64,6 +64,7 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 
 	deployParams := bosh.DeployParams{
 		NoRedact:  outRequest.Params.NoRedact,
+		DryRun:    outRequest.Params.DryRun,
 		Cleanup:   outRequest.Params.Cleanup,
 		Vars:      outRequest.Params.Vars,
 		VarsFiles: varsFilePaths,
