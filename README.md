@@ -95,7 +95,7 @@ Sample source file:
 
 ## Behaviour
 
-### `in`: Deploy a BOSH deployment
+### `in`: Download information about a BOSH deployment
 
 This will download the deployment manifest. It will place two files in the target directory:
 
