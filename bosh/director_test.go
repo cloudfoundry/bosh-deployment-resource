@@ -2,6 +2,7 @@ package bosh_test
 
 import (
 	"errors"
+	"io"
 	"io/ioutil"
 
 	. "github.com/onsi/ginkgo"
@@ -158,6 +159,79 @@ var _ = Describe("BoshDirector", func() {
 		})
 	})
 
+	Describe("Interpolate", func() {
+		var interpolatedBytes = []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
+
+		BeforeEach(func() {
+			commandRunner.ExecuteWithWriterStub = func(commandOpts interface{}, writer io.Writer) error {
+				_, err := writer.Write(interpolatedBytes)
+				Expect(err).NotTo(HaveOccurred())
+				return nil
+			}
+		})
+
+		It("tells interpolates a BOSH manifest", func() {
+			vars := map[string]interface{}{"foo": "bar"}
+			varKVs := []boshtpl.VarKV{
+				{
+					Name:  "foo",
+					Value: "bar",
+				},
+			}
+			varFileContents := properYaml(`
+				baz: "best-bar"
+			`)
+			varFile, _ := ioutil.TempFile("", "var-file-1")
+			varFile.Write(varFileContents)
+
+			opsFileContents := properYaml(`
+				- type: replace
+				  path: /my?/new_key
+				  value: awesome
+			`)
+			opsFile, _ := ioutil.TempFile("", "ops-file-1")
+			opsFile.Write(opsFileContents)
+
+			manifest, err := director.Interpolate(sillyBytes, bosh.InterpolateParams{
+				Vars:      vars,
+				VarsFiles: []string{varFile.Name()},
+				OpsFiles:  []string{opsFile.Name()},
+			})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(manifest).To(Equal(interpolatedBytes))
+
+			Expect(commandRunner.ExecuteWithWriterCallCount()).To(Equal(1))
+
+			opts, _ := commandRunner.ExecuteWithWriterArgsForCall(0)
+			interpolateOpts := opts.(*boshcmd.InterpolateOpts)
+			Expect(interpolateOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+			Expect(interpolateOpts.VarKVs).To(Equal(varKVs))
+			Expect(len(interpolateOpts.VarsFiles)).To(Equal(1))
+			Expect(interpolateOpts.VarsFiles[0].Vars).To(Equal(boshtpl.StaticVariables{
+				"baz": "best-bar",
+			}))
+			Expect(len(interpolateOpts.OpsFiles)).To(Equal(1))
+
+			pathPointer, _ := patch.NewPointerFromString("/my?/new_key")
+			Expect(interpolateOpts.OpsFiles[0].Ops).To(Equal(patch.Ops{
+				patch.ReplaceOp{
+					Path:  pathPointer,
+					Value: "awesome",
+				},
+			}))
+		})
+
+		Context("when interpolating fails", func() {
+			It("returns an error", func() {
+				commandRunner.ExecuteWithWriterReturns(errors.New("Your interpolate failed"))
+
+				_, err := director.Interpolate(sillyBytes, bosh.InterpolateParams{})
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Your interpolate failed"))
+			})
+		})
+	})
+
 	Describe("DownloadManifest", func() {
 		It("gets the deployment manifest", func() {
 			fakeDeployment := boshdirfakes.FakeDeployment{}
@@ -267,7 +341,7 @@ var _ = Describe("BoshDirector", func() {
 
 			Expect(commandRunner.ExecuteWithDefaultOverrideCallCount()).To(Equal(2))
 
-			opts, optFunc := commandRunner.ExecuteWithDefaultOverrideArgsForCall(0)
+			opts, optFunc, _ := commandRunner.ExecuteWithDefaultOverrideArgsForCall(0)
 			exportReleaseOpts, _ := opts.(*boshcmd.ExportReleaseOpts)
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("cool-release"))
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("123.45"))
@@ -278,7 +352,7 @@ var _ = Describe("BoshDirector", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(fixedOpts.(*boshcmd.ExportReleaseOpts).Directory.Path).To(Equal("/tmp/foo"))
 
-			opts, optFunc = commandRunner.ExecuteWithDefaultOverrideArgsForCall(1)
+			opts, optFunc, _ = commandRunner.ExecuteWithDefaultOverrideArgsForCall(1)
 			exportReleaseOpts, _ = opts.(*boshcmd.ExportReleaseOpts)
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("awesome-release"))
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("987.65"))

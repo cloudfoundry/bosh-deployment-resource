@@ -1,6 +1,7 @@
 package bosh
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -24,8 +25,17 @@ type DeployParams struct {
 	VarsStore string
 }
 
+type InterpolateParams struct {
+	Vars      map[string]interface{}
+	VarsFiles []string
+	OpsFiles  []string
+	VarsStore string
+}
+
+//go:generate counterfeiter . Director
 type Director interface {
 	Deploy(manifestBytes []byte, deployParams DeployParams) error
+	Interpolate(manifestBytes []byte, interpolateParams InterpolateParams) ([]byte, error)
 	DownloadManifest() ([]byte, error)
 	ExportReleases(targetDirectory string, releases []string) error
 	UploadRelease(releaseURL string) error
@@ -89,6 +99,37 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 	return nil
 }
 
+func (d BoshDirector) Interpolate(manifestBytes []byte, interpolateParams InterpolateParams) ([]byte, error) {
+	boshVarsFiles, err := parsedVarsFiles(interpolateParams.VarsFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	boshOpsFiles, err := parsedOpsFiles(interpolateParams.OpsFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	interpolateOpts := boshcmd.InterpolateOpts{
+		Args: boshcmd.InterpolateArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
+		VarFlags: boshcmd.VarFlags{
+			VarKVs:    varKVsFromVars(interpolateParams.Vars),
+			VarsFiles: boshVarsFiles,
+		},
+		OpsFlags: boshcmd.OpsFlags{
+			OpsFiles: boshOpsFiles,
+		},
+	}
+
+	writer := new(bytes.Buffer)
+	err = d.commandRunner.ExecuteWithWriter(&interpolateOpts, writer)
+	if err != nil {
+		return nil, fmt.Errorf("Could not interpolate: %s\n", err)
+	}
+
+	return writer.Bytes(), nil
+}
+
 func (d BoshDirector) DownloadManifest() ([]byte, error) {
 	desiredDeployment, err := d.cliDirector.FindDeployment(d.source.Deployment)
 	if err != nil {
@@ -150,7 +191,7 @@ func (d BoshDirector) ExportReleases(targetDirectory string, releases []string) 
 		err = d.commandRunner.ExecuteWithDefaultOverride(&boshcmd.ExportReleaseOpts{
 			Args:      boshcmd.ExportReleaseArgs{ReleaseSlug: releaseSlug, OSVersionSlug: osVersionSlug},
 			Directory: directory,
-		}, directoryFixFunction)
+		}, directoryFixFunction, nil)
 		if err != nil {
 			return fmt.Errorf("could not export release %s: %s", deploymentRelease.Name(), err)
 		}
