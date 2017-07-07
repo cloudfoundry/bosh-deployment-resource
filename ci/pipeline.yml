@@ -38,8 +38,39 @@ resources:
     uri: https://github.com/cloudfoundry/bosh-deployment-resource
     paths: [ci/*]
 
+- name: test-deployment
+  type: bosh-deployment
+  source:
+    ca-cert: {{director-ca-cert}}
+    client: {{director-client}}
+    client_secret: {{director-client-secret}}
+    deployment: test-deployment
+    vars_store:
+      config:
+        provider: gcs
+        bucket: bosh-deployment-test
+        file_name: test-deployment-vars-store
+        json_key: {{bosh-deployment-service-account}}
+
+- name: stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-google-kvm-ubuntu-trusty-go_agent
+
+- name: release
+  type: bosh-io-release
+  source:
+    repository: concourse/concourse
+
+resource_types:
+- name: bosh-deployment
+  type: docker-image
+  source:
+    repository: cloudfoundry/bosh-deployment-resource
+    tag: release-candidate
+
 jobs:
-- name: test
+- name: unit-test
   plan:
   - do:
     - aggregate:
@@ -56,7 +87,7 @@ jobs:
     - aggregate:
       - get: bosh-deployment-resource-ci
       - get: bosh-deployment-resource
-        passed: [test]
+        passed: [unit-test]
         trigger: true
       - get: version
         params: {pre: rc}
@@ -80,6 +111,65 @@ jobs:
     - put: version
       params: {file: version/version}
 
+- name: deploy
+  plan:
+  - aggregate:
+    - get: release
+    - get: stemcell
+    - get: bosh-deployment-resource
+      passed: [rc]
+  - task: write-vars-files
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: ubuntu
+          tag: "14.04"
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          set -e
+          echo "cool: beans" > vars-files/file
+        dir: ""
+      outputs:
+      - name: vars-files
+        path: ""
+  - task: write-ops-file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: ubuntu
+          tag: "14.04"
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          set -e
+          echo "- type: replace" > ops-files/file
+          echo "  path: /update/new-key?" >> ops-files/file
+          echo "  value: is-kewl" >> ops-files/file
+        dir: ""
+      outputs:
+      - name: ops-files
+        path: ""
+  - put: test-deployment
+    params:
+      manifest: bosh-deployment-resource/ci/test-deployment.yml
+      ops_files:
+      - ops-files/*
+      releases:
+      - release/*.tgz
+      vars:
+        max_in_flight: 10
+      vars_files:
+      - vars-files/*
+
 - name: shipit
   serial_groups: [version]
   plan:
@@ -87,7 +177,7 @@ jobs:
     - aggregate:
       - get: bosh-deployment-resource-ci
       - get: bosh-deployment-resource
-        passed: [rc]
+        passed: [deploy]
       - get: version
         passed: [rc]
         params: {bump: final}
