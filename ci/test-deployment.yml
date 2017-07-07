@@ -17,7 +17,7 @@ releases:
 stemcells:
 - alias: default
   os: ubuntu-trusty
-  version: 3363.12
+  version: latest
 
 variables:
 - name: cool

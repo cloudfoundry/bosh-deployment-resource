@@ -41,16 +41,11 @@ resources:
 - name: test-deployment
   type: bosh-deployment
   source:
-    ca-cert: {{director-ca-cert}}
+    ca_cert: {{director-ca-cert}}
+    target: {{director-address}}
     client: {{director-client}}
     client_secret: {{director-client-secret}}
     deployment: test-deployment
-    vars_store:
-      config:
-        provider: gcs
-        bucket: bosh-deployment-test
-        file_name: test-deployment-vars-store
-        json_key: {{bosh-deployment-service-account}}
 
 - name: stemcell
   type: bosh-io-stemcell
@@ -116,6 +111,7 @@ jobs:
   - aggregate:
     - get: release
     - get: stemcell
+    - get: bosh-deployment-resource-ci
     - get: bosh-deployment-resource
       passed: [rc]
       trigger: true
@@ -161,15 +157,17 @@ jobs:
         path: ""
   - put: test-deployment
     params:
-      manifest: bosh-deployment-resource/ci/test-deployment.yml
+      manifest: bosh-deployment-resource-ci/ci/test-deployment.yml
       ops_files:
       - ops-files/*
-      releases:
-      - release/*.tgz
-      vars:
-        max_in_flight: 10
       vars_files:
       - vars-files/*
+      vars:
+        max_in_flight: 10
+      releases:
+      - release/*.tgz
+      stemcells:
+      - stemcell/*.tgz
 
 - name: shipit
   serial_groups: [version]
