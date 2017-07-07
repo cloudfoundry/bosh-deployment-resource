@@ -118,6 +118,7 @@ jobs:
     - get: stemcell
     - get: bosh-deployment-resource
       passed: [rc]
+      trigger: true
   - task: write-vars-files
     config:
       platform: linux
