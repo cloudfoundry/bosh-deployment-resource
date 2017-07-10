@@ -1,12 +1,16 @@
 package bosh
 
 import (
+	"io"
+
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 )
 
+//go:generate counterfeiter . Runner
 type Runner interface {
+	ExecuteWithWriter(commandOpts interface{}, writer io.Writer) error
 	Execute(commandOpts interface{}) error
-	ExecuteWithDefaultOverride(commandOpts interface{}, override func(interface{}) (interface{}, error)) error
+	ExecuteWithDefaultOverride(commandOpts interface{}, override func(interface{}) (interface{}, error), writer io.Writer) error
 }
 
 type CommandRunner struct {
@@ -19,12 +23,16 @@ func NewCommandRunner(cliCoordinator CLICoordinator) CommandRunner {
 	}
 }
 
-func (c CommandRunner) Execute(commandOpts interface{}) error {
-	return c.ExecuteWithDefaultOverride(commandOpts, func(opts interface{}) (interface{}, error) { return opts, nil })
+func (c CommandRunner) ExecuteWithWriter(commandOpts interface{}, writer io.Writer) error {
+	return c.ExecuteWithDefaultOverride(commandOpts, func(opts interface{}) (interface{}, error) { return opts, nil }, writer)
 }
 
-func (c CommandRunner) ExecuteWithDefaultOverride(commandOpts interface{}, override func(interface{}) (interface{}, error)) error {
-	deps := c.cliCoordinator.StreamingBasicDeps()
+func (c CommandRunner) Execute(commandOpts interface{}) error {
+	return c.ExecuteWithDefaultOverride(commandOpts, func(opts interface{}) (interface{}, error) { return opts, nil }, nil)
+}
+
+func (c CommandRunner) ExecuteWithDefaultOverride(commandOpts interface{}, override func(interface{}) (interface{}, error), writer io.Writer) error {
+	deps := c.cliCoordinator.BasicDeps(writer)
 	globalOpts := c.cliCoordinator.GlobalOpts()
 	setDefaults(commandOpts)
 
