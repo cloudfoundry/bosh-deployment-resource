@@ -149,5 +149,25 @@ var _ = Describe("InCommand", func() {
 				})
 			})
 		})
+
+		Context("when skip_export is true", func() {
+			BeforeEach(func() {
+				inRequest.Params.CompiledReleases = []concourse.CompiledRelease{}
+			})
+
+			It("does not export releases", func() {
+				inResponse, err := inCommand.Run(inRequest, targetDir)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(director.ExportReleasesCallCount()).To(Equal(0))
+
+				Expect(inResponse).To(Equal(in.InResponse{
+					Version: concourse.Version{
+						ManifestSha1: sillyBytesSha1,
+						Target:       "director.example.com",
+					},
+				}))
+			})
+		})
 	})
 })
