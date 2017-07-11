@@ -44,6 +44,7 @@ var _ = Describe("OutCommand", func() {
 		`)
 		manifest.Write(manifestYaml)
 		manifest.Close()
+		director.InterpolateReturns(manifestYaml, nil)
 	})
 
 	Describe("Run", func() {
@@ -68,16 +69,21 @@ var _ = Describe("OutCommand", func() {
 			_, err := outCommand.Run(outRequest)
 			Expect(err).ToNot(HaveOccurred())
 
+			_, actualInterpolateParams := director.InterpolateArgsForCall(0)
+			Expect(actualInterpolateParams.Vars).To(Equal(
+				map[string]interface{}{
+					"foo": "bar",
+				},
+			))
+
 			Expect(director.DeployCallCount()).To(Equal(1))
 			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
 			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
 				NoRedact:  true,
-				VarsFiles: []string{},
-				OpsFiles:  []string{},
-				Vars: map[string]interface{}{
-					"foo": "bar",
-				},
+				VarsFiles: nil,
+				OpsFiles:  nil,
+				Vars:      nil,
 			}))
 		})
 
@@ -88,17 +94,22 @@ var _ = Describe("OutCommand", func() {
 			_, err := outCommand.Run(outRequest)
 			Expect(err).ToNot(HaveOccurred())
 
+			_, actualInterpolateParams := director.InterpolateArgsForCall(0)
+			Expect(actualInterpolateParams.Vars).To(Equal(
+				map[string]interface{}{
+					"foo": "bar",
+				},
+			))
+
 			Expect(director.DeployCallCount()).To(Equal(1))
 			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
 			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
 				NoRedact:  true,
 				DryRun:    true,
-				VarsFiles: []string{},
-				OpsFiles:  []string{},
-				Vars: map[string]interface{}{
-					"foo": "bar",
-				},
+				VarsFiles: nil,
+				OpsFiles:  nil,
+				Vars:      nil,
 			}))
 		})
 
@@ -146,16 +157,19 @@ var _ = Describe("OutCommand", func() {
 				outRequest.Params.VarsFiles = varFiles
 			})
 
-			It("specifies the varFiles in the deploy command", func() {
+			It("interpolates the varFiles into the manifest but does not delpoy with them", func() {
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, actualDeployParams := director.DeployArgsForCall(0)
-				Expect(actualDeployParams.VarsFiles).To(ConsistOf(
+				_, actualInterpolateParams := director.InterpolateArgsForCall(0)
+				Expect(actualInterpolateParams.VarsFiles).To(ConsistOf(
 					varFileThree.Name(),
 					varFileOne.Name(),
 					varFileTwo.Name(),
 				))
+
+				_, actualDeployParams := director.DeployArgsForCall(0)
+				Expect(actualDeployParams.VarsFiles).To(BeEmpty())
 			})
 
 			Context("when a varFile glob is bad", func() {
@@ -197,16 +211,19 @@ var _ = Describe("OutCommand", func() {
 				outRequest.Params.OpsFiles = opsFiles
 			})
 
-			It("specifies the opsFiles in the deploy command", func() {
+			It("interpolates the opsfiles into the manifest but does not delpoy with them", func() {
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, actualDeployParams := director.DeployArgsForCall(0)
-				Expect(actualDeployParams.OpsFiles).To(ConsistOf(
+				_, actualInterpolateParams := director.InterpolateArgsForCall(0)
+				Expect(actualInterpolateParams.OpsFiles).To(ConsistOf(
 					opsFileThree.Name(),
 					opsFileOne.Name(),
 					opsFileTwo.Name(),
 				))
+
+				_, actualDeployParams := director.DeployArgsForCall(0)
+				Expect(actualDeployParams.OpsFiles).To(BeEmpty())
 			})
 
 			Context("when a opsFile glob is bad", func() {
@@ -218,6 +235,7 @@ var _ = Describe("OutCommand", func() {
 					Expect(err.Error()).To(ContainSubstring("Invalid ops_file name: /["))
 				})
 			})
+
 		})
 
 		Context("when releases are provided", func() {
@@ -312,6 +330,7 @@ var _ = Describe("OutCommand", func() {
 		Context("when stemcells are provided", func() {
 			var (
 				stemcellOne, stemcellTwo, stemcellThree *os.File
+				interpolatedManifest                    []byte
 			)
 
 			BeforeEach(func() {
@@ -337,6 +356,18 @@ var _ = Describe("OutCommand", func() {
 					fmt.Sprintf("%s/stemcell-*", primaryStemcellDir),
 					stemcellThree.Name(),
 				}
+
+				interpolatedManifest = properYaml(`
+					releases:
+						- name: small-release
+						  version: latest
+						  url: file://release.tgz
+						  sha1: SHA1FORMAT
+					stemcells:
+						- alias: super-awesome-stemcell
+						  name: small-stemcell
+						  version: "8675309"
+				`)
 			})
 
 			It("uploads all of the stemcells", func() {
@@ -363,20 +394,11 @@ var _ = Describe("OutCommand", func() {
 
 				updatedManifest, _ := director.DeployArgsForCall(0)
 
-				Expect(updatedManifest).To(MatchYAML(properYaml(`
-					releases:
-						- name: small-release
-						  version: latest
-						  url: file://release.tgz
-						  sha1: SHA1FORMAT
-					stemcells:
-						- alias: super-awesome-stemcell
-						  name: small-stemcell
-						  version: "8675309"
-				`)))
+				Expect(updatedManifest).To(MatchYAML(interpolatedManifest))
 			})
 
 			It("includes the provided stemcells in the metadata", func() {
+				director.InterpolateReturns(interpolatedManifest, nil)
 				outResponse, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 

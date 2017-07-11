@@ -37,6 +37,27 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		return OutResponse{}, err
 	}
 
+	varsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.VarsFiles)
+	if err != nil {
+		return OutResponse{}, fmt.Errorf("Invalid var_file name: %s", err)
+	}
+
+	opsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.OpsFiles)
+	if err != nil {
+		return OutResponse{}, fmt.Errorf("Invalid ops_file name: %s", err)
+	}
+
+	interpolateParams := bosh.InterpolateParams{
+		Vars:      outRequest.Params.Vars,
+		VarsFiles: varsFilePaths,
+		OpsFiles:  opsFilePaths,
+	}
+
+	manifestBytes, err = c.director.Interpolate(manifestBytes, interpolateParams)
+	if err != nil {
+		return OutResponse{}, err
+	}
+
 	manifest, err := bosh.NewDeploymentManifest(manifestBytes)
 	if err != nil {
 		return OutResponse{}, err
@@ -52,23 +73,10 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		return OutResponse{}, err
 	}
 
-	varsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.VarsFiles)
-	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid var_file name: %s", err)
-	}
-
-	opsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.OpsFiles)
-	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid ops_file name: %s", err)
-	}
-
 	deployParams := bosh.DeployParams{
-		NoRedact:  outRequest.Params.NoRedact,
-		DryRun:    outRequest.Params.DryRun,
-		Cleanup:   outRequest.Params.Cleanup,
-		Vars:      outRequest.Params.Vars,
-		VarsFiles: varsFilePaths,
-		OpsFiles:  opsFilePaths,
+		NoRedact: outRequest.Params.NoRedact,
+		DryRun:   outRequest.Params.DryRun,
+		Cleanup:  outRequest.Params.Cleanup,
 	}
 
 	var varsStoreFile *os.File

@@ -42,20 +42,13 @@ func (c CLICoordinator) GlobalOpts() boshcmd.BoshOpts {
 	return *globalOpts
 }
 
-func (c CLICoordinator) StreamingBasicDeps() boshcmd.BasicDeps {
+func (c CLICoordinator) BasicDeps(writer io.Writer) boshcmd.BasicDeps {
 	logger := nullLogger()
 
-	parentUI := boshui.NewPaddingUI(boshui.NewWriterUI(c.out, c.out, logger))
-
-	ui := boshui.NewWrappingConfUI(parentUI, logger)
-	return boshcmd.NewBasicDeps(ui, logger)
-}
-
-func (c CLICoordinator) CapturedBasicDeps() boshcmd.BasicDeps {
-	byteWriter := bytes.NewBufferString("")
-	logger := nullLogger()
-
-	parentUI := boshui.NewNonTTYUI(boshui.NewWriterUI(byteWriter, c.out, logger))
+	if writer == nil {
+		writer = c.out
+	}
+	parentUI := boshui.NewPaddingUI(boshui.NewWriterUI(writer, writer, logger))
 
 	ui := boshui.NewWrappingConfUI(parentUI, logger)
 	return boshcmd.NewBasicDeps(ui, logger)
@@ -63,7 +56,7 @@ func (c CLICoordinator) CapturedBasicDeps() boshcmd.BasicDeps {
 
 func (c CLICoordinator) Director() (boshdir.Director, error) {
 	globalOpts := c.GlobalOpts()
-	deps := c.CapturedBasicDeps()
+	deps := c.BasicDeps(bytes.NewBufferString(""))
 	config, _ := cmdconf.NewFSConfigFromPath(globalOpts.ConfigPathOpt, deps.FS)
 	session := boshcmd.NewSessionFromOpts(globalOpts, config, deps.UI, true, true, deps.FS, deps.Logger)
 
