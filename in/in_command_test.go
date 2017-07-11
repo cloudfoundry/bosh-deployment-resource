@@ -150,7 +150,7 @@ var _ = Describe("InCommand", func() {
 			})
 		})
 
-		Context("when skip_export is true", func() {
+		Context("when there are no releases to compile", func() {
 			BeforeEach(func() {
 				inRequest.Params.CompiledReleases = []concourse.CompiledRelease{}
 			})
