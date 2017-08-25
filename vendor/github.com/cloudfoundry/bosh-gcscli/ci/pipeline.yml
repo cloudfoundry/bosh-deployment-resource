@@ -1,0 +1,110 @@
+jobs:
+  - name: run-unit
+    plan:
+      - aggregate:
+        - {trigger: true, get: gcscli-src, resource: bosh-gcscli-src-in}
+
+      - task: unit-tests
+        file: gcscli-src/ci/tasks/run-unit.yml
+
+  - name: run-fast-int
+    plan:
+      - aggregate:
+        - {
+            trigger: true, passed: [run-unit],
+            get: gcscli-src, resource: bosh-gcscli-src-in
+          }
+
+      - task: fast-integration-tests
+        file: gcscli-src/ci/tasks/run-fast-int.yml
+        params:
+          google_project: {{google_project}}
+          google_json_key_data: {{google_json_key_data}}
+
+  - name: run-int
+    plan:
+      - aggregate:
+        - {
+            trigger: true, passed: [run-fast-int],
+            get: gcscli-src, resource: bosh-gcscli-src-in
+          }
+
+      - task: full-integration-tests
+        file: gcscli-src/ci/tasks/run-int.yml
+        params:
+          google_project: {{google_project}}
+          google_json_key_data: {{google_json_key_data}}
+
+  - name: promote
+    plan:
+      - aggregate:
+        - get: gcscli-src
+          resource: bosh-gcscli-src-in
+          trigger: true
+          passed: [
+            run-unit,
+            run-fast-int,
+            run-int
+          ]
+        - put: version-semver
+          params:
+            bump: patch
+      - aggregate:
+        - task: build-linux
+          file: gcscli-src/ci/tasks/build.yml
+          output_mapping: { out: out-linux }
+          params:
+            GOOS: linux
+        - task: build-windows
+          file: gcscli-src/ci/tasks/build.yml
+          output_mapping: { out: out-windows }
+          params:
+            GOOS: windows
+      - aggregate:
+        - put: release-bucket-linux
+          params: {file: out-linux/bosh-gcscli-*-linux-amd64}
+        - put: release-bucket-windows
+          params: {file: out-windows/bosh-gcscli-*-windows-amd64.exe}
+      - put: gcscli-src
+        resource: bosh-gcscli-out
+        params: {repository: gcscli-src, tag: version-semver/number, tag_prefix: v}
+
+
+resources:
+  - name: bosh-gcscli-src-in
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/bosh-gcscli.git
+      branch: master
+
+  - name: version-semver
+    type: semver
+    source:
+      initial_version: 0.0.1
+      key: current-version
+      bucket: {{gcscli_release_bucket}}
+      access_key_id: {{gcscli_release_bucket_access_key}}
+      secret_access_key: {{gcscli_release_bucket_secret_key}}
+
+  - name: release-bucket-linux
+    type: s3
+    source:
+      regexp: bosh-gcscli-(.*)-linux-amd64
+      bucket: {{gcscli_release_bucket}}
+      access_key_id: {{gcscli_release_bucket_access_key}}
+      secret_access_key: {{gcscli_release_bucket_secret_key}}
+
+  - name: release-bucket-windows
+    type: s3
+    source:
+      regexp: bosh-gcscli-(.*)-windows-amd64\.exe
+      bucket: {{gcscli_release_bucket}}
+      access_key_id: {{gcscli_release_bucket_access_key}}
+      secret_access_key: {{gcscli_release_bucket_secret_key}}
+
+  - name: bosh-gcscli-out
+    type: git
+    source:
+      uri: git@github.com:cloudfoundry/bosh-gcscli.git
+      branch: master
+      private_key: {{github_deployment_key_gcscli}}

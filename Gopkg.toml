@@ -1,0 +1,18 @@
+[[constraint]]
+  version = "v2.0.33"
+  name = "github.com/cloudfoundry/bosh-cli"
+
+[[constraint]]
+  branch = "cli-patches"
+  name = "github.com/jessevdk/go-flags"
+  source = "github.com/cppforlife/go-flags"
+
+[[override]]
+  revision = "c1f48d5ce4f292dfb775ef52aaedd15be323510d"
+  name = "github.com/cheggaaa/pb"
+
+[[override]]
+  revision = "90561c003f2f73d7cc61a013e5d84e08a75bc5b0"
+  name = "github.com/pivotal-golang/s3cli"
+  source = "github.com/cloudfoundry/bosh-s3cli"
+

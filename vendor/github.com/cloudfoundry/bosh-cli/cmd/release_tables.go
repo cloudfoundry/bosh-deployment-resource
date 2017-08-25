@@ -16,33 +16,35 @@ type ReleaseTables struct {
 
 func (t ReleaseTables) Print(ui boshui.UI) {
 	summaryTable := boshtbl.Table{
+		Header: []boshtbl.Header{
+			boshtbl.NewHeader("Name"),
+			boshtbl.NewHeader("Version"),
+			boshtbl.NewHeader("Commit Hash"),
+		},
 		Rows: [][]boshtbl.Value{
 			{
-				boshtbl.NewValueString("Name"),
 				boshtbl.NewValueString(t.Release.Name()),
-			},
-			{
-				boshtbl.NewValueString("Version"),
 				boshtbl.NewValueString(t.Release.Version()),
-			},
-			{
-				boshtbl.NewValueString("Commit Hash"),
 				boshtbl.NewValueString(t.Release.CommitHashWithMark("+")),
 			},
 		},
+		Transpose: true,
 	}
 
 	if len(t.ArchivePath) > 0 {
-		summaryTable.Rows = append(summaryTable.Rows, []boshtbl.Value{
-			boshtbl.NewValueString("Archive"),
+		summaryTable = summaryTable.AddColumn("Archive", []boshtbl.Value{
 			boshtbl.NewValueString(t.ArchivePath),
 		})
 	}
 
 	jobsTable := boshtbl.Table{
 		Content: "jobs",
-		Header:  []string{"Job", "Digest", "Packages"},
-		SortBy:  []boshtbl.ColumnSort{{Column: 0, Asc: true}},
+		Header: []boshtbl.Header{
+			boshtbl.NewHeader("Job"),
+			boshtbl.NewHeader("Digest"),
+			boshtbl.NewHeader("Packages"),
+		},
+		SortBy: []boshtbl.ColumnSort{{Column: 0, Asc: true}},
 	}
 
 	for _, job := range t.Release.Jobs() {
@@ -55,8 +57,12 @@ func (t ReleaseTables) Print(ui boshui.UI) {
 
 	pkgsTable := boshtbl.Table{
 		Content: "packages",
-		Header:  []string{"Package", "Digest", "Dependencies"},
-		SortBy:  []boshtbl.ColumnSort{{Column: 0, Asc: true}},
+		Header: []boshtbl.Header{
+			boshtbl.NewHeader("Package"),
+			boshtbl.NewHeader("Digest"),
+			boshtbl.NewHeader("Dependencies"),
+		},
+		SortBy: []boshtbl.ColumnSort{{Column: 0, Asc: true}},
 	}
 
 	for _, pkg := range t.Release.Packages() {

@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// IniError contains location information on where an error occurred.
+// IniError contains location information on where an error occured.
 type IniError struct {
 	// The error message.
 	Message string

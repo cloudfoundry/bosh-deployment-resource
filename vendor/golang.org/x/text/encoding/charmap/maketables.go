@@ -34,6 +34,14 @@ var encodings = []struct {
 	mapping     string
 }{
 	{
+		"IBM Code Page 037",
+		"IBM037",
+		"",
+		"CodePage037",
+		0x3f,
+		"http://source.icu-project.org/repos/icu/data/trunk/charset/data/ucm/glibc-IBM037-2.1.2.ucm",
+	},
+	{
 		"IBM Code Page 437",
 		"PC8CodePage437",
 		"",
@@ -486,7 +494,7 @@ func main() {
 		if e.comment != "" {
 			printf("//\n// %s\n", e.comment)
 		}
-		printf("var %s encoding.Encoding = &%s\n\nvar %s = charmap{\nname: %q,\n",
+		printf("var %s *Charmap = &%s\n\nvar %s = Charmap{\nname: %q,\n",
 			varName, lowerVarName, lowerVarName, e.name)
 		if mibs[e.mib] {
 			log.Fatalf("MIB type %q declared multiple times.", e.mib)
@@ -532,7 +540,7 @@ func main() {
 		}
 		printf("},\n}\n")
 
-		// Add an estimate of the size of a single charmap{} struct value, which
+		// Add an estimate of the size of a single Charmap{} struct value, which
 		// includes two 256 elem arrays of 4 bytes and some extra fields, which
 		// align to 3 uint64s on 64-bit architectures.
 		w.Size += 2*4*256 + 3*8
