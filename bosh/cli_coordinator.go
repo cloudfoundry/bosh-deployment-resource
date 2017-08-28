@@ -68,6 +68,8 @@ func nullLogger() boshlog.Logger {
 }
 
 func setDefaults(obj interface{}) {
+	goflags.FactoryFunc = func(val interface{}) {}
+
 	parser := goflags.NewParser(obj, goflags.None)
 
 	// Intentionally ignoring errors. We are not parsing user-passed options,
