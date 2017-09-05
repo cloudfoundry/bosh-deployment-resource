@@ -140,7 +140,7 @@ deployment manifest and then deploy.
 * `ops_files`: *Optional.* A collection of ops files to be applied over the deployment manifest.
 
 * `cleanup`: *Optional* An boolean that specifies if a bosh cleanup should be
-  run before deployment. Defaults to false.
+  run after deployment. Defaults to false.
 
 * `no_redact`: *Optional* Removes redacted from Bosh output. Defaults to false.
 
