@@ -69,7 +69,10 @@ normal parameters for `put`, the following parameters can be provided to redefin
   structure as the source configuration for the resource itself. The `source_file` will be merged into the exist source
   configuration.
 
-_Note_: This is only supported for a `put`.
+_Notes_: 
+ - `target` must **ONLY** be configured via the `source_file` otherwise the implicit `get` will fail after the `put`.
+ - This is only supported for a `put`.
+ 
 
 #### Example
 
