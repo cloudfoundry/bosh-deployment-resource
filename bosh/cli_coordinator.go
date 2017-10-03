@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
@@ -42,9 +43,13 @@ func (c CLICoordinator) GlobalOpts(proxyAddr string) boshcmd.BoshOpts {
 		DeploymentOpt:     c.source.Deployment,
 	}
 
-	globalOpts.SSH.GatewayFlags.SOCKS5Proxy = proxyAddr
-	globalOpts.SCP.GatewayFlags.SOCKS5Proxy = proxyAddr
-	globalOpts.Logs.GatewayFlags.SOCKS5Proxy = proxyAddr
+	if proxyAddr != "" {
+		proxyAddr = fmt.Sprintf("socks5://%s", proxyAddr)
+		os.Setenv("BOSH_ALL_PROXY", proxyAddr)
+		globalOpts.SSH.GatewayFlags.SOCKS5Proxy = proxyAddr
+		globalOpts.SCP.GatewayFlags.SOCKS5Proxy = proxyAddr
+		globalOpts.Logs.GatewayFlags.SOCKS5Proxy = proxyAddr
+	}
 
 	setDefaults(globalOpts)
 
