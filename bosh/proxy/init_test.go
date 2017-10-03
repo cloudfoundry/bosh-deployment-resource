@@ -45,7 +45,7 @@ mfK1ysRq5wxNtSQoADf1XklMhEUWGUEh/8LnkP/DceWhqPAMGyOY
 
 func TestProxy(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "proxy")
+	RunSpecs(t, "Proxy")
 }
 
 func startSSHServer(httpServerURL string) string {

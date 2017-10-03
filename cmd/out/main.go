@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
 	"github.com/cloudfoundry/bosh-deployment-resource/storage"
@@ -36,7 +37,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	cliCoordinator := bosh.NewCLICoordinator(outRequest.Source, os.Stderr)
+	hostKeyGetter := proxy.NewHostKeyGetter()
+	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter)
+	cliCoordinator := bosh.NewCLICoordinator(outRequest.Source, os.Stderr, socks5Proxy)
 	commandRunner := bosh.NewCommandRunner(cliCoordinator)
 	cliDirector, err := cliCoordinator.Director()
 	if err != nil {
