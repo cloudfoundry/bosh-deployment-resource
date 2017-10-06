@@ -13,12 +13,14 @@ import (
 )
 
 type Source struct {
-	Deployment   string    `json:"deployment,omitempty" yaml:"deployment"`
-	Client       string    `json:"client,omitempty" yaml:"client"`
-	ClientSecret string    `json:"client_secret,omitempty" yaml:"client_secret"`
-	Target       string    `json:"target,omitempty" yaml:"target"`
-	CACert       string    `json:"ca_cert,omitempty" yaml:"ca_cert"`
-	VarsStore    VarsStore `json:"vars_store,omitempty" yaml:"vars_store"`
+	Deployment    string    `json:"deployment,omitempty" yaml:"deployment"`
+	Client        string    `json:"client,omitempty" yaml:"client"`
+	ClientSecret  string    `json:"client_secret,omitempty" yaml:"client_secret"`
+	Target        string    `json:"target,omitempty" yaml:"target"`
+	CACert        string    `json:"ca_cert,omitempty" yaml:"ca_cert"`
+	JumpboxSSHKey string    `json:"jumpbox_ssh_key,omitempty" yaml:"jumpbox_ssh_key"`
+	JumpboxURL    string    `json:"jumpbox_url,omitempty" yaml:"jumpbox_url"`
+	VarsStore     VarsStore `json:"vars_store,omitempty" yaml:"vars_store"`
 }
 
 type sourceRequest struct {

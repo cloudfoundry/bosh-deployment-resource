@@ -2,9 +2,13 @@ package bosh
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
@@ -18,16 +22,18 @@ import (
 type CLICoordinator struct {
 	source concourse.Source
 	out    io.Writer
+	proxy  proxy.Proxy
 }
 
-func NewCLICoordinator(source concourse.Source, out io.Writer) CLICoordinator {
+func NewCLICoordinator(source concourse.Source, out io.Writer, proxy proxy.Proxy) CLICoordinator {
 	return CLICoordinator{
 		source: source,
 		out:    out,
+		proxy:  proxy,
 	}
 }
 
-func (c CLICoordinator) GlobalOpts() boshcmd.BoshOpts {
+func (c CLICoordinator) GlobalOpts(proxyAddr string) boshcmd.BoshOpts {
 	globalOpts := &boshcmd.BoshOpts{
 		NonInteractiveOpt: true,
 		CACertOpt:         boshcmd.CACertArg{Content: c.source.CACert},
@@ -35,6 +41,14 @@ func (c CLICoordinator) GlobalOpts() boshcmd.BoshOpts {
 		ClientSecretOpt:   c.source.ClientSecret,
 		EnvironmentOpt:    c.source.Target,
 		DeploymentOpt:     c.source.Deployment,
+	}
+
+	if proxyAddr != "" {
+		proxyAddr = fmt.Sprintf("socks5://%s", proxyAddr)
+		os.Setenv("BOSH_ALL_PROXY", proxyAddr)
+		globalOpts.SSH.GatewayFlags.SOCKS5Proxy = proxyAddr
+		globalOpts.SCP.GatewayFlags.SOCKS5Proxy = proxyAddr
+		globalOpts.Logs.GatewayFlags.SOCKS5Proxy = proxyAddr
 	}
 
 	setDefaults(globalOpts)
@@ -55,12 +69,42 @@ func (c CLICoordinator) BasicDeps(writer io.Writer) boshcmd.BasicDeps {
 }
 
 func (c CLICoordinator) Director() (boshdir.Director, error) {
-	globalOpts := c.GlobalOpts()
+	addr, err := c.StartProxy()
+	if err != nil {
+		return nil, fmt.Errorf("start proxy: %s", err) // untested
+	}
+	globalOpts := c.GlobalOpts(addr)
 	deps := c.BasicDeps(bytes.NewBufferString(""))
 	config, _ := cmdconf.NewFSConfigFromPath(globalOpts.ConfigPathOpt, deps.FS)
 	session := boshcmd.NewSessionFromOpts(globalOpts, config, deps.UI, true, true, deps.FS, deps.Logger)
 
 	return session.Director()
+}
+
+func (c CLICoordinator) StartProxy() (string, error) {
+	if c.source.JumpboxSSHKey == "" && c.source.JumpboxURL == "" {
+		return "", nil
+	}
+
+	if c.source.JumpboxSSHKey != "" && c.source.JumpboxURL != "" {
+		addr, err := c.proxy.Addr()
+		if err == nil {
+			return addr, nil
+		}
+
+		err = c.proxy.Start(c.source.JumpboxSSHKey, c.source.JumpboxURL)
+		if err != nil {
+			panic(err)
+		}
+
+		addr, err = c.proxy.Addr()
+		if err != nil {
+			panic(err)
+		}
+		return addr, nil
+	}
+
+	return "", errors.New("Jumpbox URL and Jumpbox SSH Key are both required to use a jumpbox")
 }
 
 func nullLogger() boshlog.Logger {

@@ -45,6 +45,8 @@ var _ = Describe("NewDynamicSource", func() {
 					"target": "director.example.com",
 					"client": "original_client",
 					"client_secret": "foobar",
+					"jumpbox_ssh_key": "some-ssh-key",
+					"jumpbox_url": "jumpbox.example.com",
 					"vars_store": {
 						"provider": "gcs",
 						"config": {
@@ -84,10 +86,12 @@ var _ = Describe("NewDynamicSource", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(source).To(Equal(concourse.Source{
-				Deployment:   "fileDeployment",
-				Target:       "fileDirector.com",
-				Client:       "original_client",
-				ClientSecret: "fileSecret",
+				Deployment:    "fileDeployment",
+				Target:        "fileDirector.com",
+				Client:        "original_client",
+				ClientSecret:  "fileSecret",
+				JumpboxSSHKey: "some-ssh-key",
+				JumpboxURL:    "jumpbox.example.com",
 				VarsStore: concourse.VarsStore{
 					Provider: "fileProvider",
 					Config: map[string]interface{}{

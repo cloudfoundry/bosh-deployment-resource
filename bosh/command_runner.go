@@ -1,6 +1,7 @@
 package bosh
 
 import (
+	"fmt"
 	"io"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
@@ -33,10 +34,16 @@ func (c CommandRunner) Execute(commandOpts interface{}) error {
 
 func (c CommandRunner) ExecuteWithDefaultOverride(commandOpts interface{}, override func(interface{}) (interface{}, error), writer io.Writer) error {
 	deps := c.cliCoordinator.BasicDeps(writer)
-	globalOpts := c.cliCoordinator.GlobalOpts()
+
+	addr, err := c.cliCoordinator.StartProxy()
+	if err != nil {
+		return fmt.Errorf("start proxy: %s", err)
+	}
+
+	globalOpts := c.cliCoordinator.GlobalOpts(addr)
 	setDefaults(commandOpts)
 
-	commandOpts, err := override(commandOpts)
+	commandOpts, err = override(commandOpts)
 	if err != nil {
 		return err
 	}
