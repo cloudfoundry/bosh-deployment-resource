@@ -402,11 +402,7 @@ func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	defer fake.uploadReleaseMutex.RUnlock()
 	fake.uploadStemcellMutex.RLock()
 	defer fake.uploadStemcellMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *FakeDirector) recordInvocation(key string, args []interface{}) {

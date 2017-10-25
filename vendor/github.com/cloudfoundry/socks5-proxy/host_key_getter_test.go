@@ -1,8 +1,7 @@
 package proxy_test
 
 import (
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy"
-
+	proxy "github.com/cloudfoundry/socks5-proxy"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"golang.org/x/crypto/ssh"
