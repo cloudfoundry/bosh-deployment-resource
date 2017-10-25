@@ -15,7 +15,8 @@ type FakeFactory struct {
 	CreateCmd  *FakeCmd
 	CreateErr  error
 
-	Config davconf.Config
+	Config       davconf.Config
+	SetConfigErr error
 }
 
 func (f *FakeFactory) Create(name string) (cmd Cmd, err error) {
@@ -25,8 +26,9 @@ func (f *FakeFactory) Create(name string) (cmd Cmd, err error) {
 	return
 }
 
-func (f *FakeFactory) SetConfig(config davconf.Config) {
+func (f *FakeFactory) SetConfig(config davconf.Config) (err error) {
 	f.Config = config
+	return f.SetConfigErr
 }
 
 type FakeCmd struct {
@@ -40,8 +42,8 @@ func (cmd *FakeCmd) Run(args []string) (err error) {
 	return
 }
 
-func init() {
-	Describe("Testing with Ginkgo", func() {
+var _ = Describe("Runner", func() {
+	Describe("Run", func() {
 		It("run can run a command and return its error", func() {
 			factory := &FakeFactory{
 				CreateCmd: &FakeCmd{
@@ -81,15 +83,29 @@ func init() {
 			Expect(factory.CreateName).To(Equal("put"))
 			Expect(factory.CreateCmd.RunArgs).To(Equal([]string{}))
 		})
+	})
 
-		It("set config", func() {
+	Describe("SetConfig", func() {
+		It("delegates to factory", func() {
 			factory := &FakeFactory{}
 			cmdRunner := NewRunner(factory)
 			conf := davconf.Config{User: "foo"}
 
-			cmdRunner.SetConfig(conf)
+			err := cmdRunner.SetConfig(conf)
 
 			Expect(factory.Config).To(Equal(conf))
+			Expect(err).ToNot(HaveOccurred())
+		})
+		It("propagates errors", func() {
+			setConfigErr := errors.New("some error")
+			factory := &FakeFactory{
+				SetConfigErr: setConfigErr,
+			}
+			cmdRunner := NewRunner(factory)
+			conf := davconf.Config{User: "foo"}
+
+			err := cmdRunner.SetConfig(conf)
+			Expect(err).To(HaveOccurred())
 		})
 	})
-}
+})

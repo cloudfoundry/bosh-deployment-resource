@@ -6,7 +6,7 @@ import (
 )
 
 type Runner interface {
-	SetConfig(newConfig davconf.Config)
+	SetConfig(newConfig davconf.Config) (err error)
 	Run(cmdArgs []string) (err error)
 }
 
@@ -34,6 +34,6 @@ func (r runner) Run(cmdArgs []string) (err error) {
 	return cmd.Run(cmdArgs[1:])
 }
 
-func (r runner) SetConfig(newConfig davconf.Config) {
-	r.factory.SetConfig(newConfig)
+func (r runner) SetConfig(newConfig davconf.Config) (err error) {
+	return r.factory.SetConfig(newConfig)
 }

@@ -47,28 +47,54 @@ var _ = Describe("Exists", func() {
 
 			w.WriteHeader(200)
 		}
-
-		ts = httptest.NewServer(http.HandlerFunc(handler))
-
-		config = davconf.Config{
-			User:     "some user",
-			Password: "some pwd",
-			Endpoint: ts.URL,
-		}
 	})
 
 	AfterEach(func() {
 		ts.Close()
 	})
 
-	It("with valid args", func() {
-		err := runExists(config, []string{requestedBlob})
-		Expect(err).ToNot(HaveOccurred())
+	AssertExistsBehavior := func() {
+		It("with valid args", func() {
+			err := runExists(config, []string{requestedBlob})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("with incorrect arg count", func() {
+			err := runExists(davconf.Config{}, []string{})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("Incorrect usage"))
+		})
+	}
+
+	Context("with http endpoint", func() {
+		BeforeEach(func() {
+			ts = httptest.NewServer(http.HandlerFunc(handler))
+			config = davconf.Config{
+				User:     "some user",
+				Password: "some pwd",
+				Endpoint: ts.URL,
+			}
+
+		})
+
+		AssertExistsBehavior()
 	})
 
-	It("with incorrect arg count", func() {
-		err := runExists(davconf.Config{}, []string{})
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("Incorrect usage"))
+	Context("with https endpoint", func() {
+		BeforeEach(func() {
+			ts = httptest.NewTLSServer(http.HandlerFunc(handler))
+
+			rootCa, err := testcmd.ExtractRootCa(ts)
+			Expect(err).ToNot(HaveOccurred())
+
+			config = davconf.Config{
+				User:     "some user",
+				Password: "some pwd",
+				Endpoint: ts.URL,
+				CACert:   rootCa,
+			}
+		})
+
+		AssertExistsBehavior()
 	})
 })

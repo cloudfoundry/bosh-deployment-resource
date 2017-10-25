@@ -11,7 +11,7 @@ import (
 	biui "github.com/cloudfoundry/bosh-cli/ui"
 	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	bihttpclient "github.com/cloudfoundry/bosh-utils/httpclient"
+	"github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshretry "github.com/cloudfoundry/bosh-utils/retrystrategy"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
@@ -41,7 +41,7 @@ var HTTPClient = &http.Client{
 type provider struct {
 	cache            Cache
 	fs               boshsys.FileSystem
-	httpClient       bihttpclient.HTTPClient
+	httpClient       *httpclient.HTTPClient
 	downloadAttempts int
 	delayTimeout     time.Duration
 	logger           boshlog.Logger
@@ -51,7 +51,7 @@ type provider struct {
 func NewProvider(
 	cache Cache,
 	fs boshsys.FileSystem,
-	httpClient bihttpclient.HTTPClient,
+	httpClient *httpclient.HTTPClient,
 	downloadAttempts int,
 	delayTimeout time.Duration,
 	logger boshlog.Logger,
@@ -124,6 +124,8 @@ func (p *provider) downloadRetryable(source Source) boshretry.Retryable {
 		}
 
 		defer func() {
+			downloadedFile.Close()
+
 			if err = p.fs.RemoveAll(downloadedFile.Name()); err != nil {
 				p.logger.Warn(p.logTag, "Failed to remove downloaded file: %s", err.Error())
 			}
@@ -154,6 +156,8 @@ func (p *provider) downloadRetryable(source Source) boshretry.Retryable {
 		if err != nil {
 			return true, bosherr.WrapError(err, "Verifying digest for downloaded file")
 		}
+
+		downloadedFile.Close()
 
 		err = p.cache.Save(downloadedFile.Name(), source)
 		if err != nil {

@@ -39,15 +39,23 @@ func fileBytes(path string) []byte {
 
 var _ = Describe("PutCmd", func() {
 	Describe("Run", func() {
-		It("uploads the blob with valid args", func() {
+		var (
+			handler        func(http.ResponseWriter, *http.Request)
+			config         davconf.Config
+			ts             *httptest.Server
+			sourceFilePath string
+			targetBlob     string
+			serverWasHit   bool
+		)
+		BeforeEach(func() {
 			pwd, err := os.Getwd()
 			Expect(err).ToNot(HaveOccurred())
 
-			sourceFilePath := filepath.Join(pwd, "../test_assets/cat.jpg")
-			targetBlob := "some-other-awesome-guid"
-			serverWasHit := false
+			sourceFilePath = filepath.Join(pwd, "../test_assets/cat.jpg")
+			targetBlob = "some-other-awesome-guid"
+			serverWasHit = false
 
-			handler := func(w http.ResponseWriter, r *http.Request) {
+			handler = func(w http.ResponseWriter, r *http.Request) {
 				defer GinkgoRecover()
 				serverWasHit = true
 				req := testcmd.NewHTTPRequest(r)
@@ -66,25 +74,56 @@ var _ = Describe("PutCmd", func() {
 
 				w.WriteHeader(201)
 			}
-
-			ts := httptest.NewServer(http.HandlerFunc(handler))
-			defer ts.Close()
-
-			config := davconf.Config{
-				User:     "some user",
-				Password: "some pwd",
-				Endpoint: ts.URL,
-			}
-
-			err = runPut(config, []string{sourceFilePath, targetBlob})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(serverWasHit).To(BeTrue())
 		})
 
-		It("returns err with incorrect arg count", func() {
-			err := runPut(davconf.Config{}, []string{})
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("Incorrect usage"))
+		AfterEach(func() {
+			defer ts.Close()
+		})
+
+		AssertPutBehavior := func() {
+			It("uploads the blob with valid args", func() {
+				err := runPut(config, []string{sourceFilePath, targetBlob})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(serverWasHit).To(BeTrue())
+			})
+
+			It("returns err with incorrect arg count", func() {
+				err := runPut(davconf.Config{}, []string{})
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Incorrect usage"))
+			})
+		}
+
+		Context("with http endpoint", func() {
+			BeforeEach(func() {
+				ts = httptest.NewServer(http.HandlerFunc(handler))
+				config = davconf.Config{
+					User:     "some user",
+					Password: "some pwd",
+					Endpoint: ts.URL,
+				}
+
+			})
+
+			AssertPutBehavior()
+		})
+
+		Context("with https endpoint", func() {
+			BeforeEach(func() {
+				ts = httptest.NewTLSServer(http.HandlerFunc(handler))
+
+				rootCa, err := testcmd.ExtractRootCa(ts)
+				Expect(err).ToNot(HaveOccurred())
+
+				config = davconf.Config{
+					User:     "some user",
+					Password: "some pwd",
+					Endpoint: ts.URL,
+					CACert:   rootCa,
+				}
+			})
+
+			AssertPutBehavior()
 		})
 	})
 })

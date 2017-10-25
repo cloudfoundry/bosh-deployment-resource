@@ -37,35 +37,41 @@ func getFileContent(path string) string {
 	return string(fileBytes)
 }
 
-func init() {
-	Describe("Testing with Ginkgo", func() {
+var _ = Describe("GetCmd", func() {
+	var (
+		handler        func(http.ResponseWriter, *http.Request)
+		targetFilePath string
+		requestedBlob  string
+		ts             *httptest.Server
+		config         davconf.Config
+	)
+
+	BeforeEach(func() {
+		requestedBlob = "0ca907f2-dde8-4413-a304-9076c9d0978b"
+		targetFilePath = filepath.Join(os.TempDir(), "testRunGetCommand.txt")
+
+		handler = func(w http.ResponseWriter, r *http.Request) {
+			req := testcmd.NewHTTPRequest(r)
+
+			username, password, err := req.ExtractBasicAuth()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(req.URL.Path).To(Equal("/0d/" + requestedBlob))
+			Expect(req.Method).To(Equal("GET"))
+			Expect(username).To(Equal("some user"))
+			Expect(password).To(Equal("some pwd"))
+
+			w.Write([]byte("this is your blob"))
+		}
+
+	})
+
+	AfterEach(func() {
+		os.RemoveAll(targetFilePath)
+		ts.Close()
+	})
+
+	AssertGetBehavior := func() {
 		It("get run with valid args", func() {
-			requestedBlob := "0ca907f2-dde8-4413-a304-9076c9d0978b"
-			targetFilePath := filepath.Join(os.TempDir(), "testRunGetCommand.txt")
-			defer os.RemoveAll(targetFilePath)
-
-			handler := func(w http.ResponseWriter, r *http.Request) {
-				req := testcmd.NewHTTPRequest(r)
-
-				username, password, err := req.ExtractBasicAuth()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(req.URL.Path).To(Equal("/0d/" + requestedBlob))
-				Expect(req.Method).To(Equal("GET"))
-				Expect(username).To(Equal("some user"))
-				Expect(password).To(Equal("some pwd"))
-
-				w.Write([]byte("this is your blob"))
-			}
-
-			ts := httptest.NewServer(http.HandlerFunc(handler))
-			defer ts.Close()
-
-			config := davconf.Config{
-				User:     "some user",
-				Password: "some pwd",
-				Endpoint: ts.URL,
-			}
-
 			err := runGet(config, []string{requestedBlob, targetFilePath})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(getFileContent(targetFilePath)).To(Equal("this is your blob"))
@@ -76,5 +82,37 @@ func init() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("Incorrect usage"))
 		})
+	}
+
+	Context("with http endpoint", func() {
+		BeforeEach(func() {
+			ts = httptest.NewServer(http.HandlerFunc(handler))
+
+			config = davconf.Config{
+				User:     "some user",
+				Password: "some pwd",
+				Endpoint: ts.URL,
+			}
+		})
+
+		AssertGetBehavior()
 	})
-}
+
+	Context("with https endpoint", func() {
+		BeforeEach(func() {
+			ts = httptest.NewTLSServer(http.HandlerFunc(handler))
+
+			rootCa, err := testcmd.ExtractRootCa(ts)
+			Expect(err).ToNot(HaveOccurred())
+
+			config = davconf.Config{
+				User:     "some user",
+				Password: "some pwd",
+				Endpoint: ts.URL,
+				CACert:   rootCa,
+			}
+		})
+
+		AssertGetBehavior()
+	})
+})

@@ -83,10 +83,21 @@ var _ = Describe("RepackStemcellCmd", func() {
 					Expect(extractedStemcell.SetVersionCallCount()).To(BeZero())
 				})
 
+				It("should NOT use an empty image", func() {
+					Expect(err).ToNot(HaveOccurred())
+					Expect(extractedStemcell.EmptyImageCallCount()).To(Equal(0))
+				})
+
 				It("should NOT set empty cloud_properties", func() {
 					Expect(err).ToNot(HaveOccurred())
 
 					Expect(extractedStemcell.SetCloudPropertiesCallCount()).To(BeZero())
+				})
+
+				It("should NOT set empty stemcell_formats", func() {
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(extractedStemcell.SetFormatCallCount()).To(BeZero())
 				})
 			})
 
@@ -103,6 +114,50 @@ var _ = Describe("RepackStemcellCmd", func() {
 					Expect(extractedStemcell.SetNameArgsForCall(0)).To(Equal("new-name"))
 
 					Expect(extractedStemcell.PackCallCount()).To(Equal(1))
+				})
+			})
+
+			Context("and --empty-image is specified", func() {
+				It("uses an empty image", func() {
+					opts.EmptyImage = true
+					extractor.SetExtractBehavior("some-stemcell.tgz", extractedStemcell, nil)
+
+					extractedStemcell.PackReturns(nil)
+					err = act()
+					Expect(err).ToNot(HaveOccurred())
+					Expect(extractedStemcell.EmptyImageCallCount()).To(Equal(1))
+				})
+			})
+
+			Context("and --format is specfied", func() {
+				It("overrides the stemcell_formats", func() {
+					opts.Format = []string{"new-format"}
+					extractor.SetExtractBehavior("some-stemcell.tgz", extractedStemcell, nil)
+
+					extractedStemcell.PackReturns(nil)
+					err = act()
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(extractedStemcell.SetFormatCallCount()).To(Equal(1))
+					Expect(extractedStemcell.SetFormatArgsForCall(0)).To(Equal([]string{"new-format"}))
+
+					Expect(extractedStemcell.PackCallCount()).To(Equal(1))
+				})
+
+				Context(" when multiple --format options are specified", func() {
+					It("overrides the stemcell_formats with all provided formats", func() {
+						opts.Format = []string{"new-format1", "new-format2"}
+						extractor.SetExtractBehavior("some-stemcell.tgz", extractedStemcell, nil)
+
+						extractedStemcell.PackReturns(nil)
+						err = act()
+						Expect(err).ToNot(HaveOccurred())
+
+						Expect(extractedStemcell.SetFormatCallCount()).To(Equal(1))
+						Expect(extractedStemcell.SetFormatArgsForCall(0)).To(Equal([]string{"new-format1", "new-format2"}))
+
+						Expect(extractedStemcell.PackCallCount()).To(Equal(1))
+					})
 				})
 			})
 

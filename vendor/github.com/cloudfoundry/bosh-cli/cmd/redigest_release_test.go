@@ -24,15 +24,15 @@ import (
 	"github.com/cloudfoundry/bosh-utils/errors"
 )
 
-var _ = Describe("Sha2ifyRelease", func() {
+var _ = Describe("RedigestRelease", func() {
 
 	var (
 		releaseReader                *fakerel.FakeReader
 		ui                           *fakeui.FakeUI
 		fmv                          *fakefu.FakeMover
 		releaseWriter                *fakerel.FakeWriter
-		command                      Sha2ifyReleaseCmd
-		args                         Sha2ifyReleaseArgs
+		command                      RedigestReleaseCmd
+		args                         RedigestReleaseArgs
 		fakeDigestCalculator         *fakes.FakeDigestCalculator
 		releaseWriterTempDestination string
 		fs                           *fakes2.FakeFileSystem
@@ -46,7 +46,7 @@ var _ = Describe("Sha2ifyRelease", func() {
 		fs = fakes2.NewFakeFileSystem()
 
 		fakeDigestCalculator = fakes.NewFakeDigestCalculator()
-		command = NewSha2ifyReleaseCmd(releaseReader, releaseWriter, fakeDigestCalculator, fmv, fs, ui)
+		command = NewRedigestReleaseCmd(releaseReader, releaseWriter, fakeDigestCalculator, fmv, fs, ui)
 	})
 	var fakeSha128Release *fakerel.FakeRelease
 
@@ -63,7 +63,7 @@ var _ = Describe("Sha2ifyRelease", func() {
 	}
 
 	BeforeEach(func() {
-		args = Sha2ifyReleaseArgs{
+		args = RedigestReleaseArgs{
 			Path:        "/some/release_128.tgz",
 			Destination: FileArg{ExpandedPath: "/some/release_256.tgz"},
 		}
@@ -123,16 +123,16 @@ var _ = Describe("Sha2ifyRelease", func() {
 			Expect(sha2ifyRelease).NotTo(BeNil())
 
 			Expect(sha2ifyRelease.License()).ToNot(BeNil())
-			Expect(sha2ifyRelease.License().ArchiveSHA1()).To(Equal("sha256:licsha256"))
+			Expect(sha2ifyRelease.License().ArchiveDigest()).To(Equal("sha256:licsha256"))
 
 			Expect(sha2ifyRelease.Jobs()).To(HaveLen(1))
-			Expect(sha2ifyRelease.Jobs()[0].ArchiveSHA1()).To(Equal("sha256:jobsha256"))
+			Expect(sha2ifyRelease.Jobs()[0].ArchiveDigest()).To(Equal("sha256:jobsha256"))
 
 			Expect(sha2ifyRelease.Packages()).To(HaveLen(1))
-			Expect(sha2ifyRelease.Packages()[0].ArchiveSHA1()).To(Equal("sha256:pkgsha256"))
+			Expect(sha2ifyRelease.Packages()[0].ArchiveDigest()).To(Equal("sha256:pkgsha256"))
 
 			Expect(sha2ifyRelease.CompiledPackages()).To(HaveLen(1))
-			Expect(sha2ifyRelease.CompiledPackages()[0].ArchiveSHA1()).To(Equal("sha256:compiledpkgsha256"))
+			Expect(sha2ifyRelease.CompiledPackages()[0].ArchiveDigest()).To(Equal("sha256:compiledpkgsha256"))
 
 			Expect(fmv.MoveCallCount()).To(Equal(1))
 
@@ -332,7 +332,7 @@ var _ = Describe("Sha2ifyRelease", func() {
 
 	Context("Given a bad file path", func() {
 		BeforeEach(func() {
-			args = Sha2ifyReleaseArgs{
+			args = RedigestReleaseArgs{
 				Path:        "/some/release_128.tgz",
 				Destination: FileArg{ExpandedPath: "/some/release_256.tgz"},
 			}

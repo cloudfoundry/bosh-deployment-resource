@@ -108,7 +108,7 @@ func (c CLICoordinator) StartProxy() (string, error) {
 }
 
 func nullLogger() boshlog.Logger {
-	return boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard, ioutil.Discard)
+	return boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard)
 }
 
 func setDefaults(obj interface{}) {

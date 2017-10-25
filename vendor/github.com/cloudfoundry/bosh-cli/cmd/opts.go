@@ -18,6 +18,7 @@ type BoshOpts struct {
 	EnvironmentOpt string    `long:"environment" short:"e" description:"Director environment name or URL" env:"BOSH_ENVIRONMENT"`
 	CACertOpt      CACertArg `long:"ca-cert"               description:"Director CA certificate path or value" env:"BOSH_CA_CERT"`
 	Sha2           bool      `long:"sha2"                  description:"Use SHA256 checksums"`
+	Parallel       int       `long:"parallel" description:"The max number of parallel operations" default:"5"`
 
 	// Hidden
 	UsernameOpt string `long:"user" hidden:"true" env:"BOSH_USER"`
@@ -142,8 +143,10 @@ type BoshOpts struct {
 	GenerateJob     GenerateJobOpts     `command:"generate-job"                description:"Generate job"`
 	GeneratePackage GeneratePackageOpts `command:"generate-package"            description:"Generate package"`
 	CreateRelease   CreateReleaseOpts   `command:"create-release"   alias:"cr" description:"Create release"`
+	VendorPackage   VendorPackageOpts   `command:"vendor-package"              description:"Vendor package"`
 
 	// Hidden
+	Sha1ifyRelease  Sha1ifyReleaseOpts  `command:"sha1ify-release"  hidden:"true" description:"Convert release tarball to use SHA1"`
 	Sha2ifyRelease  Sha2ifyReleaseOpts  `command:"sha2ify-release"  hidden:"true" description:"Convert release tarball to use SHA256"`
 	FinalizeRelease FinalizeReleaseOpts `command:"finalize-release"               description:"Create final release from dev release tarball"`
 
@@ -167,6 +170,7 @@ type CreateEnvOpts struct {
 	VarFlags
 	OpsFlags
 	StatePath string `long:"state" value-name:"PATH" description:"State file path"`
+	Recreate  bool   `long:"recreate" description:"Recreate VM in deployment"`
 	cmd
 }
 
@@ -332,9 +336,8 @@ type UpdateRuntimeConfigOpts struct {
 	VarFlags
 	OpsFlags
 
-	NoRedact    bool   `long:"no-redact" description:"Show non-redacted manifest diff"`
-	Name        string `long:"name" description:"Runtime-Config name (default: '')" default:""`
-	ParallelOpt int    `long:"parallel" description:"Upload releases from manifest in parallel with given number of nodes (default: 5)" default:"5"`
+	NoRedact bool   `long:"no-redact" description:"Show non-redacted manifest diff"`
+	Name     string `long:"name" description:"Runtime-Config name (default: '')" default:""`
 
 	cmd
 }
@@ -358,8 +361,7 @@ type DeployOpts struct {
 	VarFlags
 	OpsFlags
 
-	NoRedact    bool `long:"no-redact" description:"Show non-redacted manifest diff"`
-	ParallelOpt int  `long:"parallel" description:"Upload releases from manifest in parallel with given number of nodes (default: 5)" default:"5"`
+	NoRedact bool `long:"no-redact" description:"Show non-redacted manifest diff"`
 
 	Recreate  bool                `long:"recreate"                          description:"Recreate all VMs in deployment"`
 	Fix       bool                `long:"fix"                               description:"Recreate unresponsive instances"`
@@ -450,6 +452,8 @@ type RepackStemcellOpts struct {
 	Args            RepackStemcellArgs `positional-args:"true" required:"true"`
 	Name            string             `long:"name" description:"Repacked stemcell name"`
 	CloudProperties string             `long:"cloud-properties" description:"Repacked stemcell cloud properties"`
+	EmptyImage      bool               `long:"empty-image" description:"Pack zero byte file instead of image"`
+	Format          []string           `long:"format" description:"Repacked stemcell formats. Can be used multiple times. Overrides existing formats."`
 	Version         string             `long:"version" description:"Repacked stemcell version"`
 
 	cmd
@@ -507,6 +511,7 @@ type ExportReleaseOpts struct {
 
 	Directory DirOrCWDArg `long:"dir" description:"Destination directory" default:"."`
 
+	Jobs []string `long:"job" description:"Name of job to export"`
 	cmd
 }
 
@@ -810,13 +815,32 @@ type GeneratePackageArgs struct {
 	Name string `positional-arg-name:"NAME"`
 }
 
-type Sha2ifyReleaseOpts struct {
-	Args Sha2ifyReleaseArgs `positional-args:"true"`
+type VendorPackageOpts struct {
+	Args VendorPackageArgs `positional-args:"true" required:"true"`
+
+	Directory DirOrCWDArg `long:"dir" description:"Release directory path if not current working directory" default:"."`
 
 	cmd
 }
 
-type Sha2ifyReleaseArgs struct {
+type VendorPackageArgs struct {
+	PackageName string      `positional-arg-name:"PACKAGE"`
+	URL         DirOrCWDArg `positional-arg-name:"SRC-DIR" default:"."`
+}
+
+type Sha1ifyReleaseOpts struct {
+	Args RedigestReleaseArgs `positional-args:"true"`
+
+	cmd
+}
+
+type Sha2ifyReleaseOpts struct {
+	Args RedigestReleaseArgs `positional-args:"true"`
+
+	cmd
+}
+
+type RedigestReleaseArgs struct {
 	Path        string  `positional-arg-name:"PATH"`
 	Destination FileArg `positional-arg-name:"DESTINATION"`
 }
@@ -890,8 +914,7 @@ type RemoveBlobArgs struct {
 }
 
 type SyncBlobsOpts struct {
-	Directory   DirOrCWDArg `long:"dir" description:"Release directory path if not current working directory" default:"."`
-	ParallelOpt int         `long:"parallel" description:"Sets the max number of parallel downloads" default:"5"`
+	Directory DirOrCWDArg `long:"dir" description:"Release directory path if not current working directory" default:"."`
 	cmd
 }
 

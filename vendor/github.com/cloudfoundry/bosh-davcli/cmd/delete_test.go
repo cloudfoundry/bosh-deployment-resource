@@ -1,20 +1,17 @@
 package cmd_test
 
 import (
-	//"io/ioutil"
 	"net/http"
-	//"net/http/httptest"
-	//"os"
-	//"path/filepath"
+	"net/http/httptest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	. "github.com/cloudfoundry/bosh-davcli/cmd"
+
 	testcmd "github.com/cloudfoundry/bosh-davcli/cmd/testing"
 	davconf "github.com/cloudfoundry/bosh-davcli/config"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"net/http/httptest"
 )
 
 func runDelete(config davconf.Config, args []string) error {
@@ -51,28 +48,54 @@ var _ = Describe("DeleteCmd", func() {
 
 			w.WriteHeader(200)
 		}
-
-		ts = httptest.NewServer(http.HandlerFunc(handler))
-
-		config = davconf.Config{
-			User:     "some user",
-			Password: "some pwd",
-			Endpoint: ts.URL,
-		}
 	})
 
 	AfterEach(func() {
 		ts.Close()
 	})
 
-	It("with valid args", func() {
-		err := runDelete(config, []string{requestedBlob})
-		Expect(err).ToNot(HaveOccurred())
+	AssertDeleteBehavior := func() {
+		It("with valid args", func() {
+			err := runDelete(config, []string{requestedBlob})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns err with incorrect arg count", func() {
+			err := runDelete(davconf.Config{}, []string{})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("Incorrect usage"))
+		})
+	}
+
+	Context("with http endpoint", func() {
+		BeforeEach(func() {
+			ts = httptest.NewServer(http.HandlerFunc(handler))
+			config = davconf.Config{
+				User:     "some user",
+				Password: "some pwd",
+				Endpoint: ts.URL,
+			}
+
+		})
+
+		AssertDeleteBehavior()
 	})
 
-	It("returns err with incorrect arg count", func() {
-		err := runDelete(davconf.Config{}, []string{})
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("Incorrect usage"))
+	Context("with https endpoint", func() {
+		BeforeEach(func() {
+			ts = httptest.NewTLSServer(http.HandlerFunc(handler))
+
+			rootCa, err := testcmd.ExtractRootCa(ts)
+			Expect(err).ToNot(HaveOccurred())
+
+			config = davconf.Config{
+				User:     "some user",
+				Password: "some pwd",
+				Endpoint: ts.URL,
+				CACert:   rootCa,
+			}
+		})
+
+		AssertDeleteBehavior()
 	})
 })

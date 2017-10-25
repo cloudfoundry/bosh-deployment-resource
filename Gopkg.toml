@@ -1,5 +1,5 @@
 [[constraint]]
-  version = "v2.0.33"
+  revision = "f58b3a1827c1f4359397485d781c16f102e4b430"
   name = "github.com/cloudfoundry/bosh-cli"
 
 [[constraint]]
@@ -16,3 +16,6 @@
   name = "github.com/pivotal-golang/s3cli"
   source = "github.com/cloudfoundry/bosh-s3cli"
 
+[[override]]
+  revision = "a960ab178e64b43d19051be6fd2891ff695bb206"
+  name = "github.com/cloudfoundry/bosh-utils"

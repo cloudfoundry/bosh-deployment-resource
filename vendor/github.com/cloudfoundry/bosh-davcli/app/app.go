@@ -60,7 +60,12 @@ func (app App) Run(args []string) (err error) {
 		return
 	}
 
-	app.runner.SetConfig(config)
+	err = app.runner.SetConfig(config)
+	if err != nil {
+		err = fmt.Errorf("Invalid CA Certificate: %s", err.Error())
+		return
+	}
+
 	err = app.runner.Run(args[2:])
 	return
 }

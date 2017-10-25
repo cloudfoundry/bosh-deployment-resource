@@ -45,20 +45,18 @@
 [[projects]]
   name = "github.com/cloudfoundry/bosh-agent"
   packages = ["agentclient","agentclient/applyspec","agentclient/http"]
-  revision = "00c7853af1cdc6b631f85b32b21e41096f640b6f"
-  version = "v2.14.0"
+  revision = "a74fc7069b604abe84f1ddd899f58ae1e6b1f8ee"
 
 [[projects]]
   name = "github.com/cloudfoundry/bosh-cli"
-  packages = ["blobstore","cloud","cmd","cmd/config","common/net","common/util","config","cpi/release","crypto","deployment","deployment/disk","deployment/instance","deployment/instance/state","deployment/manifest","deployment/release","deployment/sshtunnel","deployment/template","deployment/vm","director","director/directorfakes","director/template","index","installation","installation/blobextract","installation/manifest","installation/pkg","installation/tarball","registry","release","release/job","release/job/manifest","release/license","release/manifest","release/pkg","release/pkg/manifest","release/resource","release/set/manifest","releasedir","releasedir/index","ssh","state/job","state/pkg","stemcell","templatescompiler","templatescompiler/erbrenderer","uaa","ui","ui/fmt","ui/table","ui/task"]
-  revision = "c84537023657e2dd638c80dd568fff9c63c7fb6d"
-  version = "v2.0.33"
+  packages = ["blobstore","cloud","cmd","cmd/config","common/net","common/util","config","cpi/release","crypto","deployment","deployment/disk","deployment/instance","deployment/instance/state","deployment/manifest","deployment/release","deployment/sshtunnel","deployment/template","deployment/vm","director","director/directorfakes","director/template","index","installation","installation/blobextract","installation/manifest","installation/pkg","installation/tarball","registry","release","release/job","release/job/manifest","release/license","release/manifest","release/pkg","release/pkg/manifest","release/resource","release/set/manifest","releasedir","releasedir/index","ssh","state/job","state/pkg","stemcell","templatescompiler","templatescompiler/erbrenderer","uaa","ui","ui/fmt","ui/table","ui/task","work"]
+  revision = "f58b3a1827c1f4359397485d781c16f102e4b430"
 
 [[projects]]
   name = "github.com/cloudfoundry/bosh-davcli"
   packages = ["client","config"]
-  revision = "f1f773ae1ba528205dcf95916aacd3e878daff44"
-  version = "v0.0.23"
+  revision = "15612fdfcfd4ed7302ab02291b0c67778b774d36"
+  version = "v0.0.25"
 
 [[projects]]
   name = "github.com/cloudfoundry/bosh-gcscli"
@@ -67,10 +65,9 @@
   version = "v0.0.3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/cloudfoundry/bosh-utils"
-  packages = ["blobstore","crypto","errors","fileutil","http","httpclient","logger","property","retrystrategy","system","uuid"]
-  revision = "3116dcc64bb16f5f0c61360f6e93c1d5305eff61"
+  packages = ["blobstore","crypto","errors","fileutil","httpclient","logger","property","retrystrategy","system","uuid"]
+  revision = "a960ab178e64b43d19051be6fd2891ff695bb206"
 
 [[projects]]
   name = "github.com/cloudfoundry/config-server"
@@ -197,7 +194,7 @@
   branch = "master"
   name = "github.com/vito/go-interact"
   packages = ["interact","interact/terminal"]
-  revision = "c5a3f51ad50e34ec101050f69383caa75082f233"
+  revision = "60caa86f173a89ef7a479fa400cc50faf6a2e369"
 
 [[projects]]
   branch = "master"
@@ -262,6 +259,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a35766c579cc482afdd20aee4fcdb9b8f8a5492eb02d2ebf0b104341e70e121a"
+  inputs-digest = "630ecbe28607c5d56f92c963e05a5a6c861ca29c114e11820eae5ac447bb22db"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -276,7 +276,7 @@ func parsedVarsFiles(varsFiles []string) ([]boshtpl.VarsFileArg, error) {
 }
 
 func parsedOpsFiles(opsFiles []string) ([]boshcmd.OpsFileArg, error) {
-	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard, ioutil.Discard)
+	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard)
 	boshFS := boshsys.NewOsFileSystemWithStrictTempRoot(nullLogger)
 
 	opsFileArgs := []boshcmd.OpsFileArg{}
@@ -292,6 +292,6 @@ func parsedOpsFiles(opsFiles []string) ([]boshcmd.OpsFileArg, error) {
 }
 
 func boshFileSystem() boshsys.FileSystem {
-	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard, ioutil.Discard)
+	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard)
 	return boshsys.NewOsFileSystemWithStrictTempRoot(nullLogger)
 }

@@ -1,13 +1,13 @@
-package http_test
+package work_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
-func TestHttp(t *testing.T) {
+func TestReg(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Http Suite")
+	RunSpecs(t, "work")
 }
