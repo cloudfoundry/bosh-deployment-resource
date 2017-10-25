@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/in"
+	proxy "github.com/cloudfoundry/socks5-proxy"
 )
 
 func main() {

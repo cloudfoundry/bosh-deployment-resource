@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
@@ -19,13 +18,19 @@ import (
 	goflags "github.com/jessevdk/go-flags"
 )
 
+//go:generate counterfeiter . Proxy
+type Proxy interface {
+	Start(string, string) error
+	Addr() (string, error)
+}
+
 type CLICoordinator struct {
 	source concourse.Source
 	out    io.Writer
-	proxy  proxy.Proxy
+	proxy  Proxy
 }
 
-func NewCLICoordinator(source concourse.Source, out io.Writer, proxy proxy.Proxy) CLICoordinator {
+func NewCLICoordinator(source concourse.Source, out io.Writer, proxy Proxy) CLICoordinator {
 	return CLICoordinator{
 		source: source,
 		out:    out,

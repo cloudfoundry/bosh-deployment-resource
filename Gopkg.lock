@@ -80,6 +80,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/cloudfoundry/socks5-proxy"
+  packages = ["."]
+  revision = "930de75eb8c55a3325de5dd09a33e3631c53d677"
+
+[[projects]]
+  branch = "master"
   name = "github.com/cppforlife/go-patch"
   packages = ["patch"]
   revision = "d9e51bef8eda190cdbac94dddd3c304080774726"
@@ -197,7 +203,7 @@
   branch = "master"
   name = "github.com/vito/go-interact"
   packages = ["interact","interact/terminal"]
-  revision = "c5a3f51ad50e34ec101050f69383caa75082f233"
+  revision = "60caa86f173a89ef7a479fa400cc50faf6a2e369"
 
 [[projects]]
   branch = "master"
@@ -262,6 +268,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a35766c579cc482afdd20aee4fcdb9b8f8a5492eb02d2ebf0b104341e70e121a"
+  inputs-digest = "bc72d3e602fa7867723a1a117d11dba8c96f72e2e1ad15095a989da8f750443b"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy/proxyfakes"
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,12 +13,12 @@ import (
 var _ = Describe("CLI coordinator", func() {
 	var (
 		cliCoordinator bosh.CLICoordinator
-		fakeProxy      *proxyfakes.FakeProxy
+		fakeProxy      *boshfakes.FakeProxy
 		source         concourse.Source
 	)
 
 	BeforeEach(func() {
-		fakeProxy = &proxyfakes.FakeProxy{}
+		fakeProxy = &boshfakes.FakeProxy{}
 		fakeProxy.AddrReturns("some-proxy-addr", nil)
 		fakeProxy.AddrReturnsOnCall(0, "", errors.New("proxy is not running"))
 		source = concourse.Source{JumpboxSSHKey: "some-key", JumpboxURL: "some-url"}
