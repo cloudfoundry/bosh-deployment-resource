@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy"
 	"github.com/cloudfoundry/bosh-deployment-resource/check"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
+	proxy "github.com/cloudfoundry/socks5-proxy"
 )
 
 func main() {

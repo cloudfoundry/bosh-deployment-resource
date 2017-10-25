@@ -9,20 +9,18 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/ssh"
-	goproxy "golang.org/x/net/proxy"
-
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/proxy/proxyfakes"
-
+	proxy "github.com/cloudfoundry/socks5-proxy"
+	"github.com/cloudfoundry/socks5-proxy/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"golang.org/x/crypto/ssh"
+	goproxy "golang.org/x/net/proxy"
 )
 
 var _ = Describe("Socks5Proxy", func() {
 	var (
 		socks5Proxy   *proxy.Socks5Proxy
-		hostKeyGetter *proxyfakes.FakeKeyGetter
+		hostKeyGetter *fakes.FakeKeyGetter
 
 		sshServerURL       string
 		httpServerHostPort string
@@ -41,7 +39,7 @@ var _ = Describe("Socks5Proxy", func() {
 		signer, err := ssh.ParsePrivateKey([]byte(sshPrivateKey))
 		Expect(err).NotTo(HaveOccurred())
 
-		hostKeyGetter = &proxyfakes.FakeKeyGetter{}
+		hostKeyGetter = &fakes.FakeKeyGetter{}
 		hostKeyGetter.GetReturns(signer.PublicKey(), nil)
 
 		proxyError = make(chan error)
