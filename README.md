@@ -148,6 +148,9 @@ deployment manifest and then deploy.
 * `cleanup`: *Optional* An boolean that specifies if a bosh cleanup should be
   run after deployment. Defaults to false.
 
+* `delete`: *Optional* An boolean that specifies if delete-deployment should be run before deployment. Defaults 
+  to false.
+
 * `no_redact`: *Optional* Removes redacted from Bosh output. Defaults to false.
 
 * `dry_run`: *Optional* Shows the deployment diff without running a deploy. Defaults to false.

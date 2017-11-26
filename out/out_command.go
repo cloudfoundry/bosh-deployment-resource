@@ -77,6 +77,7 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 		NoRedact: outRequest.Params.NoRedact,
 		DryRun:   outRequest.Params.DryRun,
 		Cleanup:  outRequest.Params.Cleanup,
+		Delete:   outRequest.Params.Delete,
 	}
 
 	var varsStoreFile *os.File
