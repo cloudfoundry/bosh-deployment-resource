@@ -601,6 +601,10 @@ func (s *AppUpdateEvent) MarshalJSON() ([]byte, error) {
 
 // AppVersion: This represents a single version of the app.
 type AppVersion struct {
+	// Track: The track that this app was published in. For example if track
+	// is "alpha", this is an alpha version of the app.
+	Track string `json:"track,omitempty"`
+
 	// VersionCode: Unique increasing identifier for the app version.
 	VersionCode int64 `json:"versionCode,omitempty"`
 
@@ -609,7 +613,7 @@ type AppVersion struct {
 	// localized (for example, the string could be "1.4").
 	VersionString string `json:"versionString,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "VersionCode") to
+	// ForceSendFields is a list of field names (e.g. "Track") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -617,10 +621,10 @@ type AppVersion struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "VersionCode") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
+	// NullFields is a list of field names (e.g. "Track") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
 	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
@@ -1113,28 +1117,23 @@ func (s *EntitlementsListResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// GroupLicense: A group license object indicates a product that an
-// enterprise admin has approved for use in the enterprise. The product
-// may be free or paid. For free products, a group license object is
-// created in these cases: if the enterprise admin approves a product in
-// Google Play, if the product is added to a collection, or if an
-// entitlement for the product is created for a user via the API. For
-// paid products, a group license object is only created as part of the
-// first bulk purchase of that product in Google Play by the enterprise
-// admin.
+// GroupLicense: Group license objects allow you to keep track of
+// licenses (called entitlements) for both free and paid apps. For a
+// free app, a group license is created when an enterprise admin first
+// approves the product in Google Play or when the first entitlement for
+// the product is created for a user via the API. For a paid app, a
+// group license object is only created when an enterprise admin
+// purchases the product in Google Play for the first time.
 //
-// The API can be used to query group licenses; the available
-// information includes the total number of licenses purchased (for paid
-// products) and the total number of licenses that have been
-// provisioned, that is, the total number of user entitlements in
-// existence for the product.
+// Use the API to query group licenses. A Grouplicenses resource
+// includes the total number of licenses purchased (paid apps only) and
+// the total number of licenses currently in use. In other words, the
+// total number of Entitlements that exist for the product.
 //
-// Group license objects are never deleted. If, for example, a free app
-// is added to a collection and then removed, the group license will
-// remain, allowing the enterprise admin to keep track of any remaining
-// entitlements. An enterprise admin may indicate they are no longer
-// interested in the group license by marking it as unapproved in Google
-// Play.
+// Only one group license object is created per product and group
+// license objects are never deleted. If a product is unapproved, its
+// group license remains. This allows enterprise admins to keep track of
+// any remaining entitlements for the product.
 type GroupLicense struct {
 	// AcquisitionKind: How this group license was acquired. "bulkPurchase"
 	// means that this Grouplicenses resource was created because the
@@ -1960,14 +1959,15 @@ func (s *Permission) MarshalJSON() ([]byte, error) {
 // to the full Google Play details page) is intended to allow a basic
 // representation of the product within an EMM user interface.
 type Product struct {
-	// AppVersion: App versions currently available for this product. The
-	// returned list contains only public versions. Alpha and beta versions
-	// are not included.
+	// AppVersion: App versions currently available for this product.
 	AppVersion []*AppVersion `json:"appVersion,omitempty"`
 
 	// AuthorName: The name of the author of the product (for example, the
 	// app developer).
 	AuthorName string `json:"authorName,omitempty"`
+
+	// AvailableTracks: The tracks that are visible to the enterprise.
+	AvailableTracks []string `json:"availableTracks,omitempty"`
 
 	// DetailsUrl: A link to the (consumer) Google Play details page for the
 	// product.
@@ -2002,6 +2002,9 @@ type Product struct {
 
 	// RequiresContainerApp: Deprecated.
 	RequiresContainerApp bool `json:"requiresContainerApp,omitempty"`
+
+	// SigningCertificate: The certificate used to sign this product.
+	SigningCertificate *ProductSigningCertificate `json:"signingCertificate,omitempty"`
 
 	// SmallIconUrl: A link to a smaller image that can be used as an icon
 	// for the product. This image is suitable for use at up to 128px x
@@ -2214,6 +2217,14 @@ type ProductSet struct {
 	// per user.
 	ProductSetBehavior string `json:"productSetBehavior,omitempty"`
 
+	// ProductVisibility: Additional list of product IDs making up the
+	// product set. Unlike the productID array, in this list It's possible
+	// to specify which tracks (alpha, beta, production) of a product are
+	// visible to the user. See ProductVisibility and its fields for more
+	// information. Specifying the same product ID both here and in the
+	// productId array is not allowed and it will result in an error.
+	ProductVisibility []*ProductVisibility `json:"productVisibility,omitempty"`
+
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
@@ -2237,6 +2248,87 @@ type ProductSet struct {
 
 func (s *ProductSet) MarshalJSON() ([]byte, error) {
 	type noMethod ProductSet
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type ProductSigningCertificate struct {
+	// CertificateHashSha1: The base64 urlsafe encoded SHA1 hash of the
+	// certificate. (This field is deprecated in favor of SHA2-256. It
+	// should not be used and may be removed at any time.)
+	CertificateHashSha1 string `json:"certificateHashSha1,omitempty"`
+
+	// CertificateHashSha256: The base64 urlsafe encoded SHA2-256 hash of
+	// the certificate.
+	CertificateHashSha256 string `json:"certificateHashSha256,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CertificateHashSha1")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CertificateHashSha1") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ProductSigningCertificate) MarshalJSON() ([]byte, error) {
+	type noMethod ProductSigningCertificate
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ProductVisibility: A product to be made visible to a user.
+type ProductVisibility struct {
+	// ProductId: The product ID to make visible to the user. Required for
+	// each item in the productVisibility list.
+	ProductId string `json:"productId,omitempty"`
+
+	// Tracks: Grants visibility to the specified track(s) of the product to
+	// the user. The track available to the user is based on the following
+	// order of preference: alpha, beta, production. For example, if an app
+	// has a prod version, a beta version and an alpha version and the
+	// enterprise has been granted visibility to both the alpha and beta
+	// tracks, if tracks is {"beta", "production"} the user will be able to
+	// install the app and they will get the beta version of the app. If
+	// there are no app versions in the specified track adding the "alpha"
+	// and "beta" values to the list of tracks will have no effect. Note
+	// that the enterprise requires access to alpha and/or beta tracks
+	// before users can be granted visibility to apps in those tracks.
+	//
+	// The allowed sets are: {} (considered equivalent to {"production"})
+	// {"production"} {"beta", "production"} {"alpha", "beta", "production"}
+	// The order of elements is not relevant. Any other set of tracks will
+	// be rejected with an error.
+	Tracks []string `json:"tracks,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ProductId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ProductId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ProductVisibility) MarshalJSON() ([]byte, error) {
+	type noMethod ProductVisibility
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -5328,8 +5420,8 @@ type EnterprisesSendTestPushNotificationCall struct {
 	header_      http.Header
 }
 
-// SendTestPushNotification: Sends a test push notification to validate
-// the EMM integration with the Google Cloud Pub/Sub service for this
+// SendTestPushNotification: Sends a test notification to validate the
+// EMM integration with the Google Cloud Pub/Sub service for this
 // enterprise.
 func (r *EnterprisesService) SendTestPushNotification(enterpriseId string) *EnterprisesSendTestPushNotificationCall {
 	c := &EnterprisesSendTestPushNotificationCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -5420,7 +5512,7 @@ func (c *EnterprisesSendTestPushNotificationCall) Do(opts ...googleapi.CallOptio
 	}
 	return ret, nil
 	// {
-	//   "description": "Sends a test push notification to validate the EMM integration with the Google Cloud Pub/Sub service for this enterprise.",
+	//   "description": "Sends a test notification to validate the EMM integration with the Google Cloud Pub/Sub service for this enterprise.",
 	//   "httpMethod": "POST",
 	//   "id": "androidenterprise.enterprises.sendTestPushNotification",
 	//   "parameterOrder": [
