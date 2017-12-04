@@ -57,7 +57,11 @@ var _ = Describe("Factory", func() {
 		It("returns an error if CaCert is given but invalid", func() {
 			factory := buildFactory()
 			config := davconf.Config{
-				CACert: "--- INVALID CERTIFICATE ---",
+				TLS: davconf.TLS{
+					Cert: davconf.Cert{
+						CA: "--- INVALID CERTIFICATE ---",
+					},
+				},
 			}
 
 			err := factory.SetConfig(config)
@@ -65,8 +69,7 @@ var _ = Describe("Factory", func() {
 		})
 		It("does not return an error if CaCert is valid", func() {
 			factory := buildFactory()
-			config := davconf.Config{
-				CACert: `-----BEGIN CERTIFICATE-----
+			cert := `-----BEGIN CERTIFICATE-----
 MIICEzCCAXygAwIBAgIQMIMChMLGrR+QvmQvpwAU6zANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
 MDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB
@@ -79,7 +82,13 @@ AAAAATANBgkqhkiG9w0BAQsFAAOBgQCEcetwO59EWk7WiJsG4x8SY+UIAA+flUI9
 tyC4lNhbcF2Idq9greZwbYCqTTTr2XiRNSMLCOjKyI7ukPoPjo16ocHj+P3vZGfs
 h1fIw3cSS2OolhloGw/XM6RWPWtPAlGykKLciQrBru5NAPvCMsb/I1DAceTiotQM
 fblo6RBxUQ==
------END CERTIFICATE-----`,
+-----END CERTIFICATE-----`
+			config := davconf.Config{
+				TLS: davconf.TLS{
+					Cert: davconf.Cert{
+						CA: cert,
+					},
+				},
 			}
 
 			err := factory.SetConfig(config)
@@ -88,7 +97,11 @@ fblo6RBxUQ==
 		It("does not return an error if CaCert is not provided", func() {
 			factory := buildFactory()
 			config := davconf.Config{
-				CACert: "",
+				TLS: davconf.TLS{
+					Cert: davconf.Cert{
+						CA: "",
+					},
+				},
 			}
 
 			err := factory.SetConfig(config)

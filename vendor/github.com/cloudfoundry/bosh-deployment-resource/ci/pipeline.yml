@@ -1,0 +1,252 @@
+---
+resources:
+- name: bosh-deployment-resource
+  type: git
+  source:
+    branch: master
+    uri: git@github.com:cloudfoundry/bosh-deployment-resource
+    ignore_paths: [ci/*]
+    private_key: {{bosh-deployment-resource-git-deploy-private-key}}
+
+- name: bosh-deployment-resource-image
+  type: docker-image
+  source:
+    username: {{dockerhub_username}}
+    password: {{dockerhub_password}}
+    repository:  &bosh-deployment-resource-image-repo cloudfoundry/bosh-deployment-resource
+
+- name: version
+  type: semver
+  source:
+    driver: git
+    uri: git@github.com:cloudfoundry/bosh-deployment-resource
+    branch: version
+    file: version
+    private_key: {{bosh-deployment-resource-git-deploy-private-key}}
+
+- name: bosh-deployment-resource-github-release
+  type: github-release
+  source:
+    access_token: {{bosh-deployment-resource-github-release-access-token}}
+    repository: bosh-deployment-resource
+    user: cloudfoundry
+
+- name: bosh-deployment-resource-ci
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/cloudfoundry/bosh-deployment-resource
+    paths: [ci/*]
+
+- name: test-deployment
+  type: bosh-deployment
+  source:
+    ca_cert: {{director-ca-cert}}
+    target: {{director-address}}
+    client: {{director-client}}
+    client_secret: {{director-client-secret}}
+    deployment: test-deployment
+
+- name: stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-google-kvm-ubuntu-trusty-go_agent
+
+- name: release
+  type: bosh-io-release
+  source:
+    repository: concourse/concourse
+
+resource_types:
+- name: bosh-deployment
+  type: docker-image
+  source:
+    repository: cloudfoundry/bosh-deployment-resource
+    tag: release-candidate
+
+jobs:
+- name: unit-test
+  plan:
+  - do:
+    - aggregate:
+      - get: bosh-deployment-resource-ci
+      - get: bosh-deployment-resource
+        trigger: true
+    - task: unit-test
+      file: bosh-deployment-resource-ci/ci/tasks/unit-test.yml
+
+- name: rc
+  serial_groups: [version]
+  plan:
+  - do:
+    - aggregate:
+      - get: bosh-deployment-resource-ci
+      - get: bosh-deployment-resource
+        passed: [unit-test]
+        trigger: true
+      - get: version
+        params: {pre: rc}
+    - aggregate:
+      - task: build
+        file: bosh-deployment-resource-ci/ci/tasks/build.yml
+      - task: write-release-candidate-tag
+        file: bosh-deployment-resource-ci/ci/tasks/write-tag-file.yml
+        params:
+          TAG: &rc-tag release-candidate
+    - aggregate:
+      - put: bosh-deployment-resource-image
+        params:
+          build: built-binaries
+          tag: version/version
+          tag_prefix: v
+      - put: bosh-deployment-resource-image
+        params:
+          build: built-binaries
+          tag: tag-file/tag
+    - put: version
+      params: {file: version/version}
+
+- name: deploy
+  plan:
+  - aggregate:
+    - get: release
+    - get: stemcell
+    - get: bosh-deployment-resource-ci
+    - get: bosh-deployment-resource
+      passed: [rc]
+      trigger: true
+  - task: write-vars-files
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: ubuntu
+          tag: "14.04"
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          set -e
+          echo "cool: beans" > vars-files/file
+        dir: ""
+      outputs:
+      - name: vars-files
+        path: ""
+  - task: write-ops-file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: ubuntu
+          tag: "14.04"
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          set -e
+          echo "- type: replace" > ops-files/file
+          echo "  path: /update/new-key?" >> ops-files/file
+          echo "  value: is-kewl" >> ops-files/file
+        dir: ""
+      outputs:
+      - name: ops-files
+        path: ""
+  - put: test-deployment
+    params:
+      manifest: bosh-deployment-resource-ci/ci/test-deployment.yml
+      ops_files:
+      - ops-files/*
+      vars_files:
+      - vars-files/*
+      vars:
+        max_in_flight: 10
+      releases:
+      - release/*.tgz
+      stemcells:
+      - stemcell/*.tgz
+
+- name: shipit
+  serial_groups: [version]
+  plan:
+  - do:
+    - aggregate:
+      - get: bosh-deployment-resource-ci
+      - get: bosh-deployment-resource
+        passed: [deploy]
+      - get: version
+        passed: [rc]
+        params: {bump: final}
+      - get: bosh-deployment-resource-image
+        passed: [rc]
+    - task: write-latest-final-tag
+      file: bosh-deployment-resource-ci/ci/tasks/write-tag-file.yml
+      params:
+        TAG: latest
+    - aggregate:
+      - put: bosh-deployment-resource-image
+        params:
+          pull_repository: *bosh-deployment-resource-image-repo
+          pull_tag: *rc-tag
+          tag: version/version
+          tag_prefix: v
+      - put: bosh-deployment-resource-image
+        params:
+          pull_repository: *bosh-deployment-resource-image-repo
+          pull_tag: *rc-tag
+          tag: tag-file/tag
+      - put: bosh-deployment-resource
+        params:
+          repository: bosh-deployment-resource
+          tag: version/version
+          tag_prefix: v
+          only_tag: true
+    - aggregate:
+      - put: bosh-deployment-resource-github-release
+        params:
+          name: version/version
+          tag: version/version
+          tag_prefix: v
+      - put: version
+        params: {file: version/version}
+
+- name: auto-patch
+  public: true
+  serial_groups: [version]
+  plan:
+  - get: version
+    passed: [shipit]
+    params: {bump: patch, pre: rc}
+    trigger: true
+  - put: version
+    params: {file: version/version}
+
+- name: major
+  public: true
+  serial_groups: [version]
+  plan:
+  - get: version
+    params: {bump: major, pre: rc}
+  - put: version
+    params: {file: version/version}
+
+- name: minor
+  public: true
+  serial_groups: [version]
+  plan:
+  - get: version
+    params: {bump: minor, pre: rc}
+  - put: version
+    params: {file: version/version}
+
+- name: patch
+  public: true
+  serial_groups: [version]
+  plan:
+  - get: version
+    params: {bump: patch, pre: rc}
+  - put: version
+    params: {file: version/version}
