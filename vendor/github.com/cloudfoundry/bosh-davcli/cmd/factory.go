@@ -6,9 +6,9 @@ import (
 	"crypto/x509"
 	davclient "github.com/cloudfoundry/bosh-davcli/client"
 	davconf "github.com/cloudfoundry/bosh-davcli/config"
+	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
 	boshhttpclient "github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
 )
 
 type Factory interface {
@@ -41,8 +41,8 @@ func (f *factory) SetConfig(config davconf.Config) (err error) {
 	var httpClient boshhttpclient.Client
 	var certPool *x509.CertPool
 
-	if len(config.CACert) != 0 {
-		certPool, err = boshcrypto.CertPoolFromPEM([]byte(config.CACert))
+	if len(config.TLS.Cert.CA) != 0 {
+		certPool, err = boshcrypto.CertPoolFromPEM([]byte(config.TLS.Cert.CA))
 	}
 
 	httpClient = boshhttpclient.CreateDefaultClient(certPool)

@@ -91,7 +91,11 @@ var _ = Describe("Exists", func() {
 				User:     "some user",
 				Password: "some pwd",
 				Endpoint: ts.URL,
-				CACert:   rootCa,
+				TLS: davconf.TLS{
+					Cert: davconf.Cert{
+						CA: rootCa,
+					},
+				},
 			}
 		})
 

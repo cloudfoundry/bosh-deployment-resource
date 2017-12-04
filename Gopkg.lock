@@ -55,8 +55,14 @@
 [[projects]]
   name = "github.com/cloudfoundry/bosh-davcli"
   packages = ["client","config"]
-  revision = "15612fdfcfd4ed7302ab02291b0c67778b774d36"
-  version = "v0.0.25"
+  revision = "81142822dc5f81b6c2af2e2f512be802f3d6f69c"
+  version = "v0.0.26"
+
+[[projects]]
+  name = "github.com/cloudfoundry/bosh-deployment-resource"
+  packages = ["bosh","bosh/boshfakes","check","concourse","gcp","in","out","storage","storage/storagefakes","tools"]
+  revision = "7304aa290c9510d1e6ef6de04805080c95f56b84"
+  version = "v2.7.1"
 
 [[projects]]
   name = "github.com/cloudfoundry/bosh-gcscli"
@@ -264,6 +270,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6f8a30799d422c1fb4f491578e870be43f2a0426514fb4ca656a6cf118debff5"
+  inputs-digest = "5137fc2f6fa7131fc827e74e590700ae98995b3e65f0a82027e73de5fc9777cd"
   solver-name = "gps-cdcl"
   solver-version = 1

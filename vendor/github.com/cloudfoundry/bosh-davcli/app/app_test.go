@@ -53,11 +53,15 @@ var _ = Describe("App", func() {
 			User:     "some user",
 			Password: "some pwd",
 			Endpoint: "https://example.com/some/endpoint",
-			CACert:   "ca-cert",
+			TLS: davconf.TLS{
+				Cert: davconf.Cert{
+					CA: "ca-cert",
+				},
+			},
 		}
 
 		Expect(runner.Config).To(Equal(expectedConfig))
-		Expect(runner.Config.CACert).ToNot(BeNil())
+		Expect(runner.Config.TLS.Cert.CA).ToNot(BeNil())
 	})
 
 	It("returns error if CA Cert is invalid", func() {
@@ -86,7 +90,7 @@ var _ = Describe("App", func() {
 		}
 
 		Expect(runner.Config).To(Equal(expectedConfig))
-		Expect(runner.Config.CACert).To(BeEmpty())
+		Expect(runner.Config.TLS.Cert.CA).To(BeEmpty())
 		Expect(runner.RunArgs).To(Equal([]string{"put", "localFile", "remoteFile"}))
 	})
 
