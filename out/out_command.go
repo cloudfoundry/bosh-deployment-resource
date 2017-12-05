@@ -32,6 +32,14 @@ func NewOutCommand(director bosh.Director, storageClient storage.StorageClient, 
 }
 
 func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
+	if outRequest.Params.Delete.Enabled {
+		return OutResponse{}, c.director.Delete(outRequest.Params.Delete.Force)
+	} else {
+		return c.deploy(outRequest)
+	}
+}
+
+func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error) {
 	manifestBytes, err := ioutil.ReadFile(path.Join(c.resourcesDirectory, outRequest.Params.Manifest))
 	if err != nil {
 		return OutResponse{}, err

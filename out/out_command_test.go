@@ -68,6 +68,7 @@ var _ = Describe("OutCommand", func() {
 		It("deploys", func() {
 			_, err := outCommand.Run(outRequest)
 			Expect(err).ToNot(HaveOccurred())
+			Expect(director.DeleteCallCount()).To(Equal(0))
 
 			_, actualInterpolateParams := director.InterpolateArgsForCall(0)
 			Expect(actualInterpolateParams.Vars).To(Equal(
@@ -466,6 +467,42 @@ var _ = Describe("OutCommand", func() {
 					Expect(err.Error()).To(Equal("Failed to upload"))
 				})
 			})
+		})
+
+		Context("when the requested operation is a delete", func() {
+			BeforeEach(func() {
+				outRequest.Params = concourse.OutParams{
+					Delete: concourse.DeleteParams{
+						Enabled: true,
+						Force:   true,
+					},
+				}
+			})
+
+			It("deletes the deployment", func() {
+				response, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(director.DeployCallCount()).To(Equal(0))
+				Expect(director.DeleteCallCount()).To(Equal(1))
+				Expect(director.DeleteArgsForCall(0)).To(Equal(true))
+
+				Expect(response).To(Equal(out.OutResponse{}))
+			})
+
+			Context("when the delete errors", func() {
+				BeforeEach(func() {
+					director.DeleteReturns(fmt.Errorf("Delete failed!"))
+				})
+
+				It("returns an error", func() {
+					response, err := outCommand.Run(outRequest)
+
+					Expect(err).To(HaveOccurred())
+					Expect(response).To(Equal(out.OutResponse{}))
+				})
+			})
+
 		})
 	})
 })

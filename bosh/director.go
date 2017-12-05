@@ -34,6 +34,7 @@ type InterpolateParams struct {
 
 //go:generate counterfeiter . Director
 type Director interface {
+	Delete(force bool) error
 	Deploy(manifestBytes []byte, deployParams DeployParams) error
 	Interpolate(manifestBytes []byte, interpolateParams InterpolateParams) ([]byte, error)
 	DownloadManifest() ([]byte, error)
@@ -54,6 +55,10 @@ func NewBoshDirector(source concourse.Source, commandRunner Runner, cliDirector 
 		commandRunner: commandRunner,
 		cliDirector:   cliDirector,
 	}
+}
+
+func (d BoshDirector) Delete(force bool) error {
+	return d.commandRunner.Execute(&boshcmd.DeleteDeploymentOpts{Force: force})
 }
 
 func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) error {

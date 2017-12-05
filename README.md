@@ -122,7 +122,7 @@ _Note_: Only the most recent version is fetchable
     - name: release-two
 ```
 
-### `out`: Deploy a BOSH deployment
+### `out`: Deploy or Delete a BOSH deployment (defaults to deploy)
 
 This will upload any given stemcells and releases, lock them down in the
 deployment manifest and then deploy.
@@ -160,7 +160,13 @@ deployment manifest and then deploy.
   If both `target_file` and `target` are specified, `target_file` takes
   precedence.
 
+* `delete.enabled`: *Optional* Deletes the configured deployment instead of doing a deploy.
+
+* `delete.force`: *Optional* Defaults to `false`. Asks bosh to ignore errors when deleting the configured deployment.
+
+
 ``` yaml
+# Deploy
 - put: staging
   params:
     manifest: path/to/manifest.yml
@@ -174,4 +180,11 @@ deployment manifest and then deploy.
       smtp:
         server: example.com
         port: 25
+
+# Delete
+- put: staging
+  params:
+    delete:
+      enabled: true
+      force: true
 ```

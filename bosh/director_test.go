@@ -158,6 +158,29 @@ var _ = Describe("BoshDirector", func() {
 			})
 		})
 	})
+	Describe("Delete", func() {
+		It("tells BOSH to delete the configured deployment", func() {
+			err := director.Delete(true)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
+
+			deleteOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeleteDeploymentOpts)
+			Expect(deleteOpts).To(Equal(&boshcmd.DeleteDeploymentOpts{Force: true}))
+		})
+
+		Context("when delete fails", func() {
+			BeforeEach(func() {
+				commandRunner.ExecuteReturns(errors.New("Delete failed!"))
+			})
+
+			It("returns the error", func() {
+				err := director.Delete(true)
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError("Delete failed!"))
+			})
+		})
+	})
 
 	Describe("Interpolate", func() {
 		var interpolatedBytes = []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}

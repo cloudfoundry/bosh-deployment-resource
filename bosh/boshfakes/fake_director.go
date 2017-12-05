@@ -8,6 +8,17 @@ import (
 )
 
 type FakeDirector struct {
+	DeleteStub        func(force bool) error
+	deleteMutex       sync.RWMutex
+	deleteArgsForCall []struct {
+		force bool
+	}
+	deleteReturns struct {
+		result1 error
+	}
+	deleteReturnsOnCall map[int]struct {
+		result1 error
+	}
 	DeployStub        func(manifestBytes []byte, deployParams bosh.DeployParams) error
 	deployMutex       sync.RWMutex
 	deployArgsForCall []struct {
@@ -81,6 +92,54 @@ type FakeDirector struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeDirector) Delete(force bool) error {
+	fake.deleteMutex.Lock()
+	ret, specificReturn := fake.deleteReturnsOnCall[len(fake.deleteArgsForCall)]
+	fake.deleteArgsForCall = append(fake.deleteArgsForCall, struct {
+		force bool
+	}{force})
+	fake.recordInvocation("Delete", []interface{}{force})
+	fake.deleteMutex.Unlock()
+	if fake.DeleteStub != nil {
+		return fake.DeleteStub(force)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fake.deleteReturns.result1
+}
+
+func (fake *FakeDirector) DeleteCallCount() int {
+	fake.deleteMutex.RLock()
+	defer fake.deleteMutex.RUnlock()
+	return len(fake.deleteArgsForCall)
+}
+
+func (fake *FakeDirector) DeleteArgsForCall(i int) bool {
+	fake.deleteMutex.RLock()
+	defer fake.deleteMutex.RUnlock()
+	return fake.deleteArgsForCall[i].force
+}
+
+func (fake *FakeDirector) DeleteReturns(result1 error) {
+	fake.DeleteStub = nil
+	fake.deleteReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) DeleteReturnsOnCall(i int, result1 error) {
+	fake.DeleteStub = nil
+	if fake.deleteReturnsOnCall == nil {
+		fake.deleteReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.deleteReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeDirector) Deploy(manifestBytes []byte, deployParams bosh.DeployParams) error {
@@ -390,6 +449,8 @@ func (fake *FakeDirector) UploadStemcellReturnsOnCall(i int, result1 error) {
 func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.deleteMutex.RLock()
+	defer fake.deleteMutex.RUnlock()
 	fake.deployMutex.RLock()
 	defer fake.deployMutex.RUnlock()
 	fake.interpolateMutex.RLock()
@@ -402,7 +463,11 @@ func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	defer fake.uploadReleaseMutex.RUnlock()
 	fake.uploadStemcellMutex.RLock()
 	defer fake.uploadStemcellMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeDirector) recordInvocation(key string, args []interface{}) {

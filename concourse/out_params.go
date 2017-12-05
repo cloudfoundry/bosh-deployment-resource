@@ -10,4 +10,10 @@ type OutParams struct {
 	Vars      map[string]interface{} `json:"vars,omitempty"`
 	VarsFiles []string               `json:"vars_files,omitempty"`
 	OpsFiles  []string               `json:"ops_files,omitempty"`
+	Delete    DeleteParams           `json:"delete,omitempty"`
+}
+
+type DeleteParams struct {
+	Enabled bool `json:"enabled,omitempty"`
+	Force   bool `json:"force,omitempty"`
 }
