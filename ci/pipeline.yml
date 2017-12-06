@@ -115,6 +115,10 @@ jobs:
     - get: bosh-deployment-resource
       passed: [rc]
       trigger: true
+    - get: version
+      passed: [rc]
+    - get: bosh-deployment-resource-image
+      passed: [rc]
   - task: write-vars-files
     config:
       platform: linux
@@ -169,6 +173,23 @@ jobs:
       stemcells:
       - stemcell/*.tgz
 
+- name: delete
+  plan:
+  - aggregate:
+    - get: bosh-deployment-resource-ci
+    - get: bosh-deployment-resource
+      passed: [deploy]
+      trigger: true
+    - get: version
+      passed: [deploy]
+    - get: bosh-deployment-resource-image
+      passed: [deploy]
+  - put: test-deployment
+    params:
+      manifest: bosh-deployment-resource-ci/ci/test-deployment.yml
+      delete:
+        enabled: true
+
 - name: shipit
   serial_groups: [version]
   plan:
@@ -176,12 +197,12 @@ jobs:
     - aggregate:
       - get: bosh-deployment-resource-ci
       - get: bosh-deployment-resource
-        passed: [deploy]
+        passed: [delete]
       - get: version
-        passed: [rc]
+        passed: [delete]
         params: {bump: final}
       - get: bosh-deployment-resource-image
-        passed: [rc]
+        passed: [delete]
     - task: write-latest-final-tag
       file: bosh-deployment-resource-ci/ci/tasks/write-tag-file.yml
       params:
