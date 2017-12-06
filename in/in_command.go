@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"strings"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 )
@@ -27,7 +29,12 @@ func (c InCommand) Run(inRequest concourse.InRequest, targetDir string) (InRespo
 	manifest, err := c.director.DownloadManifest()
 
 	if err != nil {
-		return InResponse{}, err
+		// Deployment not found error, which we expect to occur after doing a delete operation
+		if strings.Contains(err.Error(), `"code":70000`) {
+			return InResponse{}, nil
+		} else {
+			return InResponse{}, err
+		}
 	}
 	actualVersion := concourse.NewVersion(manifest, inRequest.Source.Target)
 

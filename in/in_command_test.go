@@ -82,6 +82,18 @@ var _ = Describe("InCommand", func() {
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal("could not download manifest"))
 			})
+
+			Context("if the error is a 404", func() {
+				BeforeEach(func() {
+					director.DownloadManifestReturns(nil, errors.New(`Fetching manifest: Finding deployment 'test-deployment': Director responded with non-successful status code '404' response '{"code":70000,"description":"Deployment 'test-deployment' doesn't exist"}'`))
+				})
+
+				It("assumes the deployment cannot be found because of an implicit get after a put, where the put was a delete", func() {
+					inResponse, err := inCommand.Run(inRequest, targetDir)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(inResponse).To(Equal(in.InResponse{}))
+				})
+			})
 		})
 
 		Context("when downloaded manifest does not match the requested version", func() {
