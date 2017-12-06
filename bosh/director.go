@@ -22,6 +22,7 @@ type DeployParams struct {
 	NoRedact  bool
 	DryRun    bool
 	Cleanup   bool
+	Delete    bool
 	VarsStore string
 }
 
@@ -90,6 +91,10 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		varsFSStore.FS = boshFileSystem()
 		varsFSStore.UnmarshalFlag(deployParams.VarsStore)
 		deployOpts.VarsFSStore = varsFSStore
+	}
+
+	if deployParams.Delete {
+		d.commandRunner.Execute(&boshcmd.DeleteDeploymentOpts{})
 	}
 
 	err = d.commandRunner.Execute(&deployOpts)

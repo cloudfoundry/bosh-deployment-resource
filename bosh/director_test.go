@@ -127,6 +127,22 @@ var _ = Describe("BoshDirector", func() {
 			})
 		})
 
+		Context("when delete is specified", func() {
+			It("deletes a deployment if exists before the deploy", func() {
+
+				err := director.Deploy(sillyBytes, bosh.DeployParams{Delete: true})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(commandRunner.ExecuteCallCount()).To(Equal(2))
+
+				deleteDeploymentOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeleteDeploymentOpts)
+				Expect(deleteDeploymentOpts.Force).To(Equal(false))
+
+				deployOpts := commandRunner.ExecuteArgsForCall(1).(*boshcmd.DeployOpts)
+				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+			})
+		})
+
 		Context("when cleanup is specified", func() {
 			It("runs a cleanup after the deploy", func() {
 				err := director.Deploy(sillyBytes, bosh.DeployParams{Cleanup: true})
