@@ -176,7 +176,6 @@ jobs:
 - name: delete
   plan:
   - aggregate:
-    - get: bosh-deployment-resource-ci
     - get: bosh-deployment-resource
       passed: [deploy]
       trigger: true
@@ -186,7 +185,6 @@ jobs:
       passed: [deploy]
   - put: test-deployment
     params:
-      manifest: bosh-deployment-resource-ci/ci/test-deployment.yml
       delete:
         enabled: true
 
