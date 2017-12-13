@@ -36,7 +36,7 @@ func NewOutRequest(request []byte, sourcesDir string) (OutRequest, error) {
 func checkRequiredOutParameters(params OutParams) error {
 	missingParameters := []string{}
 
-	if params.Manifest == "" {
+	if params.Manifest == "" && !params.Delete.Enabled {
 		missingParameters = append(missingParameters, "manifest")
 	}
 

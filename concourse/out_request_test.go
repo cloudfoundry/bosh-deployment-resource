@@ -185,6 +185,27 @@ var _ = Describe("NewOutRequest", func() {
 		})
 	})
 
+	Context("when delete is specified", func() {
+		It("does not require the manifest parameter", func() {
+			config := []byte(`{
+				"source": {
+					"deployment": "mydeployment",
+					"target": "director.example.com",
+					"client": "foo",
+					"client_secret": "foobar"
+				},
+				"params": {
+					"delete": {
+						"enabled": true
+					}
+				}
+			}`)
+
+			_, err := concourse.NewOutRequest(config, "")
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
 	Context("when a required parameter is missing", func() {
 		It("returns an error with each missing parameter", func() {
 			config := []byte(`{
