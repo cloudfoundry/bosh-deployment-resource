@@ -184,6 +184,7 @@ deployment manifest and then deploy.
 # Delete
 - put: staging
   params:
+    manifest: path/to/manifest.yml
     delete:
       enabled: true
       force: true
