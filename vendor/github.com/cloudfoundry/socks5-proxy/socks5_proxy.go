@@ -10,6 +10,8 @@ import (
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/net/context"
+	"log"
+	"io/ioutil"
 )
 
 var netListen = net.Listen
@@ -65,6 +67,7 @@ func (s *Socks5Proxy) Start(key, url string) error {
 		Dial: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			return serverConn.Dial(network, addr)
 		},
+		Logger: log.New(ioutil.Discard, "", log.LstdFlags),
 	}
 	server, err := socks5.New(conf)
 	if err != nil {

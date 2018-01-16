@@ -55,8 +55,8 @@
 [[projects]]
   name = "github.com/cloudfoundry/bosh-davcli"
   packages = ["client","config"]
-  revision = "15612fdfcfd4ed7302ab02291b0c67778b774d36"
-  version = "v0.0.25"
+  revision = "81142822dc5f81b6c2af2e2f512be802f3d6f69c"
+  version = "v0.0.26"
 
 [[projects]]
   name = "github.com/cloudfoundry/bosh-gcscli"
@@ -76,10 +76,11 @@
   version = "v0.0.124"
 
 [[projects]]
-  branch = "master"
+  branch = "drop-stdout-logging"
   name = "github.com/cloudfoundry/socks5-proxy"
   packages = ["."]
-  revision = "930de75eb8c55a3325de5dd09a33e3631c53d677"
+  revision = "51188950306377781ed34597a99adbe1981d18ed"
+  source = "github.com/drich10/socks5-proxy"
 
 [[projects]]
   branch = "master"
@@ -264,6 +265,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6f8a30799d422c1fb4f491578e870be43f2a0426514fb4ca656a6cf118debff5"
+  inputs-digest = "222e0d0ce75efdf8357227eb8d32918c1b4e57345fafc882b4bfd97383287276"
   solver-name = "gps-cdcl"
   solver-version = 1

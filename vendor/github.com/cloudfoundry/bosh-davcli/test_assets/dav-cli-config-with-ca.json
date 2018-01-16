@@ -2,5 +2,9 @@
     "user":"some user",
     "password":"some pwd",
     "endpoint":"https://example.com/some/endpoint",
-    "ca_cert":"ca-cert"
+    "tls": {
+      "cert": {
+        "ca":"ca-cert"
+      }
+    }
 }
