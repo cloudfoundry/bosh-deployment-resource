@@ -21,6 +21,7 @@ type DeployParams struct {
 	OpsFiles  []string
 	NoRedact  bool
 	DryRun    bool
+	Recreate  bool
 	Cleanup   bool
 	VarsStore string
 }
@@ -76,6 +77,7 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		Args:     boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact: deployParams.NoRedact,
 		DryRun:   deployParams.DryRun,
+		Recreate: deployParams.Recreate,
 		VarFlags: boshcmd.VarFlags{
 			VarKVs:    varKVsFromVars(deployParams.Vars),
 			VarsFiles: boshVarsFiles,

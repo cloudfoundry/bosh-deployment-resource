@@ -84,6 +84,7 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 	deployParams := bosh.DeployParams{
 		NoRedact: outRequest.Params.NoRedact,
 		DryRun:   outRequest.Params.DryRun,
+		Recreate: outRequest.Params.Recreate,
 		Cleanup:  outRequest.Params.Cleanup,
 	}
 
