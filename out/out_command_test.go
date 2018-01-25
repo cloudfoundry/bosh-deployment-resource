@@ -88,7 +88,7 @@ var _ = Describe("OutCommand", func() {
 			}))
 		})
 
-		It("dryrun deploys", func() {
+		It("deploys with recreate", func() {
 			outRequest.Params.Recreate = true
 
 			_, err := outCommand.Run(outRequest)
@@ -113,7 +113,7 @@ var _ = Describe("OutCommand", func() {
 			}))
 		})
 
-		It("recreate deploys", func() {
+		It("dryrun deploys", func() {
 			outRequest.Params.DryRun = true
 
 			_, err := outCommand.Run(outRequest)
