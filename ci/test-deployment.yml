@@ -13,8 +13,8 @@ instance_groups:
   azs: [z1]
   instances: 1
   vm_type: minimal
-  networks:
-  - name: default
+  stemcell: default
+  networks: [name: default]
   jobs:
   - name: blackbox
     release: concourse
