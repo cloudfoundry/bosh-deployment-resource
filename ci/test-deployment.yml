@@ -8,7 +8,18 @@ update:
   update_watch_time: 5000-1200000
   really: ((cool))
   vars_r_kewl: ((super_sekret))
-instance_groups: []
+instance_groups:
+- name: postgres
+  azs: [z1]
+  instances: 1
+  vm_type: minimal
+  networks:
+  - name: default
+  jobs:
+  - name: postgresql
+    release: concourse
+    properties: []
+
 
 releases:
 - name: concourse
