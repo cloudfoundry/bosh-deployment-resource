@@ -16,14 +16,14 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: postgresql
+  - name: blackbox
     release: concourse
     properties: []
 
 
 releases:
 - name: concourse
-  version: 1.0.0
+  version: latest
 
 stemcells:
 - alias: default
