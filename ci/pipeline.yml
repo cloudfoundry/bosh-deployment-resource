@@ -31,6 +31,13 @@ resources:
     repository: bosh-deployment-resource
     user: cloudfoundry
 
+- name: dummy-boshrelease-github-release
+  type: github-release
+  source:
+    access_token: {{bosh-deployment-resource-github-release-access-token}}
+    repository: dummy-boshrelease
+    user: pivotal-cf-experimental
+
 - name: bosh-deployment-resource-ci
   type: git
   source:
@@ -51,11 +58,6 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-google-kvm-ubuntu-trusty-go_agent
-
-- name: release
-  type: bosh-io-release
-  source:
-    repository: concourse/concourse
 
 resource_types:
 - name: bosh-deployment
@@ -109,7 +111,10 @@ jobs:
 - name: deploy
   plan:
   - aggregate:
-    - get: release
+    - get: dummy-boshrelease-github-release
+      params:
+        globs:
+        - dummy-*.tgz
     - get: stemcell
     - get: bosh-deployment-resource-ci
     - get: bosh-deployment-resource
@@ -169,7 +174,7 @@ jobs:
       vars:
         max_in_flight: 10
       releases:
-      - release/*.tgz
+      - dummy-boshrelease-github-release/*.tgz
       stemcells:
       - stemcell/*.tgz
 

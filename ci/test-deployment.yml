@@ -9,19 +9,18 @@ update:
   really: ((cool))
   vars_r_kewl: ((super_sekret))
 instance_groups:
-- name: blackbox
+- name: dummy
   azs: [z1]
   instances: 1
   vm_type: minimal
   stemcell: default
   networks: [name: default]
   jobs:
-  - name: blackbox
-    release: concourse
-
+  - name: dummy
+    release: dummy
 
 releases:
-- name: concourse
+- name: dummy
   version: latest
 
 stemcells:
