@@ -109,6 +109,7 @@ jobs:
       params: {file: version/version}
 
 - name: deploy
+  serial_groups: [deployment]
   plan:
   - aggregate:
     - get: dummy-boshrelease-github-release
@@ -179,6 +180,7 @@ jobs:
       - stemcell/*.tgz
 
 - name: delete
+  serial_groups: [deployment]
   plan:
   - aggregate:
     - get: bosh-deployment-resource
