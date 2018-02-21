@@ -154,12 +154,12 @@ deployment manifest and then deploy.
 
 * `recreate`: *Optional* Recreate all VMs in deployment. Defaults to false.
 
-* `target_file`: *Optional.* Path to a file containing a BOSH director address.
+* `source_file`: *Optional.* Path to a file containing a BOSH director address.
   This allows the target to be determined at runtime, e.g. by acquiring a BOSH
   lite instance using the [Pool
   resource](https://github.com/concourse/pool-resource).
 
-  If both `target_file` and `target` are specified, `target_file` takes
+  If both `source_file` and `target` are specified, `source_file` takes
   precedence.
 
 * `delete.enabled`: *Optional* Deletes the configured deployment instead of doing a deploy.
