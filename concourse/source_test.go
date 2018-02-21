@@ -103,7 +103,7 @@ var _ = Describe("NewDynamicSource", func() {
 			}))
 		})
 
-		Context("when the target_file cannot be read", func() {
+		Context("when the source_file cannot be read", func() {
 			BeforeEach(func() {
 				sourceFileName = "not-a-real-file"
 			})
