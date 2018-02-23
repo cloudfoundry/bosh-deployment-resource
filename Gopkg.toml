@@ -8,9 +8,8 @@
   source = "github.com/cppforlife/go-flags"
 
 [[constraint]]
-  branch = "drop-stdout-logging"
+  branch = "master"
   name = "github.com/cloudfoundry/socks5-proxy"
-  source = "github.com/drich10/socks5-proxy"
 
 [[override]]
   revision = "c1f48d5ce4f292dfb775ef52aaedd15be323510d"

@@ -3,9 +3,9 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/armon/go-socks5"
+  name = "github.com/genevieve/go-socks5"
   packages = ["."]
-  revision = "e75332964ef517daa070d7c38a9466a0d687e0a5"
+  revision = "54f73bdb8a8e85a6611d3d29ab9bbf98c2a060d7"
 
 [[projects]]
   branch = "master"
@@ -52,6 +52,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c11b3b25febc450566c952c75475f72e09abfc2bace1295d0c089dfe5ecb479b"
+  inputs-digest = "c7b571fa133572ad7fe5965df4478a2f05637d2ff892012fd24502d6899161db"
   solver-name = "gps-cdcl"
   solver-version = 1

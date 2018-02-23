@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"io/ioutil"
@@ -26,8 +27,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	hostKeyGetter := proxy.NewHostKeyGetter()
-	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter)
+	hostKeyGetter := proxy.NewHostKey()
+	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(ioutil.Discard, "", log.LstdFlags))
 	cliCoordinator := bosh.NewCLICoordinator(checkRequest.Source, os.Stderr, socks5Proxy)
 	commandRunner := bosh.NewCommandRunner(cliCoordinator)
 	cliDirector, err := cliCoordinator.Director()
