@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
@@ -41,8 +42,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	hostKeyGetter := proxy.NewHostKeyGetter()
-	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter)
+	hostKeyGetter := proxy.NewHostKey()
+	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(ioutil.Discard, "", log.LstdFlags))
 	cliCoordinator := bosh.NewCLICoordinator(inRequest.Source, os.Stderr, socks5Proxy)
 	commandRunner := bosh.NewCommandRunner(cliCoordinator)
 	cliDirector, err := cliCoordinator.Director()
