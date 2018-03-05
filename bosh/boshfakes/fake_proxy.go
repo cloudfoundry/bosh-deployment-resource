@@ -8,11 +8,12 @@ import (
 )
 
 type FakeProxy struct {
-	StartStub        func(string, string) error
+	StartStub        func(string, string, string) error
 	startMutex       sync.RWMutex
 	startArgsForCall []struct {
 		arg1 string
 		arg2 string
+		arg3 string
 	}
 	startReturns struct {
 		result1 error
@@ -35,17 +36,18 @@ type FakeProxy struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeProxy) Start(arg1 string, arg2 string) error {
+func (fake *FakeProxy) Start(arg1 string, arg2 string, arg3 string) error {
 	fake.startMutex.Lock()
 	ret, specificReturn := fake.startReturnsOnCall[len(fake.startArgsForCall)]
 	fake.startArgsForCall = append(fake.startArgsForCall, struct {
 		arg1 string
 		arg2 string
-	}{arg1, arg2})
-	fake.recordInvocation("Start", []interface{}{arg1, arg2})
+		arg3 string
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("Start", []interface{}{arg1, arg2, arg3})
 	fake.startMutex.Unlock()
 	if fake.StartStub != nil {
-		return fake.StartStub(arg1, arg2)
+		return fake.StartStub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1
@@ -59,10 +61,10 @@ func (fake *FakeProxy) StartCallCount() int {
 	return len(fake.startArgsForCall)
 }
 
-func (fake *FakeProxy) StartArgsForCall(i int) (string, string) {
+func (fake *FakeProxy) StartArgsForCall(i int) (string, string, string) {
 	fake.startMutex.RLock()
 	defer fake.startMutex.RUnlock()
-	return fake.startArgsForCall[i].arg1, fake.startArgsForCall[i].arg2
+	return fake.startArgsForCall[i].arg1, fake.startArgsForCall[i].arg2, fake.startArgsForCall[i].arg3
 }
 
 func (fake *FakeProxy) StartReturns(result1 error) {
@@ -134,7 +136,11 @@ func (fake *FakeProxy) Invocations() map[string][][]interface{} {
 	defer fake.startMutex.RUnlock()
 	fake.addrMutex.RLock()
 	defer fake.addrMutex.RUnlock()
-	return fake.invocations
+	copiedInvocations := map[string][][]interface{}{}
+	for key, value := range fake.invocations {
+		copiedInvocations[key] = value
+	}
+	return copiedInvocations
 }
 
 func (fake *FakeProxy) recordInvocation(key string, args []interface{}) {

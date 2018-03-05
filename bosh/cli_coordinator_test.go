@@ -21,7 +21,7 @@ var _ = Describe("CLI coordinator", func() {
 		fakeProxy = &boshfakes.FakeProxy{}
 		fakeProxy.AddrReturns("some-proxy-addr", nil)
 		fakeProxy.AddrReturnsOnCall(0, "", errors.New("proxy is not running"))
-		source = concourse.Source{JumpboxSSHKey: "some-key", JumpboxURL: "some-url"}
+		source = concourse.Source{JumpboxUsername: "some-user", JumpboxSSHKey: "some-key", JumpboxURL: "some-url"}
 		cliCoordinator = bosh.NewCLICoordinator(source, GinkgoWriter, fakeProxy)
 	})
 
@@ -31,7 +31,8 @@ var _ = Describe("CLI coordinator", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeProxy.StartCallCount()).To(Equal(1))
-			key, url := fakeProxy.StartArgsForCall(0)
+			username, key, url := fakeProxy.StartArgsForCall(0)
+			Expect(username).To(Equal("some-user"))
 			Expect(key).To(Equal("some-key"))
 			Expect(url).To(Equal("some-url"))
 
