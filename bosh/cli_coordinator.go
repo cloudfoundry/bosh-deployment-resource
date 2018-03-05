@@ -20,7 +20,7 @@ import (
 
 //go:generate counterfeiter . Proxy
 type Proxy interface {
-	Start(string, string) error
+	Start(string, string, string) error
 	Addr() (string, error)
 }
 
@@ -97,7 +97,7 @@ func (c CLICoordinator) StartProxy() (string, error) {
 			return addr, nil
 		}
 
-		err = c.proxy.Start(c.source.JumpboxSSHKey, c.source.JumpboxURL)
+		err = c.proxy.Start(c.source.JumpboxUsername, c.source.JumpboxSSHKey, c.source.JumpboxURL)
 		if err != nil {
 			panic(err)
 		}
