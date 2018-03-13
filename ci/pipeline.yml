@@ -52,7 +52,6 @@ resources:
     target: {{director-address}}
     client: {{director-client}}
     client_secret: {{director-client-secret}}
-    jumpbox_username: {{jumpbox-username}}
     jumpbox_url: {{jumpbox-url}}
     jumpbox_ssh_key: {{jumpbox-private-key}}
     deployment: test-deployment
