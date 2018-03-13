@@ -7,7 +7,6 @@ update:
   serial: false
   update_watch_time: 5000-1200000
   really: ((cool))
-  vars_r_kewl: ((super_sekret))
 instance_groups:
 - name: dummy
   azs: [z1]
