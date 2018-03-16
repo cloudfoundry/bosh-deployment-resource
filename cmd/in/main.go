@@ -10,7 +10,7 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/in"
-	proxy "github.com/cloudfoundry/socks5-proxy"
+	"github.com/cloudfoundry/socks5-proxy"
 )
 
 func main() {
@@ -51,7 +51,12 @@ func main() {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
-	director := bosh.NewBoshDirector(inRequest.Source, commandRunner, cliDirector)
+	director := bosh.NewBoshDirector(
+		inRequest.Source,
+		commandRunner,
+		cliDirector,
+		log.New(os.Stderr, "", log.LstdFlags),
+	)
 
 	inCommand := in.NewInCommand(director)
 	inResponse, err := inCommand.Run(inRequest, targetDir)

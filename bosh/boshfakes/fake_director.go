@@ -90,6 +90,15 @@ type FakeDirector struct {
 	uploadStemcellReturnsOnCall map[int]struct {
 		result1 error
 	}
+	WaitForDeployLockStub        func() error
+	waitForDeployLockMutex       sync.RWMutex
+	waitForDeployLockArgsForCall []struct{}
+	waitForDeployLockReturns     struct {
+		result1 error
+	}
+	waitForDeployLockReturnsOnCall map[int]struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -446,6 +455,46 @@ func (fake *FakeDirector) UploadStemcellReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeDirector) WaitForDeployLock() error {
+	fake.waitForDeployLockMutex.Lock()
+	ret, specificReturn := fake.waitForDeployLockReturnsOnCall[len(fake.waitForDeployLockArgsForCall)]
+	fake.waitForDeployLockArgsForCall = append(fake.waitForDeployLockArgsForCall, struct{}{})
+	fake.recordInvocation("WaitForDeployLock", []interface{}{})
+	fake.waitForDeployLockMutex.Unlock()
+	if fake.WaitForDeployLockStub != nil {
+		return fake.WaitForDeployLockStub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fake.waitForDeployLockReturns.result1
+}
+
+func (fake *FakeDirector) WaitForDeployLockCallCount() int {
+	fake.waitForDeployLockMutex.RLock()
+	defer fake.waitForDeployLockMutex.RUnlock()
+	return len(fake.waitForDeployLockArgsForCall)
+}
+
+func (fake *FakeDirector) WaitForDeployLockReturns(result1 error) {
+	fake.WaitForDeployLockStub = nil
+	fake.waitForDeployLockReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) WaitForDeployLockReturnsOnCall(i int, result1 error) {
+	fake.WaitForDeployLockStub = nil
+	if fake.waitForDeployLockReturnsOnCall == nil {
+		fake.waitForDeployLockReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.waitForDeployLockReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -463,6 +512,8 @@ func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	defer fake.uploadReleaseMutex.RUnlock()
 	fake.uploadStemcellMutex.RLock()
 	defer fake.uploadStemcellMutex.RUnlock()
+	fake.waitForDeployLockMutex.RLock()
+	defer fake.waitForDeployLockMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

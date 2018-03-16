@@ -5,8 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
+
+	"time"
+
+	"log"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
@@ -42,19 +47,22 @@ type Director interface {
 	ExportReleases(targetDirectory string, releases []string) error
 	UploadRelease(releaseURL string) error
 	UploadStemcell(stemcellURL string) error
+	WaitForDeployLock() error
 }
 
 type BoshDirector struct {
 	source        concourse.Source
 	commandRunner Runner
 	cliDirector   boshdir.Director
+	logger        *log.Logger
 }
 
-func NewBoshDirector(source concourse.Source, commandRunner Runner, cliDirector boshdir.Director) BoshDirector {
+func NewBoshDirector(source concourse.Source, commandRunner Runner, cliDirector boshdir.Director, logger *log.Logger) BoshDirector {
 	return BoshDirector{
 		source:        source,
 		commandRunner: commandRunner,
 		cliDirector:   cliDirector,
+		logger:        logger,
 	}
 }
 
@@ -156,6 +164,35 @@ func (d BoshDirector) UploadRelease(URL string) error {
 		return fmt.Errorf("Could not upload release %s: %s\n", URL, err)
 	}
 
+	return nil
+}
+
+func (d BoshDirector) WaitForDeployLock() error {
+	locked := true
+	count := 0
+	for locked {
+		count++
+		locks, err := d.cliDirector.Locks()
+		if err != nil {
+			return fmt.Errorf("Could not check if deployment was locked: %s\n", err)
+		}
+
+		d.logger.Printf("\rWaiting for deployment lock %s", strings.Repeat(".", count))
+
+		for _, lock := range locks {
+			resources := lock.Resource
+			for _, resource := range resources {
+				if resource == d.source.Deployment {
+					d.logger.Print(".")
+					locked = true
+					time.Sleep(5 * time.Second)
+					break
+				} else {
+					locked = false
+				}
+			}
+		}
+	}
 	return nil
 }
 

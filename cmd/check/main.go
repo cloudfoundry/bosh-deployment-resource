@@ -11,7 +11,7 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/check"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-	proxy "github.com/cloudfoundry/socks5-proxy"
+	"github.com/cloudfoundry/socks5-proxy"
 )
 
 func main() {
@@ -36,7 +36,13 @@ func main() {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
-	director := bosh.NewBoshDirector(checkRequest.Source, commandRunner, cliDirector)
+
+	director := bosh.NewBoshDirector(
+		checkRequest.Source,
+		commandRunner,
+		cliDirector,
+		log.New(os.Stderr, "", log.LstdFlags),
+	)
 
 	checkCommand := check.NewCheckCommand(director)
 	checkResponse, err := checkCommand.Run(checkRequest)

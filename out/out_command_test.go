@@ -154,6 +154,12 @@ var _ = Describe("OutCommand", func() {
 			}))
 		})
 
+		It("waits for locks on the deployment", func() {
+			_, err := outCommand.Run(outRequest)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(director.WaitForDeployLockCallCount()).To(Equal(1))
+		})
+
 		Context("when varFiles are provided", func() {
 			var (
 				varFileOne, varFileTwo, varFileThree *os.File

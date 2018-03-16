@@ -32,6 +32,10 @@ func NewOutCommand(director bosh.Director, storageClient storage.StorageClient, 
 }
 
 func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
+	if err := c.director.WaitForDeployLock(); err != nil {
+		return OutResponse{}, err
+	}
+
 	if outRequest.Params.Delete.Enabled {
 		return OutResponse{}, c.director.Delete(outRequest.Params.Delete.Force)
 	} else {

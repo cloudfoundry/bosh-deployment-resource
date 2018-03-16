@@ -1,9 +1,11 @@
 package bosh_test
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,13 +14,12 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cppforlife/go-patch/patch"
+	"github.com/cppforlife/go-semi-semantic/version"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshdirfakes "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
-
-	"github.com/cppforlife/go-semi-semantic/version"
 )
 
 var _ = Describe("BoshDirector", func() {
@@ -27,13 +28,21 @@ var _ = Describe("BoshDirector", func() {
 		commandRunner    *boshfakes.FakeRunner
 		sillyBytes       = []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
 		fakeBoshDirector *boshdirfakes.FakeDirector
+		loggerOutput     bytes.Buffer
 	)
 
 	BeforeEach(func() {
 		commandRunner = new(boshfakes.FakeRunner)
 		fakeBoshDirector = new(boshdirfakes.FakeDirector)
+		logger := log.New(&loggerOutput, "", log.LstdFlags)
+		logger.SetFlags(0)
 
-		director = bosh.NewBoshDirector(concourse.Source{Deployment: "cool-deployment"}, commandRunner, fakeBoshDirector)
+		director = bosh.NewBoshDirector(
+			concourse.Source{Deployment: "cool-deployment"},
+			commandRunner,
+			fakeBoshDirector,
+			logger,
+		)
 	})
 
 	Describe("Deploy", func() {
@@ -470,6 +479,46 @@ var _ = Describe("BoshDirector", func() {
 				err := director.UploadStemcell("my-cool-stemcell")
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Could not upload stemcell my-cool-stemcell: failed communicating with director"))
+			})
+		})
+	})
+
+	Describe("WaitForDeployLock", func() {
+		BeforeEach(func() {
+			fakeBoshDirector.LocksReturns(
+				[]boshdir.Lock{
+					{Resource: []string{"other-identifier", "not-my-deployment"}},
+					{Resource: []string{"other-identifier", "cool-deployment"}},
+				},
+				nil,
+			)
+
+			fakeBoshDirector.LocksReturnsOnCall(
+				1,
+				[]boshdir.Lock{
+					{Resource: []string{"other-identifier", "not-my-deployment"}},
+				},
+				nil,
+			)
+		})
+
+		It("waits for the lock to be released", func() {
+			err := director.WaitForDeployLock()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(fakeBoshDirector.LocksCallCount()).To(Equal(2))
+
+			//logs output so the user knows what is happening
+			Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock .."))
+		})
+
+		Context("when checking the lock fails", func() {
+			BeforeEach(func() {
+				fakeBoshDirector.LocksReturns([]boshdir.Lock{{Resource: []string{}}}, errors.New("Failed to fetch locks"))
+			})
+
+			It("returns an error", func() {
+				err := director.WaitForDeployLock()
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
