@@ -179,6 +179,7 @@ func (d BoshDirector) WaitForDeployLock() error {
 			}
 		}
 	}
+	fmt.Fprintln(d.writer, " Done")
 	return nil
 }
 

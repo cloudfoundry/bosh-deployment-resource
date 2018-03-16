@@ -485,9 +485,6 @@ var _ = Describe("BoshDirector", func() {
 			err := director.WaitForDeployLock()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(fakeBoshDirector.LocksCallCount()).To(Equal(1))
-
-			//logs output so the user knows what is happening
-			Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock"))
 		})
 
 		Context("when there are locks", func() {
@@ -515,7 +512,7 @@ var _ = Describe("BoshDirector", func() {
 				Expect(fakeBoshDirector.LocksCallCount()).To(Equal(2))
 
 				//logs output so the user knows what is happening
-				Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock."))
+				Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock. Done\n"))
 			})
 		})
 
