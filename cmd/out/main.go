@@ -51,7 +51,7 @@ func main() {
 		outRequest.Source,
 		commandRunner,
 		cliDirector,
-		log.New(os.Stderr, "", log.LstdFlags),
+		os.Stderr,
 	)
 
 	storageClient, err := storage.NewStorageClient(outRequest.Source)

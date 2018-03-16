@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"log"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -34,14 +33,12 @@ var _ = Describe("BoshDirector", func() {
 	BeforeEach(func() {
 		commandRunner = new(boshfakes.FakeRunner)
 		fakeBoshDirector = new(boshdirfakes.FakeDirector)
-		logger := log.New(&loggerOutput, "", log.LstdFlags)
-		logger.SetFlags(0)
 
 		director = bosh.NewBoshDirector(
 			concourse.Source{Deployment: "cool-deployment"},
 			commandRunner,
 			fakeBoshDirector,
-			logger,
+			&loggerOutput,
 		)
 	})
 
@@ -518,7 +515,7 @@ var _ = Describe("BoshDirector", func() {
 				Expect(fakeBoshDirector.LocksCallCount()).To(Equal(2))
 
 				//logs output so the user knows what is happening
-				Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock"))
+				Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock."))
 			})
 		})
 

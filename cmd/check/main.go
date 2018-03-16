@@ -41,7 +41,7 @@ func main() {
 		checkRequest.Source,
 		commandRunner,
 		cliDirector,
-		log.New(os.Stderr, "", log.LstdFlags),
+		os.Stderr,
 	)
 
 	checkCommand := check.NewCheckCommand(director)

@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"time"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-
-	"log"
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
@@ -52,15 +51,15 @@ type BoshDirector struct {
 	source        concourse.Source
 	commandRunner Runner
 	cliDirector   boshdir.Director
-	logger        *log.Logger
+	writer        io.Writer
 }
 
-func NewBoshDirector(source concourse.Source, commandRunner Runner, cliDirector boshdir.Director, logger *log.Logger) BoshDirector {
+func NewBoshDirector(source concourse.Source, commandRunner Runner, cliDirector boshdir.Director, writer io.Writer) BoshDirector {
 	return BoshDirector{
 		source:        source,
 		commandRunner: commandRunner,
 		cliDirector:   cliDirector,
-		logger:        logger,
+		writer:        writer,
 	}
 }
 
@@ -166,7 +165,7 @@ func (d BoshDirector) UploadRelease(URL string) error {
 }
 
 func (d BoshDirector) WaitForDeployLock() error {
-	d.logger.Print("Waiting for deployment lock")
+	fmt.Fprint(d.writer, "Waiting for deployment lock")
 
 	locked, err := d.deploymentIsLocked()
 	if err != nil {
@@ -193,7 +192,7 @@ func (d BoshDirector) deploymentIsLocked() (bool, error) {
 		resources := lock.Resource
 		for _, resource := range resources {
 			if resource == d.source.Deployment {
-				d.logger.Print(".")
+				fmt.Fprint(d.writer, ".")
 				return true, nil
 			}
 		}

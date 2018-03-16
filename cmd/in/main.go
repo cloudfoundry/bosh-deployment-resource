@@ -55,7 +55,7 @@ func main() {
 		inRequest.Source,
 		commandRunner,
 		cliDirector,
-		log.New(os.Stderr, "", log.LstdFlags),
+		os.Stderr,
 	)
 
 	inCommand := in.NewInCommand(director)
