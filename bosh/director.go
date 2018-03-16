@@ -5,11 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"strings"
+	"time"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-
-	"time"
 
 	"log"
 
@@ -168,32 +166,39 @@ func (d BoshDirector) UploadRelease(URL string) error {
 }
 
 func (d BoshDirector) WaitForDeployLock() error {
-	locked := true
-	count := 0
-	for locked {
-		count++
-		locks, err := d.cliDirector.Locks()
-		if err != nil {
-			return fmt.Errorf("Could not check if deployment was locked: %s\n", err)
-		}
+	d.logger.Print("Waiting for deployment lock")
 
-		d.logger.Printf("\rWaiting for deployment lock %s", strings.Repeat(".", count))
-
-		for _, lock := range locks {
-			resources := lock.Resource
-			for _, resource := range resources {
-				if resource == d.source.Deployment {
-					d.logger.Print(".")
-					locked = true
-					time.Sleep(5 * time.Second)
-					break
-				} else {
-					locked = false
-				}
+	locked, err := d.deploymentIsLocked()
+	if err != nil {
+		return err
+	} else if locked {
+		for locked {
+			time.Sleep(3 * time.Second)
+			locked, err = d.deploymentIsLocked()
+			if err != nil {
+				return err
 			}
 		}
 	}
 	return nil
+}
+
+func (d BoshDirector) deploymentIsLocked() (bool, error) {
+	locks, err := d.cliDirector.Locks()
+	if err != nil {
+		return true, fmt.Errorf("Could not check if deployment was locked: %s\n", err)
+	}
+
+	for _, lock := range locks {
+		resources := lock.Resource
+		for _, resource := range resources {
+			if resource == d.source.Deployment {
+				d.logger.Print(".")
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 func (d BoshDirector) ExportReleases(targetDirectory string, releases []string) error {

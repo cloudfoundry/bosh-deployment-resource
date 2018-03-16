@@ -484,31 +484,42 @@ var _ = Describe("BoshDirector", func() {
 	})
 
 	Describe("WaitForDeployLock", func() {
-		BeforeEach(func() {
-			fakeBoshDirector.LocksReturns(
-				[]boshdir.Lock{
-					{Resource: []string{"other-identifier", "not-my-deployment"}},
-					{Resource: []string{"other-identifier", "cool-deployment"}},
-				},
-				nil,
-			)
-
-			fakeBoshDirector.LocksReturnsOnCall(
-				1,
-				[]boshdir.Lock{
-					{Resource: []string{"other-identifier", "not-my-deployment"}},
-				},
-				nil,
-			)
-		})
-
 		It("waits for the lock to be released", func() {
 			err := director.WaitForDeployLock()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(fakeBoshDirector.LocksCallCount()).To(Equal(2))
+			Expect(fakeBoshDirector.LocksCallCount()).To(Equal(1))
 
 			//logs output so the user knows what is happening
-			Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock .."))
+			Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock"))
+		})
+
+		Context("when there are locks", func() {
+			BeforeEach(func() {
+				fakeBoshDirector.LocksReturns(
+					[]boshdir.Lock{
+						{Resource: []string{"other-identifier", "not-my-deployment"}},
+						{Resource: []string{"other-identifier", "cool-deployment"}},
+					},
+					nil,
+				)
+
+				fakeBoshDirector.LocksReturnsOnCall(
+					1,
+					[]boshdir.Lock{
+						{Resource: []string{"other-identifier", "not-my-deployment"}},
+					},
+					nil,
+				)
+			})
+
+			It("waits for the lock to be released", func() {
+				err := director.WaitForDeployLock()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(fakeBoshDirector.LocksCallCount()).To(Equal(2))
+
+				//logs output so the user knows what is happening
+				Expect(loggerOutput.String()).To(ContainSubstring("Waiting for deployment lock"))
+			})
 		})
 
 		Context("when checking the lock fails", func() {
