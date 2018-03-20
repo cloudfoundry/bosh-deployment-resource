@@ -24,6 +24,7 @@ type DeployParams struct {
 	NoRedact  bool
 	DryRun    bool
 	Recreate  bool
+	SkipDrain []string
 	Cleanup   bool
 	VarsStore string
 }
@@ -78,11 +79,17 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		return err
 	}
 
+	skipDrains, err := parsedSkipDrains(deployParams.SkipDrain)
+	if err != nil {
+		return err
+	}
+
 	deployOpts := boshcmd.DeployOpts{
-		Args:     boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
-		NoRedact: deployParams.NoRedact,
-		DryRun:   deployParams.DryRun,
-		Recreate: deployParams.Recreate,
+		Args:      boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
+		NoRedact:  deployParams.NoRedact,
+		DryRun:    deployParams.DryRun,
+		Recreate:  deployParams.Recreate,
+		SkipDrain: skipDrains,
 		VarFlags: boshcmd.VarFlags{
 			VarKVs:    varKVsFromVars(deployParams.Vars),
 			VarsFiles: boshVarsFiles,
@@ -338,6 +345,18 @@ func parsedOpsFiles(opsFiles []string) ([]boshcmd.OpsFileArg, error) {
 	}
 
 	return opsFileArgs, nil
+}
+
+func parsedSkipDrains(drains []string) ([]boshdir.SkipDrain, error) {
+	parsedDrains := make([]boshdir.SkipDrain, len(drains))
+	for idx, drain := range drains {
+		parsedDrain := boshdir.SkipDrain{}
+		if err := parsedDrain.UnmarshalFlag(drain); err != nil {
+			return parsedDrains, err
+		}
+		parsedDrains[idx] = parsedDrain
+	}
+	return parsedDrains, nil
 }
 
 func boshFileSystem() boshsys.FileSystem {
