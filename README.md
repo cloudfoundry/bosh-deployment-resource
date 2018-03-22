@@ -155,7 +155,7 @@ deployment manifest and then deploy.
 
 * `recreate`: *Optional* Recreate all VMs in deployment. Defaults to false.
 
-* `skip_drain`: *Optional* A list of `SkipDrain` strings. Defaults to empty.
+* `skip_drain`: *Optional* A collection of instance group names to skip running drain scripts for. Defaults to empty.
 
 * `source_file`: *Optional.* Path to a file containing a BOSH director address.
   This allows the target to be determined at runtime, e.g. by acquiring a BOSH
