@@ -163,6 +163,25 @@ var _ = Describe("BoshDirector", func() {
 				Expect(deployOpts.DryRun).To(Equal(dryRun))
 			})
 		})
+
+		Context("when skipdrain is specified", func() {
+			It("uses skip-drain flag", func() {
+				err := director.Deploy(sillyBytes, bosh.DeployParams{
+					SkipDrain: []string{"*"},
+				})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
+
+				skipDrain := []boshdir.SkipDrain{
+					{All: true},
+				}
+
+				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+				Expect(deployOpts.SkipDrain).To(Equal(skipDrain))
+			})
+		})
 	})
 	Describe("Delete", func() {
 		It("tells BOSH to delete the configured deployment", func() {

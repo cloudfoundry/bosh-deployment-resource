@@ -138,6 +138,31 @@ var _ = Describe("OutCommand", func() {
 			}))
 		})
 
+		It("deploys with skip drain", func() {
+			outRequest.Params.SkipDrain = []string{"all"}
+
+			_, err := outCommand.Run(outRequest)
+			Expect(err).ToNot(HaveOccurred())
+
+			_, actualInterpolateParams := director.InterpolateArgsForCall(0)
+			Expect(actualInterpolateParams.Vars).To(Equal(
+				map[string]interface{}{
+					"foo": "bar",
+				},
+			))
+
+			Expect(director.DeployCallCount()).To(Equal(1))
+			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
+			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
+			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
+				NoRedact:  true,
+				SkipDrain: []string{"all"},
+				VarsFiles: nil,
+				OpsFiles:  nil,
+				Vars:      nil,
+			}))
+		})
+
 		It("returns the new version", func() {
 			sillyBytes := []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
 			director.DownloadManifestReturns(sillyBytes, nil)

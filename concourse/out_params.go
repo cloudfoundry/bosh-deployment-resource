@@ -5,6 +5,7 @@ type OutParams struct {
 	NoRedact  bool                   `json:"no_redact,omitempty"`
 	DryRun    bool                   `json:"dry_run,omitempty"`
 	Recreate  bool                   `json:"recreate,omitempty"`
+	SkipDrain []string               `json:"skip_drain,omitempty"`
 	Cleanup   bool                   `json:"cleanup,omitempty"`
 	Releases  []string               `json:"releases,omitempty"`
 	Stemcells []string               `json:"stemcells,omitempty"`
