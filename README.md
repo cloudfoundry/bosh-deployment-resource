@@ -138,7 +138,9 @@ deployment manifest and then deploy.
   stemcell versions.
 
 * `releases`: *Optional.* An array of globs that should point to where the
-  releases used in the deployment can be found.
+  releases used in the deployment can be found. Release entries in the 
+  manifest with version 'latest' will be updated to the actual provided 
+  release versions.
 
 * `vars`: *Optional.* A collection of variables to be set in the deployment manifest.
 
