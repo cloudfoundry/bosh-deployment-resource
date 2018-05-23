@@ -19,6 +19,7 @@ import (
 
 type DeployParams struct {
 	Vars      map[string]interface{}
+	VarFiles  map[string]string
 	VarsFiles []string
 	OpsFiles  []string
 	NoRedact  bool
@@ -74,6 +75,11 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		return err
 	}
 
+	boshVarFiles, err := parsedVarFiles(deployParams.VarFiles)
+	if err != nil {
+		return err
+	}
+
 	boshOpsFiles, err := parsedOpsFiles(deployParams.OpsFiles)
 	if err != nil {
 		return err
@@ -93,6 +99,7 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		VarFlags: boshcmd.VarFlags{
 			VarKVs:    varKVsFromVars(deployParams.Vars),
 			VarsFiles: boshVarsFiles,
+			VarFiles:  boshVarFiles,
 		},
 		OpsFlags: boshcmd.OpsFlags{
 			OpsFiles: boshOpsFiles,
@@ -329,6 +336,18 @@ func parsedVarsFiles(varsFiles []string) ([]boshtpl.VarsFileArg, error) {
 		varsFileArgs = append(varsFileArgs, varsFileArg)
 	}
 	return varsFileArgs, nil
+}
+
+func parsedVarFiles(varFiles map[string]string) ([]boshtpl.VarFileArg, error) {
+	varFileArgs := []boshtpl.VarFileArg{}
+	for varKey, varFile := range varFiles {
+		varFileArg := boshtpl.VarFileArg{FS: boshFileSystem()}
+		if err := varFileArg.UnmarshalFlag(fmt.Sprintf("%s=%s", varKey, varFile)); err != nil {
+			return nil, err
+		}
+		varFileArgs = append(varFileArgs, varFileArg)
+	}
+	return varFileArgs, nil
 }
 
 func parsedOpsFiles(opsFiles []string) ([]boshcmd.OpsFileArg, error) {
