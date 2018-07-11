@@ -185,70 +185,57 @@ var _ = Describe("OutCommand", func() {
 			Expect(director.WaitForDeployLockCallCount()).To(Equal(1))
 		})
 
-		Context("when varsFiles are provided", func() {
+		Context("when varFiles are provided", func() {
 			var (
-				varsFileOne, varsFileTwo, varsFileThree *os.File
-				varsFiles                               []string
+				varFileOne, varFileTwo, varFileThree *os.File
+				varFiles                             []string
 			)
 
 			BeforeEach(func() {
 				// Update varFile generation to yield expected bosh varFile format
 				primaryVarFileDir, _ := ioutil.TempDir("", "")
 
-				varsFileOne, _ = ioutil.TempFile(primaryVarFileDir, "varFile-one")
-				varsFileOne.Close()
+				varFileOne, _ = ioutil.TempFile(primaryVarFileDir, "varFile-one")
+				varFileOne.Close()
 
-				varsFileTwo, _ = ioutil.TempFile(primaryVarFileDir, "varFile-two")
-				varsFileTwo.Close()
+				varFileTwo, _ = ioutil.TempFile(primaryVarFileDir, "varFile-two")
+				varFileTwo.Close()
 
 				secondaryVarFileDir, _ := ioutil.TempDir("", "")
 
-				varsFileThree, _ = ioutil.TempFile(secondaryVarFileDir, "varFile-three")
-				varsFileThree.Close()
+				varFileThree, _ = ioutil.TempFile(secondaryVarFileDir, "varFile-three")
+				varFileThree.Close()
 
-				varsFiles = []string{
-					varsFileThree.Name(),
+				varFiles = []string{
+					varFileThree.Name(),
 					fmt.Sprintf("%s/varFile-*", primaryVarFileDir),
 				}
-				outRequest.Params.VarsFiles = varsFiles
+				outRequest.Params.VarsFiles = varFiles
 			})
 
-			It("interpolates the varsFiles into the manifest but does not delpoy with them", func() {
+			It("interpolates the varFiles into the manifest but does not delpoy with them", func() {
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
 				_, actualInterpolateParams := director.InterpolateArgsForCall(0)
 				Expect(actualInterpolateParams.VarsFiles).To(ConsistOf(
-					varsFileThree.Name(),
-					varsFileOne.Name(),
-					varsFileTwo.Name(),
+					varFileThree.Name(),
+					varFileOne.Name(),
+					varFileTwo.Name(),
 				))
 
 				_, actualDeployParams := director.DeployArgsForCall(0)
 				Expect(actualDeployParams.VarsFiles).To(BeEmpty())
 			})
 
-			Context("when a varsFile glob is bad", func() {
+			Context("when a varFile glob is bad", func() {
 				It("gives a useful error", func() {
 					outRequest.Params.VarsFiles = []string{"/["}
 					_, err := outCommand.Run(outRequest)
 
 					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("Invalid vars_file name: /["))
+					Expect(err.Error()).To(ContainSubstring("Invalid var_file name: /["))
 				})
-			})
-		})
-
-		Context("when varFiles are provided", func() {
-			It("passes them along to the deploy params", func() {
-				varFiles := map[string]string{"awesome-var": "path/to/file-with/value"}
-				outRequest.Params.VarFiles = varFiles
-
-				_, err := outCommand.Run(outRequest)
-				Expect(err).ToNot(HaveOccurred())
-
-				_, actualDeployParams := director.DeployArgsForCall(0)
-				Expect(actualDeployParams.VarFiles).To(Equal(varFiles))
 			})
 		})
 

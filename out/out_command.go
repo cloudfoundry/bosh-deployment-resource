@@ -51,7 +51,7 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 
 	varsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.VarsFiles)
 	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid vars_file name: %s", err)
+		return OutResponse{}, fmt.Errorf("Invalid var_file name: %s", err)
 	}
 
 	opsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.OpsFiles)
@@ -91,7 +91,6 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 		Recreate:  outRequest.Params.Recreate,
 		SkipDrain: outRequest.Params.SkipDrain,
 		Cleanup:   outRequest.Params.Cleanup,
-		VarFiles:  outRequest.Params.VarFiles,
 	}
 
 	var varsStoreFile *os.File

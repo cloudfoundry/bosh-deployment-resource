@@ -23,10 +23,6 @@ var _ = Describe("NewOutRequest", func() {
 					"path/to/file",
 					"second/path/to/file"
 				],
-				"var_files": {
-					"var_from_file": "/path/to/file/with/var/content",
-					"another_var_from_file": "/more/path/to/content"
-				},
 				"ops_files": [
 					"ops-file1",
 					"path/to/ops-file2"
@@ -73,10 +69,6 @@ var _ = Describe("NewOutRequest", func() {
 				VarsFiles: []string{
 					"path/to/file",
 					"second/path/to/file",
-				},
-				VarFiles: map[string]string{
-					"var_from_file":         "/path/to/file/with/var/content",
-					"another_var_from_file": "/more/path/to/content",
 				},
 				OpsFiles: []string{
 					"ops-file1",
