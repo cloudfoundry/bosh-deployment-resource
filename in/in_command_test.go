@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/in"
@@ -138,7 +139,10 @@ var _ = Describe("InCommand", func() {
 				inRequest.Version.ManifestSha1 = fmt.Sprintf("%x", sha1.Sum(manifest))
 				inRequest.Params.CompiledReleases = []concourse.CompiledRelease{
 					{Name: "real-one"},
-					{Name: "real-two"},
+					{
+						Name: "real-two",
+						Jobs: []string{"nice-job"},
+					},
 				}
 			})
 
@@ -150,7 +154,13 @@ var _ = Describe("InCommand", func() {
 
 				targetDir, releases := director.ExportReleasesArgsForCall(0)
 				Expect(targetDir).To(Equal(targetDir))
-				Expect(releases).To(Equal([]string{"real-one", "real-two"}))
+				Expect(releases).To(Equal([]bosh.ReleaseSpec{
+					{Name: "real-one"},
+					{
+						Name: "real-two",
+						Jobs: []string{"nice-job"},
+					},
+				}))
 			})
 
 			Context("when exporting releases fails", func() {

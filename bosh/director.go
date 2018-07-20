@@ -36,13 +36,18 @@ type InterpolateParams struct {
 	VarsStore string
 }
 
+type ReleaseSpec struct {
+	Name string
+	Jobs []string
+}
+
 //go:generate counterfeiter . Director
 type Director interface {
 	Delete(force bool) error
 	Deploy(manifestBytes []byte, deployParams DeployParams) error
 	Interpolate(manifestBytes []byte, interpolateParams InterpolateParams) ([]byte, error)
 	DownloadManifest() ([]byte, error)
-	ExportReleases(targetDirectory string, releases []string) error
+	ExportReleases(targetDirectory string, releases []ReleaseSpec) error
 	UploadRelease(releaseURL string) error
 	UploadStemcell(stemcellURL string) error
 	WaitForDeployLock() error
@@ -208,7 +213,7 @@ func (d BoshDirector) deploymentIsLocked() (bool, error) {
 	return false, nil
 }
 
-func (d BoshDirector) ExportReleases(targetDirectory string, releases []string) error {
+func (d BoshDirector) ExportReleases(targetDirectory string, releases []ReleaseSpec) error {
 	deploymentReleases, stemcell, err := d.releasesAndStemcell()
 	if err != nil {
 		return fmt.Errorf("could not export releases: %s", err)
@@ -219,18 +224,18 @@ func (d BoshDirector) ExportReleases(targetDirectory string, releases []string) 
 	for _, release := range releases {
 		foundRelease := false
 		for _, deploymentRelease := range deploymentReleases {
-			if deploymentRelease.Name() == release {
+			if deploymentRelease.Name() == release.Name {
 				releasesToDownload = append(releasesToDownload, deploymentRelease)
 				foundRelease = true
 			}
 		}
 
 		if !foundRelease {
-			return fmt.Errorf("could not find release %s in deployment", release)
+			return fmt.Errorf("could not find release %s in deployment", release.Name)
 		}
 	}
 
-	for _, deploymentRelease := range releasesToDownload {
+	for i, deploymentRelease := range releasesToDownload {
 		releaseSlug := boshdir.NewReleaseSlug(deploymentRelease.Name(), deploymentRelease.Version().AsString())
 		osVersionSlug := boshdir.NewOSVersionSlug(stemcell.OSName(), stemcell.Version().AsString())
 
@@ -246,6 +251,7 @@ func (d BoshDirector) ExportReleases(targetDirectory string, releases []string) 
 		}
 		err = d.commandRunner.ExecuteWithDefaultOverride(&boshcmd.ExportReleaseOpts{
 			Args:      boshcmd.ExportReleaseArgs{ReleaseSlug: releaseSlug, OSVersionSlug: osVersionSlug},
+			Jobs:      releases[i].Jobs,
 			Directory: directory,
 		}, directoryFixFunction, nil)
 		if err != nil {
