@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,14 +24,13 @@ var _ = Describe("OutCommand", func() {
 	var (
 		outCommand   out.OutCommand
 		director     *boshfakes.FakeDirector
-		manifest     *os.File
+		resourcesDir string
 		manifestYaml []byte
 	)
 
 	BeforeEach(func() {
 		director = new(boshfakes.FakeDirector)
-		outCommand = out.NewOutCommand(director, nil, "")
-		manifest, _ = ioutil.TempFile("", "manifest")
+		resourcesDir, _ = ioutil.TempDir("", "resources-dir")
 		manifestYaml = properYaml(`
 			releases:
 			- name: small-release
@@ -42,9 +42,13 @@ var _ = Describe("OutCommand", func() {
 			  alias: super-awesome-stemcell
 			  version: latest
 		`)
-		manifest.Write(manifestYaml)
-		manifest.Close()
+		Expect(ioutil.WriteFile(filepath.Join(resourcesDir, "manifest"), manifestYaml, 0600)).To(Succeed())
 		director.InterpolateReturns(manifestYaml, nil)
+		outCommand = out.NewOutCommand(director, nil, resourcesDir)
+	})
+
+	AfterEach(func() {
+		Expect(os.RemoveAll(resourcesDir)).To(Succeed())
 	})
 
 	Describe("Run", func() {
@@ -56,7 +60,7 @@ var _ = Describe("OutCommand", func() {
 					Target: "director.example.com",
 				},
 				Params: concourse.OutParams{
-					Manifest: manifest.Name(),
+					Manifest: "manifest",
 					NoRedact: true,
 					Vars: map[string]interface{}{
 						"foo": "bar",
@@ -81,10 +85,8 @@ var _ = Describe("OutCommand", func() {
 			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
 			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
-				NoRedact:  true,
-				VarsFiles: nil,
-				OpsFiles:  nil,
-				Vars:      nil,
+				NoRedact: true,
+				VarFiles: map[string]string{},
 			}))
 		})
 
@@ -105,11 +107,9 @@ var _ = Describe("OutCommand", func() {
 			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
 			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
-				NoRedact:  true,
-				Recreate:  true,
-				VarsFiles: nil,
-				OpsFiles:  nil,
-				Vars:      nil,
+				NoRedact: true,
+				Recreate: true,
+				VarFiles: map[string]string{},
 			}))
 		})
 
@@ -130,11 +130,9 @@ var _ = Describe("OutCommand", func() {
 			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
 			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
-				NoRedact:  true,
-				DryRun:    true,
-				VarsFiles: nil,
-				OpsFiles:  nil,
-				Vars:      nil,
+				NoRedact: true,
+				DryRun:   true,
+				VarFiles: map[string]string{},
 			}))
 		})
 
@@ -157,9 +155,7 @@ var _ = Describe("OutCommand", func() {
 			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
 				NoRedact:  true,
 				SkipDrain: []string{"all"},
-				VarsFiles: nil,
-				OpsFiles:  nil,
-				Vars:      nil,
+				VarFiles:  map[string]string{},
 			}))
 		})
 
@@ -185,57 +181,71 @@ var _ = Describe("OutCommand", func() {
 			Expect(director.WaitForDeployLockCallCount()).To(Equal(1))
 		})
 
-		Context("when varFiles are provided", func() {
+		Context("when varsFiles are provided", func() {
 			var (
-				varFileOne, varFileTwo, varFileThree *os.File
-				varFiles                             []string
+				varsFileOne, varsFileTwo, varsFileThree *os.File
+				varsFiles                               []string
 			)
 
 			BeforeEach(func() {
 				// Update varFile generation to yield expected bosh varFile format
-				primaryVarFileDir, _ := ioutil.TempDir("", "")
+				primaryVarFileDir, _ := ioutil.TempDir(resourcesDir, "")
 
-				varFileOne, _ = ioutil.TempFile(primaryVarFileDir, "varFile-one")
-				varFileOne.Close()
+				varsFileOne, _ = ioutil.TempFile(primaryVarFileDir, "varFile-one")
+				varsFileOne.Close()
 
-				varFileTwo, _ = ioutil.TempFile(primaryVarFileDir, "varFile-two")
-				varFileTwo.Close()
+				varsFileTwo, _ = ioutil.TempFile(primaryVarFileDir, "varFile-two")
+				varsFileTwo.Close()
 
-				secondaryVarFileDir, _ := ioutil.TempDir("", "")
+				varsFileThree, _ = ioutil.TempFile(resourcesDir, "varFile-three")
+				varsFileThree.Close()
 
-				varFileThree, _ = ioutil.TempFile(secondaryVarFileDir, "varFile-three")
-				varFileThree.Close()
-
-				varFiles = []string{
-					varFileThree.Name(),
-					fmt.Sprintf("%s/varFile-*", primaryVarFileDir),
+				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/varFile-*", primaryVarFileDir))
+				varsFiles = []string{
+					filepath.Base(varsFileThree.Name()),
+					primaryDirWithoutResourcesDir,
 				}
-				outRequest.Params.VarsFiles = varFiles
+				outRequest.Params.VarsFiles = varsFiles
 			})
 
-			It("interpolates the varFiles into the manifest but does not delpoy with them", func() {
+			It("interpolates the varsFiles into the manifest but does not delpoy with them", func() {
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
 				_, actualInterpolateParams := director.InterpolateArgsForCall(0)
 				Expect(actualInterpolateParams.VarsFiles).To(ConsistOf(
-					varFileThree.Name(),
-					varFileOne.Name(),
-					varFileTwo.Name(),
+					varsFileThree.Name(),
+					varsFileOne.Name(),
+					varsFileTwo.Name(),
 				))
 
 				_, actualDeployParams := director.DeployArgsForCall(0)
 				Expect(actualDeployParams.VarsFiles).To(BeEmpty())
 			})
 
-			Context("when a varFile glob is bad", func() {
+			Context("when a varsFile glob is bad", func() {
 				It("gives a useful error", func() {
 					outRequest.Params.VarsFiles = []string{"/["}
 					_, err := outCommand.Run(outRequest)
 
 					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("Invalid var_file name: /["))
+					Expect(err.Error()).To(ContainSubstring("Invalid vars_file name: /["))
 				})
+			})
+		})
+
+		Context("when varFiles are provided", func() {
+			It("prepends the paths with the resources directory and passes them to deploy params", func() {
+				varFiles := map[string]string{"awesome-var": "relative/path/to/file-with/value"}
+				outRequest.Params.VarFiles = varFiles
+
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, actualDeployParams := director.DeployArgsForCall(0)
+				Expect(actualDeployParams.VarFiles).To(Equal(
+					map[string]string{"awesome-var": filepath.Join(resourcesDir, "relative/path/to/file-with/value")},
+				))
 			})
 		})
 
@@ -247,7 +257,7 @@ var _ = Describe("OutCommand", func() {
 
 			BeforeEach(func() {
 				// Update opsFile generation to yield expected bosh opsFile format
-				primaryopsFileDir, _ := ioutil.TempDir("", "")
+				primaryopsFileDir, _ := ioutil.TempDir(resourcesDir, "")
 
 				opsFileOne, _ = ioutil.TempFile(primaryopsFileDir, "opsFile-one")
 				opsFileOne.Close()
@@ -255,14 +265,13 @@ var _ = Describe("OutCommand", func() {
 				opsFileTwo, _ = ioutil.TempFile(primaryopsFileDir, "opsFile-two")
 				opsFileTwo.Close()
 
-				secondaryopsFileDir, _ := ioutil.TempDir("", "")
-
-				opsFileThree, _ = ioutil.TempFile(secondaryopsFileDir, "opsFile-three")
+				opsFileThree, _ = ioutil.TempFile(resourcesDir, "opsFile-three")
 				opsFileThree.Close()
 
+				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/opsFile-*", primaryopsFileDir))
 				opsFiles = []string{
-					opsFileThree.Name(),
-					fmt.Sprintf("%s/opsFile-*", primaryopsFileDir),
+					filepath.Base(opsFileThree.Name()),
+					primaryDirWithoutResourcesDir,
 				}
 				outRequest.Params.OpsFiles = opsFiles
 			})
@@ -301,7 +310,7 @@ var _ = Describe("OutCommand", func() {
 
 			BeforeEach(func() {
 				// Update release generation to yield expected bosh release format
-				primaryReleaseDir, _ := ioutil.TempDir("", "")
+				primaryReleaseDir, _ := ioutil.TempDir(resourcesDir, "")
 
 				smallRelease, _ := ioutil.ReadFile("fixtures/small-release.tgz")
 
@@ -313,15 +322,14 @@ var _ = Describe("OutCommand", func() {
 				io.Copy(releaseTwo, bytes.NewReader(smallRelease))
 				releaseTwo.Close()
 
-				secondaryReleaseDir, _ := ioutil.TempDir("", "")
-
-				releaseThree, _ = ioutil.TempFile(secondaryReleaseDir, "release-three")
+				releaseThree, _ = ioutil.TempFile(resourcesDir, "release-three")
 				io.Copy(releaseThree, bytes.NewReader(smallRelease))
 				releaseThree.Close()
 
+				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/release-*", primaryReleaseDir))
 				outRequest.Params.Releases = []string{
-					fmt.Sprintf("%s/release-*", primaryReleaseDir),
-					releaseThree.Name(),
+					primaryDirWithoutResourcesDir,
+					filepath.Base(releaseThree.Name()),
 				}
 			})
 
@@ -343,7 +351,6 @@ var _ = Describe("OutCommand", func() {
 			})
 
 			It("updates the version information in the manifest", func() {
-				outRequest.Params.Releases = []string{"fixtures/small-release.tgz"}
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -390,7 +397,7 @@ var _ = Describe("OutCommand", func() {
 			)
 
 			BeforeEach(func() {
-				primaryStemcellDir, _ := ioutil.TempDir("", "")
+				primaryStemcellDir, _ := ioutil.TempDir(resourcesDir, "")
 
 				smallStemcell, _ := ioutil.ReadFile("fixtures/small-stemcell.tgz")
 
@@ -402,15 +409,14 @@ var _ = Describe("OutCommand", func() {
 				io.Copy(stemcellTwo, bytes.NewReader(smallStemcell))
 				stemcellTwo.Close()
 
-				secondaryStemcellDir, _ := ioutil.TempDir("", "")
-
-				stemcellThree, _ = ioutil.TempFile(secondaryStemcellDir, "stemcell-three")
+				stemcellThree, _ = ioutil.TempFile(resourcesDir, "stemcell-three")
 				io.Copy(stemcellThree, bytes.NewReader(smallStemcell))
 				stemcellThree.Close()
 
+				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/stemcell-*", primaryStemcellDir))
 				outRequest.Params.Stemcells = []string{
-					fmt.Sprintf("%s/stemcell-*", primaryStemcellDir),
-					stemcellThree.Name(),
+					primaryDirWithoutResourcesDir,
+					filepath.Base(stemcellThree.Name()),
 				}
 
 				interpolatedManifest = properYaml(`
@@ -444,7 +450,6 @@ var _ = Describe("OutCommand", func() {
 			})
 
 			It("updates the version information in the manifest", func() {
-				outRequest.Params.Stemcells = []string{"fixtures/small-stemcell.tgz"}
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -483,7 +488,7 @@ var _ = Describe("OutCommand", func() {
 			It("downloads the vars store, uses it, and uploads it", func() {
 				director = new(boshfakes.FakeDirector)
 				fakeStorageClient = new(storagefakes.FakeStorageClient)
-				outCommand = out.NewOutCommand(director, fakeStorageClient, "")
+				outCommand = out.NewOutCommand(director, fakeStorageClient, resourcesDir)
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -503,7 +508,7 @@ var _ = Describe("OutCommand", func() {
 					fakeStorageClient = new(storagefakes.FakeStorageClient)
 					fakeStorageClient.DownloadReturns(errors.New("Failed to download"))
 
-					outCommand = out.NewOutCommand(director, fakeStorageClient, "")
+					outCommand = out.NewOutCommand(director, fakeStorageClient, resourcesDir)
 					_, err := outCommand.Run(outRequest)
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("Failed to download"))
@@ -516,7 +521,7 @@ var _ = Describe("OutCommand", func() {
 					fakeStorageClient = new(storagefakes.FakeStorageClient)
 					fakeStorageClient.UploadReturns(errors.New("Failed to upload"))
 
-					outCommand = out.NewOutCommand(director, fakeStorageClient, "")
+					outCommand = out.NewOutCommand(director, fakeStorageClient, resourcesDir)
 					_, err := outCommand.Run(outRequest)
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("Failed to upload"))

@@ -51,11 +51,14 @@ var _ = Describe("BoshDirector", func() {
 					Value: "bar",
 				},
 			}
-			varFileContents := properYaml(`
+			varsFileContents := properYaml(`
 				baz: "best-bar"
 			`)
-			varFile, _ := ioutil.TempFile("", "var-file-1")
-			varFile.Write(varFileContents)
+			varsFile, _ := ioutil.TempFile("", "var-file-1")
+			varsFile.Write(varsFileContents)
+
+			varFile, _ := ioutil.TempFile("", "var-file-key2")
+			varFile.Write([]byte("val2"))
 
 			opsFileContents := properYaml(`
 				- type: replace
@@ -71,7 +74,8 @@ var _ = Describe("BoshDirector", func() {
 				NoRedact:  noRedact,
 				DryRun:    dryRun,
 				Vars:      vars,
-				VarsFiles: []string{varFile.Name()},
+				VarFiles:  map[string]string{"key2": varFile.Name()},
+				VarsFiles: []string{varsFile.Name()},
 				OpsFiles:  []string{opsFile.Name()},
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -86,6 +90,11 @@ var _ = Describe("BoshDirector", func() {
 			Expect(len(deployOpts.VarsFiles)).To(Equal(1))
 			Expect(deployOpts.VarsFiles[0].Vars).To(Equal(boshtpl.StaticVariables{
 				"baz": "best-bar",
+			}))
+
+			Expect(len(deployOpts.VarFiles)).To(Equal(1))
+			Expect(deployOpts.VarFiles[0].Vars).To(Equal(boshtpl.StaticVariables{
+				"key2": "val2",
 			}))
 			Expect(len(deployOpts.OpsFiles)).To(Equal(1))
 

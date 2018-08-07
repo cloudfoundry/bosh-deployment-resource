@@ -11,6 +11,7 @@ type OutParams struct {
 	Stemcells []string               `json:"stemcells,omitempty"`
 	Vars      map[string]interface{} `json:"vars,omitempty"`
 	VarsFiles []string               `json:"vars_files,omitempty"`
+	VarFiles  map[string]string      `json:"var_files,omitempty"`
 	OpsFiles  []string               `json:"ops_files,omitempty"`
 	Delete    DeleteParams           `json:"delete,omitempty"`
 }

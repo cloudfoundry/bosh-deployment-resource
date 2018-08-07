@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
@@ -51,7 +52,7 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 
 	varsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.VarsFiles)
 	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid var_file name: %s", err)
+		return OutResponse{}, fmt.Errorf("Invalid vars_file name: %s", err)
 	}
 
 	opsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.OpsFiles)
@@ -91,6 +92,7 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 		Recreate:  outRequest.Params.Recreate,
 		SkipDrain: outRequest.Params.SkipDrain,
 		Cleanup:   outRequest.Params.Cleanup,
+		VarFiles:  c.prependResourcesDir(outRequest.Params.VarFiles),
 	}
 
 	var varsStoreFile *os.File
@@ -181,4 +183,12 @@ func (c OutCommand) consumeStemcells(manifest bosh.DeploymentManifest, stemcellG
 	}
 
 	return metadata, nil
+}
+
+func (c OutCommand) prependResourcesDir(varsFiles map[string]string) map[string]string {
+	varsWithAbsPath := map[string]string{}
+	for varName, varFilePath := range varsFiles {
+		varsWithAbsPath[varName] = filepath.Join(c.resourcesDirectory, varFilePath)
+	}
+	return varsWithAbsPath
 }
