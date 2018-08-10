@@ -37,6 +37,7 @@ resource_types:
   the BOSH director will be dialed directly.
 * `jumpbox_ssh_key`: *Optional.* The private key of the jumpbox. If set, `jumpbox_url` must also be set.
 * `jumpbox_username`: *Optional.* The username for the jumpbox. If not set, will default to `jumpbox`.
+* `skip_check`: *Optional* Setting this will avoid failing checks when using this resource in dynamic configuration. If not set, will default to `false`.
 * `vars_store`: *Optional.* Configuration for a persisted variables store. Currently only the Google Cloud Storage (GCS)
   provider is supported. `json_key` must be the the JSON key for your service account. Example:
 
