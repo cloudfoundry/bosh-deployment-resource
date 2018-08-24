@@ -55,6 +55,7 @@ resources:
     jumpbox_url: {{jumpbox-url}}
     jumpbox_ssh_key: {{jumpbox-private-key}}
     deployment: test-deployment
+    skip_check: true
 
 - name: stemcell
   type: bosh-io-stemcell
