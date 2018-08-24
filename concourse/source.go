@@ -22,6 +22,7 @@ type Source struct {
 	JumpboxURL      string    `json:"jumpbox_url,omitempty" yaml:"jumpbox_url"`
 	JumpboxUsername string    `json:"jumpbox_username,omitempty" yaml:"jumpbox_username"`
 	VarsStore       VarsStore `json:"vars_store,omitempty" yaml:"vars_store"`
+	SkipCheck       bool      `json:"skip_check,omitempty" yaml:"skip_check"`
 }
 
 type sourceRequest struct {
