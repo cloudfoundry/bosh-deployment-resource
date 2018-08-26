@@ -1,7 +1,8 @@
 package concourse
 
 type CompiledRelease struct {
-	Name string `json:"name"`
+	Name string   `json:"name"`
+	Jobs []string `json:"jobs"`
 }
 
 type InParams struct {

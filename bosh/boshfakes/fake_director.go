@@ -56,11 +56,11 @@ type FakeDirector struct {
 		result1 []byte
 		result2 error
 	}
-	ExportReleasesStub        func(targetDirectory string, releases []string) error
+	ExportReleasesStub        func(targetDirectory string, releases []bosh.ReleaseSpec) error
 	exportReleasesMutex       sync.RWMutex
 	exportReleasesArgsForCall []struct {
 		targetDirectory string
-		releases        []string
+		releases        []bosh.ReleaseSpec
 	}
 	exportReleasesReturns struct {
 		result1 error
@@ -305,17 +305,17 @@ func (fake *FakeDirector) DownloadManifestReturnsOnCall(i int, result1 []byte, r
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) ExportReleases(targetDirectory string, releases []string) error {
-	var releasesCopy []string
+func (fake *FakeDirector) ExportReleases(targetDirectory string, releases []bosh.ReleaseSpec) error {
+	var releasesCopy []bosh.ReleaseSpec
 	if releases != nil {
-		releasesCopy = make([]string, len(releases))
+		releasesCopy = make([]bosh.ReleaseSpec, len(releases))
 		copy(releasesCopy, releases)
 	}
 	fake.exportReleasesMutex.Lock()
 	ret, specificReturn := fake.exportReleasesReturnsOnCall[len(fake.exportReleasesArgsForCall)]
 	fake.exportReleasesArgsForCall = append(fake.exportReleasesArgsForCall, struct {
 		targetDirectory string
-		releases        []string
+		releases        []bosh.ReleaseSpec
 	}{targetDirectory, releasesCopy})
 	fake.recordInvocation("ExportReleases", []interface{}{targetDirectory, releasesCopy})
 	fake.exportReleasesMutex.Unlock()
@@ -334,7 +334,7 @@ func (fake *FakeDirector) ExportReleasesCallCount() int {
 	return len(fake.exportReleasesArgsForCall)
 }
 
-func (fake *FakeDirector) ExportReleasesArgsForCall(i int) (string, []string) {
+func (fake *FakeDirector) ExportReleasesArgsForCall(i int) (string, []bosh.ReleaseSpec) {
 	fake.exportReleasesMutex.RLock()
 	defer fake.exportReleasesMutex.RUnlock()
 	return fake.exportReleasesArgsForCall[i].targetDirectory, fake.exportReleasesArgsForCall[i].releases

@@ -47,9 +47,12 @@ func (c InCommand) Run(inRequest concourse.InRequest, targetDir string) (InRespo
 	}
 
 	if len(inRequest.Params.CompiledReleases) > 0 {
-		releases := []string{}
+		var releases []bosh.ReleaseSpec
 		for _, compiledRelease := range inRequest.Params.CompiledReleases {
-			releases = append(releases, compiledRelease.Name)
+			releases = append(releases, bosh.ReleaseSpec{
+				Name: compiledRelease.Name,
+				Jobs: compiledRelease.Jobs,
+			})
 		}
 		if err := c.director.ExportReleases(targetDir, releases); err != nil {
 			return InResponse{}, err
