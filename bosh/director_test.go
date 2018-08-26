@@ -390,7 +390,16 @@ var _ = Describe("BoshDirector", func() {
 		})
 
 		It("downloads the given releases", func() {
-			err := director.ExportReleases("/tmp/foo", []string{"cool-release", "awesome-release"})
+			err := director.ExportReleases("/tmp/foo", []bosh.ReleaseSpec{
+				{Name: "cool-release"},
+				{
+					Name: "awesome-release",
+					Jobs: []string{
+						"nice-job",
+						"well-done",
+					},
+				},
+			})
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(fakeBoshDirector.FindDeploymentCallCount()).To(Equal(1))
@@ -415,11 +424,19 @@ var _ = Describe("BoshDirector", func() {
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("987.65"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.Version())).To(Equal("3.4.0"))
+			Expect(exportReleaseOpts.Jobs).To(Equal([]string{
+				"nice-job",
+				"well-done",
+			}))
 		})
 
 		Context("when requesting a release not in the manifest", func() {
 			It("errors before downloading any releases", func() {
-				err := director.ExportReleases("/tmp/foo", []string{"cool-release", "awesome-release", "missing-release"})
+				err := director.ExportReleases("/tmp/foo", []bosh.ReleaseSpec{
+					{Name: "cool-release"},
+					{Name: "awesome-release"},
+					{Name: "missing-release"},
+				})
 				Expect(err).To(MatchError(ContainSubstring("could not find release missing-release")))
 
 				Expect(commandRunner.ExecuteCallCount()).To(Equal(0))
@@ -429,8 +446,10 @@ var _ = Describe("BoshDirector", func() {
 		Context("when there is more than one stemcell in the manifest", func() {
 			It("errors before downloading any releases", func() {
 				fakeDeployment.StemcellsReturns([]boshdir.Stemcell{fakeDeploymentStemcell, fakeDeploymentStemcell}, nil)
-
-				err := director.ExportReleases("/tmp/foo", []string{"cool-release", "awesome-release"})
+				err := director.ExportReleases("/tmp/foo", []bosh.ReleaseSpec{
+					{Name: "cool-release"},
+					{Name: "awesome-release"},
+				})
 				Expect(err).To(MatchError(ContainSubstring("exporting releases from a deployment with multiple stemcells is unsupported")))
 
 				Expect(commandRunner.ExecuteCallCount()).To(Equal(0))
@@ -441,7 +460,9 @@ var _ = Describe("BoshDirector", func() {
 			It("returns an error", func() {
 				fakeBoshDirector.FindDeploymentReturns(fakeDeployment, errors.New("foo"))
 
-				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+				err := director.ExportReleases("/tmp/foo", []bosh.ReleaseSpec{
+					{Name: "cool-release"},
+				})
 				Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch deployment cool-deployment: foo")))
 			})
 		})
@@ -450,7 +471,9 @@ var _ = Describe("BoshDirector", func() {
 			It("returns an error", func() {
 				commandRunner.ExecuteWithDefaultOverrideReturns(errors.New("failed communicating with director"))
 
-				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+				err := director.ExportReleases("/tmp/foo", []bosh.ReleaseSpec{
+					{Name: "cool-release"},
+				})
 				Expect(err).To(MatchError(ContainSubstring("could not export release cool-release: failed communicating with director")))
 			})
 		})
@@ -459,7 +482,9 @@ var _ = Describe("BoshDirector", func() {
 			It("returns an error", func() {
 				fakeDeployment.ReleasesReturns([]boshdir.Release{}, errors.New("foo"))
 
-				err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+				err := director.ExportReleases("/tmp/foo", []bosh.ReleaseSpec{
+					{Name: "cool-release"},
+				})
 				Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch releases: foo")))
 			})
 		})
@@ -469,7 +494,9 @@ var _ = Describe("BoshDirector", func() {
 				It("returns an error", func() {
 					fakeDeployment.StemcellsReturns([]boshdir.Stemcell{}, errors.New("foo"))
 
-					err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+					err := director.ExportReleases("/tmp/foo", []bosh.ReleaseSpec{
+						{Name: "cool-release"},
+					})
 					Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch stemcells: foo")))
 				})
 			})
@@ -478,7 +505,9 @@ var _ = Describe("BoshDirector", func() {
 				It("returns an error", func() {
 					fakeBoshDirector.StemcellsReturns([]boshdir.Stemcell{}, errors.New("foo"))
 
-					err := director.ExportReleases("/tmp/foo", []string{"cool-release"})
+					err := director.ExportReleases("/tmp/foo", []bosh.ReleaseSpec{
+						{Name: "cool-release"},
+					})
 					Expect(err).To(MatchError(ContainSubstring("could not export releases: could not fetch stemcells: foo")))
 				})
 			})

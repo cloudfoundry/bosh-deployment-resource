@@ -1,6 +1,6 @@
 # BOSH Deployment Resource
 
-A resource that will deploy releases and stemcells using the [BOSH CLI v2](https://bosh.io/docs/cli-v2.html). 
+A resource that will deploy releases and stemcells using the [BOSH CLI v2](https://bosh.io/docs/cli-v2.html).
 
 ## Differences from original BOSH Deployment Resource
 
@@ -16,7 +16,7 @@ uses the Ruby CLI and does not support newer BOSH features.
 
 To use the BOSH Deployment Resource, you must declare it in your pipeline as a resource type:
 
-```
+```yaml
 resource_types:
 - name: bosh-deployment
   type: docker-image
@@ -41,7 +41,7 @@ resource_types:
 * `vars_store`: *Optional.* Configuration for a persisted variables store. Currently only the Google Cloud Storage (GCS)
   provider is supported. `json_key` must be the the JSON key for your service account. Example:
 
-  ```
+  ```yaml
   provider: gcs
   config:
     bucket: my-bucket
@@ -81,7 +81,7 @@ _Notes_:
 
 #### Example
 
-```
+```yaml
 - put: staging
   params:
     source_file: path/to/sourcefile
@@ -89,7 +89,7 @@ _Notes_:
 
 Sample source file:
 
-```
+```json
 {
     "target": "dynamic-director.example.com",
     "client_secret": "generated-secret",
@@ -114,7 +114,7 @@ _Note_: Only the most recent version is fetchable
 
 #### Parameters
 
-* `compiled_releases`: *Optional.* List of compiled releases to download. Deployment can only have one stemcell.
+* `compiled_releases`: *Optional.* List of compiled releases to download and optionally specified jobs. Deployment can only have one stemcell.
 
 ``` yaml
 - get: staging
@@ -122,6 +122,9 @@ _Note_: Only the most recent version is fetchable
     compiled_releases:
     - name: release-one
     - name: release-two
+      jobs:
+      - job-one
+      - job-two
 ```
 
 ### `out`: Deploy or Delete a BOSH deployment (defaults to deploy)
@@ -139,8 +142,8 @@ deployment manifest and then deploy.
   stemcell versions.
 
 * `releases`: *Optional.* An array of globs that should point to where the
-  releases used in the deployment can be found. Release entries in the 
-  manifest with version 'latest' will be updated to the actual provided 
+  releases used in the deployment can be found. Release entries in the
+  manifest with version 'latest' will be updated to the actual provided
   release versions.
 
 * `vars`: *Optional.* A collection of variables to be set in the deployment manifest.
