@@ -154,16 +154,18 @@ deployment manifest and then deploy.
 
 * `ops_files`: *Optional.* A collection of ops files to be applied over the deployment manifest.
 
-* `cleanup`: *Optional* An boolean that specifies if a bosh cleanup should be
+* `cleanup`: *Optional.* An boolean that specifies if a bosh cleanup should be
   run after deployment. Defaults to false.
 
-* `no_redact`: *Optional* Removes redacted from Bosh output. Defaults to false.
+* `no_redact`: *Optional.* Removes redacted from Bosh output. Defaults to false.
 
-* `dry_run`: *Optional* Shows the deployment diff without running a deploy. Defaults to false.
+* `dry_run`: *Optional.* Shows the deployment diff without running a deploy. Defaults to false.
 
-* `recreate`: *Optional* Recreate all VMs in deployment. Defaults to false.
+* `max_in_flight`: *Optional.* A number of max in flight option.
 
-* `skip_drain`: *Optional* A collection of instance group names to skip running drain scripts for. Defaults to empty.
+* `recreate`: *Optional.* Recreate all VMs in deployment. Defaults to false.
+
+* `skip_drain`: *Optional.* A collection of instance group names to skip running drain scripts for. Defaults to empty.
 
 * `source_file`: *Optional.* Path to a file containing a BOSH director address.
   This allows the target to be determined at runtime, e.g. by acquiring a BOSH
@@ -173,9 +175,9 @@ deployment manifest and then deploy.
   If both `source_file` and `target` are specified, `source_file` takes
   precedence.
 
-* `delete.enabled`: *Optional* Deletes the configured deployment instead of doing a deploy.
+* `delete.enabled`: *Optional.* Deletes the configured deployment instead of doing a deploy.
 
-* `delete.force`: *Optional* Defaults to `false`. Asks bosh to ignore errors when deleting the configured deployment.
+* `delete.force`: *Optional.* Defaults to `false`. Asks bosh to ignore errors when deleting the configured deployment.
 
 
 ``` yaml
