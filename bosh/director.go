@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strconv"
 	"time"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
@@ -18,16 +19,17 @@ import (
 )
 
 type DeployParams struct {
-	Vars      map[string]interface{}
-	VarFiles  map[string]string
-	VarsFiles []string
-	OpsFiles  []string
-	NoRedact  bool
-	DryRun    bool
-	Recreate  bool
-	SkipDrain []string
-	Cleanup   bool
-	VarsStore string
+	Vars        map[string]interface{}
+	VarFiles    map[string]string
+	VarsFiles   []string
+	OpsFiles    []string
+	NoRedact    bool
+	DryRun      bool
+	MaxInFlight int
+	Recreate    bool
+	SkipDrain   []string
+	Cleanup     bool
+	VarsStore   string
 }
 
 type InterpolateParams struct {
@@ -96,11 +98,12 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 	}
 
 	deployOpts := boshcmd.DeployOpts{
-		Args:      boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
-		NoRedact:  deployParams.NoRedact,
-		DryRun:    deployParams.DryRun,
-		Recreate:  deployParams.Recreate,
-		SkipDrain: skipDrains,
+		Args:        boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
+		NoRedact:    deployParams.NoRedact,
+		DryRun:      deployParams.DryRun,
+		MaxInFlight: strconv.Itoa(deployParams.MaxInFlight),
+		Recreate:    deployParams.Recreate,
+		SkipDrain:   skipDrains,
 		VarFlags: boshcmd.VarFlags{
 			VarKVs:    varKVsFromVars(deployParams.Vars),
 			VarsFiles: boshVarsFiles,

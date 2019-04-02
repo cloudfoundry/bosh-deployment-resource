@@ -136,6 +136,29 @@ var _ = Describe("OutCommand", func() {
 			}))
 		})
 
+		It("deploys with max in flight", func() {
+			outRequest.Params.MaxInFlight = 5
+
+			_, err := outCommand.Run(outRequest)
+			Expect(err).ToNot(HaveOccurred())
+
+			_, actualInterpolateParams := director.InterpolateArgsForCall(0)
+			Expect(actualInterpolateParams.Vars).To(Equal(
+				map[string]interface{}{
+					"foo": "bar",
+				},
+			))
+
+			Expect(director.DeployCallCount()).To(Equal(1))
+			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
+			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
+			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
+				NoRedact:    true,
+				MaxInFlight: 5,
+				VarFiles:    map[string]string{},
+			}))
+		})
+
 		It("deploys with skip drain", func() {
 			outRequest.Params.SkipDrain = []string{"all"}
 

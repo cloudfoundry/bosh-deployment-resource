@@ -87,12 +87,13 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 	}
 
 	deployParams := bosh.DeployParams{
-		NoRedact:  outRequest.Params.NoRedact,
-		DryRun:    outRequest.Params.DryRun,
-		Recreate:  outRequest.Params.Recreate,
-		SkipDrain: outRequest.Params.SkipDrain,
-		Cleanup:   outRequest.Params.Cleanup,
-		VarFiles:  c.prependResourcesDir(outRequest.Params.VarFiles),
+		NoRedact:    outRequest.Params.NoRedact,
+		DryRun:      outRequest.Params.DryRun,
+		MaxInFlight: outRequest.Params.MaxInFlight,
+		Recreate:    outRequest.Params.Recreate,
+		SkipDrain:   outRequest.Params.SkipDrain,
+		Cleanup:     outRequest.Params.Cleanup,
+		VarFiles:    c.prependResourcesDir(outRequest.Params.VarFiles),
 	}
 
 	var varsStoreFile *os.File
