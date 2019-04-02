@@ -101,7 +101,7 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		Args:        boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact:    deployParams.NoRedact,
 		DryRun:      deployParams.DryRun,
-		MaxInFlight: strconv.Itoa(deployParams.MaxInFlight),
+		MaxInFlight: convertMaxInFlight(deployParams.MaxInFlight),
 		Recreate:    deployParams.Recreate,
 		SkipDrain:   skipDrains,
 		VarFlags: boshcmd.VarFlags{
@@ -385,6 +385,13 @@ func parsedSkipDrains(drains []string) ([]boshdir.SkipDrain, error) {
 		parsedDrains[idx] = parsedDrain
 	}
 	return parsedDrains, nil
+}
+
+func convertMaxInFlight(maxInFlight int) string {
+	if maxInFlight == 0 {
+		return ""
+	}
+	return strconv.Itoa(maxInFlight)
 }
 
 func boshFileSystem() boshsys.FileSystem {
