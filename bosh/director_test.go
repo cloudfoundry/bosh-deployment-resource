@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -70,13 +71,15 @@ var _ = Describe("BoshDirector", func() {
 
 			noRedact := true
 			dryRun := false
+			maxInFlight := 5
 			err := director.Deploy(sillyBytes, bosh.DeployParams{
-				NoRedact:  noRedact,
-				DryRun:    dryRun,
-				Vars:      vars,
-				VarFiles:  map[string]string{"key2": varFile.Name()},
-				VarsFiles: []string{varsFile.Name()},
-				OpsFiles:  []string{opsFile.Name()},
+				NoRedact:    noRedact,
+				DryRun:      dryRun,
+				MaxInFlight: maxInFlight,
+				Vars:        vars,
+				VarFiles:    map[string]string{"key2": varFile.Name()},
+				VarsFiles:   []string{varsFile.Name()},
+				OpsFiles:    []string{opsFile.Name()},
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -86,6 +89,7 @@ var _ = Describe("BoshDirector", func() {
 			Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 			Expect(deployOpts.NoRedact).To(Equal(noRedact))
 			Expect(deployOpts.DryRun).To(Equal(dryRun))
+			Expect(deployOpts.MaxInFlight).To(Equal(strconv.Itoa(maxInFlight)))
 			Expect(deployOpts.VarKVs).To(Equal(varKVs))
 			Expect(len(deployOpts.VarsFiles)).To(Equal(1))
 			Expect(deployOpts.VarsFiles[0].Vars).To(Equal(boshtpl.StaticVariables{
@@ -170,6 +174,22 @@ var _ = Describe("BoshDirector", func() {
 				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
 				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 				Expect(deployOpts.DryRun).To(Equal(dryRun))
+			})
+		})
+
+		Context("when max in flight is specified", func() {
+			It("use max-in-flight flags", func() {
+				maxInFlight := 5
+				err := director.Deploy(sillyBytes, bosh.DeployParams{
+					MaxInFlight: maxInFlight,
+				})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
+
+				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
+				Expect(deployOpts.MaxInFlight).To(Equal(strconv.Itoa(maxInFlight)))
 			})
 		})
 
