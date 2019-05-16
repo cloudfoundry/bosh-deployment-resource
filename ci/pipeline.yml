@@ -1,5 +1,23 @@
 ---
+resource_types:
+- name: bosh-deployment
+  type: docker-image
+  source:
+    repository: cloudfoundry/bosh-deployment-resource
+    tag: release-candidate
+- name: bbl-state-resource
+  type: docker-image
+  source:
+    repository: cfinfrastructure/bbl-state-resource
+    tag: latest
 resources:
+- name: bbl-state
+  type: bbl-state-resource
+  source:
+    bucket: {{bbl-state-bucket}}
+    iaas: gcp
+    gcp_region: us-central1
+    gcp_service_account_key: {{bosh-deployment-service-account}}
 - name: bosh-deployment-resource
   type: git
   source:
@@ -62,14 +80,15 @@ resources:
   source:
     name: bosh-google-kvm-ubuntu-trusty-go_agent
 
-resource_types:
-- name: bosh-deployment
-  type: docker-image
-  source:
-    repository: cloudfoundry/bosh-deployment-resource
-    tag: release-candidate
-
 jobs:
+- name: bbl-up
+  plan:
+    - get: bbl-state
+    - put: bbl-state
+      params:
+        command: up
+        name_file: bbl-state/name
+        state_dir: bbl-state
 - name: unit-test
   plan:
   - do:
