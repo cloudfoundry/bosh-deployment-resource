@@ -30,6 +30,7 @@ type DeployParams struct {
 	SkipDrain   []string
 	Cleanup     bool
 	VarsStore   string
+	Fix         bool
 }
 
 type InterpolateParams struct {
@@ -104,6 +105,7 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		MaxInFlight: convertMaxInFlight(deployParams.MaxInFlight),
 		Recreate:    deployParams.Recreate,
 		SkipDrain:   skipDrains,
+		Fix:         deployParams.Fix,
 		VarFlags: boshcmd.VarFlags{
 			VarKVs:    varKVsFromVars(deployParams.Vars),
 			VarsFiles: boshVarsFiles,

@@ -8,6 +8,7 @@ type OutParams struct {
 	Recreate    bool                   `json:"recreate,omitempty"`
 	SkipDrain   []string               `json:"skip_drain,omitempty"`
 	Cleanup     bool                   `json:"cleanup,omitempty"`
+	Fix         bool                   `json:"fix,omitempty"`
 	Releases    []string               `json:"releases,omitempty"`
 	Stemcells   []string               `json:"stemcells,omitempty"`
 	Vars        map[string]interface{} `json:"vars,omitempty"`

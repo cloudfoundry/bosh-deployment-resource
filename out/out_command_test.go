@@ -113,6 +113,29 @@ var _ = Describe("OutCommand", func() {
 			}))
 		})
 
+		It("deploys with fix", func() {
+			outRequest.Params.Fix = true
+
+			_, err := outCommand.Run(outRequest)
+			Expect(err).ToNot(HaveOccurred())
+
+			_, actualInterpolateParams := director.InterpolateArgsForCall(0)
+			Expect(actualInterpolateParams.Vars).To(Equal(
+				map[string]interface{}{
+					"foo": "bar",
+				},
+			))
+
+			Expect(director.DeployCallCount()).To(Equal(1))
+			actualManifestYaml, actualDeployParams := director.DeployArgsForCall(0)
+			Expect(actualManifestYaml).To(MatchYAML(manifestYaml))
+			Expect(actualDeployParams).To(Equal(bosh.DeployParams{
+				NoRedact: true,
+				Fix:      true,
+				VarFiles: map[string]string{},
+			}))
+		})
+
 		It("dryrun deploys", func() {
 			outRequest.Params.DryRun = true
 

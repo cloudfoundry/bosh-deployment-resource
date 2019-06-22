@@ -161,6 +161,8 @@ deployment manifest and then deploy.
 
 * `dry_run`: *Optional.* Shows the deployment diff without running a deploy. Defaults to false.
 
+* `fix`: *Optional.* Recreate an instance with an unresponsive agent instead of erroring. Defaults to false.
+
 * `max_in_flight`: *Optional.* A number of max in flight option.
 
 * `recreate`: *Optional.* Recreate all VMs in deployment. Defaults to false.
