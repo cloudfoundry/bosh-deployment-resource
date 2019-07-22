@@ -93,6 +93,7 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 		Recreate:    outRequest.Params.Recreate,
 		SkipDrain:   outRequest.Params.SkipDrain,
 		Cleanup:     outRequest.Params.Cleanup,
+		Fix:         outRequest.Params.Fix,
 		VarFiles:    c.prependResourcesDir(outRequest.Params.VarFiles),
 	}
 
