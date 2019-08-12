@@ -27,7 +27,7 @@ resource_types:
 ## Source Configuration
 
 * `deployment`: *Required.* The name of the deployment.
-* `target`: *Optional.* The address of the BOSH director which will be used for the deployment. If omitted, target_file
+* `target`: *Optional.* The address of the BOSH director which will be used for the deployment. If omitted, `source_file`
   must be specified via out parameters, as documented below.
 * `client`: *Required.* The username or UAA client ID for the BOSH director.
 * `client_secret`: *Required.* The password or UAA client secret for the BOSH director.
