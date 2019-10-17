@@ -7,8 +7,8 @@ import (
 	fakeaction "github.com/cloudfoundry/bosh-agent/agent/action/fakes"
 	boshscript "github.com/cloudfoundry/bosh-agent/agent/script"
 	boshdrain "github.com/cloudfoundry/bosh-agent/agent/script/drain"
-	fakedrain "github.com/cloudfoundry/bosh-agent/agent/script/drain/fakes"
-	fakescript "github.com/cloudfoundry/bosh-agent/agent/script/fakes"
+	"github.com/cloudfoundry/bosh-agent/agent/script/drain/drainfakes"
+	"github.com/cloudfoundry/bosh-agent/agent/script/scriptfakes"
 	boshdir "github.com/cloudfoundry/bosh-agent/settings/directories"
 	boshassert "github.com/cloudfoundry/bosh-utils/assert"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -19,6 +19,7 @@ var _ = Describe("ConcreteJobScriptProvider", func() {
 	var (
 		logger         boshlog.Logger
 		scriptProvider boshscript.ConcreteJobScriptProvider
+		scriptEnv      map[string]string
 	)
 
 	BeforeEach(func() {
@@ -37,7 +38,7 @@ var _ = Describe("ConcreteJobScriptProvider", func() {
 
 	Describe("NewScript", func() {
 		It("returns script with relative job paths to the base directory", func() {
-			script := scriptProvider.NewScript("myjob", "the-best-hook-ever")
+			script := scriptProvider.NewScript("myjob", "the-best-hook-ever", scriptEnv)
 			Expect(script.Tag()).To(Equal("myjob"))
 
 			expPath := "/the/base/dir/jobs/myjob/bin/the-best-hook-ever" + boshscript.ScriptExt
@@ -47,7 +48,7 @@ var _ = Describe("ConcreteJobScriptProvider", func() {
 
 	Describe("NewDrainScript", func() {
 		It("returns drain script", func() {
-			params := &fakedrain.FakeScriptParams{}
+			params := &drainfakes.FakeScriptParams{}
 			script := scriptProvider.NewDrainScript("foo", params)
 			Expect(script.Tag()).To(Equal("foo"))
 
@@ -59,7 +60,7 @@ var _ = Describe("ConcreteJobScriptProvider", func() {
 
 	Describe("NewParallelScript", func() {
 		It("returns parallel script", func() {
-			scripts := []boshscript.Script{&fakescript.FakeScript{}}
+			scripts := []boshscript.Script{&scriptfakes.FakeScript{}}
 			script := scriptProvider.NewParallelScript("foo", scripts)
 			Expect(script).To(Equal(boshscript.NewParallelScript("foo", scripts, logger)))
 		})

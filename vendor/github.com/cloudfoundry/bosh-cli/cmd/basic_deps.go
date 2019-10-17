@@ -33,7 +33,7 @@ func NewBasicDeps(ui *boshui.ConfUI, logger boshlog.Logger) BasicDeps {
 func NewBasicDepsWithFS(ui *boshui.ConfUI, fs boshsys.FileSystem, logger boshlog.Logger) BasicDeps {
 	cmdRunner := boshsys.NewExecCmdRunner(logger)
 
-	digestCreationAlgorithms := []boshcrypto.Algorithm{boshcrypto.DigestAlgorithmSHA1}
+	digestCreationAlgorithms := []boshcrypto.Algorithm{boshcrypto.DigestAlgorithmSHA256}
 	digestCalculator := bicrypto.NewDigestCalculator(fs, digestCreationAlgorithms)
 
 	return BasicDeps{
@@ -46,14 +46,6 @@ func NewBasicDepsWithFS(ui *boshui.ConfUI, fs boshsys.FileSystem, logger boshlog
 		Compressor:               boshcmd.NewTarballCompressor(cmdRunner, fs),
 		DigestCalculator:         digestCalculator,
 		DigestCreationAlgorithms: digestCreationAlgorithms,
-		Time: clock.NewClock(),
+		Time:                     clock.NewClock(),
 	}
-}
-
-func (b BasicDeps) WithSha2CheckSumming() BasicDeps {
-	b.DigestCreationAlgorithms = []boshcrypto.Algorithm{
-		boshcrypto.DigestAlgorithmSHA256,
-	}
-	b.DigestCalculator = bicrypto.NewDigestCalculator(b.FS, b.DigestCreationAlgorithms)
-	return b
 }

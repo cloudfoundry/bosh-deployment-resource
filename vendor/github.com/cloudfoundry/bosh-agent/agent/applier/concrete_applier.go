@@ -8,6 +8,7 @@ import (
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	boshdirs "github.com/cloudfoundry/bosh-agent/settings/directories"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"github.com/cloudfoundry/bosh-utils/work"
 )
 
 type concreteApplier struct {
@@ -16,6 +17,7 @@ type concreteApplier struct {
 	logrotateDelegate LogrotateDelegate
 	jobSupervisor     boshjobsuper.JobSupervisor
 	dirProvider       boshdirs.Provider
+	settings          boshsettings.Settings
 }
 
 func NewConcreteApplier(
@@ -24,6 +26,7 @@ func NewConcreteApplier(
 	logrotateDelegate LogrotateDelegate,
 	jobSupervisor boshjobsuper.JobSupervisor,
 	dirProvider boshdirs.Provider,
+	settings boshsettings.Settings,
 ) Applier {
 	return &concreteApplier{
 		jobApplier:        jobApplier,
@@ -31,28 +34,52 @@ func NewConcreteApplier(
 		logrotateDelegate: logrotateDelegate,
 		jobSupervisor:     jobSupervisor,
 		dirProvider:       dirProvider,
+		settings:          settings,
 	}
 }
 
 func (a *concreteApplier) Prepare(desiredApplySpec as.ApplySpec) error {
+	var tasks []func() error
+	pool := work.Pool{
+		Count: *a.settings.Env.GetParallel(),
+	}
+
 	for _, job := range desiredApplySpec.Jobs() {
-		err := a.jobApplier.Prepare(job)
-		if err != nil {
-			return bosherr.WrapErrorf(err, "Preparing job %s", job.Name)
-		}
+		job := job
+		tasks = append(tasks, func() error {
+			jobErr := a.jobApplier.Prepare(job)
+			if jobErr != nil {
+				return bosherr.WrapErrorf(jobErr, "Preparing job %s", job.Name)
+			}
+			return nil
+		})
 	}
 
 	for _, pkg := range desiredApplySpec.Packages() {
-		err := a.packageApplier.Prepare(pkg)
-		if err != nil {
-			return bosherr.WrapErrorf(err, "Preparing package %s", pkg.Name)
-		}
+		pkg := pkg
+		tasks = append(tasks, func() error {
+			pkgErr := a.packageApplier.Prepare(pkg)
+			if pkgErr != nil {
+				return bosherr.WrapErrorf(pkgErr, "Preparing package %s", pkg.Name)
+			}
+			return nil
+		})
+	}
+
+	err := pool.ParallelDo(tasks...)
+	if err != nil {
+		return err
+	}
+
+	err = a.jobApplier.DeleteSourceBlobs(desiredApplySpec.Jobs())
+	if err != nil {
+		return bosherr.WrapError(err, "Failed removing job source blobs")
 	}
 
 	return nil
 }
 
-func (a *concreteApplier) Apply(currentApplySpec, desiredApplySpec as.ApplySpec) error {
+func (a *concreteApplier) Apply(desiredApplySpec as.ApplySpec) error {
 	err := a.jobSupervisor.RemoveAllJobs()
 	if err != nil {
 		return bosherr.WrapError(err, "Removing all jobs")
@@ -66,7 +93,12 @@ func (a *concreteApplier) Apply(currentApplySpec, desiredApplySpec as.ApplySpec)
 		}
 	}
 
-	err = a.jobApplier.KeepOnly(append(currentApplySpec.Jobs(), desiredApplySpec.Jobs()...))
+	err = a.jobApplier.DeleteSourceBlobs(desiredApplySpec.Jobs())
+	if err != nil {
+		return bosherr.WrapError(err, "Failed removing job source blobs")
+	}
+
+	err = a.jobApplier.KeepOnly(desiredApplySpec.Jobs())
 	if err != nil {
 		return bosherr.WrapError(err, "Keeping only needed jobs")
 	}
@@ -78,7 +110,7 @@ func (a *concreteApplier) Apply(currentApplySpec, desiredApplySpec as.ApplySpec)
 		}
 	}
 
-	err = a.packageApplier.KeepOnly(append(currentApplySpec.Packages(), desiredApplySpec.Packages()...))
+	err = a.packageApplier.KeepOnly(desiredApplySpec.Packages())
 	if err != nil {
 		return bosherr.WrapError(err, "Keeping only needed packages")
 	}
@@ -92,7 +124,6 @@ func (a *concreteApplier) Apply(currentApplySpec, desiredApplySpec as.ApplySpec)
 }
 
 func (a *concreteApplier) ConfigureJobs(desiredApplySpec as.ApplySpec) error {
-
 	jobs := desiredApplySpec.Jobs()
 	for i := 0; i < len(jobs); i++ {
 		job := jobs[len(jobs)-1-i]

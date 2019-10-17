@@ -7,6 +7,7 @@ import (
 	. "github.com/cloudfoundry/bosh-agent/infrastructure"
 	fakeinf "github.com/cloudfoundry/bosh-agent/infrastructure/fakes"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
+	"github.com/cloudfoundry/bosh-utils/errors"
 )
 
 var _ = Describe("MultiSourceMetadataService", describeMultiSourceMetadataService)
@@ -26,6 +27,10 @@ func describeMultiSourceMetadataService() {
 			ServerName:       "fake-server-name-1",
 			RegistryEndpoint: "fake-registry-endpoint-1",
 			Networks:         boshsettings.Networks{"net-1": boshsettings.Network{}},
+			Settings: boshsettings.Settings{
+				AgentID: "Agent-Foo",
+				Mbus:    "Agent-Mbus",
+			},
 		}
 
 		service2 = fakeinf.FakeMetadataService{
@@ -42,6 +47,13 @@ func describeMultiSourceMetadataService() {
 		BeforeEach(func() {
 			service1.Available = true
 			metadataService = NewMultiSourceMetadataService(service1, service2)
+		})
+
+		Describe("IsAvailable", func() {
+			It("is true", func() {
+				availablity := metadataService.IsAvailable()
+				Expect(availablity).To(BeTrue())
+			})
 		})
 
 		Describe("GetPublicKey", func() {
@@ -76,6 +88,29 @@ func describeMultiSourceMetadataService() {
 			})
 		})
 
+		Describe("GetSettings", func() {
+			Context("selected metadata service did not return an error", func() {
+				It("returns settings", func() {
+					settings, err := metadataService.GetSettings()
+					Expect(err).NotTo(HaveOccurred())
+					Expect(settings.AgentID).To(Equal("Agent-Foo"))
+				})
+			})
+
+			Context("selected metadata service returned an error", func() {
+				BeforeEach(func() {
+					service1.SettingsErr = errors.Error("Foo Bar")
+					metadataService = NewMultiSourceMetadataService(service1, service2)
+				})
+
+				It("returns the error", func() {
+					_, err := metadataService.GetSettings()
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(Equal("Foo Bar"))
+				})
+			})
+		})
+
 		Describe("GetNetworks", func() {
 			It("returns network settings from the available service", func() {
 				networks, err := metadataService.GetNetworks()
@@ -90,6 +125,13 @@ func describeMultiSourceMetadataService() {
 			service1.Available = false
 			service2.Available = true
 			metadataService = NewMultiSourceMetadataService(service1, service2)
+		})
+
+		Describe("IsAvailable", func() {
+			It("is true", func() {
+				availablity := metadataService.IsAvailable()
+				Expect(availablity).To(BeTrue())
+			})
 		})
 
 		Describe("GetPublicKey", func() {
@@ -129,6 +171,68 @@ func describeMultiSourceMetadataService() {
 				networks, err := metadataService.GetNetworks()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(networks).To(Equal(boshsettings.Networks{"net-2": boshsettings.Network{}}))
+			})
+		})
+	})
+
+	Context("when no service is available", func() {
+		BeforeEach(func() {
+			service1.Available = false
+			metadataService = NewMultiSourceMetadataService(service1)
+		})
+
+		Describe("IsAvailable", func() {
+			It("is false", func() {
+				availablity := metadataService.IsAvailable()
+				Expect(availablity).To(BeFalse())
+			})
+		})
+
+		Describe("GetPublicKey", func() {
+			It("returns an error", func() {
+				_, err := metadataService.GetPublicKey()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("services not available"))
+			})
+		})
+
+		Describe("GetInstanceID", func() {
+			It("returns an error getting the instance ID", func() {
+				_, err := metadataService.GetInstanceID()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("services not available"))
+			})
+		})
+
+		Describe("GetServerName", func() {
+			It("returns an error getting the server name", func() {
+				_, err := metadataService.GetServerName()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("services not available"))
+			})
+		})
+
+		Describe("GetRegistryEndpoint", func() {
+			It("returns an error getting the registry endpoint", func() {
+				_, err := metadataService.GetRegistryEndpoint()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("services not available"))
+			})
+		})
+
+		Describe("GetNetworks", func() {
+			It("returns an error getting the networks", func() {
+				_, err := metadataService.GetNetworks()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("services not available"))
+			})
+		})
+
+		Describe("GetSettings", func() {
+			It("returns an error getting the settings", func() {
+				_, err := metadataService.GetSettings()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("services not available"))
 			})
 		})
 	})

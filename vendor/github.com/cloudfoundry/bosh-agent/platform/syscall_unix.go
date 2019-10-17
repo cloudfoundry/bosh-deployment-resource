@@ -10,7 +10,7 @@ func createUserProfile(username string) error {
 	return ErrNotImplemented
 }
 
-func deleteUserProfile(username string) error {
+func deleteLocalUser(username string) error {
 	return ErrNotImplemented
 }
 
@@ -31,5 +31,9 @@ func sshEnabled() error {
 }
 
 func setupRuntimeConfiguration() error {
+	return ErrNotImplemented
+}
+
+func setRandomPassword(username string) error {
 	return ErrNotImplemented
 }

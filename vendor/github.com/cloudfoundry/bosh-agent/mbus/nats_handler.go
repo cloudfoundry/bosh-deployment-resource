@@ -14,16 +14,24 @@ import (
 
 	"github.com/cloudfoundry/yagnats"
 
+	"crypto/x509"
+	"time"
+
+	"crypto/tls"
+	"regexp"
+
 	boshhandler "github.com/cloudfoundry/bosh-agent/handler"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshretry "github.com/cloudfoundry/bosh-utils/retrystrategy"
 )
 
 const (
-	responseMaxLength = 1024 * 1024
-	natsHandlerLogTag = "NATS Handler"
+	responseMaxLength        = 1024 * 1024
+	natsHandlerLogTag        = "NATS Handler"
+	natsConnectionMaxRetries = 4
 )
 
 type Handler interface {
@@ -99,7 +107,16 @@ func (h *natsHandler) Start(handlerFunc boshhandler.Func) error {
 		}
 	})
 
-	err = h.client.Connect(connProvider)
+	natsRetryable := boshretry.NewRetryable(func() (bool, error) {
+		err := h.client.Connect(connProvider)
+		if err != nil {
+			return true, bosherr.WrapError(err, "Connecting to NATS")
+		}
+		return false, nil
+	})
+
+	attemptRetryStrategy := boshretry.NewAttemptRetryStrategy(natsConnectionMaxRetries, time.Second, natsRetryable, h.logger)
+	err = attemptRetryStrategy.Try()
 	if err != nil {
 		return bosherr.WrapError(err, "Connecting")
 	}
@@ -154,6 +171,20 @@ func (h *natsHandler) Stop() {
 	h.client.Disconnect()
 }
 
+func (h *natsHandler) VerifyPeerCertificate(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+	for _, chain := range verifiedChains {
+		if len(chain) == 0 {
+			continue
+		}
+		commonName := chain[0].Subject.CommonName
+		match, _ := regexp.MatchString("^[a-zA-Z0-9*\\-]*.nats.bosh-internal$", commonName)
+		if match {
+			return nil
+		}
+	}
+	return errors.New("Server Certificate CommonName does not match *.nats.bosh-internal")
+}
+
 func (h *natsHandler) handleNatsMsg(natsMsg *yagnats.Message, handlerFunc boshhandler.Func) {
 	respBytes, req, err := boshhandler.PerformHandlerWithJSON(
 		natsMsg.Payload,
@@ -199,13 +230,33 @@ func (h *natsHandler) runUntilInterrupted() {
 func (h *natsHandler) getConnectionInfo() (*yagnats.ConnectionInfo, error) {
 	settings := h.settingsService.GetSettings()
 
-	natsURL, err := url.Parse(settings.Mbus)
+	natsURL, err := url.Parse(settings.GetMbusURL())
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Parsing Nats URL")
 	}
 
 	connInfo := new(yagnats.ConnectionInfo)
 	connInfo.Addr = natsURL.Host
+
+	if settings.Env.IsNATSMutualTLSEnabled() {
+		connInfo.TLSInfo = &yagnats.ConnectionTLSInfo{}
+
+		caCert := settings.Env.Bosh.Mbus.Cert.CA
+		if caCert != "" {
+			connInfo.TLSInfo.CertPool = x509.NewCertPool()
+			if ok := connInfo.TLSInfo.CertPool.AppendCertsFromPEM([]byte(caCert)); !ok {
+				return nil, bosherr.Error("Failed to load Mbus CA cert")
+			}
+		}
+
+		connInfo.TLSInfo.VerifyPeerCertificate = h.VerifyPeerCertificate
+
+		clientCertificate, err := tls.X509KeyPair([]byte(settings.Env.Bosh.Mbus.Cert.Certificate), []byte(settings.Env.Bosh.Mbus.Cert.PrivateKey))
+		if err != nil {
+			return nil, bosherr.WrapError(err, "Parsing certificate and private key")
+		}
+		connInfo.TLSInfo.ClientCert = &clientCertificate
+	}
 
 	user := natsURL.User
 	if user != nil {
@@ -225,7 +276,7 @@ func (h *natsHandler) generateCEFLog(natsMsg *yagnats.Message, severity int, sta
 
 	settings := h.settingsService.GetSettings()
 
-	natsURL, err := url.Parse(settings.Mbus)
+	natsURL, err := url.Parse(settings.GetMbusURL())
 	if err != nil {
 		h.logger.Error(natsHandlerLogTag, err.Error())
 		return

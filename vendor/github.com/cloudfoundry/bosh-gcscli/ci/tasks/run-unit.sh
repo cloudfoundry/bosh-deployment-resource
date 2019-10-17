@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 
-set -e
-
+set -ue
 
 my_dir="$( cd $(dirname $0) && pwd )"
-release_dir="$( cd ${my_dir} && cd ../.. && pwd )"
-workspace_dir="$( cd ${release_dir} && cd ../../../.. && pwd )"
+pushd ${my_dir} > /dev/null
+    source utils.sh
+    set_env
+popd > /dev/null
 
-export GOPATH=${workspace_dir}
-export PATH=${GOPATH}/bin:${PATH}
-
-pushd ${release_dir} > /dev/null
-
-make test-unit
-
+pushd ${release_dir}
+    make test-unit
 popd > /dev/null

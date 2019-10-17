@@ -4,20 +4,21 @@ import (
 	"crypto/tls"
 	"net/http"
 
-	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	. "github.com/cloudfoundry/bosh-cli/director"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
+	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
 	"github.com/onsi/gomega/ghttp"
 
-	. "github.com/cloudfoundry/bosh-cli/director"
-	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
-	"github.com/cloudfoundry/bosh-utils/system/fakes"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 var _ = Describe("Factory", func() {
 	Describe("New", func() {
 		It("returns error if config is invalid", func() {
-			_, err := NewFactory(boshlog.NewLogger(boshlog.LevelNone)).New(Config{}, nil, nil)
+			_, err := NewFactory(boshlog.NewLogger(boshlog.LevelNone)).New(FactoryConfig{}, nil, nil)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -25,12 +26,12 @@ var _ = Describe("Factory", func() {
 			server := ghttp.NewTLSServer()
 			defer server.Close()
 
-			config, err := NewConfigFromURL(server.URL())
+			factoryConfig, err := NewConfigFromURL(server.URL())
 			Expect(err).ToNot(HaveOccurred())
 
 			logger := boshlog.NewLogger(boshlog.LevelNone)
 
-			director, err := NewFactory(logger).New(config, nil, nil)
+			director, err := NewFactory(logger).New(factoryConfig, nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			_, err = director.Info()
@@ -60,7 +61,7 @@ var _ = Describe("Factory", func() {
 				server.Close()
 			})
 
-			DirectorRedirect := func(config Config) http.Header {
+			DirectorRedirect := func(config FactoryConfig) http.Header {
 				h := http.Header{}
 				// URL does not include port, creds
 				h.Add("Location", "https://"+config.Host+"/info")
@@ -68,7 +69,7 @@ var _ = Describe("Factory", func() {
 				return h
 			}
 
-			TasksRedirect := func(config Config) http.Header {
+			TasksRedirect := func(config FactoryConfig) http.Header {
 				h := http.Header{}
 				// URL does not include port, creds
 				h.Add("Location", "https://"+config.Host+"/tasks/123")
@@ -86,23 +87,23 @@ var _ = Describe("Factory", func() {
 			}
 
 			It("succeeds making requests and follow redirects with basic auth creds", func() {
-				config, err := NewConfigFromURL(server.URL())
+				factoryConfig, err := NewConfigFromURL(server.URL())
 				Expect(err).ToNot(HaveOccurred())
 
-				config.Client = "username"
-				config.ClientSecret = "password"
-				config.CACert = validCACert
+				factoryConfig.Client = "username"
+				factoryConfig.ClientSecret = "password"
+				factoryConfig.CACert = validCACert
 
 				logger := boshlog.NewLogger(boshlog.LevelNone)
 
-				director, err := NewFactory(logger).New(config, nil, nil)
+				director, err := NewFactory(logger).New(factoryConfig, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/info"),
 						ghttp.VerifyBasicAuth("username", "password"),
-						ghttp.RespondWith(http.StatusFound, nil, DirectorRedirect(config)),
+						ghttp.RespondWith(http.StatusFound, nil, DirectorRedirect(factoryConfig)),
 					),
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/info"),
@@ -117,25 +118,27 @@ var _ = Describe("Factory", func() {
 			})
 
 			It("succeeds making initial post request and clears out headers when redirecting to a get resource", func() {
-				config, err := NewConfigFromURL(server.URL())
+				fs := fakesys.NewFakeFileSystem()
+
+				factoryConfig, err := NewConfigFromURL(server.URL())
 				Expect(err).ToNot(HaveOccurred())
 
-				config.Client = "username"
-				config.ClientSecret = "password"
-				config.CACert = validCACert
+				factoryConfig.Client = "username"
+				factoryConfig.ClientSecret = "password"
+				factoryConfig.CACert = validCACert
 
 				logger := boshlog.NewLogger(boshlog.LevelNone)
 
 				taskReporter := NewNoopTaskReporter()
 				fileReporter := NewNoopFileReporter()
-				director, err := NewFactory(logger).New(config, taskReporter, fileReporter)
+				director, err := NewFactory(logger).New(factoryConfig, taskReporter, fileReporter)
 				Expect(err).ToNot(HaveOccurred())
 
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("POST", "/stemcells"),
 						ghttp.VerifyBasicAuth("username", "password"),
-						ghttp.RespondWith(http.StatusFound, nil, TasksRedirect(config)),
+						ghttp.RespondWith(http.StatusFound, nil, TasksRedirect(factoryConfig)),
 					),
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/tasks/123"),
@@ -160,20 +163,20 @@ var _ = Describe("Factory", func() {
 					),
 				)
 
-				err = director.UploadStemcellFile(&fakes.FakeFile{}, false)
+				err = director.UploadStemcellFile(fakesys.NewFakeFile("/some-path", fs), false)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("does not redact url query params", func() {
 				logger := &loggerfakes.FakeLogger{}
-				config, err := NewConfigFromURL(server.URL())
+				factoryConfig, err := NewConfigFromURL(server.URL())
 				Expect(err).ToNot(HaveOccurred())
 
-				config.Client = "username"
-				config.ClientSecret = "password"
-				config.CACert = validCACert
+				factoryConfig.Client = "username"
+				factoryConfig.ClientSecret = "password"
+				factoryConfig.CACert = validCACert
 
-				director, err := NewFactory(logger).New(config, nil, nil)
+				director, err := NewFactory(logger).New(factoryConfig, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				server.AppendHandlers(
@@ -198,27 +201,27 @@ var _ = Describe("Factory", func() {
 			})
 
 			It("succeeds making requests and follow redirects with token", func() {
-				config, err := NewConfigFromURL(server.URL())
+				factoryConfig, err := NewConfigFromURL(server.URL())
 				Expect(err).ToNot(HaveOccurred())
 
 				var tokenRetries []bool
 
-				config.TokenFunc = func(retried bool) (string, error) {
+				factoryConfig.TokenFunc = func(retried bool) (string, error) {
 					tokenRetries = append(tokenRetries, retried)
 					return "auth", nil
 				}
-				config.CACert = validCACert
+				factoryConfig.CACert = validCACert
 
 				logger := boshlog.NewLogger(boshlog.LevelNone)
 
-				director, err := NewFactory(logger).New(config, nil, nil)
+				director, err := NewFactory(logger).New(factoryConfig, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/info"),
 						ghttp.VerifyHeader(http.Header{"Authorization": []string{"auth"}}),
-						ghttp.RespondWith(http.StatusFound, nil, DirectorRedirect(config)),
+						ghttp.RespondWith(http.StatusFound, nil, DirectorRedirect(factoryConfig)),
 					),
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/info"),
@@ -238,21 +241,21 @@ var _ = Describe("Factory", func() {
 			})
 
 			It("succeeds making requests and follow redirects without any auth", func() {
-				config, err := NewConfigFromURL(server.URL())
+				factoryConfig, err := NewConfigFromURL(server.URL())
 				Expect(err).ToNot(HaveOccurred())
 
-				config.CACert = validCACert
+				factoryConfig.CACert = validCACert
 
 				logger := boshlog.NewLogger(boshlog.LevelNone)
 
-				director, err := NewFactory(logger).New(config, nil, nil)
+				director, err := NewFactory(logger).New(factoryConfig, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/info"),
 						VerifyHeaderDoesNotExist("Authorization"),
-						ghttp.RespondWith(http.StatusFound, nil, DirectorRedirect(config)),
+						ghttp.RespondWith(http.StatusFound, nil, DirectorRedirect(factoryConfig)),
 					),
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/info"),
@@ -267,14 +270,14 @@ var _ = Describe("Factory", func() {
 			})
 
 			It("retries request 3 times if a StatusGatewayTimeout returned", func() {
-				config, err := NewConfigFromURL(server.URL())
+				factoryConfig, err := NewConfigFromURL(server.URL())
 				Expect(err).ToNot(HaveOccurred())
 
-				config.CACert = validCACert
+				factoryConfig.CACert = validCACert
 
 				logger := boshlog.NewLogger(boshlog.LevelNone)
 
-				director, err := NewFactory(logger).New(config, nil, nil)
+				director, err := NewFactory(logger).New(factoryConfig, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				server.AppendHandlers(
@@ -298,14 +301,14 @@ var _ = Describe("Factory", func() {
 			})
 
 			It("does not retry on non-successful http status codes", func() {
-				config, err := NewConfigFromURL(server.URL())
+				factoryConfig, err := NewConfigFromURL(server.URL())
 				Expect(err).ToNot(HaveOccurred())
 
-				config.CACert = validCACert
+				factoryConfig.CACert = validCACert
 
 				logger := boshlog.NewLogger(boshlog.LevelNone)
 
-				director, err := NewFactory(logger).New(config, nil, nil)
+				director, err := NewFactory(logger).New(factoryConfig, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 
 				server.AppendHandlers(

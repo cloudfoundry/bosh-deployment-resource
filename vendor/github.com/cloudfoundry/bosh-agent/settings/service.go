@@ -3,10 +3,11 @@ package settings
 import (
 	"encoding/json"
 
+	"sync"
+
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"sync"
 )
 
 type Service interface {
@@ -14,6 +15,14 @@ type Service interface {
 
 	// GetSettings does not return error because without settings Agent cannot start.
 	GetSettings() Settings
+
+	GetPersistentDiskSettings(diskCID string) (DiskSettings, error)
+
+	GetAllPersistentDiskSettings() (map[string]DiskSettings, error)
+
+	SavePersistentDiskSettings(DiskSettings) error
+
+	RemovePersistentDiskSettings(string) error
 
 	PublicSSHKeyForUsername(string) (string, error)
 
@@ -23,13 +32,13 @@ type Service interface {
 const settingsServiceLogTag = "settingsService"
 
 type settingsService struct {
-	fs                     boshsys.FileSystem
-	settingsPath           string
-	settings               Settings
-	settingsMutex          sync.Mutex
-	settingsSource         Source
-	defaultNetworkResolver DefaultNetworkResolver
-	logger                 boshlog.Logger
+	fs                          boshsys.FileSystem
+	settings                    Settings
+	settingsMutex               sync.Mutex
+	persistentDiskSettingsMutex sync.Mutex
+	settingsSource              Source
+	platform                    PlatformSettingsGetter
+	logger                      boshlog.Logger
 }
 
 type DefaultNetworkResolver interface {
@@ -38,20 +47,27 @@ type DefaultNetworkResolver interface {
 	GetDefaultNetwork() (Network, error)
 }
 
+//go:generate counterfeiter PlatformSettingsGetter
+
+type PlatformSettingsGetter interface {
+	DefaultNetworkResolver
+	SetupBoshSettingsDisk() error
+	GetAgentSettingsPath(tmpfs bool) string
+	GetPersistentDiskSettingsPath(tmpfs bool) string
+}
+
 func NewService(
 	fs boshsys.FileSystem,
-	settingsPath string,
 	settingsSource Source,
-	defaultNetworkResolver DefaultNetworkResolver,
+	platform PlatformSettingsGetter,
 	logger boshlog.Logger,
-) (service Service) {
+) Service {
 	return &settingsService{
-		fs:                     fs,
-		settingsPath:           settingsPath,
-		settings:               Settings{},
-		settingsSource:         settingsSource,
-		defaultNetworkResolver: defaultNetworkResolver,
-		logger:                 logger,
+		fs:             fs,
+		settings:       Settings{},
+		settingsSource: settingsSource,
+		platform:       platform,
+		logger:         logger,
 	}
 }
 
@@ -63,10 +79,12 @@ func (s *settingsService) LoadSettings() error {
 	s.logger.Debug(settingsServiceLogTag, "Loading settings from fetcher")
 
 	newSettings, fetchErr := s.settingsSource.Settings()
+
 	if fetchErr != nil {
 		s.logger.Error(settingsServiceLogTag, "Failed loading settings via fetcher: %v", fetchErr)
 
-		existingSettingsJSON, readError := s.fs.ReadFile(s.settingsPath)
+		opts := boshsys.ReadOpts{Quiet: true}
+		existingSettingsJSON, readError := s.fs.ReadFileWithOpts(s.getSettingsPath(), opts)
 		if readError != nil {
 			s.logger.Error(settingsServiceLogTag, "Failed reading settings from file %s", readError.Error())
 			return bosherr.WrapError(fetchErr, "Invoking settings fetcher")
@@ -94,14 +112,92 @@ func (s *settingsService) LoadSettings() error {
 	s.settings = newSettings
 	s.settingsMutex.Unlock()
 
-	newSettingsJSON, err := json.Marshal(newSettings)
+	if s.settings.Env.Bosh.Agent.Settings.TmpFS {
+		if err := s.platform.SetupBoshSettingsDisk(); err != nil {
+			return bosherr.WrapError(err, "Setting up settings tmpfs")
+		}
+	}
+
+	newSettingsJSON, err := json.Marshal(s.settings)
 	if err != nil {
 		return bosherr.WrapError(err, "Marshalling settings json")
 	}
 
-	err = s.fs.WriteFile(s.settingsPath, newSettingsJSON)
+	err = s.fs.WriteFileQuietly(s.getSettingsPath(), newSettingsJSON)
 	if err != nil {
 		return bosherr.WrapError(err, "Writing setting json")
+	}
+
+	return nil
+}
+
+func (s *settingsService) GetAllPersistentDiskSettings() (map[string]DiskSettings, error) {
+	s.persistentDiskSettingsMutex.Lock()
+	defer s.persistentDiskSettingsMutex.Unlock()
+
+	allPersistentDiskSettings := map[string]DiskSettings{}
+
+	settings := s.GetSettings()
+
+	for diskCID, settings := range settings.Disks.Persistent {
+		allPersistentDiskSettings[diskCID] = s.settings.populatePersistentDiskSettings(diskCID, settings)
+	}
+
+	persistentDiskSettings, err := s.getPersistentDiskSettingsWithoutLocking()
+	if err != nil {
+		return nil, bosherr.WrapError(err, "Reading persistent disk settings")
+	}
+
+	for diskCID, settings := range persistentDiskSettings {
+		allPersistentDiskSettings[diskCID] = settings
+	}
+
+	return allPersistentDiskSettings, nil
+}
+
+func (s *settingsService) GetPersistentDiskSettings(diskCID string) (DiskSettings, error) {
+	allDiskSettings, err := s.GetAllPersistentDiskSettings()
+	if err != nil {
+		return DiskSettings{}, bosherr.WrapError(err, "Getting all persistent disk settings")
+	}
+
+	settings, hasDiskSettings := allDiskSettings[diskCID]
+	if !hasDiskSettings {
+		return DiskSettings{}, bosherr.Errorf("Persistent disk with volume id '%s' could not be found", diskCID)
+	}
+
+	return settings, nil
+}
+
+func (s *settingsService) RemovePersistentDiskSettings(diskID string) error {
+	s.persistentDiskSettingsMutex.Lock()
+	defer s.persistentDiskSettingsMutex.Unlock()
+
+	persistentDiskSettings, err := s.getPersistentDiskSettingsWithoutLocking()
+	if err != nil {
+		return bosherr.WrapError(err, "Cannot remove entry from file due to read error")
+	}
+
+	delete(persistentDiskSettings, diskID)
+	if err := s.savePersistentDiskSettingsWithoutLocking(persistentDiskSettings); err != nil {
+		return bosherr.WrapError(err, "Saving persistent disk settings")
+	}
+
+	return nil
+}
+
+func (s *settingsService) SavePersistentDiskSettings(newDiskSettings DiskSettings) error {
+	s.persistentDiskSettingsMutex.Lock()
+	defer s.persistentDiskSettingsMutex.Unlock()
+
+	persistentDiskSettings, err := s.getPersistentDiskSettingsWithoutLocking()
+	if err != nil {
+		return bosherr.WrapError(err, "Reading all persistent disk settings")
+	}
+
+	persistentDiskSettings[newDiskSettings.ID] = newDiskSettings
+	if err := s.savePersistentDiskSettingsWithoutLocking(persistentDiskSettings); err != nil {
+		return bosherr.WrapError(err, "Saving persistent disk settings")
 	}
 
 	return nil
@@ -138,7 +234,7 @@ func (s *settingsService) GetSettings() Settings {
 }
 
 func (s *settingsService) InvalidateSettings() error {
-	err := s.fs.RemoveAll(s.settingsPath)
+	err := s.fs.RemoveAll(s.getSettingsPath())
 	if err != nil {
 		return bosherr.WrapError(err, "Removing settings file")
 	}
@@ -150,7 +246,7 @@ func (s *settingsService) resolveNetwork(network Network) (Network, error) {
 	// Ideally this would be GetNetworkByMACAddress(mac string)
 	// Currently, we are relying that if the default network does not contain
 	// the MAC adddress the InterfaceConfigurationCreator will fail.
-	resolvedNetwork, err := s.defaultNetworkResolver.GetDefaultNetwork()
+	resolvedNetwork, err := s.platform.GetDefaultNetwork()
 	if err != nil {
 		s.logger.Error(settingsServiceLogTag, "Failed retrieving default network %s", err.Error())
 		return Network{}, bosherr.WrapError(err, "Failed retrieving default network")
@@ -163,4 +259,50 @@ func (s *settingsService) resolveNetwork(network Network) (Network, error) {
 	network.Resolved = true
 
 	return network, nil
+}
+
+func (s *settingsService) savePersistentDiskSettingsWithoutLocking(persistentDiskSettings map[string]DiskSettings) error {
+	newPersistentDiskSettingsJSON, err := json.Marshal(persistentDiskSettings)
+	if err != nil {
+		return bosherr.WrapError(err, "Marshalling persistent disk settings json")
+	}
+
+	err = s.fs.WriteFile(s.getPersistentDiskSettingsPath(), newPersistentDiskSettingsJSON)
+	if err != nil {
+		return bosherr.WrapError(err, "Writing persistent disk settings settings json")
+	}
+
+	return nil
+}
+
+func (s *settingsService) getPersistentDiskSettingsWithoutLocking() (map[string]DiskSettings, error) {
+	persistentDiskSettings := make(map[string]DiskSettings)
+
+	if s.fs.FileExists(s.getPersistentDiskSettingsPath()) {
+		opts := boshsys.ReadOpts{Quiet: true}
+		existingSettingsJSON, readError := s.fs.ReadFileWithOpts(s.getPersistentDiskSettingsPath(), opts)
+		if readError != nil {
+			return nil, bosherr.WrapError(readError, "Reading persistent disk settings from file")
+		}
+
+		err := json.Unmarshal(existingSettingsJSON, &persistentDiskSettings)
+		if err != nil {
+			return nil, bosherr.WrapError(err, "Unmarshalling persistent disk settings from file")
+		}
+	}
+	return persistentDiskSettings, nil
+}
+
+func (s *settingsService) getSettingsPath() string {
+	s.settingsMutex.Lock()
+	defer s.settingsMutex.Unlock()
+
+	return s.platform.GetAgentSettingsPath(s.settings.Env.Bosh.Agent.Settings.TmpFS)
+}
+
+func (s *settingsService) getPersistentDiskSettingsPath() string {
+	s.settingsMutex.Lock()
+	defer s.settingsMutex.Unlock()
+
+	return s.platform.GetPersistentDiskSettingsPath(s.settings.Env.Bosh.Agent.Settings.TmpFS)
 }

@@ -74,6 +74,8 @@ func (c UAALoginStrategy) tryUser(sess Session, uaa boshuaa.UAA) error {
 		return err
 	}
 
+	c.ui.PrintLinef("Using environment '%s'", sess.Environment())
+
 	for {
 		authed, err := c.tryUserOnce(sess.Environment(), prompts, uaa)
 		if err != nil {
@@ -117,7 +119,12 @@ func (c UAALoginStrategy) tryUserOnce(environment string, prompts []boshuaa.Prom
 	}
 
 	creds := cmdconf.Creds{
-		RefreshToken: accessToken.RefreshToken().Value(),
+		AccessToken:     accessToken.Value(),
+		AccessTokenType: accessToken.Type(),
+	}
+
+	if refreshToken, ok := accessToken.(boshuaa.RefreshableAccessToken); ok {
+		creds.RefreshToken = refreshToken.RefreshValue()
 	}
 
 	updatedConfig := c.config.SetCredentials(environment, creds)

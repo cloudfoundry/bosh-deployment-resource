@@ -51,8 +51,8 @@ func createProfile(sid, username string) (string, error) {
 		uintptr(unsafe.Pointer(pusername)),   // _In_  LPCWSTR pszUserName
 		uintptr(unsafe.Pointer(&pathbuf[0])), // _Out_ LPWSTR  pszProfilePath
 		uintptr(len(pathbuf)),                // _In_  DWORD   cchProfilePath
-		0, // unused
-		0, // unused
+		0,                                    // unused
+		0,                                    // unused
 	)
 	if r1 != S_OK {
 		if e1 == 0 {
@@ -76,8 +76,8 @@ func deleteProfile(sid string) error {
 	}
 	r1, _, e1 := syscall.Syscall(procDeleteProfile.Addr(), 3,
 		uintptr(unsafe.Pointer(psid)), // _In_     LPCTSTR lpSidString,
-		0, // _In_opt_ LPCTSTR lpProfilePath,
-		0, // _In_opt_ LPCTSTR lpComputerName
+		0,                             // _In_opt_ LPCTSTR lpProfilePath,
+		0,                             // _In_opt_ LPCTSTR lpComputerName
 	)
 	if r1 == 0 {
 		if e1 == 0 {
@@ -187,6 +187,9 @@ func validPassword(s string) bool {
 }
 
 // generatePassword, returns a 14 char ascii85 encoded password.
+//
+// DO NOT CALL THIS DIRECTLY, use randomPassword instead as it
+// returns a valid Windows password.
 func generatePassword() (string, error) {
 	const Length = 14
 
@@ -275,19 +278,7 @@ func createUserProfile(username string) error {
 	return err
 }
 
-func deleteUserProfile(username string) error {
-	sid, _, _, err := syscall.LookupSID("", username)
-	if err != nil {
-		return err
-	}
-	ssid, err := sid.String()
-	if err != nil {
-		return err
-	}
-	if err := deleteProfile(ssid); err != nil {
-		return err
-	}
-
+func deleteLocalUser(username string) error {
 	cmd := exec.Command("NET.exe", "USER", username, "/DELETE")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -369,7 +360,7 @@ func serviceDisabled(s *mgr.Service) bool {
 // Make the function called by GetHostPublicKey configurable for testing.
 var sshEnabled func() error = checkSSH
 
-// checkSSH checks if the sshd and ssh-agent services are installed and running.
+// checkSSH checks if the sshd service is installed and running.
 //
 // The services are installed during stemcell creation, but are disabled.  The
 // job windows-utilities-release/enable_ssh job is used to enable ssh.
@@ -395,15 +386,6 @@ func checkSSH() error {
 	}
 	defer sshd.Close()
 
-	agent, err := m.OpenService("ssh-agent")
-	if err != nil {
-		if err == ERROR_SERVICE_DOES_NOT_EXIST {
-			return errors.New("ssh-agent is not installed")
-		}
-		return fmt.Errorf("opening service ssh-agent: %s", err)
-	}
-	defer agent.Close()
-
 	st, err := sshd.Query()
 	if err != nil {
 		return fmt.Errorf("querying status of service (sshd): %s", err)
@@ -413,19 +395,6 @@ func checkSSH() error {
 			return fmt.Errorf(msgFmt, "sshd")
 		}
 		return errors.New("sshd service is not running")
-	}
-
-	// ssh-agent is a dependency of sshd so it should always
-	// be running if sshd is running - check just to make sure.
-	st, err = agent.Query()
-	if err != nil {
-		return fmt.Errorf("querying status of service ssh-agent: %s", err)
-	}
-	if st.State != svc.Running {
-		if serviceDisabled(agent) {
-			return fmt.Errorf(msgFmt, "ssh-agent")
-		}
-		return errors.New("ssh-agent service is not running")
 	}
 
 	return nil
@@ -499,6 +468,27 @@ func disableWindowsUpdates() error {
 func setupRuntimeConfiguration() error {
 	if err := disableWindowsUpdates(); err != nil {
 		return fmt.Errorf("disabling updates: %s", err)
+	}
+	return nil
+}
+
+func setRandomPassword(username string) error {
+	if !userExists(username) {
+		// Special case, if the Admin account does not exist
+		// or is disabled there is no need to randomize it.
+		if username == administratorUserName {
+			return nil
+		}
+		return fmt.Errorf("user does not exist: %s", username)
+	}
+	passwd, err := randomPassword()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("NET.exe", "USER", username, passwd)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error setting password for user (%s): %s", err, string(out))
 	}
 	return nil
 }

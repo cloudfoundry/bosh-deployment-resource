@@ -26,6 +26,7 @@ import (
 	bicloud "github.com/cloudfoundry/bosh-cli/cloud"
 	mock_cloud "github.com/cloudfoundry/bosh-cli/cloud/mocks"
 	. "github.com/cloudfoundry/bosh-cli/cmd"
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	biconfig "github.com/cloudfoundry/bosh-cli/config"
 	bicpirel "github.com/cloudfoundry/bosh-cli/cpi/release"
 	fakebicrypto "github.com/cloudfoundry/bosh-cli/crypto/fakes"
@@ -122,10 +123,12 @@ var _ = Describe("bosh", func() {
 			directorID string
 
 			stemcellTarballPath    = "/fake-stemcell-release.tgz"
-			deploymentManifestPath = "/deployment-dir/fake-deployment-manifest.yml"
-			deploymentStatePath    = "/deployment-dir/fake-deployment-manifest-state.json"
+			deploymentManifestPath = filepath.Join("/", "deployment-dir", "fake-deployment-manifest.yml")
+			deploymentStatePath    = filepath.Join("/", "deployment-dir", "fake-deployment-manifest-state.json")
 
 			stemcellCID             = "fake-stemcell-cid"
+			stemcellApiVersion      = 2
+			cpiApiVersion           = 2
 			stemcellCloudProperties = biproperty.Map{}
 
 			vmCloudProperties = biproperty.Map{}
@@ -134,7 +137,7 @@ var _ = Describe("bosh", func() {
 			diskCloudProperties = biproperty.Map{}
 
 			networkInterfaces = map[string]biproperty.Map{
-				"network-1": biproperty.Map{
+				"network-1": {
 					"type":             "dynamic",
 					"default":          []bideplmanifest.NetworkDefault{"dns", "gateway"},
 					"cloud_properties": biproperty.Map{},
@@ -259,14 +262,14 @@ cloud_provider:
 		}
 
 		var writeCPIReleaseTarball = func() {
-			err := fs.WriteFileString("/fake-cpi-release.tgz", "fake-tgz-content")
+			err := fs.WriteFileString(filepath.Join("/", "fake-cpi-release.tgz"), "fake-tgz-content")
 			Expect(err).ToNot(HaveOccurred())
 		}
 
 		var allowCPIToBeInstalled = func() {
 			cpiPackage := birelpkg.NewPackage(NewResource("fake-package-name", "fake-package-fingerprint-cpi", nil), nil)
 			job := bireljob.NewJob(NewResource("fake-cpi-release-job-name", "", nil))
-			job.Templates = map[string]string{"templates/cpi.erb": "bin/cpi"}
+			job.Templates = map[string]string{filepath.Join("templates", "cpi.erb"): "bin/cpi"}
 			job.PackageNames = []string{"fake-package-name"}
 			job.AttachPackages([]*birelpkg.Package{cpiPackage})
 			cpiRelease := birel.NewRelease(
@@ -315,7 +318,7 @@ cloud_provider:
 				Expect(fakeStage.SubStages).To(ContainElement(stage))
 			}).Return(installation, nil).AnyTimes()
 			mockInstaller.EXPECT().Cleanup(installation).AnyTimes()
-			mockCloudFactory.EXPECT().NewCloud(installation, directorID).Return(mockCloud, nil).AnyTimes()
+			mockCloudFactory.EXPECT().NewCloud(installation, directorID, stemcellApiVersion).Return(mockCloud, nil).AnyTimes()
 		}
 
 		var writeStemcellReleaseTarball = func() {
@@ -410,7 +413,7 @@ cloud_provider:
 				deploymentRecord := bidepl.NewRecord(deploymentRepo, releaseRepo, stemcellRepo)
 				stemcellManagerFactory = bistemcell.NewManagerFactory(stemcellRepo)
 				diskManagerFactory = bidisk.NewManagerFactory(diskRepo, logger)
-				diskDeployer = bivm.NewDiskDeployer(diskManagerFactory, diskRepo, logger)
+				diskDeployer = bivm.NewDiskDeployer(diskManagerFactory, diskRepo, logger, false)
 				vmManagerFactory = bivm.NewManagerFactory(vmRepo, stemcellRepo, diskDeployer, fakeAgentIDGenerator, fs, logger)
 				deployer := bidepl.NewDeployer(
 					vmManagerFactory,
@@ -492,15 +495,17 @@ cloud_provider:
 			//TODO: use a real StateBuilder and test mockBlobstore.Add & mockAgentClient.CompilePackage
 
 			gomock.InOrder(
-				mockCloud.EXPECT().CreateStemcell("fake-stemcell-extracted-dir/image", stemcellCloudProperties).Return(stemcellCID, nil),
+				mockCloud.EXPECT().Info().Return(bicloud.CpiInfo{ApiVersion: cpiApiVersion}, nil).AnyTimes(),
+				mockCloud.EXPECT().CreateStemcell(filepath.Join("fake-stemcell-extracted-dir", "image"), stemcellCloudProperties).Return(stemcellCID, nil),
 				mockCloud.EXPECT().CreateVM(agentID, stemcellCID, vmCloudProperties, networkInterfaces, vmEnv).Return(vmCID, nil),
 				mockCloud.EXPECT().SetVMMetadata(vmCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
 
 				mockCloud.EXPECT().CreateDisk(diskSize, diskCloudProperties, vmCID).Return(diskCID, nil),
-				mockCloud.EXPECT().AttachDisk(vmCID, diskCID),
+				mockCloud.EXPECT().AttachDisk(vmCID, diskCID).Return("/dev/xyz", nil),
 				mockCloud.EXPECT().SetDiskMetadata(diskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(diskCID, "/dev/xyz"),
 				mockAgentClient.EXPECT().MountDisk(diskCID),
 
 				mockAgentClient.EXPECT().Apply(applySpec),
@@ -525,10 +530,12 @@ cloud_provider:
 			expectHasVM1 = mockCloud.EXPECT().HasVM(oldVMCID).Return(true, nil)
 
 			gomock.InOrder(
+				mockCloud.EXPECT().Info().Return(bicloud.CpiInfo{ApiVersion: cpiApiVersion}, nil),
 				expectHasVM1,
 
 				// shutdown old vm
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().Drain("shutdown"),
 				mockAgentClient.EXPECT().Stop(),
 				mockAgentClient.EXPECT().ListDisk().Return([]string{oldDiskCID}, nil),
 				mockAgentClient.EXPECT().UnmountDisk(oldDiskCID),
@@ -540,16 +547,19 @@ cloud_provider:
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
 
 				// attach both disks and migrate
-				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID),
+				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID).Return("/dev/xyz", nil),
 				mockCloud.EXPECT().SetDiskMetadata(oldDiskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(oldDiskCID, "/dev/xyz"),
 				mockAgentClient.EXPECT().MountDisk(oldDiskCID),
 				mockCloud.EXPECT().CreateDisk(newDiskSize, diskCloudProperties, newVMCID).Return(newDiskCID, nil),
-				mockCloud.EXPECT().AttachDisk(newVMCID, newDiskCID),
+				mockCloud.EXPECT().AttachDisk(newVMCID, newDiskCID).Return("/dev/abc", nil),
 				mockCloud.EXPECT().SetDiskMetadata(newDiskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(newDiskCID, "/dev/abc"),
 				mockAgentClient.EXPECT().MountDisk(newDiskCID),
 				mockAgentClient.EXPECT().MigrateDisk(),
+				mockAgentClient.EXPECT().RemovePersistentDisk(oldDiskCID),
 				mockCloud.EXPECT().DetachDisk(newVMCID, oldDiskCID),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
 				mockCloud.EXPECT().DeleteDisk(oldDiskCID),
@@ -577,6 +587,7 @@ cloud_provider:
 			expectDeleteVM1 = mockCloud.EXPECT().DeleteVM(oldVMCID)
 
 			gomock.InOrder(
+				mockCloud.EXPECT().Info().Return(bicloud.CpiInfo{ApiVersion: cpiApiVersion}, nil),
 				mockCloud.EXPECT().HasVM(oldVMCID).Return(false, nil),
 
 				// delete old vm (without talking to agent) so that the cpi can clean up related resources
@@ -588,16 +599,19 @@ cloud_provider:
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
 
 				// attach both disks and migrate
-				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID),
+				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID).Return("/dev/xyz", nil),
 				mockCloud.EXPECT().SetDiskMetadata(oldDiskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(oldDiskCID, "/dev/xyz"),
 				mockAgentClient.EXPECT().MountDisk(oldDiskCID),
 				mockCloud.EXPECT().CreateDisk(newDiskSize, diskCloudProperties, newVMCID).Return(newDiskCID, nil),
-				mockCloud.EXPECT().AttachDisk(newVMCID, newDiskCID),
+				mockCloud.EXPECT().AttachDisk(newVMCID, newDiskCID).Return("/dev/abc", nil),
 				mockCloud.EXPECT().SetDiskMetadata(newDiskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(newDiskCID, "/dev/abc"),
 				mockAgentClient.EXPECT().MountDisk(newDiskCID),
 				mockAgentClient.EXPECT().MigrateDisk(),
+				mockAgentClient.EXPECT().RemovePersistentDisk(oldDiskCID),
 				mockCloud.EXPECT().DetachDisk(newVMCID, oldDiskCID),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
 				mockCloud.EXPECT().DeleteDisk(oldDiskCID),
@@ -621,10 +635,12 @@ cloud_provider:
 			oldDiskCID := "fake-disk-cid-1"
 
 			gomock.InOrder(
+				mockCloud.EXPECT().Info().Return(bicloud.CpiInfo{ApiVersion: cpiApiVersion}, nil),
 				mockCloud.EXPECT().HasVM(oldVMCID).Return(true, nil),
 
 				// shutdown old vm
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().Drain("shutdown"),
 				mockAgentClient.EXPECT().Stop(),
 				mockAgentClient.EXPECT().ListDisk().Return([]string{oldDiskCID}, nil),
 				mockAgentClient.EXPECT().UnmountDisk(oldDiskCID),
@@ -637,6 +653,7 @@ cloud_provider:
 
 				// attaching a missing disk will fail
 				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID).Return(
+					"",
 					bicloud.NewCPIError("attach_disk", bicloud.CmdError{
 						Type:    bicloud.DiskNotFoundError,
 						Message: "fake-disk-not-found-message",
@@ -654,10 +671,12 @@ cloud_provider:
 			newDiskSize := 2048
 
 			gomock.InOrder(
+				mockCloud.EXPECT().Info().Return(bicloud.CpiInfo{ApiVersion: cpiApiVersion}, nil),
 				mockCloud.EXPECT().HasVM(oldVMCID).Return(true, nil),
 
 				// shutdown old vm
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().Drain("shutdown"),
 				mockAgentClient.EXPECT().Stop(),
 				mockAgentClient.EXPECT().ListDisk().Return([]string{oldDiskCID}, nil),
 				mockAgentClient.EXPECT().UnmountDisk(oldDiskCID),
@@ -669,14 +688,16 @@ cloud_provider:
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
 
 				// attach both disks and migrate (with error)
-				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID),
+				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID).Return("/dev/xyz", nil),
 				mockCloud.EXPECT().SetDiskMetadata(oldDiskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(oldDiskCID, "/dev/xyz"),
 				mockAgentClient.EXPECT().MountDisk(oldDiskCID),
 				mockCloud.EXPECT().CreateDisk(newDiskSize, diskCloudProperties, newVMCID).Return(newDiskCID, nil),
-				mockCloud.EXPECT().AttachDisk(newVMCID, newDiskCID),
+				mockCloud.EXPECT().AttachDisk(newVMCID, newDiskCID).Return("/dev/abc", nil),
 				mockCloud.EXPECT().SetDiskMetadata(newDiskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(newDiskCID, "/dev/abc"),
 				mockAgentClient.EXPECT().MountDisk(newDiskCID),
 				mockAgentClient.EXPECT().MigrateDisk().Return(
 					bosherr.Error("fake-migration-error"),
@@ -693,31 +714,35 @@ cloud_provider:
 			newDiskSize := 2048
 
 			gomock.InOrder(
+				mockCloud.EXPECT().Info().Return(bicloud.CpiInfo{ApiVersion: cpiApiVersion}, nil),
 				mockCloud.EXPECT().HasVM(oldVMCID).Return(true, nil),
 
 				// shutdown old vm
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().Drain("shutdown"),
 				mockAgentClient.EXPECT().Stop(),
 				mockAgentClient.EXPECT().ListDisk().Return([]string{oldDiskCID}, nil),
 				mockAgentClient.EXPECT().UnmountDisk(oldDiskCID),
 				mockCloud.EXPECT().DeleteVM(oldVMCID),
 
-				// create new vm
 				mockCloud.EXPECT().CreateVM(agentID, stemcellCID, vmCloudProperties, networkInterfaces, vmEnv).Return(newVMCID, nil),
 				mockCloud.EXPECT().SetVMMetadata(newVMCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
 
 				// attach both disks and migrate
-				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID),
+				mockCloud.EXPECT().AttachDisk(newVMCID, oldDiskCID).Return("/dev/xyz", nil),
 				mockCloud.EXPECT().SetDiskMetadata(oldDiskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(oldDiskCID, "/dev/xyz"),
 				mockAgentClient.EXPECT().MountDisk(oldDiskCID),
 				mockCloud.EXPECT().CreateDisk(newDiskSize, diskCloudProperties, newVMCID).Return(newDiskCID, nil),
-				mockCloud.EXPECT().AttachDisk(newVMCID, newDiskCID),
+				mockCloud.EXPECT().AttachDisk(newVMCID, newDiskCID).Return("/dev/abc", nil),
 				mockCloud.EXPECT().SetDiskMetadata(newDiskCID, gomock.Any()).Return(nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
+				mockAgentClient.EXPECT().AddPersistentDisk(newDiskCID, "/dev/abc"),
 				mockAgentClient.EXPECT().MountDisk(newDiskCID),
 				mockAgentClient.EXPECT().MigrateDisk(),
+				mockAgentClient.EXPECT().RemovePersistentDisk(oldDiskCID),
 				mockCloud.EXPECT().DetachDisk(newVMCID, oldDiskCID),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),
 				mockCloud.EXPECT().DeleteDisk(oldDiskCID),
@@ -803,7 +828,7 @@ cloud_provider:
 
 		Context("when multiple releases are provided", func() {
 			var (
-				otherReleaseTarballPath = "/fake-other-release.tgz"
+				otherReleaseTarballPath = filepath.Join("/", "fake-other-release.tgz")
 			)
 
 			BeforeEach(func() {
@@ -872,14 +897,14 @@ cloud_provider:
 
 			Context("and it's specified", func() {
 				BeforeEach(func() {
-					err := fs.RemoveAll("/tmp/new/state/path/state")
+					err := fs.RemoveAll(filepath.Join("/", "tmp", "new", "state", "path", "state"))
 					Expect(err).ToNot(HaveOccurred())
 
 					directorID = "fake-uuid-1"
 				})
 
 				It("creates one", func() {
-					createsStatePath("/tmp/new/state/path/state", "/tmp/new/state/path/state")
+					createsStatePath(filepath.Join("/", "tmp", "new", "state", "path", "state"), filepath.Join("/", "tmp", "new", "state", "path", "state"))
 				})
 			})
 		})
@@ -990,6 +1015,52 @@ cloud_provider:
 					Expect(err).ToNot(HaveOccurred())
 					Expect(stdOut).To(gbytes.Say("No deployment, stemcell or release changes. Skipping deploy."))
 				})
+			})
+		})
+
+		Context("when the stemcell supports api_version 2", func() {
+			stateFilePath := filepath.Join("/", "tmp", "new", "state", "path", "state")
+			stemcellApiVersion = 2
+			allowStemcellToBeExtracted = func() {
+				stemcellManifest := bistemcell.Manifest{
+					Name:            "fake-stemcell-name",
+					Version:         "fake-stemcell-version",
+					SHA1:            "fake-stemcell-sha1",
+					ApiVersion:      stemcellApiVersion,
+					CloudProperties: biproperty.Map{},
+				}
+
+				extractedStemcell := bistemcell.NewExtractedStemcell(
+					stemcellManifest,
+					"fake-stemcell-extracted-dir",
+					fakes.NewFakeCompressor(),
+					fs,
+				)
+				fakeStemcellExtractor.SetExtractBehavior(stemcellTarballPath, extractedStemcell, nil)
+			}
+
+			BeforeEach(func() {
+				err := fs.RemoveAll(stateFilePath)
+				Expect(err).ToNot(HaveOccurred())
+
+				directorID = "fake-uuid-1"
+			})
+
+			It("uses the version with the cpi api calls", func() {
+				expectDeployFlow()
+
+				// new directorID will be generated
+				mockCloudFactory.EXPECT().NewCloud(gomock.Any(), directorID, stemcellApiVersion).Return(mockCloud, nil).AnyTimes()
+				mockAgentClientFactory.EXPECT().NewAgentClient(gomock.Any(), mbusURL, caCert).Return(mockAgentClient, nil)
+
+				err := newCreateEnvCmd().Run(fakeStage, newDeployOpts(deploymentManifestPath, stateFilePath))
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(fs.FileExists(stateFilePath)).To(BeTrue())
+
+				deploymentState, err := deploymentStateService.Load()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(deploymentState.Stemcells[0].ApiVersion).To(Equal(2))
 			})
 		})
 	})

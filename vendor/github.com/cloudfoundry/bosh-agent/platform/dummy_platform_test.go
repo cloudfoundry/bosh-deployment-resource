@@ -9,6 +9,8 @@ import (
 
 	"encoding/json"
 
+	"os"
+
 	boshdpresolv "github.com/cloudfoundry/bosh-agent/infrastructure/devicepathresolver"
 	fakedpresolv "github.com/cloudfoundry/bosh-agent/infrastructure/devicepathresolver/fakes"
 	"github.com/cloudfoundry/bosh-agent/platform/fakes"
@@ -20,7 +22,6 @@ import (
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
-	"os"
 )
 
 type mount struct {
@@ -28,9 +29,7 @@ type mount struct {
 	DiskCid  string
 }
 
-var _ = Describe("DummyPlatform", describeDummyPlatform)
-
-func describeDummyPlatform() {
+var _ = Describe("DummyPlatform", func() {
 	var (
 		platform           Platform
 		collector          boshstats.Collector
@@ -89,7 +88,7 @@ func describeDummyPlatform() {
 		var mountsPath, managedSettingsPath, formattedDisksPath string
 
 		BeforeEach(func() {
-			diskSettings = boshsettings.DiskSettings{ID: "somediskid"}
+			diskSettings = boshsettings.DiskSettings{ID: "somediskid", MountOptions: []string{"mountOption1", "mountOption2"}}
 			mountsPath = filepath.Join(dirProvider.BoshDir(), "mounts.json")
 			managedSettingsPath = filepath.Join(dirProvider.BoshDir(), "managed_disk_settings.json")
 			formattedDisksPath = filepath.Join(dirProvider.BoshDir(), "formatted_disks.json")
@@ -103,7 +102,7 @@ func describeDummyPlatform() {
 			Expect(err).NotTo(HaveOccurred())
 
 			mountsContent, _ = fs.ReadFileString(mountsPath)
-			Expect(mountsContent).To(Equal(`[{"MountDir":"/dev/potato","DiskCid":"somediskid"}]`))
+			Expect(mountsContent).To(Equal(`[{"MountDir":"/dev/potato","MountOptions":["mountOption1","mountOption2"],"DiskCid":"somediskid"}]`))
 		})
 
 		It("Updates the managed disk settings", func() {
@@ -257,7 +256,7 @@ func describeDummyPlatform() {
 
 	Describe("SetupDataDir", func() {
 		It("creates a link from BASEDIR/sys to BASEDIR/data/sys", func() {
-			err := platform.SetupDataDir()
+			err := platform.SetupDataDir(boshsettings.JobDir{})
 			Expect(err).NotTo(HaveOccurred())
 
 			stat := fs.GetFileTestStat(filepath.Clean("/fake-dir/sys"))
@@ -278,4 +277,49 @@ func describeDummyPlatform() {
 			Expect(stat.FileMode).To(Equal(os.FileMode(0700)))
 		})
 	})
-}
+
+	Describe("SetupBoshSettingsDisk", func() {
+		It("creates the sensitive directory for the agent settings file with correct permissions", func() {
+			err := platform.SetupBoshSettingsDisk()
+			Expect(err).NotTo(HaveOccurred())
+
+			stat := fs.GetFileTestStat(filepath.Clean("/fake-dir/bosh/settings"))
+
+			Expect(stat.FileType).To(Equal(fakesys.FakeFileTypeDir))
+			Expect(stat.FileMode).To(Equal(os.FileMode(0700)))
+
+		})
+	})
+
+	Describe("GetAgentSettingsPath", func() {
+		It("returns a path in the sensitive settings directory if tmpfs is enabled", func() {
+			expectedPath := filepath.Join(platform.GetDirProvider().BoshDir(), "settings", "settings.json")
+
+			path := platform.GetAgentSettingsPath(true)
+			Expect(path).To(Equal(expectedPath))
+		})
+
+		It("returns a path in the default directory if tmpfs is disabled", func() {
+			expectedPath := filepath.Join(platform.GetDirProvider().BoshDir(), "settings.json")
+
+			path := platform.GetAgentSettingsPath(false)
+			Expect(path).To(Equal(expectedPath))
+		})
+	})
+
+	Describe("GetPersistentDiskSettingsPath", func() {
+		It("returns a path in the sensitive settings directory if tmpfs is enabled", func() {
+			expectedPath := filepath.Join(platform.GetDirProvider().BoshDir(), "settings", "persistent_disk_hints.json")
+
+			path := platform.GetPersistentDiskSettingsPath(true)
+			Expect(path).To(Equal(expectedPath))
+		})
+
+		It("returns a path in the default directory if tmpfs is disabled", func() {
+			expectedPath := filepath.Join(platform.GetDirProvider().BoshDir(), "persistent_disk_hints.json")
+
+			path := platform.GetPersistentDiskSettingsPath(false)
+			Expect(path).To(Equal(expectedPath))
+		})
+	})
+})

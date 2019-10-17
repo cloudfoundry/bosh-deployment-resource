@@ -43,14 +43,14 @@ var _ = Describe("RetryClients", func() {
 				resp, err := retryClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(resp.StatusCode).To(Equal(201))
+				Expect(resp.StatusCode).To(Equal(http.StatusCreated))
 				Expect(readString(resp.Body)).To(Equal("fake-response-body"))
 			})
 
 			It("attemps once if request is successful", func() {
 				server.AppendHandlers(ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/"),
-					ghttp.RespondWith(200, "fake-response-body"),
+					ghttp.RespondWith(http.StatusOK, "fake-response-body"),
 				))
 
 				req, err := http.NewRequest("GET", server.URL(), nil)
@@ -59,20 +59,20 @@ var _ = Describe("RetryClients", func() {
 				resp, err := retryClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(resp.StatusCode).To(Equal(200))
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(server.ReceivedRequests()).To(HaveLen(1))
 			})
 
 			It("retries for maxAttempts if request is failing", func() {
-				server.RouteToHandler("GET", "/", ghttp.RespondWith(404, "fake-response-body"))
+				server.RouteToHandler("GET", "/", ghttp.RespondWith(http.StatusNotFound, "fake-response-body"))
 
 				req, err := http.NewRequest("GET", server.URL(), nil)
 				Expect(err).NotTo(HaveOccurred())
 
 				resp, err := retryClient.Do(req)
-				Expect(err).To(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Expect(resp.StatusCode).To(Equal(404))
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 				Expect(server.ReceivedRequests()).To(HaveLen(maxAttempts))
 			})
 		})
@@ -106,10 +106,16 @@ var _ = Describe("RetryClients", func() {
 				resp, err := retryClient.Do(req)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(resp.StatusCode).To(Equal(201))
+				Expect(resp.StatusCode).To(Equal(http.StatusCreated))
 			})
 
-			directorErrorCodes := []int{400, 401, 403, 404, 500}
+			directorErrorCodes := []int{
+				http.StatusBadRequest,
+				http.StatusUnauthorized,
+				http.StatusForbidden,
+				http.StatusNotFound,
+				http.StatusInternalServerError,
+			}
 			for _, code := range directorErrorCodes {
 				code := code
 				It(fmt.Sprintf("attemps once if request is %d", code), func() {
@@ -129,16 +135,17 @@ var _ = Describe("RetryClients", func() {
 				})
 			}
 
+			redirectCodes := map[int]bool{301: true, 302: true, 303: true, 307: true, 308: true}
+
 			for code := 200; code < 400; code++ {
 				code := code
-				if code >= 301 && code <= 303 {
+				if redirectCodes[code] {
 					continue
 				}
 				It(fmt.Sprintf("attempts once if request is %d", code), func() {
-					server.AppendHandlers(ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/"),
+					server.RouteToHandler("GET", "/",
 						ghttp.RespondWith(code, "fake-response-body"),
-					))
+					)
 
 					req, err := http.NewRequest("GET", server.URL(), nil)
 					Expect(err).NotTo(HaveOccurred())
@@ -151,7 +158,7 @@ var _ = Describe("RetryClients", func() {
 				})
 			}
 
-			for code := 301; code <= 303; code++ {
+			for code := range redirectCodes {
 				code := code
 				It(fmt.Sprintf("follows redirects if response is %d", code), func() {
 					server.AppendHandlers(ghttp.CombineHandlers(
@@ -159,7 +166,7 @@ var _ = Describe("RetryClients", func() {
 						ghttp.RespondWith(code, "fake-response-body", http.Header{"Location": []string{"redirected"}}),
 					), ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/redirected"),
-						ghttp.RespondWith(200, "fake-response-body"),
+						ghttp.RespondWith(http.StatusOK, "fake-response-body"),
 					))
 
 					req, err := http.NewRequest("GET", server.URL(), nil)
@@ -167,7 +174,7 @@ var _ = Describe("RetryClients", func() {
 
 					resp, err := retryClient.Do(req)
 					Expect(err).ToNot(HaveOccurred())
-					Expect(resp.StatusCode).To(Equal(200))
+					Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
 					Expect(server.ReceivedRequests()).To(HaveLen(2))
 				})
@@ -200,6 +207,7 @@ var _ = Describe("RetryClients", func() {
 			timeoutCodes := []int{
 				http.StatusGatewayTimeout,
 				http.StatusServiceUnavailable,
+				http.StatusBadGateway,
 			}
 			for _, code := range timeoutCodes {
 				code := code

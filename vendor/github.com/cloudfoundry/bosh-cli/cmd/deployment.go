@@ -2,32 +2,54 @@ package cmd
 
 import (
 	cmdconf "github.com/cloudfoundry/bosh-cli/cmd/config"
-	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	biui "github.com/cloudfoundry/bosh-cli/ui"
 )
 
 type DeploymentCmd struct {
-	sessionFactory func(cmdconf.Config) Session
+	session Session
 
 	config cmdconf.Config
 	ui     biui.UI
 }
 
 func NewDeploymentCmd(
-	sessionFactory func(cmdconf.Config) Session,
+	session Session,
 	config cmdconf.Config,
 	ui biui.UI,
 ) DeploymentCmd {
-	return DeploymentCmd{sessionFactory: sessionFactory, config: config, ui: ui}
+	return DeploymentCmd{session: session, config: config, ui: ui}
 }
 
 func (c DeploymentCmd) Run() error {
-	sess := c.sessionFactory(c.config)
-
-	deployment, err := sess.Deployment()
+	deployment, err := c.session.Deployment()
 	if err != nil {
 		return err
 	}
 
-	return DeploymentsTable{[]boshdir.Deployment{deployment}, c.ui}.Print()
+	teams, err := deployment.Teams()
+	if err != nil {
+		return err
+	}
+
+	releases, err := deployment.Releases()
+	if err != nil {
+		return err
+	}
+
+	stemcells, err := deployment.Stemcells()
+	if err != nil {
+		return err
+	}
+
+	director, err := c.session.Director()
+	if err != nil {
+		return err
+	}
+
+	configs, err := director.ListDeploymentConfigs(deployment.Name())
+	if err != nil {
+		return err
+	}
+
+	return DeploymentTablePrinter{deployment.Name(), releases, stemcells, teams, configs, c.ui}.Print()
 }

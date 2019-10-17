@@ -4,6 +4,7 @@ import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	semver "github.com/cppforlife/go-semi-semantic/version"
 
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	biui "github.com/cloudfoundry/bosh-cli/ui"
 )
@@ -23,7 +24,7 @@ func NewUploadStemcellCmd(
 	return UploadStemcellCmd{
 		director:               director,
 		stemcellArchiveFactory: stemcellArchiveFactory,
-		ui: ui,
+		ui:                     ui,
 	}
 }
 
@@ -49,12 +50,12 @@ func (c UploadStemcellCmd) uploadRemote(url string, opts UploadStemcellOpts) err
 func (c UploadStemcellCmd) uploadFile(path string, fix bool) error {
 	archive := c.stemcellArchiveFactory(path)
 
-	name, version, err := archive.Info()
+	stemcellMetadata, err := archive.Info()
 	if err != nil {
 		return bosherr.WrapErrorf(err, "Retrieving stemcell info")
 	}
 
-	necessary, err := c.needToUpload(name, version, fix)
+	necessary, err := c.needToUpload(stemcellMetadata.Name, stemcellMetadata.Version, fix)
 	if err != nil || !necessary {
 		return err
 	}
@@ -72,12 +73,14 @@ func (c UploadStemcellCmd) needToUpload(name, version string, fix bool) (bool, e
 		return true, nil
 	}
 
-	found, err := c.director.HasStemcell(name, version)
+	needed, err := c.director.StemcellNeedsUpload(
+		boshdir.StemcellInfo{Name: name, Version: version},
+	)
 	if err != nil {
-		return true, err
+		return false, err
 	}
 
-	if found {
+	if !needed {
 		c.ui.PrintLinef("Stemcell '%s/%s' already exists.", name, version)
 		return false, nil
 	}

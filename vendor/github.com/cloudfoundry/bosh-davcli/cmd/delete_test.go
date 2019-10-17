@@ -46,7 +46,7 @@ var _ = Describe("DeleteCmd", func() {
 			Expect(username).To(Equal("some user"))
 			Expect(password).To(Equal("some pwd"))
 
-			w.WriteHeader(200)
+			w.WriteHeader(http.StatusOK)
 		}
 	})
 

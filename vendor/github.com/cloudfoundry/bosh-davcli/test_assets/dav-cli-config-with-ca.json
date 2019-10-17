@@ -2,6 +2,7 @@
     "user":"some user",
     "password":"some pwd",
     "endpoint":"https://example.com/some/endpoint",
+    "secret": "77D47E3A0B0F590B73CF3EBD9BB6761E244F90FA6F28BB39F941B0905789863FBE2861FDFD8195ADC81B72BB5310BC18969BEBBF4656366E7ACD3F0E4186FDDA",
     "tls": {
       "cert": {
         "ca":"ca-cert"

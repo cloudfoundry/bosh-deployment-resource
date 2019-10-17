@@ -3,9 +3,10 @@ package deployment_test
 import (
 	. "github.com/cloudfoundry/bosh-cli/deployment"
 
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 
 	mock_agentclient "github.com/cloudfoundry/bosh-cli/agentclient/mocks"
 	mock_blobstore "github.com/cloudfoundry/bosh-cli/blobstore/mocks"
@@ -66,10 +67,26 @@ var _ = Describe("Deployment", func() {
 
 			deploymentFactory Factory
 
-			deployment Deployment
+			stemcellApiVersion = 2
+			deployment         Deployment
+			skipDrain          bool
 		)
 
 		var expectNormalFlow = func() {
+			gomock.InOrder(
+				mockCloud.EXPECT().HasVM("fake-vm-cid").Return(true, nil),
+				mockAgentClient.EXPECT().Ping().Return("any-state", nil),                   // ping to make sure agent is responsive
+				mockAgentClient.EXPECT().Drain("shutdown"),                                 // drain all jobs
+				mockAgentClient.EXPECT().Stop(),                                            // stop all jobs
+				mockAgentClient.EXPECT().ListDisk().Return([]string{"fake-disk-cid"}, nil), // get mounted disks to be unmounted
+				mockAgentClient.EXPECT().UnmountDisk("fake-disk-cid"),
+				mockCloud.EXPECT().DeleteVM("fake-vm-cid"),
+				mockCloud.EXPECT().DeleteDisk("fake-disk-cid"),
+				mockCloud.EXPECT().DeleteStemcell("fake-stemcell-cid"),
+			)
+		}
+
+		var expectDrainlessFlow = func() {
 			gomock.InOrder(
 				mockCloud.EXPECT().HasVM("fake-vm-cid").Return(true, nil),
 				mockAgentClient.EXPECT().Ping().Return("any-state", nil),                   // ping to make sure agent is responsive
@@ -81,7 +98,6 @@ var _ = Describe("Deployment", func() {
 				mockCloud.EXPECT().DeleteStemcell("fake-stemcell-cid"),
 			)
 		}
-
 		var allowApplySpecToBeCreated = func() {
 			jobName := "fake-job-name"
 			jobIndex := 0
@@ -129,12 +145,14 @@ var _ = Describe("Deployment", func() {
 			pingTimeout := 10 * time.Second
 			pingDelay := 500 * time.Millisecond
 			deploymentFactory = NewFactory(pingTimeout, pingDelay)
+
+			skipDrain = false
 		})
 
 		JustBeforeEach(func() {
 			// all these local factories & managers are just used to construct a Deployment based on the deployment state
 			diskManagerFactory := bidisk.NewManagerFactory(diskRepo, logger)
-			diskDeployer := bivm.NewDiskDeployer(diskManagerFactory, diskRepo, logger)
+			diskDeployer := bivm.NewDiskDeployer(diskManagerFactory, diskRepo, logger, false)
 
 			vmManagerFactory := bivm.NewManagerFactory(vmRepo, stemcellRepo, diskDeployer, fakeUUIDGenerator, fs, logger)
 			sshTunnelFactory := bisshtunnel.NewFactory(logger)
@@ -188,18 +206,27 @@ var _ = Describe("Deployment", func() {
 			It("stops agent, unmounts disk, deletes vm, deletes disk, deletes stemcell", func() {
 				expectNormalFlow()
 
-				err := deployment.Delete(fakeStage)
+				err := deployment.Delete(skipDrain, fakeStage)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("skips draining if specified", func() {
+				skipDrain = true
+				expectDrainlessFlow()
+
+				err := deployment.Delete(skipDrain, fakeStage)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("logs validation stages", func() {
 				expectNormalFlow()
 
-				err := deployment.Delete(fakeStage)
+				err := deployment.Delete(skipDrain, fakeStage)
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(fakeStage.PerformCalls).To(Equal([]*fakebiui.PerformCall{
 					{Name: "Waiting for the agent on VM 'fake-vm-cid'"},
+					{Name: "Draining jobs on instance 'unknown/0'"},
 					{Name: "Stopping jobs on instance 'unknown/0'"},
 					{Name: "Unmounting disk 'fake-disk-cid'"},
 					{Name: "Deleting VM 'fake-vm-cid'"},
@@ -211,7 +238,7 @@ var _ = Describe("Deployment", func() {
 			It("clears current vm, disk and stemcell", func() {
 				expectNormalFlow()
 
-				err := deployment.Delete(fakeStage)
+				err := deployment.Delete(skipDrain, fakeStage)
 				Expect(err).ToNot(HaveOccurred())
 
 				_, found, err := vmRepo.FindCurrent()
@@ -250,7 +277,7 @@ var _ = Describe("Deployment", func() {
 						mockCloud.EXPECT().DeleteStemcell("fake-stemcell-cid"),
 					)
 
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -259,7 +286,7 @@ var _ = Describe("Deployment", func() {
 				JustBeforeEach(func() {
 					expectNormalFlow()
 
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 
 					// reset event log recording
@@ -267,7 +294,7 @@ var _ = Describe("Deployment", func() {
 				})
 
 				It("does not delete anything", func() {
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 
 					Expect(fakeStage.PerformCalls).To(BeEmpty())
@@ -288,7 +315,7 @@ var _ = Describe("Deployment", func() {
 			})
 
 			It("does not delete anything", func() {
-				err := deployment.Delete(fakeStage)
+				err := deployment.Delete(skipDrain, fakeStage)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeStage.PerformCalls).To(BeEmpty())
@@ -309,13 +336,14 @@ var _ = Describe("Deployment", func() {
 			It("stops the agent and deletes the VM", func() {
 				gomock.InOrder(
 					mockAgentClient.EXPECT().Ping().Return("any-state", nil),                   // ping to make sure agent is responsive
+					mockAgentClient.EXPECT().Drain("shutdown"),                                 // drain all jobs
 					mockAgentClient.EXPECT().Stop(),                                            // stop all jobs
 					mockAgentClient.EXPECT().ListDisk().Return([]string{"fake-disk-cid"}, nil), // get mounted disks to be unmounted
 					mockAgentClient.EXPECT().UnmountDisk("fake-disk-cid"),
 					mockCloud.EXPECT().DeleteVM("fake-vm-cid"),
 				)
 
-				err := deployment.Delete(fakeStage)
+				err := deployment.Delete(skipDrain, fakeStage)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -327,7 +355,7 @@ var _ = Describe("Deployment", func() {
 				It("skips agent shutdown & deletes the VM (to ensure related resources are released by the CPI)", func() {
 					mockCloud.EXPECT().DeleteVM("fake-vm-cid")
 
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -337,7 +365,7 @@ var _ = Describe("Deployment", func() {
 						Message: "fake-vm-not-found-message",
 					}))
 
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -354,7 +382,7 @@ var _ = Describe("Deployment", func() {
 			It("deletes the disk", func() {
 				mockCloud.EXPECT().DeleteDisk("fake-disk-cid")
 
-				err := deployment.Delete(fakeStage)
+				err := deployment.Delete(skipDrain, fakeStage)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -362,7 +390,7 @@ var _ = Describe("Deployment", func() {
 				It("deletes the disk (to ensure related resources are released by the CPI)", func() {
 					mockCloud.EXPECT().DeleteDisk("fake-disk-cid")
 
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -372,7 +400,7 @@ var _ = Describe("Deployment", func() {
 						Message: "fake-disk-not-found-message",
 					}))
 
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -381,7 +409,7 @@ var _ = Describe("Deployment", func() {
 		Context("when a current stemcell exists", func() {
 			BeforeEach(func() {
 				deploymentStateService.Save(biconfig.DeploymentState{})
-				stemcellRecord, err := stemcellRepo.Save("fake-stemcell-name", "fake-stemcell-version", "fake-stemcell-cid")
+				stemcellRecord, err := stemcellRepo.Save("fake-stemcell-name", "fake-stemcell-version", "fake-stemcell-cid", stemcellApiVersion)
 				Expect(err).ToNot(HaveOccurred())
 				stemcellRepo.UpdateCurrent(stemcellRecord.ID)
 			})
@@ -389,7 +417,7 @@ var _ = Describe("Deployment", func() {
 			It("deletes the stemcell", func() {
 				mockCloud.EXPECT().DeleteStemcell("fake-stemcell-cid")
 
-				err := deployment.Delete(fakeStage)
+				err := deployment.Delete(skipDrain, fakeStage)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -397,7 +425,7 @@ var _ = Describe("Deployment", func() {
 				It("deletes the stemcell (to ensure related resources are released by the CPI)", func() {
 					mockCloud.EXPECT().DeleteStemcell("fake-stemcell-cid")
 
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -407,7 +435,7 @@ var _ = Describe("Deployment", func() {
 						Message: "fake-stemcell-not-found-message",
 					}))
 
-					err := deployment.Delete(fakeStage)
+					err := deployment.Delete(skipDrain, fakeStage)
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})

@@ -2,9 +2,9 @@ package testing
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/pem"
 	"net/http/httptest"
-	"crypto/x509"
 )
 
 func ExtractRootCa(server *httptest.Server) (rootCaStr string, err error) {

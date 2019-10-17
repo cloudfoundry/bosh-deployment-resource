@@ -53,6 +53,7 @@ var _ = Describe("App", func() {
 			User:     "some user",
 			Password: "some pwd",
 			Endpoint: "https://example.com/some/endpoint",
+			Secret:   "77D47E3A0B0F590B73CF3EBD9BB6761E244F90FA6F28BB39F941B0905789863FBE2861FDFD8195ADC81B72BB5310BC18969BEBBF4656366E7ACD3F0E4186FDDA",
 			TLS: davconf.TLS{
 				Cert: davconf.Cert{
 					CA: "ca-cert",
@@ -87,6 +88,7 @@ var _ = Describe("App", func() {
 			User:     "some user",
 			Password: "some pwd",
 			Endpoint: "http://example.com/some/endpoint",
+			Secret:   "77D47E3A0B0F590B73CF3EBD9BB6761E244F90FA6F28BB39F941B0905789863FBE2861FDFD8195ADC81B72BB5310BC18969BEBBF4656366E7ACD3F0E4186FDDA",
 		}
 
 		Expect(runner.Config).To(Equal(expectedConfig))

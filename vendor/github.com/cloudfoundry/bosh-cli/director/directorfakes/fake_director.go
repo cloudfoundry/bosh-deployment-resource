@@ -9,49 +9,39 @@ import (
 )
 
 type FakeDirector struct {
-	IsAuthenticatedStub        func() (bool, error)
-	isAuthenticatedMutex       sync.RWMutex
-	isAuthenticatedArgsForCall []struct{}
-	isAuthenticatedReturns     struct {
-		result1 bool
+	CancelTasksStub        func(director.TasksFilter) error
+	cancelTasksMutex       sync.RWMutex
+	cancelTasksArgsForCall []struct {
+		arg1 director.TasksFilter
+	}
+	cancelTasksReturns struct {
+		result1 error
+	}
+	cancelTasksReturnsOnCall map[int]struct {
+		result1 error
+	}
+	CertificateExpiryStub        func() ([]director.CertificateExpiryInfo, error)
+	certificateExpiryMutex       sync.RWMutex
+	certificateExpiryArgsForCall []struct {
+	}
+	certificateExpiryReturns struct {
+		result1 []director.CertificateExpiryInfo
 		result2 error
 	}
-	isAuthenticatedReturnsOnCall map[int]struct {
-		result1 bool
+	certificateExpiryReturnsOnCall map[int]struct {
+		result1 []director.CertificateExpiryInfo
 		result2 error
 	}
-	WithContextStub        func(id string) director.Director
-	withContextMutex       sync.RWMutex
-	withContextArgsForCall []struct {
-		id string
+	CleanUpStub        func(bool) error
+	cleanUpMutex       sync.RWMutex
+	cleanUpArgsForCall []struct {
+		arg1 bool
 	}
-	withContextReturns struct {
-		result1 director.Director
+	cleanUpReturns struct {
+		result1 error
 	}
-	withContextReturnsOnCall map[int]struct {
-		result1 director.Director
-	}
-	InfoStub        func() (director.Info, error)
-	infoMutex       sync.RWMutex
-	infoArgsForCall []struct{}
-	infoReturns     struct {
-		result1 director.Info
-		result2 error
-	}
-	infoReturnsOnCall map[int]struct {
-		result1 director.Info
-		result2 error
-	}
-	LocksStub        func() ([]director.Lock, error)
-	locksMutex       sync.RWMutex
-	locksArgsForCall []struct{}
-	locksReturns     struct {
-		result1 []director.Lock
-		result2 error
-	}
-	locksReturnsOnCall map[int]struct {
-		result1 []director.Lock
-		result2 error
+	cleanUpReturnsOnCall map[int]struct {
+		result1 error
 	}
 	CurrentTasksStub        func(director.TasksFilter) ([]director.Task, error)
 	currentTasksMutex       sync.RWMutex
@@ -66,44 +56,152 @@ type FakeDirector struct {
 		result1 []director.Task
 		result2 error
 	}
-	RecentTasksStub        func(int, director.TasksFilter) ([]director.Task, error)
-	recentTasksMutex       sync.RWMutex
-	recentTasksArgsForCall []struct {
-		arg1 int
-		arg2 director.TasksFilter
+	DeleteConfigStub        func(string, string) (bool, error)
+	deleteConfigMutex       sync.RWMutex
+	deleteConfigArgsForCall []struct {
+		arg1 string
+		arg2 string
 	}
-	recentTasksReturns struct {
-		result1 []director.Task
+	deleteConfigReturns struct {
+		result1 bool
 		result2 error
 	}
-	recentTasksReturnsOnCall map[int]struct {
-		result1 []director.Task
+	deleteConfigReturnsOnCall map[int]struct {
+		result1 bool
 		result2 error
 	}
-	FindTaskStub        func(int) (director.Task, error)
-	findTaskMutex       sync.RWMutex
-	findTaskArgsForCall []struct {
-		arg1 int
-	}
-	findTaskReturns struct {
-		result1 director.Task
-		result2 error
-	}
-	findTaskReturnsOnCall map[int]struct {
-		result1 director.Task
-		result2 error
-	}
-	FindTasksByContextIdStub        func(string) ([]director.Task, error)
-	findTasksByContextIdMutex       sync.RWMutex
-	findTasksByContextIdArgsForCall []struct {
+	DeleteConfigByIDStub        func(string) (bool, error)
+	deleteConfigByIDMutex       sync.RWMutex
+	deleteConfigByIDArgsForCall []struct {
 		arg1 string
 	}
-	findTasksByContextIdReturns struct {
-		result1 []director.Task
+	deleteConfigByIDReturns struct {
+		result1 bool
 		result2 error
 	}
-	findTasksByContextIdReturnsOnCall map[int]struct {
-		result1 []director.Task
+	deleteConfigByIDReturnsOnCall map[int]struct {
+		result1 bool
+		result2 error
+	}
+	DeploymentsStub        func() ([]director.Deployment, error)
+	deploymentsMutex       sync.RWMutex
+	deploymentsArgsForCall []struct {
+	}
+	deploymentsReturns struct {
+		result1 []director.Deployment
+		result2 error
+	}
+	deploymentsReturnsOnCall map[int]struct {
+		result1 []director.Deployment
+		result2 error
+	}
+	DiffCPIConfigStub        func([]byte, bool) (director.ConfigDiff, error)
+	diffCPIConfigMutex       sync.RWMutex
+	diffCPIConfigArgsForCall []struct {
+		arg1 []byte
+		arg2 bool
+	}
+	diffCPIConfigReturns struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	diffCPIConfigReturnsOnCall map[int]struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	DiffCloudConfigStub        func([]byte) (director.ConfigDiff, error)
+	diffCloudConfigMutex       sync.RWMutex
+	diffCloudConfigArgsForCall []struct {
+		arg1 []byte
+	}
+	diffCloudConfigReturns struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	diffCloudConfigReturnsOnCall map[int]struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	DiffConfigStub        func(string, string, []byte) (director.ConfigDiff, error)
+	diffConfigMutex       sync.RWMutex
+	diffConfigArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 []byte
+	}
+	diffConfigReturns struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	diffConfigReturnsOnCall map[int]struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	DiffConfigByIDOrContentStub        func(string, []byte, string, []byte) (director.ConfigDiff, error)
+	diffConfigByIDOrContentMutex       sync.RWMutex
+	diffConfigByIDOrContentArgsForCall []struct {
+		arg1 string
+		arg2 []byte
+		arg3 string
+		arg4 []byte
+	}
+	diffConfigByIDOrContentReturns struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	diffConfigByIDOrContentReturnsOnCall map[int]struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	DiffRuntimeConfigStub        func(string, []byte, bool) (director.ConfigDiff, error)
+	diffRuntimeConfigMutex       sync.RWMutex
+	diffRuntimeConfigArgsForCall []struct {
+		arg1 string
+		arg2 []byte
+		arg3 bool
+	}
+	diffRuntimeConfigReturns struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	diffRuntimeConfigReturnsOnCall map[int]struct {
+		result1 director.ConfigDiff
+		result2 error
+	}
+	DownloadResourceUncheckedStub        func(string, io.Writer) error
+	downloadResourceUncheckedMutex       sync.RWMutex
+	downloadResourceUncheckedArgsForCall []struct {
+		arg1 string
+		arg2 io.Writer
+	}
+	downloadResourceUncheckedReturns struct {
+		result1 error
+	}
+	downloadResourceUncheckedReturnsOnCall map[int]struct {
+		result1 error
+	}
+	EnableResurrectionStub        func(bool) error
+	enableResurrectionMutex       sync.RWMutex
+	enableResurrectionArgsForCall []struct {
+		arg1 bool
+	}
+	enableResurrectionReturns struct {
+		result1 error
+	}
+	enableResurrectionReturnsOnCall map[int]struct {
+		result1 error
+	}
+	EventStub        func(string) (director.Event, error)
+	eventMutex       sync.RWMutex
+	eventArgsForCall []struct {
+		arg1 string
+	}
+	eventReturns struct {
+		result1 director.Event
+		result2 error
+	}
+	eventReturnsOnCall map[int]struct {
+		result1 director.Event
 		result2 error
 	}
 	EventsStub        func(director.EventsFilter) ([]director.Event, error)
@@ -119,30 +217,6 @@ type FakeDirector struct {
 		result1 []director.Event
 		result2 error
 	}
-	EventStub        func(string) (director.Event, error)
-	eventMutex       sync.RWMutex
-	eventArgsForCall []struct {
-		arg1 string
-	}
-	eventReturns struct {
-		result1 director.Event
-		result2 error
-	}
-	eventReturnsOnCall map[int]struct {
-		result1 director.Event
-		result2 error
-	}
-	DeploymentsStub        func() ([]director.Deployment, error)
-	deploymentsMutex       sync.RWMutex
-	deploymentsArgsForCall []struct{}
-	deploymentsReturns     struct {
-		result1 []director.Deployment
-		result2 error
-	}
-	deploymentsReturnsOnCall map[int]struct {
-		result1 []director.Deployment
-		result2 error
-	}
 	FindDeploymentStub        func(string) (director.Deployment, error)
 	findDeploymentMutex       sync.RWMutex
 	findDeploymentArgsForCall []struct {
@@ -156,30 +230,30 @@ type FakeDirector struct {
 		result1 director.Deployment
 		result2 error
 	}
-	ReleasesStub        func() ([]director.Release, error)
-	releasesMutex       sync.RWMutex
-	releasesArgsForCall []struct{}
-	releasesReturns     struct {
-		result1 []director.Release
+	FindOrphanDiskStub        func(string) (director.OrphanDisk, error)
+	findOrphanDiskMutex       sync.RWMutex
+	findOrphanDiskArgsForCall []struct {
+		arg1 string
+	}
+	findOrphanDiskReturns struct {
+		result1 director.OrphanDisk
 		result2 error
 	}
-	releasesReturnsOnCall map[int]struct {
-		result1 []director.Release
+	findOrphanDiskReturnsOnCall map[int]struct {
+		result1 director.OrphanDisk
 		result2 error
 	}
-	HasReleaseStub        func(name, version string, stemcell director.OSVersionSlug) (bool, error)
-	hasReleaseMutex       sync.RWMutex
-	hasReleaseArgsForCall []struct {
-		name     string
-		version  string
-		stemcell director.OSVersionSlug
+	FindOrphanNetworkStub        func(string) (director.OrphanNetwork, error)
+	findOrphanNetworkMutex       sync.RWMutex
+	findOrphanNetworkArgsForCall []struct {
+		arg1 string
 	}
-	hasReleaseReturns struct {
-		result1 bool
+	findOrphanNetworkReturns struct {
+		result1 director.OrphanNetwork
 		result2 error
 	}
-	hasReleaseReturnsOnCall map[int]struct {
-		result1 bool
+	findOrphanNetworkReturnsOnCall map[int]struct {
+		result1 director.OrphanNetwork
 		result2 error
 	}
 	FindReleaseStub        func(director.ReleaseSlug) (director.Release, error)
@@ -208,72 +282,6 @@ type FakeDirector struct {
 		result1 director.ReleaseSeries
 		result2 error
 	}
-	UploadReleaseURLStub        func(url, sha1 string, rebase, fix bool) error
-	uploadReleaseURLMutex       sync.RWMutex
-	uploadReleaseURLArgsForCall []struct {
-		url    string
-		sha1   string
-		rebase bool
-		fix    bool
-	}
-	uploadReleaseURLReturns struct {
-		result1 error
-	}
-	uploadReleaseURLReturnsOnCall map[int]struct {
-		result1 error
-	}
-	UploadReleaseFileStub        func(file director.UploadFile, rebase, fix bool) error
-	uploadReleaseFileMutex       sync.RWMutex
-	uploadReleaseFileArgsForCall []struct {
-		file   director.UploadFile
-		rebase bool
-		fix    bool
-	}
-	uploadReleaseFileReturns struct {
-		result1 error
-	}
-	uploadReleaseFileReturnsOnCall map[int]struct {
-		result1 error
-	}
-	MatchPackagesStub        func(manifest interface{}, compiled bool) ([]string, error)
-	matchPackagesMutex       sync.RWMutex
-	matchPackagesArgsForCall []struct {
-		manifest interface{}
-		compiled bool
-	}
-	matchPackagesReturns struct {
-		result1 []string
-		result2 error
-	}
-	matchPackagesReturnsOnCall map[int]struct {
-		result1 []string
-		result2 error
-	}
-	StemcellsStub        func() ([]director.Stemcell, error)
-	stemcellsMutex       sync.RWMutex
-	stemcellsArgsForCall []struct{}
-	stemcellsReturns     struct {
-		result1 []director.Stemcell
-		result2 error
-	}
-	stemcellsReturnsOnCall map[int]struct {
-		result1 []director.Stemcell
-		result2 error
-	}
-	HasStemcellStub        func(name, version string) (bool, error)
-	hasStemcellMutex       sync.RWMutex
-	hasStemcellArgsForCall []struct {
-		name    string
-		version string
-	}
-	hasStemcellReturns struct {
-		result1 bool
-		result2 error
-	}
-	hasStemcellReturnsOnCall map[int]struct {
-		result1 bool
-		result2 error
-	}
 	FindStemcellStub        func(director.StemcellSlug) (director.Stemcell, error)
 	findStemcellMutex       sync.RWMutex
 	findStemcellArgsForCall []struct {
@@ -287,70 +295,76 @@ type FakeDirector struct {
 		result1 director.Stemcell
 		result2 error
 	}
-	UploadStemcellURLStub        func(url, sha1 string, fix bool) error
-	uploadStemcellURLMutex       sync.RWMutex
-	uploadStemcellURLArgsForCall []struct {
-		url  string
-		sha1 string
-		fix  bool
+	FindTaskStub        func(int) (director.Task, error)
+	findTaskMutex       sync.RWMutex
+	findTaskArgsForCall []struct {
+		arg1 int
 	}
-	uploadStemcellURLReturns struct {
-		result1 error
-	}
-	uploadStemcellURLReturnsOnCall map[int]struct {
-		result1 error
-	}
-	UploadStemcellFileStub        func(file director.UploadFile, fix bool) error
-	uploadStemcellFileMutex       sync.RWMutex
-	uploadStemcellFileArgsForCall []struct {
-		file director.UploadFile
-		fix  bool
-	}
-	uploadStemcellFileReturns struct {
-		result1 error
-	}
-	uploadStemcellFileReturnsOnCall map[int]struct {
-		result1 error
-	}
-	LatestCloudConfigStub        func() (director.CloudConfig, error)
-	latestCloudConfigMutex       sync.RWMutex
-	latestCloudConfigArgsForCall []struct{}
-	latestCloudConfigReturns     struct {
-		result1 director.CloudConfig
+	findTaskReturns struct {
+		result1 director.Task
 		result2 error
 	}
-	latestCloudConfigReturnsOnCall map[int]struct {
-		result1 director.CloudConfig
+	findTaskReturnsOnCall map[int]struct {
+		result1 director.Task
 		result2 error
 	}
-	UpdateCloudConfigStub        func([]byte) error
-	updateCloudConfigMutex       sync.RWMutex
-	updateCloudConfigArgsForCall []struct {
-		arg1 []byte
+	FindTasksByContextIdStub        func(string) ([]director.Task, error)
+	findTasksByContextIdMutex       sync.RWMutex
+	findTasksByContextIdArgsForCall []struct {
+		arg1 string
 	}
-	updateCloudConfigReturns struct {
-		result1 error
-	}
-	updateCloudConfigReturnsOnCall map[int]struct {
-		result1 error
-	}
-	DiffCloudConfigStub        func(manifest []byte) (director.ConfigDiff, error)
-	diffCloudConfigMutex       sync.RWMutex
-	diffCloudConfigArgsForCall []struct {
-		manifest []byte
-	}
-	diffCloudConfigReturns struct {
-		result1 director.ConfigDiff
+	findTasksByContextIdReturns struct {
+		result1 []director.Task
 		result2 error
 	}
-	diffCloudConfigReturnsOnCall map[int]struct {
-		result1 director.ConfigDiff
+	findTasksByContextIdReturnsOnCall map[int]struct {
+		result1 []director.Task
+		result2 error
+	}
+	HasReleaseStub        func(string, string, director.OSVersionSlug) (bool, error)
+	hasReleaseMutex       sync.RWMutex
+	hasReleaseArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 director.OSVersionSlug
+	}
+	hasReleaseReturns struct {
+		result1 bool
+		result2 error
+	}
+	hasReleaseReturnsOnCall map[int]struct {
+		result1 bool
+		result2 error
+	}
+	InfoStub        func() (director.Info, error)
+	infoMutex       sync.RWMutex
+	infoArgsForCall []struct {
+	}
+	infoReturns struct {
+		result1 director.Info
+		result2 error
+	}
+	infoReturnsOnCall map[int]struct {
+		result1 director.Info
+		result2 error
+	}
+	IsAuthenticatedStub        func() (bool, error)
+	isAuthenticatedMutex       sync.RWMutex
+	isAuthenticatedArgsForCall []struct {
+	}
+	isAuthenticatedReturns struct {
+		result1 bool
+		result2 error
+	}
+	isAuthenticatedReturnsOnCall map[int]struct {
+		result1 bool
 		result2 error
 	}
 	LatestCPIConfigStub        func() (director.CPIConfig, error)
 	latestCPIConfigMutex       sync.RWMutex
-	latestCPIConfigArgsForCall []struct{}
-	latestCPIConfigReturns     struct {
+	latestCPIConfigArgsForCall []struct {
+	}
+	latestCPIConfigReturns struct {
 		result1 director.CPIConfig
 		result2 error
 	}
@@ -358,35 +372,49 @@ type FakeDirector struct {
 		result1 director.CPIConfig
 		result2 error
 	}
-	UpdateCPIConfigStub        func([]byte) error
-	updateCPIConfigMutex       sync.RWMutex
-	updateCPIConfigArgsForCall []struct {
-		arg1 []byte
+	LatestCloudConfigStub        func() (director.CloudConfig, error)
+	latestCloudConfigMutex       sync.RWMutex
+	latestCloudConfigArgsForCall []struct {
 	}
-	updateCPIConfigReturns struct {
-		result1 error
-	}
-	updateCPIConfigReturnsOnCall map[int]struct {
-		result1 error
-	}
-	DiffCPIConfigStub        func(manifest []byte, noRedact bool) (director.ConfigDiff, error)
-	diffCPIConfigMutex       sync.RWMutex
-	diffCPIConfigArgsForCall []struct {
-		manifest []byte
-		noRedact bool
-	}
-	diffCPIConfigReturns struct {
-		result1 director.ConfigDiff
+	latestCloudConfigReturns struct {
+		result1 director.CloudConfig
 		result2 error
 	}
-	diffCPIConfigReturnsOnCall map[int]struct {
-		result1 director.ConfigDiff
+	latestCloudConfigReturnsOnCall map[int]struct {
+		result1 director.CloudConfig
 		result2 error
 	}
-	LatestRuntimeConfigStub        func(name string) (director.RuntimeConfig, error)
+	LatestConfigStub        func(string, string) (director.Config, error)
+	latestConfigMutex       sync.RWMutex
+	latestConfigArgsForCall []struct {
+		arg1 string
+		arg2 string
+	}
+	latestConfigReturns struct {
+		result1 director.Config
+		result2 error
+	}
+	latestConfigReturnsOnCall map[int]struct {
+		result1 director.Config
+		result2 error
+	}
+	LatestConfigByIDStub        func(string) (director.Config, error)
+	latestConfigByIDMutex       sync.RWMutex
+	latestConfigByIDArgsForCall []struct {
+		arg1 string
+	}
+	latestConfigByIDReturns struct {
+		result1 director.Config
+		result2 error
+	}
+	latestConfigByIDReturnsOnCall map[int]struct {
+		result1 director.Config
+		result2 error
+	}
+	LatestRuntimeConfigStub        func(string) (director.RuntimeConfig, error)
 	latestRuntimeConfigMutex       sync.RWMutex
 	latestRuntimeConfigArgsForCall []struct {
-		name string
+		arg1 string
 	}
 	latestRuntimeConfigReturns struct {
 		result1 director.RuntimeConfig
@@ -396,55 +424,69 @@ type FakeDirector struct {
 		result1 director.RuntimeConfig
 		result2 error
 	}
-	UpdateRuntimeConfigStub        func(name string, manifest []byte) error
-	updateRuntimeConfigMutex       sync.RWMutex
-	updateRuntimeConfigArgsForCall []struct {
-		name     string
-		manifest []byte
+	ListConfigsStub        func(int, director.ConfigsFilter) ([]director.Config, error)
+	listConfigsMutex       sync.RWMutex
+	listConfigsArgsForCall []struct {
+		arg1 int
+		arg2 director.ConfigsFilter
 	}
-	updateRuntimeConfigReturns struct {
-		result1 error
-	}
-	updateRuntimeConfigReturnsOnCall map[int]struct {
-		result1 error
-	}
-	DiffRuntimeConfigStub        func(name string, manifest []byte, noRedact bool) (director.ConfigDiff, error)
-	diffRuntimeConfigMutex       sync.RWMutex
-	diffRuntimeConfigArgsForCall []struct {
-		name     string
-		manifest []byte
-		noRedact bool
-	}
-	diffRuntimeConfigReturns struct {
-		result1 director.ConfigDiff
+	listConfigsReturns struct {
+		result1 []director.Config
 		result2 error
 	}
-	diffRuntimeConfigReturnsOnCall map[int]struct {
-		result1 director.ConfigDiff
+	listConfigsReturnsOnCall map[int]struct {
+		result1 []director.Config
 		result2 error
 	}
-	FindOrphanDiskStub        func(string) (director.OrphanDisk, error)
-	findOrphanDiskMutex       sync.RWMutex
-	findOrphanDiskArgsForCall []struct {
+	ListDeploymentConfigsStub        func(string) (director.DeploymentConfigs, error)
+	listDeploymentConfigsMutex       sync.RWMutex
+	listDeploymentConfigsArgsForCall []struct {
 		arg1 string
 	}
-	findOrphanDiskReturns struct {
-		result1 director.OrphanDisk
+	listDeploymentConfigsReturns struct {
+		result1 director.DeploymentConfigs
 		result2 error
 	}
-	findOrphanDiskReturnsOnCall map[int]struct {
-		result1 director.OrphanDisk
+	listDeploymentConfigsReturnsOnCall map[int]struct {
+		result1 director.DeploymentConfigs
 		result2 error
 	}
-	OrphanDisksStub        func() ([]director.OrphanDisk, error)
-	orphanDisksMutex       sync.RWMutex
-	orphanDisksArgsForCall []struct{}
-	orphanDisksReturns     struct {
-		result1 []director.OrphanDisk
+	ListDeploymentsStub        func() ([]director.DeploymentResp, error)
+	listDeploymentsMutex       sync.RWMutex
+	listDeploymentsArgsForCall []struct {
+	}
+	listDeploymentsReturns struct {
+		result1 []director.DeploymentResp
 		result2 error
 	}
-	orphanDisksReturnsOnCall map[int]struct {
-		result1 []director.OrphanDisk
+	listDeploymentsReturnsOnCall map[int]struct {
+		result1 []director.DeploymentResp
+		result2 error
+	}
+	LocksStub        func() ([]director.Lock, error)
+	locksMutex       sync.RWMutex
+	locksArgsForCall []struct {
+	}
+	locksReturns struct {
+		result1 []director.Lock
+		result2 error
+	}
+	locksReturnsOnCall map[int]struct {
+		result1 []director.Lock
+		result2 error
+	}
+	MatchPackagesStub        func(interface{}, bool) ([]string, error)
+	matchPackagesMutex       sync.RWMutex
+	matchPackagesArgsForCall []struct {
+		arg1 interface{}
+		arg2 bool
+	}
+	matchPackagesReturns struct {
+		result1 []string
+		result2 error
+	}
+	matchPackagesReturnsOnCall map[int]struct {
+		result1 []string
 		result2 error
 	}
 	OrphanDiskStub        func(string) error
@@ -458,219 +500,383 @@ type FakeDirector struct {
 	orphanDiskReturnsOnCall map[int]struct {
 		result1 error
 	}
-	EnableResurrectionStub        func(bool) error
-	enableResurrectionMutex       sync.RWMutex
-	enableResurrectionArgsForCall []struct {
-		arg1 bool
+	OrphanDisksStub        func() ([]director.OrphanDisk, error)
+	orphanDisksMutex       sync.RWMutex
+	orphanDisksArgsForCall []struct {
 	}
-	enableResurrectionReturns struct {
+	orphanDisksReturns struct {
+		result1 []director.OrphanDisk
+		result2 error
+	}
+	orphanDisksReturnsOnCall map[int]struct {
+		result1 []director.OrphanDisk
+		result2 error
+	}
+	OrphanNetworksStub        func() ([]director.OrphanNetwork, error)
+	orphanNetworksMutex       sync.RWMutex
+	orphanNetworksArgsForCall []struct {
+	}
+	orphanNetworksReturns struct {
+		result1 []director.OrphanNetwork
+		result2 error
+	}
+	orphanNetworksReturnsOnCall map[int]struct {
+		result1 []director.OrphanNetwork
+		result2 error
+	}
+	OrphanedVMsStub        func() ([]director.OrphanedVM, error)
+	orphanedVMsMutex       sync.RWMutex
+	orphanedVMsArgsForCall []struct {
+	}
+	orphanedVMsReturns struct {
+		result1 []director.OrphanedVM
+		result2 error
+	}
+	orphanedVMsReturnsOnCall map[int]struct {
+		result1 []director.OrphanedVM
+		result2 error
+	}
+	RecentTasksStub        func(int, director.TasksFilter) ([]director.Task, error)
+	recentTasksMutex       sync.RWMutex
+	recentTasksArgsForCall []struct {
+		arg1 int
+		arg2 director.TasksFilter
+	}
+	recentTasksReturns struct {
+		result1 []director.Task
+		result2 error
+	}
+	recentTasksReturnsOnCall map[int]struct {
+		result1 []director.Task
+		result2 error
+	}
+	ReleasesStub        func() ([]director.Release, error)
+	releasesMutex       sync.RWMutex
+	releasesArgsForCall []struct {
+	}
+	releasesReturns struct {
+		result1 []director.Release
+		result2 error
+	}
+	releasesReturnsOnCall map[int]struct {
+		result1 []director.Release
+		result2 error
+	}
+	StemcellNeedsUploadStub        func(director.StemcellInfo) (bool, error)
+	stemcellNeedsUploadMutex       sync.RWMutex
+	stemcellNeedsUploadArgsForCall []struct {
+		arg1 director.StemcellInfo
+	}
+	stemcellNeedsUploadReturns struct {
+		result1 bool
+		result2 error
+	}
+	stemcellNeedsUploadReturnsOnCall map[int]struct {
+		result1 bool
+		result2 error
+	}
+	StemcellsStub        func() ([]director.Stemcell, error)
+	stemcellsMutex       sync.RWMutex
+	stemcellsArgsForCall []struct {
+	}
+	stemcellsReturns struct {
+		result1 []director.Stemcell
+		result2 error
+	}
+	stemcellsReturnsOnCall map[int]struct {
+		result1 []director.Stemcell
+		result2 error
+	}
+	UpdateCPIConfigStub        func([]byte) error
+	updateCPIConfigMutex       sync.RWMutex
+	updateCPIConfigArgsForCall []struct {
+		arg1 []byte
+	}
+	updateCPIConfigReturns struct {
 		result1 error
 	}
-	enableResurrectionReturnsOnCall map[int]struct {
+	updateCPIConfigReturnsOnCall map[int]struct {
 		result1 error
 	}
-	CleanUpStub        func(bool) error
-	cleanUpMutex       sync.RWMutex
-	cleanUpArgsForCall []struct {
-		arg1 bool
+	UpdateCloudConfigStub        func([]byte) error
+	updateCloudConfigMutex       sync.RWMutex
+	updateCloudConfigArgsForCall []struct {
+		arg1 []byte
 	}
-	cleanUpReturns struct {
+	updateCloudConfigReturns struct {
 		result1 error
 	}
-	cleanUpReturnsOnCall map[int]struct {
+	updateCloudConfigReturnsOnCall map[int]struct {
 		result1 error
 	}
-	DownloadResourceUncheckedStub        func(blobstoreID string, out io.Writer) error
-	downloadResourceUncheckedMutex       sync.RWMutex
-	downloadResourceUncheckedArgsForCall []struct {
-		blobstoreID string
-		out         io.Writer
+	UpdateConfigStub        func(string, string, string, []byte) (director.Config, error)
+	updateConfigMutex       sync.RWMutex
+	updateConfigArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 string
+		arg4 []byte
 	}
-	downloadResourceUncheckedReturns struct {
+	updateConfigReturns struct {
+		result1 director.Config
+		result2 error
+	}
+	updateConfigReturnsOnCall map[int]struct {
+		result1 director.Config
+		result2 error
+	}
+	UpdateRuntimeConfigStub        func(string, []byte) error
+	updateRuntimeConfigMutex       sync.RWMutex
+	updateRuntimeConfigArgsForCall []struct {
+		arg1 string
+		arg2 []byte
+	}
+	updateRuntimeConfigReturns struct {
 		result1 error
 	}
-	downloadResourceUncheckedReturnsOnCall map[int]struct {
+	updateRuntimeConfigReturnsOnCall map[int]struct {
 		result1 error
+	}
+	UploadReleaseFileStub        func(director.UploadFile, bool, bool) error
+	uploadReleaseFileMutex       sync.RWMutex
+	uploadReleaseFileArgsForCall []struct {
+		arg1 director.UploadFile
+		arg2 bool
+		arg3 bool
+	}
+	uploadReleaseFileReturns struct {
+		result1 error
+	}
+	uploadReleaseFileReturnsOnCall map[int]struct {
+		result1 error
+	}
+	UploadReleaseURLStub        func(string, string, bool, bool) error
+	uploadReleaseURLMutex       sync.RWMutex
+	uploadReleaseURLArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 bool
+		arg4 bool
+	}
+	uploadReleaseURLReturns struct {
+		result1 error
+	}
+	uploadReleaseURLReturnsOnCall map[int]struct {
+		result1 error
+	}
+	UploadStemcellFileStub        func(director.UploadFile, bool) error
+	uploadStemcellFileMutex       sync.RWMutex
+	uploadStemcellFileArgsForCall []struct {
+		arg1 director.UploadFile
+		arg2 bool
+	}
+	uploadStemcellFileReturns struct {
+		result1 error
+	}
+	uploadStemcellFileReturnsOnCall map[int]struct {
+		result1 error
+	}
+	UploadStemcellURLStub        func(string, string, bool) error
+	uploadStemcellURLMutex       sync.RWMutex
+	uploadStemcellURLArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 bool
+	}
+	uploadStemcellURLReturns struct {
+		result1 error
+	}
+	uploadStemcellURLReturnsOnCall map[int]struct {
+		result1 error
+	}
+	WithContextStub        func(string) director.Director
+	withContextMutex       sync.RWMutex
+	withContextArgsForCall []struct {
+		arg1 string
+	}
+	withContextReturns struct {
+		result1 director.Director
+	}
+	withContextReturnsOnCall map[int]struct {
+		result1 director.Director
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDirector) IsAuthenticated() (bool, error) {
-	fake.isAuthenticatedMutex.Lock()
-	ret, specificReturn := fake.isAuthenticatedReturnsOnCall[len(fake.isAuthenticatedArgsForCall)]
-	fake.isAuthenticatedArgsForCall = append(fake.isAuthenticatedArgsForCall, struct{}{})
-	fake.recordInvocation("IsAuthenticated", []interface{}{})
-	fake.isAuthenticatedMutex.Unlock()
-	if fake.IsAuthenticatedStub != nil {
-		return fake.IsAuthenticatedStub()
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.isAuthenticatedReturns.result1, fake.isAuthenticatedReturns.result2
-}
-
-func (fake *FakeDirector) IsAuthenticatedCallCount() int {
-	fake.isAuthenticatedMutex.RLock()
-	defer fake.isAuthenticatedMutex.RUnlock()
-	return len(fake.isAuthenticatedArgsForCall)
-}
-
-func (fake *FakeDirector) IsAuthenticatedReturns(result1 bool, result2 error) {
-	fake.IsAuthenticatedStub = nil
-	fake.isAuthenticatedReturns = struct {
-		result1 bool
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) IsAuthenticatedReturnsOnCall(i int, result1 bool, result2 error) {
-	fake.IsAuthenticatedStub = nil
-	if fake.isAuthenticatedReturnsOnCall == nil {
-		fake.isAuthenticatedReturnsOnCall = make(map[int]struct {
-			result1 bool
-			result2 error
-		})
-	}
-	fake.isAuthenticatedReturnsOnCall[i] = struct {
-		result1 bool
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) WithContext(id string) director.Director {
-	fake.withContextMutex.Lock()
-	ret, specificReturn := fake.withContextReturnsOnCall[len(fake.withContextArgsForCall)]
-	fake.withContextArgsForCall = append(fake.withContextArgsForCall, struct {
-		id string
-	}{id})
-	fake.recordInvocation("WithContext", []interface{}{id})
-	fake.withContextMutex.Unlock()
-	if fake.WithContextStub != nil {
-		return fake.WithContextStub(id)
+func (fake *FakeDirector) CancelTasks(arg1 director.TasksFilter) error {
+	fake.cancelTasksMutex.Lock()
+	ret, specificReturn := fake.cancelTasksReturnsOnCall[len(fake.cancelTasksArgsForCall)]
+	fake.cancelTasksArgsForCall = append(fake.cancelTasksArgsForCall, struct {
+		arg1 director.TasksFilter
+	}{arg1})
+	fake.recordInvocation("CancelTasks", []interface{}{arg1})
+	fake.cancelTasksMutex.Unlock()
+	if fake.CancelTasksStub != nil {
+		return fake.CancelTasksStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.withContextReturns.result1
+	fakeReturns := fake.cancelTasksReturns
+	return fakeReturns.result1
 }
 
-func (fake *FakeDirector) WithContextCallCount() int {
-	fake.withContextMutex.RLock()
-	defer fake.withContextMutex.RUnlock()
-	return len(fake.withContextArgsForCall)
+func (fake *FakeDirector) CancelTasksCallCount() int {
+	fake.cancelTasksMutex.RLock()
+	defer fake.cancelTasksMutex.RUnlock()
+	return len(fake.cancelTasksArgsForCall)
 }
 
-func (fake *FakeDirector) WithContextArgsForCall(i int) string {
-	fake.withContextMutex.RLock()
-	defer fake.withContextMutex.RUnlock()
-	return fake.withContextArgsForCall[i].id
+func (fake *FakeDirector) CancelTasksCalls(stub func(director.TasksFilter) error) {
+	fake.cancelTasksMutex.Lock()
+	defer fake.cancelTasksMutex.Unlock()
+	fake.CancelTasksStub = stub
 }
 
-func (fake *FakeDirector) WithContextReturns(result1 director.Director) {
-	fake.WithContextStub = nil
-	fake.withContextReturns = struct {
-		result1 director.Director
+func (fake *FakeDirector) CancelTasksArgsForCall(i int) director.TasksFilter {
+	fake.cancelTasksMutex.RLock()
+	defer fake.cancelTasksMutex.RUnlock()
+	argsForCall := fake.cancelTasksArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) CancelTasksReturns(result1 error) {
+	fake.cancelTasksMutex.Lock()
+	defer fake.cancelTasksMutex.Unlock()
+	fake.CancelTasksStub = nil
+	fake.cancelTasksReturns = struct {
+		result1 error
 	}{result1}
 }
 
-func (fake *FakeDirector) WithContextReturnsOnCall(i int, result1 director.Director) {
-	fake.WithContextStub = nil
-	if fake.withContextReturnsOnCall == nil {
-		fake.withContextReturnsOnCall = make(map[int]struct {
-			result1 director.Director
+func (fake *FakeDirector) CancelTasksReturnsOnCall(i int, result1 error) {
+	fake.cancelTasksMutex.Lock()
+	defer fake.cancelTasksMutex.Unlock()
+	fake.CancelTasksStub = nil
+	if fake.cancelTasksReturnsOnCall == nil {
+		fake.cancelTasksReturnsOnCall = make(map[int]struct {
+			result1 error
 		})
 	}
-	fake.withContextReturnsOnCall[i] = struct {
-		result1 director.Director
+	fake.cancelTasksReturnsOnCall[i] = struct {
+		result1 error
 	}{result1}
 }
 
-func (fake *FakeDirector) Info() (director.Info, error) {
-	fake.infoMutex.Lock()
-	ret, specificReturn := fake.infoReturnsOnCall[len(fake.infoArgsForCall)]
-	fake.infoArgsForCall = append(fake.infoArgsForCall, struct{}{})
-	fake.recordInvocation("Info", []interface{}{})
-	fake.infoMutex.Unlock()
-	if fake.InfoStub != nil {
-		return fake.InfoStub()
+func (fake *FakeDirector) CertificateExpiry() ([]director.CertificateExpiryInfo, error) {
+	fake.certificateExpiryMutex.Lock()
+	ret, specificReturn := fake.certificateExpiryReturnsOnCall[len(fake.certificateExpiryArgsForCall)]
+	fake.certificateExpiryArgsForCall = append(fake.certificateExpiryArgsForCall, struct {
+	}{})
+	fake.recordInvocation("CertificateExpiry", []interface{}{})
+	fake.certificateExpiryMutex.Unlock()
+	if fake.CertificateExpiryStub != nil {
+		return fake.CertificateExpiryStub()
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.infoReturns.result1, fake.infoReturns.result2
+	fakeReturns := fake.certificateExpiryReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) InfoCallCount() int {
-	fake.infoMutex.RLock()
-	defer fake.infoMutex.RUnlock()
-	return len(fake.infoArgsForCall)
+func (fake *FakeDirector) CertificateExpiryCallCount() int {
+	fake.certificateExpiryMutex.RLock()
+	defer fake.certificateExpiryMutex.RUnlock()
+	return len(fake.certificateExpiryArgsForCall)
 }
 
-func (fake *FakeDirector) InfoReturns(result1 director.Info, result2 error) {
-	fake.InfoStub = nil
-	fake.infoReturns = struct {
-		result1 director.Info
+func (fake *FakeDirector) CertificateExpiryCalls(stub func() ([]director.CertificateExpiryInfo, error)) {
+	fake.certificateExpiryMutex.Lock()
+	defer fake.certificateExpiryMutex.Unlock()
+	fake.CertificateExpiryStub = stub
+}
+
+func (fake *FakeDirector) CertificateExpiryReturns(result1 []director.CertificateExpiryInfo, result2 error) {
+	fake.certificateExpiryMutex.Lock()
+	defer fake.certificateExpiryMutex.Unlock()
+	fake.CertificateExpiryStub = nil
+	fake.certificateExpiryReturns = struct {
+		result1 []director.CertificateExpiryInfo
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) InfoReturnsOnCall(i int, result1 director.Info, result2 error) {
-	fake.InfoStub = nil
-	if fake.infoReturnsOnCall == nil {
-		fake.infoReturnsOnCall = make(map[int]struct {
-			result1 director.Info
+func (fake *FakeDirector) CertificateExpiryReturnsOnCall(i int, result1 []director.CertificateExpiryInfo, result2 error) {
+	fake.certificateExpiryMutex.Lock()
+	defer fake.certificateExpiryMutex.Unlock()
+	fake.CertificateExpiryStub = nil
+	if fake.certificateExpiryReturnsOnCall == nil {
+		fake.certificateExpiryReturnsOnCall = make(map[int]struct {
+			result1 []director.CertificateExpiryInfo
 			result2 error
 		})
 	}
-	fake.infoReturnsOnCall[i] = struct {
-		result1 director.Info
+	fake.certificateExpiryReturnsOnCall[i] = struct {
+		result1 []director.CertificateExpiryInfo
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) Locks() ([]director.Lock, error) {
-	fake.locksMutex.Lock()
-	ret, specificReturn := fake.locksReturnsOnCall[len(fake.locksArgsForCall)]
-	fake.locksArgsForCall = append(fake.locksArgsForCall, struct{}{})
-	fake.recordInvocation("Locks", []interface{}{})
-	fake.locksMutex.Unlock()
-	if fake.LocksStub != nil {
-		return fake.LocksStub()
+func (fake *FakeDirector) CleanUp(arg1 bool) error {
+	fake.cleanUpMutex.Lock()
+	ret, specificReturn := fake.cleanUpReturnsOnCall[len(fake.cleanUpArgsForCall)]
+	fake.cleanUpArgsForCall = append(fake.cleanUpArgsForCall, struct {
+		arg1 bool
+	}{arg1})
+	fake.recordInvocation("CleanUp", []interface{}{arg1})
+	fake.cleanUpMutex.Unlock()
+	if fake.CleanUpStub != nil {
+		return fake.CleanUpStub(arg1)
 	}
 	if specificReturn {
-		return ret.result1, ret.result2
+		return ret.result1
 	}
-	return fake.locksReturns.result1, fake.locksReturns.result2
+	fakeReturns := fake.cleanUpReturns
+	return fakeReturns.result1
 }
 
-func (fake *FakeDirector) LocksCallCount() int {
-	fake.locksMutex.RLock()
-	defer fake.locksMutex.RUnlock()
-	return len(fake.locksArgsForCall)
+func (fake *FakeDirector) CleanUpCallCount() int {
+	fake.cleanUpMutex.RLock()
+	defer fake.cleanUpMutex.RUnlock()
+	return len(fake.cleanUpArgsForCall)
 }
 
-func (fake *FakeDirector) LocksReturns(result1 []director.Lock, result2 error) {
-	fake.LocksStub = nil
-	fake.locksReturns = struct {
-		result1 []director.Lock
-		result2 error
-	}{result1, result2}
+func (fake *FakeDirector) CleanUpCalls(stub func(bool) error) {
+	fake.cleanUpMutex.Lock()
+	defer fake.cleanUpMutex.Unlock()
+	fake.CleanUpStub = stub
 }
 
-func (fake *FakeDirector) LocksReturnsOnCall(i int, result1 []director.Lock, result2 error) {
-	fake.LocksStub = nil
-	if fake.locksReturnsOnCall == nil {
-		fake.locksReturnsOnCall = make(map[int]struct {
-			result1 []director.Lock
-			result2 error
+func (fake *FakeDirector) CleanUpArgsForCall(i int) bool {
+	fake.cleanUpMutex.RLock()
+	defer fake.cleanUpMutex.RUnlock()
+	argsForCall := fake.cleanUpArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) CleanUpReturns(result1 error) {
+	fake.cleanUpMutex.Lock()
+	defer fake.cleanUpMutex.Unlock()
+	fake.CleanUpStub = nil
+	fake.cleanUpReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) CleanUpReturnsOnCall(i int, result1 error) {
+	fake.cleanUpMutex.Lock()
+	defer fake.cleanUpMutex.Unlock()
+	fake.CleanUpStub = nil
+	if fake.cleanUpReturnsOnCall == nil {
+		fake.cleanUpReturnsOnCall = make(map[int]struct {
+			result1 error
 		})
 	}
-	fake.locksReturnsOnCall[i] = struct {
-		result1 []director.Lock
-		result2 error
-	}{result1, result2}
+	fake.cleanUpReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeDirector) CurrentTasks(arg1 director.TasksFilter) ([]director.Task, error) {
@@ -687,7 +893,8 @@ func (fake *FakeDirector) CurrentTasks(arg1 director.TasksFilter) ([]director.Ta
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.currentTasksReturns.result1, fake.currentTasksReturns.result2
+	fakeReturns := fake.currentTasksReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDirector) CurrentTasksCallCount() int {
@@ -696,13 +903,22 @@ func (fake *FakeDirector) CurrentTasksCallCount() int {
 	return len(fake.currentTasksArgsForCall)
 }
 
+func (fake *FakeDirector) CurrentTasksCalls(stub func(director.TasksFilter) ([]director.Task, error)) {
+	fake.currentTasksMutex.Lock()
+	defer fake.currentTasksMutex.Unlock()
+	fake.CurrentTasksStub = stub
+}
+
 func (fake *FakeDirector) CurrentTasksArgsForCall(i int) director.TasksFilter {
 	fake.currentTasksMutex.RLock()
 	defer fake.currentTasksMutex.RUnlock()
-	return fake.currentTasksArgsForCall[i].arg1
+	argsForCall := fake.currentTasksArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) CurrentTasksReturns(result1 []director.Task, result2 error) {
+	fake.currentTasksMutex.Lock()
+	defer fake.currentTasksMutex.Unlock()
 	fake.CurrentTasksStub = nil
 	fake.currentTasksReturns = struct {
 		result1 []director.Task
@@ -711,6 +927,8 @@ func (fake *FakeDirector) CurrentTasksReturns(result1 []director.Task, result2 e
 }
 
 func (fake *FakeDirector) CurrentTasksReturnsOnCall(i int, result1 []director.Task, result2 error) {
+	fake.currentTasksMutex.Lock()
+	defer fake.currentTasksMutex.Unlock()
 	fake.CurrentTasksStub = nil
 	if fake.currentTasksReturnsOnCall == nil {
 		fake.currentTasksReturnsOnCall = make(map[int]struct {
@@ -724,156 +942,721 @@ func (fake *FakeDirector) CurrentTasksReturnsOnCall(i int, result1 []director.Ta
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) RecentTasks(arg1 int, arg2 director.TasksFilter) ([]director.Task, error) {
-	fake.recentTasksMutex.Lock()
-	ret, specificReturn := fake.recentTasksReturnsOnCall[len(fake.recentTasksArgsForCall)]
-	fake.recentTasksArgsForCall = append(fake.recentTasksArgsForCall, struct {
-		arg1 int
-		arg2 director.TasksFilter
+func (fake *FakeDirector) DeleteConfig(arg1 string, arg2 string) (bool, error) {
+	fake.deleteConfigMutex.Lock()
+	ret, specificReturn := fake.deleteConfigReturnsOnCall[len(fake.deleteConfigArgsForCall)]
+	fake.deleteConfigArgsForCall = append(fake.deleteConfigArgsForCall, struct {
+		arg1 string
+		arg2 string
 	}{arg1, arg2})
-	fake.recordInvocation("RecentTasks", []interface{}{arg1, arg2})
-	fake.recentTasksMutex.Unlock()
-	if fake.RecentTasksStub != nil {
-		return fake.RecentTasksStub(arg1, arg2)
+	fake.recordInvocation("DeleteConfig", []interface{}{arg1, arg2})
+	fake.deleteConfigMutex.Unlock()
+	if fake.DeleteConfigStub != nil {
+		return fake.DeleteConfigStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.recentTasksReturns.result1, fake.recentTasksReturns.result2
+	fakeReturns := fake.deleteConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) RecentTasksCallCount() int {
-	fake.recentTasksMutex.RLock()
-	defer fake.recentTasksMutex.RUnlock()
-	return len(fake.recentTasksArgsForCall)
+func (fake *FakeDirector) DeleteConfigCallCount() int {
+	fake.deleteConfigMutex.RLock()
+	defer fake.deleteConfigMutex.RUnlock()
+	return len(fake.deleteConfigArgsForCall)
 }
 
-func (fake *FakeDirector) RecentTasksArgsForCall(i int) (int, director.TasksFilter) {
-	fake.recentTasksMutex.RLock()
-	defer fake.recentTasksMutex.RUnlock()
-	return fake.recentTasksArgsForCall[i].arg1, fake.recentTasksArgsForCall[i].arg2
+func (fake *FakeDirector) DeleteConfigCalls(stub func(string, string) (bool, error)) {
+	fake.deleteConfigMutex.Lock()
+	defer fake.deleteConfigMutex.Unlock()
+	fake.DeleteConfigStub = stub
 }
 
-func (fake *FakeDirector) RecentTasksReturns(result1 []director.Task, result2 error) {
-	fake.RecentTasksStub = nil
-	fake.recentTasksReturns = struct {
-		result1 []director.Task
+func (fake *FakeDirector) DeleteConfigArgsForCall(i int) (string, string) {
+	fake.deleteConfigMutex.RLock()
+	defer fake.deleteConfigMutex.RUnlock()
+	argsForCall := fake.deleteConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) DeleteConfigReturns(result1 bool, result2 error) {
+	fake.deleteConfigMutex.Lock()
+	defer fake.deleteConfigMutex.Unlock()
+	fake.DeleteConfigStub = nil
+	fake.deleteConfigReturns = struct {
+		result1 bool
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) RecentTasksReturnsOnCall(i int, result1 []director.Task, result2 error) {
-	fake.RecentTasksStub = nil
-	if fake.recentTasksReturnsOnCall == nil {
-		fake.recentTasksReturnsOnCall = make(map[int]struct {
-			result1 []director.Task
+func (fake *FakeDirector) DeleteConfigReturnsOnCall(i int, result1 bool, result2 error) {
+	fake.deleteConfigMutex.Lock()
+	defer fake.deleteConfigMutex.Unlock()
+	fake.DeleteConfigStub = nil
+	if fake.deleteConfigReturnsOnCall == nil {
+		fake.deleteConfigReturnsOnCall = make(map[int]struct {
+			result1 bool
 			result2 error
 		})
 	}
-	fake.recentTasksReturnsOnCall[i] = struct {
-		result1 []director.Task
+	fake.deleteConfigReturnsOnCall[i] = struct {
+		result1 bool
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) FindTask(arg1 int) (director.Task, error) {
-	fake.findTaskMutex.Lock()
-	ret, specificReturn := fake.findTaskReturnsOnCall[len(fake.findTaskArgsForCall)]
-	fake.findTaskArgsForCall = append(fake.findTaskArgsForCall, struct {
-		arg1 int
-	}{arg1})
-	fake.recordInvocation("FindTask", []interface{}{arg1})
-	fake.findTaskMutex.Unlock()
-	if fake.FindTaskStub != nil {
-		return fake.FindTaskStub(arg1)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.findTaskReturns.result1, fake.findTaskReturns.result2
-}
-
-func (fake *FakeDirector) FindTaskCallCount() int {
-	fake.findTaskMutex.RLock()
-	defer fake.findTaskMutex.RUnlock()
-	return len(fake.findTaskArgsForCall)
-}
-
-func (fake *FakeDirector) FindTaskArgsForCall(i int) int {
-	fake.findTaskMutex.RLock()
-	defer fake.findTaskMutex.RUnlock()
-	return fake.findTaskArgsForCall[i].arg1
-}
-
-func (fake *FakeDirector) FindTaskReturns(result1 director.Task, result2 error) {
-	fake.FindTaskStub = nil
-	fake.findTaskReturns = struct {
-		result1 director.Task
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) FindTaskReturnsOnCall(i int, result1 director.Task, result2 error) {
-	fake.FindTaskStub = nil
-	if fake.findTaskReturnsOnCall == nil {
-		fake.findTaskReturnsOnCall = make(map[int]struct {
-			result1 director.Task
-			result2 error
-		})
-	}
-	fake.findTaskReturnsOnCall[i] = struct {
-		result1 director.Task
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) FindTasksByContextId(arg1 string) ([]director.Task, error) {
-	fake.findTasksByContextIdMutex.Lock()
-	ret, specificReturn := fake.findTasksByContextIdReturnsOnCall[len(fake.findTasksByContextIdArgsForCall)]
-	fake.findTasksByContextIdArgsForCall = append(fake.findTasksByContextIdArgsForCall, struct {
+func (fake *FakeDirector) DeleteConfigByID(arg1 string) (bool, error) {
+	fake.deleteConfigByIDMutex.Lock()
+	ret, specificReturn := fake.deleteConfigByIDReturnsOnCall[len(fake.deleteConfigByIDArgsForCall)]
+	fake.deleteConfigByIDArgsForCall = append(fake.deleteConfigByIDArgsForCall, struct {
 		arg1 string
 	}{arg1})
-	fake.recordInvocation("FindTasksByContextId", []interface{}{arg1})
-	fake.findTasksByContextIdMutex.Unlock()
-	if fake.FindTasksByContextIdStub != nil {
-		return fake.FindTasksByContextIdStub(arg1)
+	fake.recordInvocation("DeleteConfigByID", []interface{}{arg1})
+	fake.deleteConfigByIDMutex.Unlock()
+	if fake.DeleteConfigByIDStub != nil {
+		return fake.DeleteConfigByIDStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.findTasksByContextIdReturns.result1, fake.findTasksByContextIdReturns.result2
+	fakeReturns := fake.deleteConfigByIDReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) FindTasksByContextIdCallCount() int {
-	fake.findTasksByContextIdMutex.RLock()
-	defer fake.findTasksByContextIdMutex.RUnlock()
-	return len(fake.findTasksByContextIdArgsForCall)
+func (fake *FakeDirector) DeleteConfigByIDCallCount() int {
+	fake.deleteConfigByIDMutex.RLock()
+	defer fake.deleteConfigByIDMutex.RUnlock()
+	return len(fake.deleteConfigByIDArgsForCall)
 }
 
-func (fake *FakeDirector) FindTasksByContextIdArgsForCall(i int) string {
-	fake.findTasksByContextIdMutex.RLock()
-	defer fake.findTasksByContextIdMutex.RUnlock()
-	return fake.findTasksByContextIdArgsForCall[i].arg1
+func (fake *FakeDirector) DeleteConfigByIDCalls(stub func(string) (bool, error)) {
+	fake.deleteConfigByIDMutex.Lock()
+	defer fake.deleteConfigByIDMutex.Unlock()
+	fake.DeleteConfigByIDStub = stub
 }
 
-func (fake *FakeDirector) FindTasksByContextIdReturns(result1 []director.Task, result2 error) {
-	fake.FindTasksByContextIdStub = nil
-	fake.findTasksByContextIdReturns = struct {
-		result1 []director.Task
+func (fake *FakeDirector) DeleteConfigByIDArgsForCall(i int) string {
+	fake.deleteConfigByIDMutex.RLock()
+	defer fake.deleteConfigByIDMutex.RUnlock()
+	argsForCall := fake.deleteConfigByIDArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) DeleteConfigByIDReturns(result1 bool, result2 error) {
+	fake.deleteConfigByIDMutex.Lock()
+	defer fake.deleteConfigByIDMutex.Unlock()
+	fake.DeleteConfigByIDStub = nil
+	fake.deleteConfigByIDReturns = struct {
+		result1 bool
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) FindTasksByContextIdReturnsOnCall(i int, result1 []director.Task, result2 error) {
-	fake.FindTasksByContextIdStub = nil
-	if fake.findTasksByContextIdReturnsOnCall == nil {
-		fake.findTasksByContextIdReturnsOnCall = make(map[int]struct {
-			result1 []director.Task
+func (fake *FakeDirector) DeleteConfigByIDReturnsOnCall(i int, result1 bool, result2 error) {
+	fake.deleteConfigByIDMutex.Lock()
+	defer fake.deleteConfigByIDMutex.Unlock()
+	fake.DeleteConfigByIDStub = nil
+	if fake.deleteConfigByIDReturnsOnCall == nil {
+		fake.deleteConfigByIDReturnsOnCall = make(map[int]struct {
+			result1 bool
 			result2 error
 		})
 	}
-	fake.findTasksByContextIdReturnsOnCall[i] = struct {
-		result1 []director.Task
+	fake.deleteConfigByIDReturnsOnCall[i] = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) Deployments() ([]director.Deployment, error) {
+	fake.deploymentsMutex.Lock()
+	ret, specificReturn := fake.deploymentsReturnsOnCall[len(fake.deploymentsArgsForCall)]
+	fake.deploymentsArgsForCall = append(fake.deploymentsArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Deployments", []interface{}{})
+	fake.deploymentsMutex.Unlock()
+	if fake.DeploymentsStub != nil {
+		return fake.DeploymentsStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.deploymentsReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) DeploymentsCallCount() int {
+	fake.deploymentsMutex.RLock()
+	defer fake.deploymentsMutex.RUnlock()
+	return len(fake.deploymentsArgsForCall)
+}
+
+func (fake *FakeDirector) DeploymentsCalls(stub func() ([]director.Deployment, error)) {
+	fake.deploymentsMutex.Lock()
+	defer fake.deploymentsMutex.Unlock()
+	fake.DeploymentsStub = stub
+}
+
+func (fake *FakeDirector) DeploymentsReturns(result1 []director.Deployment, result2 error) {
+	fake.deploymentsMutex.Lock()
+	defer fake.deploymentsMutex.Unlock()
+	fake.DeploymentsStub = nil
+	fake.deploymentsReturns = struct {
+		result1 []director.Deployment
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DeploymentsReturnsOnCall(i int, result1 []director.Deployment, result2 error) {
+	fake.deploymentsMutex.Lock()
+	defer fake.deploymentsMutex.Unlock()
+	fake.DeploymentsStub = nil
+	if fake.deploymentsReturnsOnCall == nil {
+		fake.deploymentsReturnsOnCall = make(map[int]struct {
+			result1 []director.Deployment
+			result2 error
+		})
+	}
+	fake.deploymentsReturnsOnCall[i] = struct {
+		result1 []director.Deployment
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffCPIConfig(arg1 []byte, arg2 bool) (director.ConfigDiff, error) {
+	var arg1Copy []byte
+	if arg1 != nil {
+		arg1Copy = make([]byte, len(arg1))
+		copy(arg1Copy, arg1)
+	}
+	fake.diffCPIConfigMutex.Lock()
+	ret, specificReturn := fake.diffCPIConfigReturnsOnCall[len(fake.diffCPIConfigArgsForCall)]
+	fake.diffCPIConfigArgsForCall = append(fake.diffCPIConfigArgsForCall, struct {
+		arg1 []byte
+		arg2 bool
+	}{arg1Copy, arg2})
+	fake.recordInvocation("DiffCPIConfig", []interface{}{arg1Copy, arg2})
+	fake.diffCPIConfigMutex.Unlock()
+	if fake.DiffCPIConfigStub != nil {
+		return fake.DiffCPIConfigStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.diffCPIConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) DiffCPIConfigCallCount() int {
+	fake.diffCPIConfigMutex.RLock()
+	defer fake.diffCPIConfigMutex.RUnlock()
+	return len(fake.diffCPIConfigArgsForCall)
+}
+
+func (fake *FakeDirector) DiffCPIConfigCalls(stub func([]byte, bool) (director.ConfigDiff, error)) {
+	fake.diffCPIConfigMutex.Lock()
+	defer fake.diffCPIConfigMutex.Unlock()
+	fake.DiffCPIConfigStub = stub
+}
+
+func (fake *FakeDirector) DiffCPIConfigArgsForCall(i int) ([]byte, bool) {
+	fake.diffCPIConfigMutex.RLock()
+	defer fake.diffCPIConfigMutex.RUnlock()
+	argsForCall := fake.diffCPIConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) DiffCPIConfigReturns(result1 director.ConfigDiff, result2 error) {
+	fake.diffCPIConfigMutex.Lock()
+	defer fake.diffCPIConfigMutex.Unlock()
+	fake.DiffCPIConfigStub = nil
+	fake.diffCPIConfigReturns = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffCPIConfigReturnsOnCall(i int, result1 director.ConfigDiff, result2 error) {
+	fake.diffCPIConfigMutex.Lock()
+	defer fake.diffCPIConfigMutex.Unlock()
+	fake.DiffCPIConfigStub = nil
+	if fake.diffCPIConfigReturnsOnCall == nil {
+		fake.diffCPIConfigReturnsOnCall = make(map[int]struct {
+			result1 director.ConfigDiff
+			result2 error
+		})
+	}
+	fake.diffCPIConfigReturnsOnCall[i] = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffCloudConfig(arg1 []byte) (director.ConfigDiff, error) {
+	var arg1Copy []byte
+	if arg1 != nil {
+		arg1Copy = make([]byte, len(arg1))
+		copy(arg1Copy, arg1)
+	}
+	fake.diffCloudConfigMutex.Lock()
+	ret, specificReturn := fake.diffCloudConfigReturnsOnCall[len(fake.diffCloudConfigArgsForCall)]
+	fake.diffCloudConfigArgsForCall = append(fake.diffCloudConfigArgsForCall, struct {
+		arg1 []byte
+	}{arg1Copy})
+	fake.recordInvocation("DiffCloudConfig", []interface{}{arg1Copy})
+	fake.diffCloudConfigMutex.Unlock()
+	if fake.DiffCloudConfigStub != nil {
+		return fake.DiffCloudConfigStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.diffCloudConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) DiffCloudConfigCallCount() int {
+	fake.diffCloudConfigMutex.RLock()
+	defer fake.diffCloudConfigMutex.RUnlock()
+	return len(fake.diffCloudConfigArgsForCall)
+}
+
+func (fake *FakeDirector) DiffCloudConfigCalls(stub func([]byte) (director.ConfigDiff, error)) {
+	fake.diffCloudConfigMutex.Lock()
+	defer fake.diffCloudConfigMutex.Unlock()
+	fake.DiffCloudConfigStub = stub
+}
+
+func (fake *FakeDirector) DiffCloudConfigArgsForCall(i int) []byte {
+	fake.diffCloudConfigMutex.RLock()
+	defer fake.diffCloudConfigMutex.RUnlock()
+	argsForCall := fake.diffCloudConfigArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) DiffCloudConfigReturns(result1 director.ConfigDiff, result2 error) {
+	fake.diffCloudConfigMutex.Lock()
+	defer fake.diffCloudConfigMutex.Unlock()
+	fake.DiffCloudConfigStub = nil
+	fake.diffCloudConfigReturns = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffCloudConfigReturnsOnCall(i int, result1 director.ConfigDiff, result2 error) {
+	fake.diffCloudConfigMutex.Lock()
+	defer fake.diffCloudConfigMutex.Unlock()
+	fake.DiffCloudConfigStub = nil
+	if fake.diffCloudConfigReturnsOnCall == nil {
+		fake.diffCloudConfigReturnsOnCall = make(map[int]struct {
+			result1 director.ConfigDiff
+			result2 error
+		})
+	}
+	fake.diffCloudConfigReturnsOnCall[i] = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffConfig(arg1 string, arg2 string, arg3 []byte) (director.ConfigDiff, error) {
+	var arg3Copy []byte
+	if arg3 != nil {
+		arg3Copy = make([]byte, len(arg3))
+		copy(arg3Copy, arg3)
+	}
+	fake.diffConfigMutex.Lock()
+	ret, specificReturn := fake.diffConfigReturnsOnCall[len(fake.diffConfigArgsForCall)]
+	fake.diffConfigArgsForCall = append(fake.diffConfigArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 []byte
+	}{arg1, arg2, arg3Copy})
+	fake.recordInvocation("DiffConfig", []interface{}{arg1, arg2, arg3Copy})
+	fake.diffConfigMutex.Unlock()
+	if fake.DiffConfigStub != nil {
+		return fake.DiffConfigStub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.diffConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) DiffConfigCallCount() int {
+	fake.diffConfigMutex.RLock()
+	defer fake.diffConfigMutex.RUnlock()
+	return len(fake.diffConfigArgsForCall)
+}
+
+func (fake *FakeDirector) DiffConfigCalls(stub func(string, string, []byte) (director.ConfigDiff, error)) {
+	fake.diffConfigMutex.Lock()
+	defer fake.diffConfigMutex.Unlock()
+	fake.DiffConfigStub = stub
+}
+
+func (fake *FakeDirector) DiffConfigArgsForCall(i int) (string, string, []byte) {
+	fake.diffConfigMutex.RLock()
+	defer fake.diffConfigMutex.RUnlock()
+	argsForCall := fake.diffConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeDirector) DiffConfigReturns(result1 director.ConfigDiff, result2 error) {
+	fake.diffConfigMutex.Lock()
+	defer fake.diffConfigMutex.Unlock()
+	fake.DiffConfigStub = nil
+	fake.diffConfigReturns = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffConfigReturnsOnCall(i int, result1 director.ConfigDiff, result2 error) {
+	fake.diffConfigMutex.Lock()
+	defer fake.diffConfigMutex.Unlock()
+	fake.DiffConfigStub = nil
+	if fake.diffConfigReturnsOnCall == nil {
+		fake.diffConfigReturnsOnCall = make(map[int]struct {
+			result1 director.ConfigDiff
+			result2 error
+		})
+	}
+	fake.diffConfigReturnsOnCall[i] = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffConfigByIDOrContent(arg1 string, arg2 []byte, arg3 string, arg4 []byte) (director.ConfigDiff, error) {
+	var arg2Copy []byte
+	if arg2 != nil {
+		arg2Copy = make([]byte, len(arg2))
+		copy(arg2Copy, arg2)
+	}
+	var arg4Copy []byte
+	if arg4 != nil {
+		arg4Copy = make([]byte, len(arg4))
+		copy(arg4Copy, arg4)
+	}
+	fake.diffConfigByIDOrContentMutex.Lock()
+	ret, specificReturn := fake.diffConfigByIDOrContentReturnsOnCall[len(fake.diffConfigByIDOrContentArgsForCall)]
+	fake.diffConfigByIDOrContentArgsForCall = append(fake.diffConfigByIDOrContentArgsForCall, struct {
+		arg1 string
+		arg2 []byte
+		arg3 string
+		arg4 []byte
+	}{arg1, arg2Copy, arg3, arg4Copy})
+	fake.recordInvocation("DiffConfigByIDOrContent", []interface{}{arg1, arg2Copy, arg3, arg4Copy})
+	fake.diffConfigByIDOrContentMutex.Unlock()
+	if fake.DiffConfigByIDOrContentStub != nil {
+		return fake.DiffConfigByIDOrContentStub(arg1, arg2, arg3, arg4)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.diffConfigByIDOrContentReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) DiffConfigByIDOrContentCallCount() int {
+	fake.diffConfigByIDOrContentMutex.RLock()
+	defer fake.diffConfigByIDOrContentMutex.RUnlock()
+	return len(fake.diffConfigByIDOrContentArgsForCall)
+}
+
+func (fake *FakeDirector) DiffConfigByIDOrContentCalls(stub func(string, []byte, string, []byte) (director.ConfigDiff, error)) {
+	fake.diffConfigByIDOrContentMutex.Lock()
+	defer fake.diffConfigByIDOrContentMutex.Unlock()
+	fake.DiffConfigByIDOrContentStub = stub
+}
+
+func (fake *FakeDirector) DiffConfigByIDOrContentArgsForCall(i int) (string, []byte, string, []byte) {
+	fake.diffConfigByIDOrContentMutex.RLock()
+	defer fake.diffConfigByIDOrContentMutex.RUnlock()
+	argsForCall := fake.diffConfigByIDOrContentArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
+}
+
+func (fake *FakeDirector) DiffConfigByIDOrContentReturns(result1 director.ConfigDiff, result2 error) {
+	fake.diffConfigByIDOrContentMutex.Lock()
+	defer fake.diffConfigByIDOrContentMutex.Unlock()
+	fake.DiffConfigByIDOrContentStub = nil
+	fake.diffConfigByIDOrContentReturns = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffConfigByIDOrContentReturnsOnCall(i int, result1 director.ConfigDiff, result2 error) {
+	fake.diffConfigByIDOrContentMutex.Lock()
+	defer fake.diffConfigByIDOrContentMutex.Unlock()
+	fake.DiffConfigByIDOrContentStub = nil
+	if fake.diffConfigByIDOrContentReturnsOnCall == nil {
+		fake.diffConfigByIDOrContentReturnsOnCall = make(map[int]struct {
+			result1 director.ConfigDiff
+			result2 error
+		})
+	}
+	fake.diffConfigByIDOrContentReturnsOnCall[i] = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffRuntimeConfig(arg1 string, arg2 []byte, arg3 bool) (director.ConfigDiff, error) {
+	var arg2Copy []byte
+	if arg2 != nil {
+		arg2Copy = make([]byte, len(arg2))
+		copy(arg2Copy, arg2)
+	}
+	fake.diffRuntimeConfigMutex.Lock()
+	ret, specificReturn := fake.diffRuntimeConfigReturnsOnCall[len(fake.diffRuntimeConfigArgsForCall)]
+	fake.diffRuntimeConfigArgsForCall = append(fake.diffRuntimeConfigArgsForCall, struct {
+		arg1 string
+		arg2 []byte
+		arg3 bool
+	}{arg1, arg2Copy, arg3})
+	fake.recordInvocation("DiffRuntimeConfig", []interface{}{arg1, arg2Copy, arg3})
+	fake.diffRuntimeConfigMutex.Unlock()
+	if fake.DiffRuntimeConfigStub != nil {
+		return fake.DiffRuntimeConfigStub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.diffRuntimeConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) DiffRuntimeConfigCallCount() int {
+	fake.diffRuntimeConfigMutex.RLock()
+	defer fake.diffRuntimeConfigMutex.RUnlock()
+	return len(fake.diffRuntimeConfigArgsForCall)
+}
+
+func (fake *FakeDirector) DiffRuntimeConfigCalls(stub func(string, []byte, bool) (director.ConfigDiff, error)) {
+	fake.diffRuntimeConfigMutex.Lock()
+	defer fake.diffRuntimeConfigMutex.Unlock()
+	fake.DiffRuntimeConfigStub = stub
+}
+
+func (fake *FakeDirector) DiffRuntimeConfigArgsForCall(i int) (string, []byte, bool) {
+	fake.diffRuntimeConfigMutex.RLock()
+	defer fake.diffRuntimeConfigMutex.RUnlock()
+	argsForCall := fake.diffRuntimeConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeDirector) DiffRuntimeConfigReturns(result1 director.ConfigDiff, result2 error) {
+	fake.diffRuntimeConfigMutex.Lock()
+	defer fake.diffRuntimeConfigMutex.Unlock()
+	fake.DiffRuntimeConfigStub = nil
+	fake.diffRuntimeConfigReturns = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DiffRuntimeConfigReturnsOnCall(i int, result1 director.ConfigDiff, result2 error) {
+	fake.diffRuntimeConfigMutex.Lock()
+	defer fake.diffRuntimeConfigMutex.Unlock()
+	fake.DiffRuntimeConfigStub = nil
+	if fake.diffRuntimeConfigReturnsOnCall == nil {
+		fake.diffRuntimeConfigReturnsOnCall = make(map[int]struct {
+			result1 director.ConfigDiff
+			result2 error
+		})
+	}
+	fake.diffRuntimeConfigReturnsOnCall[i] = struct {
+		result1 director.ConfigDiff
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) DownloadResourceUnchecked(arg1 string, arg2 io.Writer) error {
+	fake.downloadResourceUncheckedMutex.Lock()
+	ret, specificReturn := fake.downloadResourceUncheckedReturnsOnCall[len(fake.downloadResourceUncheckedArgsForCall)]
+	fake.downloadResourceUncheckedArgsForCall = append(fake.downloadResourceUncheckedArgsForCall, struct {
+		arg1 string
+		arg2 io.Writer
+	}{arg1, arg2})
+	fake.recordInvocation("DownloadResourceUnchecked", []interface{}{arg1, arg2})
+	fake.downloadResourceUncheckedMutex.Unlock()
+	if fake.DownloadResourceUncheckedStub != nil {
+		return fake.DownloadResourceUncheckedStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.downloadResourceUncheckedReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeDirector) DownloadResourceUncheckedCallCount() int {
+	fake.downloadResourceUncheckedMutex.RLock()
+	defer fake.downloadResourceUncheckedMutex.RUnlock()
+	return len(fake.downloadResourceUncheckedArgsForCall)
+}
+
+func (fake *FakeDirector) DownloadResourceUncheckedCalls(stub func(string, io.Writer) error) {
+	fake.downloadResourceUncheckedMutex.Lock()
+	defer fake.downloadResourceUncheckedMutex.Unlock()
+	fake.DownloadResourceUncheckedStub = stub
+}
+
+func (fake *FakeDirector) DownloadResourceUncheckedArgsForCall(i int) (string, io.Writer) {
+	fake.downloadResourceUncheckedMutex.RLock()
+	defer fake.downloadResourceUncheckedMutex.RUnlock()
+	argsForCall := fake.downloadResourceUncheckedArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) DownloadResourceUncheckedReturns(result1 error) {
+	fake.downloadResourceUncheckedMutex.Lock()
+	defer fake.downloadResourceUncheckedMutex.Unlock()
+	fake.DownloadResourceUncheckedStub = nil
+	fake.downloadResourceUncheckedReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) DownloadResourceUncheckedReturnsOnCall(i int, result1 error) {
+	fake.downloadResourceUncheckedMutex.Lock()
+	defer fake.downloadResourceUncheckedMutex.Unlock()
+	fake.DownloadResourceUncheckedStub = nil
+	if fake.downloadResourceUncheckedReturnsOnCall == nil {
+		fake.downloadResourceUncheckedReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.downloadResourceUncheckedReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) EnableResurrection(arg1 bool) error {
+	fake.enableResurrectionMutex.Lock()
+	ret, specificReturn := fake.enableResurrectionReturnsOnCall[len(fake.enableResurrectionArgsForCall)]
+	fake.enableResurrectionArgsForCall = append(fake.enableResurrectionArgsForCall, struct {
+		arg1 bool
+	}{arg1})
+	fake.recordInvocation("EnableResurrection", []interface{}{arg1})
+	fake.enableResurrectionMutex.Unlock()
+	if fake.EnableResurrectionStub != nil {
+		return fake.EnableResurrectionStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.enableResurrectionReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeDirector) EnableResurrectionCallCount() int {
+	fake.enableResurrectionMutex.RLock()
+	defer fake.enableResurrectionMutex.RUnlock()
+	return len(fake.enableResurrectionArgsForCall)
+}
+
+func (fake *FakeDirector) EnableResurrectionCalls(stub func(bool) error) {
+	fake.enableResurrectionMutex.Lock()
+	defer fake.enableResurrectionMutex.Unlock()
+	fake.EnableResurrectionStub = stub
+}
+
+func (fake *FakeDirector) EnableResurrectionArgsForCall(i int) bool {
+	fake.enableResurrectionMutex.RLock()
+	defer fake.enableResurrectionMutex.RUnlock()
+	argsForCall := fake.enableResurrectionArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) EnableResurrectionReturns(result1 error) {
+	fake.enableResurrectionMutex.Lock()
+	defer fake.enableResurrectionMutex.Unlock()
+	fake.EnableResurrectionStub = nil
+	fake.enableResurrectionReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) EnableResurrectionReturnsOnCall(i int, result1 error) {
+	fake.enableResurrectionMutex.Lock()
+	defer fake.enableResurrectionMutex.Unlock()
+	fake.EnableResurrectionStub = nil
+	if fake.enableResurrectionReturnsOnCall == nil {
+		fake.enableResurrectionReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.enableResurrectionReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) Event(arg1 string) (director.Event, error) {
+	fake.eventMutex.Lock()
+	ret, specificReturn := fake.eventReturnsOnCall[len(fake.eventArgsForCall)]
+	fake.eventArgsForCall = append(fake.eventArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("Event", []interface{}{arg1})
+	fake.eventMutex.Unlock()
+	if fake.EventStub != nil {
+		return fake.EventStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.eventReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) EventCallCount() int {
+	fake.eventMutex.RLock()
+	defer fake.eventMutex.RUnlock()
+	return len(fake.eventArgsForCall)
+}
+
+func (fake *FakeDirector) EventCalls(stub func(string) (director.Event, error)) {
+	fake.eventMutex.Lock()
+	defer fake.eventMutex.Unlock()
+	fake.EventStub = stub
+}
+
+func (fake *FakeDirector) EventArgsForCall(i int) string {
+	fake.eventMutex.RLock()
+	defer fake.eventMutex.RUnlock()
+	argsForCall := fake.eventArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) EventReturns(result1 director.Event, result2 error) {
+	fake.eventMutex.Lock()
+	defer fake.eventMutex.Unlock()
+	fake.EventStub = nil
+	fake.eventReturns = struct {
+		result1 director.Event
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) EventReturnsOnCall(i int, result1 director.Event, result2 error) {
+	fake.eventMutex.Lock()
+	defer fake.eventMutex.Unlock()
+	fake.EventStub = nil
+	if fake.eventReturnsOnCall == nil {
+		fake.eventReturnsOnCall = make(map[int]struct {
+			result1 director.Event
+			result2 error
+		})
+	}
+	fake.eventReturnsOnCall[i] = struct {
+		result1 director.Event
 		result2 error
 	}{result1, result2}
 }
@@ -892,7 +1675,8 @@ func (fake *FakeDirector) Events(arg1 director.EventsFilter) ([]director.Event, 
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.eventsReturns.result1, fake.eventsReturns.result2
+	fakeReturns := fake.eventsReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDirector) EventsCallCount() int {
@@ -901,13 +1685,22 @@ func (fake *FakeDirector) EventsCallCount() int {
 	return len(fake.eventsArgsForCall)
 }
 
+func (fake *FakeDirector) EventsCalls(stub func(director.EventsFilter) ([]director.Event, error)) {
+	fake.eventsMutex.Lock()
+	defer fake.eventsMutex.Unlock()
+	fake.EventsStub = stub
+}
+
 func (fake *FakeDirector) EventsArgsForCall(i int) director.EventsFilter {
 	fake.eventsMutex.RLock()
 	defer fake.eventsMutex.RUnlock()
-	return fake.eventsArgsForCall[i].arg1
+	argsForCall := fake.eventsArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) EventsReturns(result1 []director.Event, result2 error) {
+	fake.eventsMutex.Lock()
+	defer fake.eventsMutex.Unlock()
 	fake.EventsStub = nil
 	fake.eventsReturns = struct {
 		result1 []director.Event
@@ -916,6 +1709,8 @@ func (fake *FakeDirector) EventsReturns(result1 []director.Event, result2 error)
 }
 
 func (fake *FakeDirector) EventsReturnsOnCall(i int, result1 []director.Event, result2 error) {
+	fake.eventsMutex.Lock()
+	defer fake.eventsMutex.Unlock()
 	fake.EventsStub = nil
 	if fake.eventsReturnsOnCall == nil {
 		fake.eventsReturnsOnCall = make(map[int]struct {
@@ -925,100 +1720,6 @@ func (fake *FakeDirector) EventsReturnsOnCall(i int, result1 []director.Event, r
 	}
 	fake.eventsReturnsOnCall[i] = struct {
 		result1 []director.Event
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) Event(arg1 string) (director.Event, error) {
-	fake.eventMutex.Lock()
-	ret, specificReturn := fake.eventReturnsOnCall[len(fake.eventArgsForCall)]
-	fake.eventArgsForCall = append(fake.eventArgsForCall, struct {
-		arg1 string
-	}{arg1})
-	fake.recordInvocation("Event", []interface{}{arg1})
-	fake.eventMutex.Unlock()
-	if fake.EventStub != nil {
-		return fake.EventStub(arg1)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.eventReturns.result1, fake.eventReturns.result2
-}
-
-func (fake *FakeDirector) EventCallCount() int {
-	fake.eventMutex.RLock()
-	defer fake.eventMutex.RUnlock()
-	return len(fake.eventArgsForCall)
-}
-
-func (fake *FakeDirector) EventArgsForCall(i int) string {
-	fake.eventMutex.RLock()
-	defer fake.eventMutex.RUnlock()
-	return fake.eventArgsForCall[i].arg1
-}
-
-func (fake *FakeDirector) EventReturns(result1 director.Event, result2 error) {
-	fake.EventStub = nil
-	fake.eventReturns = struct {
-		result1 director.Event
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) EventReturnsOnCall(i int, result1 director.Event, result2 error) {
-	fake.EventStub = nil
-	if fake.eventReturnsOnCall == nil {
-		fake.eventReturnsOnCall = make(map[int]struct {
-			result1 director.Event
-			result2 error
-		})
-	}
-	fake.eventReturnsOnCall[i] = struct {
-		result1 director.Event
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) Deployments() ([]director.Deployment, error) {
-	fake.deploymentsMutex.Lock()
-	ret, specificReturn := fake.deploymentsReturnsOnCall[len(fake.deploymentsArgsForCall)]
-	fake.deploymentsArgsForCall = append(fake.deploymentsArgsForCall, struct{}{})
-	fake.recordInvocation("Deployments", []interface{}{})
-	fake.deploymentsMutex.Unlock()
-	if fake.DeploymentsStub != nil {
-		return fake.DeploymentsStub()
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.deploymentsReturns.result1, fake.deploymentsReturns.result2
-}
-
-func (fake *FakeDirector) DeploymentsCallCount() int {
-	fake.deploymentsMutex.RLock()
-	defer fake.deploymentsMutex.RUnlock()
-	return len(fake.deploymentsArgsForCall)
-}
-
-func (fake *FakeDirector) DeploymentsReturns(result1 []director.Deployment, result2 error) {
-	fake.DeploymentsStub = nil
-	fake.deploymentsReturns = struct {
-		result1 []director.Deployment
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) DeploymentsReturnsOnCall(i int, result1 []director.Deployment, result2 error) {
-	fake.DeploymentsStub = nil
-	if fake.deploymentsReturnsOnCall == nil {
-		fake.deploymentsReturnsOnCall = make(map[int]struct {
-			result1 []director.Deployment
-			result2 error
-		})
-	}
-	fake.deploymentsReturnsOnCall[i] = struct {
-		result1 []director.Deployment
 		result2 error
 	}{result1, result2}
 }
@@ -1037,7 +1738,8 @@ func (fake *FakeDirector) FindDeployment(arg1 string) (director.Deployment, erro
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.findDeploymentReturns.result1, fake.findDeploymentReturns.result2
+	fakeReturns := fake.findDeploymentReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDirector) FindDeploymentCallCount() int {
@@ -1046,13 +1748,22 @@ func (fake *FakeDirector) FindDeploymentCallCount() int {
 	return len(fake.findDeploymentArgsForCall)
 }
 
+func (fake *FakeDirector) FindDeploymentCalls(stub func(string) (director.Deployment, error)) {
+	fake.findDeploymentMutex.Lock()
+	defer fake.findDeploymentMutex.Unlock()
+	fake.FindDeploymentStub = stub
+}
+
 func (fake *FakeDirector) FindDeploymentArgsForCall(i int) string {
 	fake.findDeploymentMutex.RLock()
 	defer fake.findDeploymentMutex.RUnlock()
-	return fake.findDeploymentArgsForCall[i].arg1
+	argsForCall := fake.findDeploymentArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) FindDeploymentReturns(result1 director.Deployment, result2 error) {
+	fake.findDeploymentMutex.Lock()
+	defer fake.findDeploymentMutex.Unlock()
 	fake.FindDeploymentStub = nil
 	fake.findDeploymentReturns = struct {
 		result1 director.Deployment
@@ -1061,6 +1772,8 @@ func (fake *FakeDirector) FindDeploymentReturns(result1 director.Deployment, res
 }
 
 func (fake *FakeDirector) FindDeploymentReturnsOnCall(i int, result1 director.Deployment, result2 error) {
+	fake.findDeploymentMutex.Lock()
+	defer fake.findDeploymentMutex.Unlock()
 	fake.FindDeploymentStub = nil
 	if fake.findDeploymentReturnsOnCall == nil {
 		fake.findDeploymentReturnsOnCall = make(map[int]struct {
@@ -1074,98 +1787,128 @@ func (fake *FakeDirector) FindDeploymentReturnsOnCall(i int, result1 director.De
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) Releases() ([]director.Release, error) {
-	fake.releasesMutex.Lock()
-	ret, specificReturn := fake.releasesReturnsOnCall[len(fake.releasesArgsForCall)]
-	fake.releasesArgsForCall = append(fake.releasesArgsForCall, struct{}{})
-	fake.recordInvocation("Releases", []interface{}{})
-	fake.releasesMutex.Unlock()
-	if fake.ReleasesStub != nil {
-		return fake.ReleasesStub()
+func (fake *FakeDirector) FindOrphanDisk(arg1 string) (director.OrphanDisk, error) {
+	fake.findOrphanDiskMutex.Lock()
+	ret, specificReturn := fake.findOrphanDiskReturnsOnCall[len(fake.findOrphanDiskArgsForCall)]
+	fake.findOrphanDiskArgsForCall = append(fake.findOrphanDiskArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("FindOrphanDisk", []interface{}{arg1})
+	fake.findOrphanDiskMutex.Unlock()
+	if fake.FindOrphanDiskStub != nil {
+		return fake.FindOrphanDiskStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.releasesReturns.result1, fake.releasesReturns.result2
+	fakeReturns := fake.findOrphanDiskReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) ReleasesCallCount() int {
-	fake.releasesMutex.RLock()
-	defer fake.releasesMutex.RUnlock()
-	return len(fake.releasesArgsForCall)
+func (fake *FakeDirector) FindOrphanDiskCallCount() int {
+	fake.findOrphanDiskMutex.RLock()
+	defer fake.findOrphanDiskMutex.RUnlock()
+	return len(fake.findOrphanDiskArgsForCall)
 }
 
-func (fake *FakeDirector) ReleasesReturns(result1 []director.Release, result2 error) {
-	fake.ReleasesStub = nil
-	fake.releasesReturns = struct {
-		result1 []director.Release
+func (fake *FakeDirector) FindOrphanDiskCalls(stub func(string) (director.OrphanDisk, error)) {
+	fake.findOrphanDiskMutex.Lock()
+	defer fake.findOrphanDiskMutex.Unlock()
+	fake.FindOrphanDiskStub = stub
+}
+
+func (fake *FakeDirector) FindOrphanDiskArgsForCall(i int) string {
+	fake.findOrphanDiskMutex.RLock()
+	defer fake.findOrphanDiskMutex.RUnlock()
+	argsForCall := fake.findOrphanDiskArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) FindOrphanDiskReturns(result1 director.OrphanDisk, result2 error) {
+	fake.findOrphanDiskMutex.Lock()
+	defer fake.findOrphanDiskMutex.Unlock()
+	fake.FindOrphanDiskStub = nil
+	fake.findOrphanDiskReturns = struct {
+		result1 director.OrphanDisk
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) ReleasesReturnsOnCall(i int, result1 []director.Release, result2 error) {
-	fake.ReleasesStub = nil
-	if fake.releasesReturnsOnCall == nil {
-		fake.releasesReturnsOnCall = make(map[int]struct {
-			result1 []director.Release
+func (fake *FakeDirector) FindOrphanDiskReturnsOnCall(i int, result1 director.OrphanDisk, result2 error) {
+	fake.findOrphanDiskMutex.Lock()
+	defer fake.findOrphanDiskMutex.Unlock()
+	fake.FindOrphanDiskStub = nil
+	if fake.findOrphanDiskReturnsOnCall == nil {
+		fake.findOrphanDiskReturnsOnCall = make(map[int]struct {
+			result1 director.OrphanDisk
 			result2 error
 		})
 	}
-	fake.releasesReturnsOnCall[i] = struct {
-		result1 []director.Release
+	fake.findOrphanDiskReturnsOnCall[i] = struct {
+		result1 director.OrphanDisk
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) HasRelease(name string, version string, stemcell director.OSVersionSlug) (bool, error) {
-	fake.hasReleaseMutex.Lock()
-	ret, specificReturn := fake.hasReleaseReturnsOnCall[len(fake.hasReleaseArgsForCall)]
-	fake.hasReleaseArgsForCall = append(fake.hasReleaseArgsForCall, struct {
-		name     string
-		version  string
-		stemcell director.OSVersionSlug
-	}{name, version, stemcell})
-	fake.recordInvocation("HasRelease", []interface{}{name, version, stemcell})
-	fake.hasReleaseMutex.Unlock()
-	if fake.HasReleaseStub != nil {
-		return fake.HasReleaseStub(name, version, stemcell)
+func (fake *FakeDirector) FindOrphanNetwork(arg1 string) (director.OrphanNetwork, error) {
+	fake.findOrphanNetworkMutex.Lock()
+	ret, specificReturn := fake.findOrphanNetworkReturnsOnCall[len(fake.findOrphanNetworkArgsForCall)]
+	fake.findOrphanNetworkArgsForCall = append(fake.findOrphanNetworkArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("FindOrphanNetwork", []interface{}{arg1})
+	fake.findOrphanNetworkMutex.Unlock()
+	if fake.FindOrphanNetworkStub != nil {
+		return fake.FindOrphanNetworkStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.hasReleaseReturns.result1, fake.hasReleaseReturns.result2
+	fakeReturns := fake.findOrphanNetworkReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) HasReleaseCallCount() int {
-	fake.hasReleaseMutex.RLock()
-	defer fake.hasReleaseMutex.RUnlock()
-	return len(fake.hasReleaseArgsForCall)
+func (fake *FakeDirector) FindOrphanNetworkCallCount() int {
+	fake.findOrphanNetworkMutex.RLock()
+	defer fake.findOrphanNetworkMutex.RUnlock()
+	return len(fake.findOrphanNetworkArgsForCall)
 }
 
-func (fake *FakeDirector) HasReleaseArgsForCall(i int) (string, string, director.OSVersionSlug) {
-	fake.hasReleaseMutex.RLock()
-	defer fake.hasReleaseMutex.RUnlock()
-	return fake.hasReleaseArgsForCall[i].name, fake.hasReleaseArgsForCall[i].version, fake.hasReleaseArgsForCall[i].stemcell
+func (fake *FakeDirector) FindOrphanNetworkCalls(stub func(string) (director.OrphanNetwork, error)) {
+	fake.findOrphanNetworkMutex.Lock()
+	defer fake.findOrphanNetworkMutex.Unlock()
+	fake.FindOrphanNetworkStub = stub
 }
 
-func (fake *FakeDirector) HasReleaseReturns(result1 bool, result2 error) {
-	fake.HasReleaseStub = nil
-	fake.hasReleaseReturns = struct {
-		result1 bool
+func (fake *FakeDirector) FindOrphanNetworkArgsForCall(i int) string {
+	fake.findOrphanNetworkMutex.RLock()
+	defer fake.findOrphanNetworkMutex.RUnlock()
+	argsForCall := fake.findOrphanNetworkArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) FindOrphanNetworkReturns(result1 director.OrphanNetwork, result2 error) {
+	fake.findOrphanNetworkMutex.Lock()
+	defer fake.findOrphanNetworkMutex.Unlock()
+	fake.FindOrphanNetworkStub = nil
+	fake.findOrphanNetworkReturns = struct {
+		result1 director.OrphanNetwork
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) HasReleaseReturnsOnCall(i int, result1 bool, result2 error) {
-	fake.HasReleaseStub = nil
-	if fake.hasReleaseReturnsOnCall == nil {
-		fake.hasReleaseReturnsOnCall = make(map[int]struct {
-			result1 bool
+func (fake *FakeDirector) FindOrphanNetworkReturnsOnCall(i int, result1 director.OrphanNetwork, result2 error) {
+	fake.findOrphanNetworkMutex.Lock()
+	defer fake.findOrphanNetworkMutex.Unlock()
+	fake.FindOrphanNetworkStub = nil
+	if fake.findOrphanNetworkReturnsOnCall == nil {
+		fake.findOrphanNetworkReturnsOnCall = make(map[int]struct {
+			result1 director.OrphanNetwork
 			result2 error
 		})
 	}
-	fake.hasReleaseReturnsOnCall[i] = struct {
-		result1 bool
+	fake.findOrphanNetworkReturnsOnCall[i] = struct {
+		result1 director.OrphanNetwork
 		result2 error
 	}{result1, result2}
 }
@@ -1184,7 +1927,8 @@ func (fake *FakeDirector) FindRelease(arg1 director.ReleaseSlug) (director.Relea
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.findReleaseReturns.result1, fake.findReleaseReturns.result2
+	fakeReturns := fake.findReleaseReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDirector) FindReleaseCallCount() int {
@@ -1193,13 +1937,22 @@ func (fake *FakeDirector) FindReleaseCallCount() int {
 	return len(fake.findReleaseArgsForCall)
 }
 
+func (fake *FakeDirector) FindReleaseCalls(stub func(director.ReleaseSlug) (director.Release, error)) {
+	fake.findReleaseMutex.Lock()
+	defer fake.findReleaseMutex.Unlock()
+	fake.FindReleaseStub = stub
+}
+
 func (fake *FakeDirector) FindReleaseArgsForCall(i int) director.ReleaseSlug {
 	fake.findReleaseMutex.RLock()
 	defer fake.findReleaseMutex.RUnlock()
-	return fake.findReleaseArgsForCall[i].arg1
+	argsForCall := fake.findReleaseArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) FindReleaseReturns(result1 director.Release, result2 error) {
+	fake.findReleaseMutex.Lock()
+	defer fake.findReleaseMutex.Unlock()
 	fake.FindReleaseStub = nil
 	fake.findReleaseReturns = struct {
 		result1 director.Release
@@ -1208,6 +1961,8 @@ func (fake *FakeDirector) FindReleaseReturns(result1 director.Release, result2 e
 }
 
 func (fake *FakeDirector) FindReleaseReturnsOnCall(i int, result1 director.Release, result2 error) {
+	fake.findReleaseMutex.Lock()
+	defer fake.findReleaseMutex.Unlock()
 	fake.FindReleaseStub = nil
 	if fake.findReleaseReturnsOnCall == nil {
 		fake.findReleaseReturnsOnCall = make(map[int]struct {
@@ -1235,7 +1990,8 @@ func (fake *FakeDirector) FindReleaseSeries(arg1 director.ReleaseSeriesSlug) (di
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.findReleaseSeriesReturns.result1, fake.findReleaseSeriesReturns.result2
+	fakeReturns := fake.findReleaseSeriesReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDirector) FindReleaseSeriesCallCount() int {
@@ -1244,13 +2000,22 @@ func (fake *FakeDirector) FindReleaseSeriesCallCount() int {
 	return len(fake.findReleaseSeriesArgsForCall)
 }
 
+func (fake *FakeDirector) FindReleaseSeriesCalls(stub func(director.ReleaseSeriesSlug) (director.ReleaseSeries, error)) {
+	fake.findReleaseSeriesMutex.Lock()
+	defer fake.findReleaseSeriesMutex.Unlock()
+	fake.FindReleaseSeriesStub = stub
+}
+
 func (fake *FakeDirector) FindReleaseSeriesArgsForCall(i int) director.ReleaseSeriesSlug {
 	fake.findReleaseSeriesMutex.RLock()
 	defer fake.findReleaseSeriesMutex.RUnlock()
-	return fake.findReleaseSeriesArgsForCall[i].arg1
+	argsForCall := fake.findReleaseSeriesArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) FindReleaseSeriesReturns(result1 director.ReleaseSeries, result2 error) {
+	fake.findReleaseSeriesMutex.Lock()
+	defer fake.findReleaseSeriesMutex.Unlock()
 	fake.FindReleaseSeriesStub = nil
 	fake.findReleaseSeriesReturns = struct {
 		result1 director.ReleaseSeries
@@ -1259,6 +2024,8 @@ func (fake *FakeDirector) FindReleaseSeriesReturns(result1 director.ReleaseSerie
 }
 
 func (fake *FakeDirector) FindReleaseSeriesReturnsOnCall(i int, result1 director.ReleaseSeries, result2 error) {
+	fake.findReleaseSeriesMutex.Lock()
+	defer fake.findReleaseSeriesMutex.Unlock()
 	fake.FindReleaseSeriesStub = nil
 	if fake.findReleaseSeriesReturnsOnCall == nil {
 		fake.findReleaseSeriesReturnsOnCall = make(map[int]struct {
@@ -1268,254 +2035,6 @@ func (fake *FakeDirector) FindReleaseSeriesReturnsOnCall(i int, result1 director
 	}
 	fake.findReleaseSeriesReturnsOnCall[i] = struct {
 		result1 director.ReleaseSeries
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) UploadReleaseURL(url string, sha1 string, rebase bool, fix bool) error {
-	fake.uploadReleaseURLMutex.Lock()
-	ret, specificReturn := fake.uploadReleaseURLReturnsOnCall[len(fake.uploadReleaseURLArgsForCall)]
-	fake.uploadReleaseURLArgsForCall = append(fake.uploadReleaseURLArgsForCall, struct {
-		url    string
-		sha1   string
-		rebase bool
-		fix    bool
-	}{url, sha1, rebase, fix})
-	fake.recordInvocation("UploadReleaseURL", []interface{}{url, sha1, rebase, fix})
-	fake.uploadReleaseURLMutex.Unlock()
-	if fake.UploadReleaseURLStub != nil {
-		return fake.UploadReleaseURLStub(url, sha1, rebase, fix)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.uploadReleaseURLReturns.result1
-}
-
-func (fake *FakeDirector) UploadReleaseURLCallCount() int {
-	fake.uploadReleaseURLMutex.RLock()
-	defer fake.uploadReleaseURLMutex.RUnlock()
-	return len(fake.uploadReleaseURLArgsForCall)
-}
-
-func (fake *FakeDirector) UploadReleaseURLArgsForCall(i int) (string, string, bool, bool) {
-	fake.uploadReleaseURLMutex.RLock()
-	defer fake.uploadReleaseURLMutex.RUnlock()
-	return fake.uploadReleaseURLArgsForCall[i].url, fake.uploadReleaseURLArgsForCall[i].sha1, fake.uploadReleaseURLArgsForCall[i].rebase, fake.uploadReleaseURLArgsForCall[i].fix
-}
-
-func (fake *FakeDirector) UploadReleaseURLReturns(result1 error) {
-	fake.UploadReleaseURLStub = nil
-	fake.uploadReleaseURLReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) UploadReleaseURLReturnsOnCall(i int, result1 error) {
-	fake.UploadReleaseURLStub = nil
-	if fake.uploadReleaseURLReturnsOnCall == nil {
-		fake.uploadReleaseURLReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.uploadReleaseURLReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) UploadReleaseFile(file director.UploadFile, rebase bool, fix bool) error {
-	fake.uploadReleaseFileMutex.Lock()
-	ret, specificReturn := fake.uploadReleaseFileReturnsOnCall[len(fake.uploadReleaseFileArgsForCall)]
-	fake.uploadReleaseFileArgsForCall = append(fake.uploadReleaseFileArgsForCall, struct {
-		file   director.UploadFile
-		rebase bool
-		fix    bool
-	}{file, rebase, fix})
-	fake.recordInvocation("UploadReleaseFile", []interface{}{file, rebase, fix})
-	fake.uploadReleaseFileMutex.Unlock()
-	if fake.UploadReleaseFileStub != nil {
-		return fake.UploadReleaseFileStub(file, rebase, fix)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.uploadReleaseFileReturns.result1
-}
-
-func (fake *FakeDirector) UploadReleaseFileCallCount() int {
-	fake.uploadReleaseFileMutex.RLock()
-	defer fake.uploadReleaseFileMutex.RUnlock()
-	return len(fake.uploadReleaseFileArgsForCall)
-}
-
-func (fake *FakeDirector) UploadReleaseFileArgsForCall(i int) (director.UploadFile, bool, bool) {
-	fake.uploadReleaseFileMutex.RLock()
-	defer fake.uploadReleaseFileMutex.RUnlock()
-	return fake.uploadReleaseFileArgsForCall[i].file, fake.uploadReleaseFileArgsForCall[i].rebase, fake.uploadReleaseFileArgsForCall[i].fix
-}
-
-func (fake *FakeDirector) UploadReleaseFileReturns(result1 error) {
-	fake.UploadReleaseFileStub = nil
-	fake.uploadReleaseFileReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) UploadReleaseFileReturnsOnCall(i int, result1 error) {
-	fake.UploadReleaseFileStub = nil
-	if fake.uploadReleaseFileReturnsOnCall == nil {
-		fake.uploadReleaseFileReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.uploadReleaseFileReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) MatchPackages(manifest interface{}, compiled bool) ([]string, error) {
-	fake.matchPackagesMutex.Lock()
-	ret, specificReturn := fake.matchPackagesReturnsOnCall[len(fake.matchPackagesArgsForCall)]
-	fake.matchPackagesArgsForCall = append(fake.matchPackagesArgsForCall, struct {
-		manifest interface{}
-		compiled bool
-	}{manifest, compiled})
-	fake.recordInvocation("MatchPackages", []interface{}{manifest, compiled})
-	fake.matchPackagesMutex.Unlock()
-	if fake.MatchPackagesStub != nil {
-		return fake.MatchPackagesStub(manifest, compiled)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.matchPackagesReturns.result1, fake.matchPackagesReturns.result2
-}
-
-func (fake *FakeDirector) MatchPackagesCallCount() int {
-	fake.matchPackagesMutex.RLock()
-	defer fake.matchPackagesMutex.RUnlock()
-	return len(fake.matchPackagesArgsForCall)
-}
-
-func (fake *FakeDirector) MatchPackagesArgsForCall(i int) (interface{}, bool) {
-	fake.matchPackagesMutex.RLock()
-	defer fake.matchPackagesMutex.RUnlock()
-	return fake.matchPackagesArgsForCall[i].manifest, fake.matchPackagesArgsForCall[i].compiled
-}
-
-func (fake *FakeDirector) MatchPackagesReturns(result1 []string, result2 error) {
-	fake.MatchPackagesStub = nil
-	fake.matchPackagesReturns = struct {
-		result1 []string
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) MatchPackagesReturnsOnCall(i int, result1 []string, result2 error) {
-	fake.MatchPackagesStub = nil
-	if fake.matchPackagesReturnsOnCall == nil {
-		fake.matchPackagesReturnsOnCall = make(map[int]struct {
-			result1 []string
-			result2 error
-		})
-	}
-	fake.matchPackagesReturnsOnCall[i] = struct {
-		result1 []string
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) Stemcells() ([]director.Stemcell, error) {
-	fake.stemcellsMutex.Lock()
-	ret, specificReturn := fake.stemcellsReturnsOnCall[len(fake.stemcellsArgsForCall)]
-	fake.stemcellsArgsForCall = append(fake.stemcellsArgsForCall, struct{}{})
-	fake.recordInvocation("Stemcells", []interface{}{})
-	fake.stemcellsMutex.Unlock()
-	if fake.StemcellsStub != nil {
-		return fake.StemcellsStub()
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.stemcellsReturns.result1, fake.stemcellsReturns.result2
-}
-
-func (fake *FakeDirector) StemcellsCallCount() int {
-	fake.stemcellsMutex.RLock()
-	defer fake.stemcellsMutex.RUnlock()
-	return len(fake.stemcellsArgsForCall)
-}
-
-func (fake *FakeDirector) StemcellsReturns(result1 []director.Stemcell, result2 error) {
-	fake.StemcellsStub = nil
-	fake.stemcellsReturns = struct {
-		result1 []director.Stemcell
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) StemcellsReturnsOnCall(i int, result1 []director.Stemcell, result2 error) {
-	fake.StemcellsStub = nil
-	if fake.stemcellsReturnsOnCall == nil {
-		fake.stemcellsReturnsOnCall = make(map[int]struct {
-			result1 []director.Stemcell
-			result2 error
-		})
-	}
-	fake.stemcellsReturnsOnCall[i] = struct {
-		result1 []director.Stemcell
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) HasStemcell(name string, version string) (bool, error) {
-	fake.hasStemcellMutex.Lock()
-	ret, specificReturn := fake.hasStemcellReturnsOnCall[len(fake.hasStemcellArgsForCall)]
-	fake.hasStemcellArgsForCall = append(fake.hasStemcellArgsForCall, struct {
-		name    string
-		version string
-	}{name, version})
-	fake.recordInvocation("HasStemcell", []interface{}{name, version})
-	fake.hasStemcellMutex.Unlock()
-	if fake.HasStemcellStub != nil {
-		return fake.HasStemcellStub(name, version)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.hasStemcellReturns.result1, fake.hasStemcellReturns.result2
-}
-
-func (fake *FakeDirector) HasStemcellCallCount() int {
-	fake.hasStemcellMutex.RLock()
-	defer fake.hasStemcellMutex.RUnlock()
-	return len(fake.hasStemcellArgsForCall)
-}
-
-func (fake *FakeDirector) HasStemcellArgsForCall(i int) (string, string) {
-	fake.hasStemcellMutex.RLock()
-	defer fake.hasStemcellMutex.RUnlock()
-	return fake.hasStemcellArgsForCall[i].name, fake.hasStemcellArgsForCall[i].version
-}
-
-func (fake *FakeDirector) HasStemcellReturns(result1 bool, result2 error) {
-	fake.HasStemcellStub = nil
-	fake.hasStemcellReturns = struct {
-		result1 bool
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) HasStemcellReturnsOnCall(i int, result1 bool, result2 error) {
-	fake.HasStemcellStub = nil
-	if fake.hasStemcellReturnsOnCall == nil {
-		fake.hasStemcellReturnsOnCall = make(map[int]struct {
-			result1 bool
-			result2 error
-		})
-	}
-	fake.hasStemcellReturnsOnCall[i] = struct {
-		result1 bool
 		result2 error
 	}{result1, result2}
 }
@@ -1534,7 +2053,8 @@ func (fake *FakeDirector) FindStemcell(arg1 director.StemcellSlug) (director.Ste
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.findStemcellReturns.result1, fake.findStemcellReturns.result2
+	fakeReturns := fake.findStemcellReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDirector) FindStemcellCallCount() int {
@@ -1543,13 +2063,22 @@ func (fake *FakeDirector) FindStemcellCallCount() int {
 	return len(fake.findStemcellArgsForCall)
 }
 
+func (fake *FakeDirector) FindStemcellCalls(stub func(director.StemcellSlug) (director.Stemcell, error)) {
+	fake.findStemcellMutex.Lock()
+	defer fake.findStemcellMutex.Unlock()
+	fake.FindStemcellStub = stub
+}
+
 func (fake *FakeDirector) FindStemcellArgsForCall(i int) director.StemcellSlug {
 	fake.findStemcellMutex.RLock()
 	defer fake.findStemcellMutex.RUnlock()
-	return fake.findStemcellArgsForCall[i].arg1
+	argsForCall := fake.findStemcellArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) FindStemcellReturns(result1 director.Stemcell, result2 error) {
+	fake.findStemcellMutex.Lock()
+	defer fake.findStemcellMutex.Unlock()
 	fake.FindStemcellStub = nil
 	fake.findStemcellReturns = struct {
 		result1 director.Stemcell
@@ -1558,6 +2087,8 @@ func (fake *FakeDirector) FindStemcellReturns(result1 director.Stemcell, result2
 }
 
 func (fake *FakeDirector) FindStemcellReturnsOnCall(i int, result1 director.Stemcell, result2 error) {
+	fake.findStemcellMutex.Lock()
+	defer fake.findStemcellMutex.Unlock()
 	fake.FindStemcellStub = nil
 	if fake.findStemcellReturnsOnCall == nil {
 		fake.findStemcellReturnsOnCall = make(map[int]struct {
@@ -1571,109 +2102,367 @@ func (fake *FakeDirector) FindStemcellReturnsOnCall(i int, result1 director.Stem
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) UploadStemcellURL(url string, sha1 string, fix bool) error {
-	fake.uploadStemcellURLMutex.Lock()
-	ret, specificReturn := fake.uploadStemcellURLReturnsOnCall[len(fake.uploadStemcellURLArgsForCall)]
-	fake.uploadStemcellURLArgsForCall = append(fake.uploadStemcellURLArgsForCall, struct {
-		url  string
-		sha1 string
-		fix  bool
-	}{url, sha1, fix})
-	fake.recordInvocation("UploadStemcellURL", []interface{}{url, sha1, fix})
-	fake.uploadStemcellURLMutex.Unlock()
-	if fake.UploadStemcellURLStub != nil {
-		return fake.UploadStemcellURLStub(url, sha1, fix)
+func (fake *FakeDirector) FindTask(arg1 int) (director.Task, error) {
+	fake.findTaskMutex.Lock()
+	ret, specificReturn := fake.findTaskReturnsOnCall[len(fake.findTaskArgsForCall)]
+	fake.findTaskArgsForCall = append(fake.findTaskArgsForCall, struct {
+		arg1 int
+	}{arg1})
+	fake.recordInvocation("FindTask", []interface{}{arg1})
+	fake.findTaskMutex.Unlock()
+	if fake.FindTaskStub != nil {
+		return fake.FindTaskStub(arg1)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
-	return fake.uploadStemcellURLReturns.result1
+	fakeReturns := fake.findTaskReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) UploadStemcellURLCallCount() int {
-	fake.uploadStemcellURLMutex.RLock()
-	defer fake.uploadStemcellURLMutex.RUnlock()
-	return len(fake.uploadStemcellURLArgsForCall)
+func (fake *FakeDirector) FindTaskCallCount() int {
+	fake.findTaskMutex.RLock()
+	defer fake.findTaskMutex.RUnlock()
+	return len(fake.findTaskArgsForCall)
 }
 
-func (fake *FakeDirector) UploadStemcellURLArgsForCall(i int) (string, string, bool) {
-	fake.uploadStemcellURLMutex.RLock()
-	defer fake.uploadStemcellURLMutex.RUnlock()
-	return fake.uploadStemcellURLArgsForCall[i].url, fake.uploadStemcellURLArgsForCall[i].sha1, fake.uploadStemcellURLArgsForCall[i].fix
+func (fake *FakeDirector) FindTaskCalls(stub func(int) (director.Task, error)) {
+	fake.findTaskMutex.Lock()
+	defer fake.findTaskMutex.Unlock()
+	fake.FindTaskStub = stub
 }
 
-func (fake *FakeDirector) UploadStemcellURLReturns(result1 error) {
-	fake.UploadStemcellURLStub = nil
-	fake.uploadStemcellURLReturns = struct {
-		result1 error
-	}{result1}
+func (fake *FakeDirector) FindTaskArgsForCall(i int) int {
+	fake.findTaskMutex.RLock()
+	defer fake.findTaskMutex.RUnlock()
+	argsForCall := fake.findTaskArgsForCall[i]
+	return argsForCall.arg1
 }
 
-func (fake *FakeDirector) UploadStemcellURLReturnsOnCall(i int, result1 error) {
-	fake.UploadStemcellURLStub = nil
-	if fake.uploadStemcellURLReturnsOnCall == nil {
-		fake.uploadStemcellURLReturnsOnCall = make(map[int]struct {
-			result1 error
+func (fake *FakeDirector) FindTaskReturns(result1 director.Task, result2 error) {
+	fake.findTaskMutex.Lock()
+	defer fake.findTaskMutex.Unlock()
+	fake.FindTaskStub = nil
+	fake.findTaskReturns = struct {
+		result1 director.Task
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) FindTaskReturnsOnCall(i int, result1 director.Task, result2 error) {
+	fake.findTaskMutex.Lock()
+	defer fake.findTaskMutex.Unlock()
+	fake.FindTaskStub = nil
+	if fake.findTaskReturnsOnCall == nil {
+		fake.findTaskReturnsOnCall = make(map[int]struct {
+			result1 director.Task
+			result2 error
 		})
 	}
-	fake.uploadStemcellURLReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
+	fake.findTaskReturnsOnCall[i] = struct {
+		result1 director.Task
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeDirector) UploadStemcellFile(file director.UploadFile, fix bool) error {
-	fake.uploadStemcellFileMutex.Lock()
-	ret, specificReturn := fake.uploadStemcellFileReturnsOnCall[len(fake.uploadStemcellFileArgsForCall)]
-	fake.uploadStemcellFileArgsForCall = append(fake.uploadStemcellFileArgsForCall, struct {
-		file director.UploadFile
-		fix  bool
-	}{file, fix})
-	fake.recordInvocation("UploadStemcellFile", []interface{}{file, fix})
-	fake.uploadStemcellFileMutex.Unlock()
-	if fake.UploadStemcellFileStub != nil {
-		return fake.UploadStemcellFileStub(file, fix)
+func (fake *FakeDirector) FindTasksByContextId(arg1 string) ([]director.Task, error) {
+	fake.findTasksByContextIdMutex.Lock()
+	ret, specificReturn := fake.findTasksByContextIdReturnsOnCall[len(fake.findTasksByContextIdArgsForCall)]
+	fake.findTasksByContextIdArgsForCall = append(fake.findTasksByContextIdArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("FindTasksByContextId", []interface{}{arg1})
+	fake.findTasksByContextIdMutex.Unlock()
+	if fake.FindTasksByContextIdStub != nil {
+		return fake.FindTasksByContextIdStub(arg1)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
-	return fake.uploadStemcellFileReturns.result1
+	fakeReturns := fake.findTasksByContextIdReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) UploadStemcellFileCallCount() int {
-	fake.uploadStemcellFileMutex.RLock()
-	defer fake.uploadStemcellFileMutex.RUnlock()
-	return len(fake.uploadStemcellFileArgsForCall)
+func (fake *FakeDirector) FindTasksByContextIdCallCount() int {
+	fake.findTasksByContextIdMutex.RLock()
+	defer fake.findTasksByContextIdMutex.RUnlock()
+	return len(fake.findTasksByContextIdArgsForCall)
 }
 
-func (fake *FakeDirector) UploadStemcellFileArgsForCall(i int) (director.UploadFile, bool) {
-	fake.uploadStemcellFileMutex.RLock()
-	defer fake.uploadStemcellFileMutex.RUnlock()
-	return fake.uploadStemcellFileArgsForCall[i].file, fake.uploadStemcellFileArgsForCall[i].fix
+func (fake *FakeDirector) FindTasksByContextIdCalls(stub func(string) ([]director.Task, error)) {
+	fake.findTasksByContextIdMutex.Lock()
+	defer fake.findTasksByContextIdMutex.Unlock()
+	fake.FindTasksByContextIdStub = stub
 }
 
-func (fake *FakeDirector) UploadStemcellFileReturns(result1 error) {
-	fake.UploadStemcellFileStub = nil
-	fake.uploadStemcellFileReturns = struct {
-		result1 error
-	}{result1}
+func (fake *FakeDirector) FindTasksByContextIdArgsForCall(i int) string {
+	fake.findTasksByContextIdMutex.RLock()
+	defer fake.findTasksByContextIdMutex.RUnlock()
+	argsForCall := fake.findTasksByContextIdArgsForCall[i]
+	return argsForCall.arg1
 }
 
-func (fake *FakeDirector) UploadStemcellFileReturnsOnCall(i int, result1 error) {
-	fake.UploadStemcellFileStub = nil
-	if fake.uploadStemcellFileReturnsOnCall == nil {
-		fake.uploadStemcellFileReturnsOnCall = make(map[int]struct {
-			result1 error
+func (fake *FakeDirector) FindTasksByContextIdReturns(result1 []director.Task, result2 error) {
+	fake.findTasksByContextIdMutex.Lock()
+	defer fake.findTasksByContextIdMutex.Unlock()
+	fake.FindTasksByContextIdStub = nil
+	fake.findTasksByContextIdReturns = struct {
+		result1 []director.Task
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) FindTasksByContextIdReturnsOnCall(i int, result1 []director.Task, result2 error) {
+	fake.findTasksByContextIdMutex.Lock()
+	defer fake.findTasksByContextIdMutex.Unlock()
+	fake.FindTasksByContextIdStub = nil
+	if fake.findTasksByContextIdReturnsOnCall == nil {
+		fake.findTasksByContextIdReturnsOnCall = make(map[int]struct {
+			result1 []director.Task
+			result2 error
 		})
 	}
-	fake.uploadStemcellFileReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
+	fake.findTasksByContextIdReturnsOnCall[i] = struct {
+		result1 []director.Task
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) HasRelease(arg1 string, arg2 string, arg3 director.OSVersionSlug) (bool, error) {
+	fake.hasReleaseMutex.Lock()
+	ret, specificReturn := fake.hasReleaseReturnsOnCall[len(fake.hasReleaseArgsForCall)]
+	fake.hasReleaseArgsForCall = append(fake.hasReleaseArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 director.OSVersionSlug
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("HasRelease", []interface{}{arg1, arg2, arg3})
+	fake.hasReleaseMutex.Unlock()
+	if fake.HasReleaseStub != nil {
+		return fake.HasReleaseStub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.hasReleaseReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) HasReleaseCallCount() int {
+	fake.hasReleaseMutex.RLock()
+	defer fake.hasReleaseMutex.RUnlock()
+	return len(fake.hasReleaseArgsForCall)
+}
+
+func (fake *FakeDirector) HasReleaseCalls(stub func(string, string, director.OSVersionSlug) (bool, error)) {
+	fake.hasReleaseMutex.Lock()
+	defer fake.hasReleaseMutex.Unlock()
+	fake.HasReleaseStub = stub
+}
+
+func (fake *FakeDirector) HasReleaseArgsForCall(i int) (string, string, director.OSVersionSlug) {
+	fake.hasReleaseMutex.RLock()
+	defer fake.hasReleaseMutex.RUnlock()
+	argsForCall := fake.hasReleaseArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeDirector) HasReleaseReturns(result1 bool, result2 error) {
+	fake.hasReleaseMutex.Lock()
+	defer fake.hasReleaseMutex.Unlock()
+	fake.HasReleaseStub = nil
+	fake.hasReleaseReturns = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) HasReleaseReturnsOnCall(i int, result1 bool, result2 error) {
+	fake.hasReleaseMutex.Lock()
+	defer fake.hasReleaseMutex.Unlock()
+	fake.HasReleaseStub = nil
+	if fake.hasReleaseReturnsOnCall == nil {
+		fake.hasReleaseReturnsOnCall = make(map[int]struct {
+			result1 bool
+			result2 error
+		})
+	}
+	fake.hasReleaseReturnsOnCall[i] = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) Info() (director.Info, error) {
+	fake.infoMutex.Lock()
+	ret, specificReturn := fake.infoReturnsOnCall[len(fake.infoArgsForCall)]
+	fake.infoArgsForCall = append(fake.infoArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Info", []interface{}{})
+	fake.infoMutex.Unlock()
+	if fake.InfoStub != nil {
+		return fake.InfoStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.infoReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) InfoCallCount() int {
+	fake.infoMutex.RLock()
+	defer fake.infoMutex.RUnlock()
+	return len(fake.infoArgsForCall)
+}
+
+func (fake *FakeDirector) InfoCalls(stub func() (director.Info, error)) {
+	fake.infoMutex.Lock()
+	defer fake.infoMutex.Unlock()
+	fake.InfoStub = stub
+}
+
+func (fake *FakeDirector) InfoReturns(result1 director.Info, result2 error) {
+	fake.infoMutex.Lock()
+	defer fake.infoMutex.Unlock()
+	fake.InfoStub = nil
+	fake.infoReturns = struct {
+		result1 director.Info
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) InfoReturnsOnCall(i int, result1 director.Info, result2 error) {
+	fake.infoMutex.Lock()
+	defer fake.infoMutex.Unlock()
+	fake.InfoStub = nil
+	if fake.infoReturnsOnCall == nil {
+		fake.infoReturnsOnCall = make(map[int]struct {
+			result1 director.Info
+			result2 error
+		})
+	}
+	fake.infoReturnsOnCall[i] = struct {
+		result1 director.Info
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) IsAuthenticated() (bool, error) {
+	fake.isAuthenticatedMutex.Lock()
+	ret, specificReturn := fake.isAuthenticatedReturnsOnCall[len(fake.isAuthenticatedArgsForCall)]
+	fake.isAuthenticatedArgsForCall = append(fake.isAuthenticatedArgsForCall, struct {
+	}{})
+	fake.recordInvocation("IsAuthenticated", []interface{}{})
+	fake.isAuthenticatedMutex.Unlock()
+	if fake.IsAuthenticatedStub != nil {
+		return fake.IsAuthenticatedStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.isAuthenticatedReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) IsAuthenticatedCallCount() int {
+	fake.isAuthenticatedMutex.RLock()
+	defer fake.isAuthenticatedMutex.RUnlock()
+	return len(fake.isAuthenticatedArgsForCall)
+}
+
+func (fake *FakeDirector) IsAuthenticatedCalls(stub func() (bool, error)) {
+	fake.isAuthenticatedMutex.Lock()
+	defer fake.isAuthenticatedMutex.Unlock()
+	fake.IsAuthenticatedStub = stub
+}
+
+func (fake *FakeDirector) IsAuthenticatedReturns(result1 bool, result2 error) {
+	fake.isAuthenticatedMutex.Lock()
+	defer fake.isAuthenticatedMutex.Unlock()
+	fake.IsAuthenticatedStub = nil
+	fake.isAuthenticatedReturns = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) IsAuthenticatedReturnsOnCall(i int, result1 bool, result2 error) {
+	fake.isAuthenticatedMutex.Lock()
+	defer fake.isAuthenticatedMutex.Unlock()
+	fake.IsAuthenticatedStub = nil
+	if fake.isAuthenticatedReturnsOnCall == nil {
+		fake.isAuthenticatedReturnsOnCall = make(map[int]struct {
+			result1 bool
+			result2 error
+		})
+	}
+	fake.isAuthenticatedReturnsOnCall[i] = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) LatestCPIConfig() (director.CPIConfig, error) {
+	fake.latestCPIConfigMutex.Lock()
+	ret, specificReturn := fake.latestCPIConfigReturnsOnCall[len(fake.latestCPIConfigArgsForCall)]
+	fake.latestCPIConfigArgsForCall = append(fake.latestCPIConfigArgsForCall, struct {
+	}{})
+	fake.recordInvocation("LatestCPIConfig", []interface{}{})
+	fake.latestCPIConfigMutex.Unlock()
+	if fake.LatestCPIConfigStub != nil {
+		return fake.LatestCPIConfigStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.latestCPIConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) LatestCPIConfigCallCount() int {
+	fake.latestCPIConfigMutex.RLock()
+	defer fake.latestCPIConfigMutex.RUnlock()
+	return len(fake.latestCPIConfigArgsForCall)
+}
+
+func (fake *FakeDirector) LatestCPIConfigCalls(stub func() (director.CPIConfig, error)) {
+	fake.latestCPIConfigMutex.Lock()
+	defer fake.latestCPIConfigMutex.Unlock()
+	fake.LatestCPIConfigStub = stub
+}
+
+func (fake *FakeDirector) LatestCPIConfigReturns(result1 director.CPIConfig, result2 error) {
+	fake.latestCPIConfigMutex.Lock()
+	defer fake.latestCPIConfigMutex.Unlock()
+	fake.LatestCPIConfigStub = nil
+	fake.latestCPIConfigReturns = struct {
+		result1 director.CPIConfig
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) LatestCPIConfigReturnsOnCall(i int, result1 director.CPIConfig, result2 error) {
+	fake.latestCPIConfigMutex.Lock()
+	defer fake.latestCPIConfigMutex.Unlock()
+	fake.LatestCPIConfigStub = nil
+	if fake.latestCPIConfigReturnsOnCall == nil {
+		fake.latestCPIConfigReturnsOnCall = make(map[int]struct {
+			result1 director.CPIConfig
+			result2 error
+		})
+	}
+	fake.latestCPIConfigReturnsOnCall[i] = struct {
+		result1 director.CPIConfig
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeDirector) LatestCloudConfig() (director.CloudConfig, error) {
 	fake.latestCloudConfigMutex.Lock()
 	ret, specificReturn := fake.latestCloudConfigReturnsOnCall[len(fake.latestCloudConfigArgsForCall)]
-	fake.latestCloudConfigArgsForCall = append(fake.latestCloudConfigArgsForCall, struct{}{})
+	fake.latestCloudConfigArgsForCall = append(fake.latestCloudConfigArgsForCall, struct {
+	}{})
 	fake.recordInvocation("LatestCloudConfig", []interface{}{})
 	fake.latestCloudConfigMutex.Unlock()
 	if fake.LatestCloudConfigStub != nil {
@@ -1682,7 +2471,8 @@ func (fake *FakeDirector) LatestCloudConfig() (director.CloudConfig, error) {
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.latestCloudConfigReturns.result1, fake.latestCloudConfigReturns.result2
+	fakeReturns := fake.latestCloudConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDirector) LatestCloudConfigCallCount() int {
@@ -1691,7 +2481,15 @@ func (fake *FakeDirector) LatestCloudConfigCallCount() int {
 	return len(fake.latestCloudConfigArgsForCall)
 }
 
+func (fake *FakeDirector) LatestCloudConfigCalls(stub func() (director.CloudConfig, error)) {
+	fake.latestCloudConfigMutex.Lock()
+	defer fake.latestCloudConfigMutex.Unlock()
+	fake.LatestCloudConfigStub = stub
+}
+
 func (fake *FakeDirector) LatestCloudConfigReturns(result1 director.CloudConfig, result2 error) {
+	fake.latestCloudConfigMutex.Lock()
+	defer fake.latestCloudConfigMutex.Unlock()
 	fake.LatestCloudConfigStub = nil
 	fake.latestCloudConfigReturns = struct {
 		result1 director.CloudConfig
@@ -1700,6 +2498,8 @@ func (fake *FakeDirector) LatestCloudConfigReturns(result1 director.CloudConfig,
 }
 
 func (fake *FakeDirector) LatestCloudConfigReturnsOnCall(i int, result1 director.CloudConfig, result2 error) {
+	fake.latestCloudConfigMutex.Lock()
+	defer fake.latestCloudConfigMutex.Unlock()
 	fake.LatestCloudConfigStub = nil
 	if fake.latestCloudConfigReturnsOnCall == nil {
 		fake.latestCloudConfigReturnsOnCall = make(map[int]struct {
@@ -1713,154 +2513,955 @@ func (fake *FakeDirector) LatestCloudConfigReturnsOnCall(i int, result1 director
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) UpdateCloudConfig(arg1 []byte) error {
-	var arg1Copy []byte
-	if arg1 != nil {
-		arg1Copy = make([]byte, len(arg1))
-		copy(arg1Copy, arg1)
+func (fake *FakeDirector) LatestConfig(arg1 string, arg2 string) (director.Config, error) {
+	fake.latestConfigMutex.Lock()
+	ret, specificReturn := fake.latestConfigReturnsOnCall[len(fake.latestConfigArgsForCall)]
+	fake.latestConfigArgsForCall = append(fake.latestConfigArgsForCall, struct {
+		arg1 string
+		arg2 string
+	}{arg1, arg2})
+	fake.recordInvocation("LatestConfig", []interface{}{arg1, arg2})
+	fake.latestConfigMutex.Unlock()
+	if fake.LatestConfigStub != nil {
+		return fake.LatestConfigStub(arg1, arg2)
 	}
-	fake.updateCloudConfigMutex.Lock()
-	ret, specificReturn := fake.updateCloudConfigReturnsOnCall[len(fake.updateCloudConfigArgsForCall)]
-	fake.updateCloudConfigArgsForCall = append(fake.updateCloudConfigArgsForCall, struct {
-		arg1 []byte
-	}{arg1Copy})
-	fake.recordInvocation("UpdateCloudConfig", []interface{}{arg1Copy})
-	fake.updateCloudConfigMutex.Unlock()
-	if fake.UpdateCloudConfigStub != nil {
-		return fake.UpdateCloudConfigStub(arg1)
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.latestConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) LatestConfigCallCount() int {
+	fake.latestConfigMutex.RLock()
+	defer fake.latestConfigMutex.RUnlock()
+	return len(fake.latestConfigArgsForCall)
+}
+
+func (fake *FakeDirector) LatestConfigCalls(stub func(string, string) (director.Config, error)) {
+	fake.latestConfigMutex.Lock()
+	defer fake.latestConfigMutex.Unlock()
+	fake.LatestConfigStub = stub
+}
+
+func (fake *FakeDirector) LatestConfigArgsForCall(i int) (string, string) {
+	fake.latestConfigMutex.RLock()
+	defer fake.latestConfigMutex.RUnlock()
+	argsForCall := fake.latestConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) LatestConfigReturns(result1 director.Config, result2 error) {
+	fake.latestConfigMutex.Lock()
+	defer fake.latestConfigMutex.Unlock()
+	fake.LatestConfigStub = nil
+	fake.latestConfigReturns = struct {
+		result1 director.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) LatestConfigReturnsOnCall(i int, result1 director.Config, result2 error) {
+	fake.latestConfigMutex.Lock()
+	defer fake.latestConfigMutex.Unlock()
+	fake.LatestConfigStub = nil
+	if fake.latestConfigReturnsOnCall == nil {
+		fake.latestConfigReturnsOnCall = make(map[int]struct {
+			result1 director.Config
+			result2 error
+		})
+	}
+	fake.latestConfigReturnsOnCall[i] = struct {
+		result1 director.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) LatestConfigByID(arg1 string) (director.Config, error) {
+	fake.latestConfigByIDMutex.Lock()
+	ret, specificReturn := fake.latestConfigByIDReturnsOnCall[len(fake.latestConfigByIDArgsForCall)]
+	fake.latestConfigByIDArgsForCall = append(fake.latestConfigByIDArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("LatestConfigByID", []interface{}{arg1})
+	fake.latestConfigByIDMutex.Unlock()
+	if fake.LatestConfigByIDStub != nil {
+		return fake.LatestConfigByIDStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.latestConfigByIDReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) LatestConfigByIDCallCount() int {
+	fake.latestConfigByIDMutex.RLock()
+	defer fake.latestConfigByIDMutex.RUnlock()
+	return len(fake.latestConfigByIDArgsForCall)
+}
+
+func (fake *FakeDirector) LatestConfigByIDCalls(stub func(string) (director.Config, error)) {
+	fake.latestConfigByIDMutex.Lock()
+	defer fake.latestConfigByIDMutex.Unlock()
+	fake.LatestConfigByIDStub = stub
+}
+
+func (fake *FakeDirector) LatestConfigByIDArgsForCall(i int) string {
+	fake.latestConfigByIDMutex.RLock()
+	defer fake.latestConfigByIDMutex.RUnlock()
+	argsForCall := fake.latestConfigByIDArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) LatestConfigByIDReturns(result1 director.Config, result2 error) {
+	fake.latestConfigByIDMutex.Lock()
+	defer fake.latestConfigByIDMutex.Unlock()
+	fake.LatestConfigByIDStub = nil
+	fake.latestConfigByIDReturns = struct {
+		result1 director.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) LatestConfigByIDReturnsOnCall(i int, result1 director.Config, result2 error) {
+	fake.latestConfigByIDMutex.Lock()
+	defer fake.latestConfigByIDMutex.Unlock()
+	fake.LatestConfigByIDStub = nil
+	if fake.latestConfigByIDReturnsOnCall == nil {
+		fake.latestConfigByIDReturnsOnCall = make(map[int]struct {
+			result1 director.Config
+			result2 error
+		})
+	}
+	fake.latestConfigByIDReturnsOnCall[i] = struct {
+		result1 director.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) LatestRuntimeConfig(arg1 string) (director.RuntimeConfig, error) {
+	fake.latestRuntimeConfigMutex.Lock()
+	ret, specificReturn := fake.latestRuntimeConfigReturnsOnCall[len(fake.latestRuntimeConfigArgsForCall)]
+	fake.latestRuntimeConfigArgsForCall = append(fake.latestRuntimeConfigArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("LatestRuntimeConfig", []interface{}{arg1})
+	fake.latestRuntimeConfigMutex.Unlock()
+	if fake.LatestRuntimeConfigStub != nil {
+		return fake.LatestRuntimeConfigStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.latestRuntimeConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) LatestRuntimeConfigCallCount() int {
+	fake.latestRuntimeConfigMutex.RLock()
+	defer fake.latestRuntimeConfigMutex.RUnlock()
+	return len(fake.latestRuntimeConfigArgsForCall)
+}
+
+func (fake *FakeDirector) LatestRuntimeConfigCalls(stub func(string) (director.RuntimeConfig, error)) {
+	fake.latestRuntimeConfigMutex.Lock()
+	defer fake.latestRuntimeConfigMutex.Unlock()
+	fake.LatestRuntimeConfigStub = stub
+}
+
+func (fake *FakeDirector) LatestRuntimeConfigArgsForCall(i int) string {
+	fake.latestRuntimeConfigMutex.RLock()
+	defer fake.latestRuntimeConfigMutex.RUnlock()
+	argsForCall := fake.latestRuntimeConfigArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) LatestRuntimeConfigReturns(result1 director.RuntimeConfig, result2 error) {
+	fake.latestRuntimeConfigMutex.Lock()
+	defer fake.latestRuntimeConfigMutex.Unlock()
+	fake.LatestRuntimeConfigStub = nil
+	fake.latestRuntimeConfigReturns = struct {
+		result1 director.RuntimeConfig
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) LatestRuntimeConfigReturnsOnCall(i int, result1 director.RuntimeConfig, result2 error) {
+	fake.latestRuntimeConfigMutex.Lock()
+	defer fake.latestRuntimeConfigMutex.Unlock()
+	fake.LatestRuntimeConfigStub = nil
+	if fake.latestRuntimeConfigReturnsOnCall == nil {
+		fake.latestRuntimeConfigReturnsOnCall = make(map[int]struct {
+			result1 director.RuntimeConfig
+			result2 error
+		})
+	}
+	fake.latestRuntimeConfigReturnsOnCall[i] = struct {
+		result1 director.RuntimeConfig
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) ListConfigs(arg1 int, arg2 director.ConfigsFilter) ([]director.Config, error) {
+	fake.listConfigsMutex.Lock()
+	ret, specificReturn := fake.listConfigsReturnsOnCall[len(fake.listConfigsArgsForCall)]
+	fake.listConfigsArgsForCall = append(fake.listConfigsArgsForCall, struct {
+		arg1 int
+		arg2 director.ConfigsFilter
+	}{arg1, arg2})
+	fake.recordInvocation("ListConfigs", []interface{}{arg1, arg2})
+	fake.listConfigsMutex.Unlock()
+	if fake.ListConfigsStub != nil {
+		return fake.ListConfigsStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.listConfigsReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) ListConfigsCallCount() int {
+	fake.listConfigsMutex.RLock()
+	defer fake.listConfigsMutex.RUnlock()
+	return len(fake.listConfigsArgsForCall)
+}
+
+func (fake *FakeDirector) ListConfigsCalls(stub func(int, director.ConfigsFilter) ([]director.Config, error)) {
+	fake.listConfigsMutex.Lock()
+	defer fake.listConfigsMutex.Unlock()
+	fake.ListConfigsStub = stub
+}
+
+func (fake *FakeDirector) ListConfigsArgsForCall(i int) (int, director.ConfigsFilter) {
+	fake.listConfigsMutex.RLock()
+	defer fake.listConfigsMutex.RUnlock()
+	argsForCall := fake.listConfigsArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) ListConfigsReturns(result1 []director.Config, result2 error) {
+	fake.listConfigsMutex.Lock()
+	defer fake.listConfigsMutex.Unlock()
+	fake.ListConfigsStub = nil
+	fake.listConfigsReturns = struct {
+		result1 []director.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) ListConfigsReturnsOnCall(i int, result1 []director.Config, result2 error) {
+	fake.listConfigsMutex.Lock()
+	defer fake.listConfigsMutex.Unlock()
+	fake.ListConfigsStub = nil
+	if fake.listConfigsReturnsOnCall == nil {
+		fake.listConfigsReturnsOnCall = make(map[int]struct {
+			result1 []director.Config
+			result2 error
+		})
+	}
+	fake.listConfigsReturnsOnCall[i] = struct {
+		result1 []director.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) ListDeploymentConfigs(arg1 string) (director.DeploymentConfigs, error) {
+	fake.listDeploymentConfigsMutex.Lock()
+	ret, specificReturn := fake.listDeploymentConfigsReturnsOnCall[len(fake.listDeploymentConfigsArgsForCall)]
+	fake.listDeploymentConfigsArgsForCall = append(fake.listDeploymentConfigsArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("ListDeploymentConfigs", []interface{}{arg1})
+	fake.listDeploymentConfigsMutex.Unlock()
+	if fake.ListDeploymentConfigsStub != nil {
+		return fake.ListDeploymentConfigsStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.listDeploymentConfigsReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) ListDeploymentConfigsCallCount() int {
+	fake.listDeploymentConfigsMutex.RLock()
+	defer fake.listDeploymentConfigsMutex.RUnlock()
+	return len(fake.listDeploymentConfigsArgsForCall)
+}
+
+func (fake *FakeDirector) ListDeploymentConfigsCalls(stub func(string) (director.DeploymentConfigs, error)) {
+	fake.listDeploymentConfigsMutex.Lock()
+	defer fake.listDeploymentConfigsMutex.Unlock()
+	fake.ListDeploymentConfigsStub = stub
+}
+
+func (fake *FakeDirector) ListDeploymentConfigsArgsForCall(i int) string {
+	fake.listDeploymentConfigsMutex.RLock()
+	defer fake.listDeploymentConfigsMutex.RUnlock()
+	argsForCall := fake.listDeploymentConfigsArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) ListDeploymentConfigsReturns(result1 director.DeploymentConfigs, result2 error) {
+	fake.listDeploymentConfigsMutex.Lock()
+	defer fake.listDeploymentConfigsMutex.Unlock()
+	fake.ListDeploymentConfigsStub = nil
+	fake.listDeploymentConfigsReturns = struct {
+		result1 director.DeploymentConfigs
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) ListDeploymentConfigsReturnsOnCall(i int, result1 director.DeploymentConfigs, result2 error) {
+	fake.listDeploymentConfigsMutex.Lock()
+	defer fake.listDeploymentConfigsMutex.Unlock()
+	fake.ListDeploymentConfigsStub = nil
+	if fake.listDeploymentConfigsReturnsOnCall == nil {
+		fake.listDeploymentConfigsReturnsOnCall = make(map[int]struct {
+			result1 director.DeploymentConfigs
+			result2 error
+		})
+	}
+	fake.listDeploymentConfigsReturnsOnCall[i] = struct {
+		result1 director.DeploymentConfigs
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) ListDeployments() ([]director.DeploymentResp, error) {
+	fake.listDeploymentsMutex.Lock()
+	ret, specificReturn := fake.listDeploymentsReturnsOnCall[len(fake.listDeploymentsArgsForCall)]
+	fake.listDeploymentsArgsForCall = append(fake.listDeploymentsArgsForCall, struct {
+	}{})
+	fake.recordInvocation("ListDeployments", []interface{}{})
+	fake.listDeploymentsMutex.Unlock()
+	if fake.ListDeploymentsStub != nil {
+		return fake.ListDeploymentsStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.listDeploymentsReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) ListDeploymentsCallCount() int {
+	fake.listDeploymentsMutex.RLock()
+	defer fake.listDeploymentsMutex.RUnlock()
+	return len(fake.listDeploymentsArgsForCall)
+}
+
+func (fake *FakeDirector) ListDeploymentsCalls(stub func() ([]director.DeploymentResp, error)) {
+	fake.listDeploymentsMutex.Lock()
+	defer fake.listDeploymentsMutex.Unlock()
+	fake.ListDeploymentsStub = stub
+}
+
+func (fake *FakeDirector) ListDeploymentsReturns(result1 []director.DeploymentResp, result2 error) {
+	fake.listDeploymentsMutex.Lock()
+	defer fake.listDeploymentsMutex.Unlock()
+	fake.ListDeploymentsStub = nil
+	fake.listDeploymentsReturns = struct {
+		result1 []director.DeploymentResp
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) ListDeploymentsReturnsOnCall(i int, result1 []director.DeploymentResp, result2 error) {
+	fake.listDeploymentsMutex.Lock()
+	defer fake.listDeploymentsMutex.Unlock()
+	fake.ListDeploymentsStub = nil
+	if fake.listDeploymentsReturnsOnCall == nil {
+		fake.listDeploymentsReturnsOnCall = make(map[int]struct {
+			result1 []director.DeploymentResp
+			result2 error
+		})
+	}
+	fake.listDeploymentsReturnsOnCall[i] = struct {
+		result1 []director.DeploymentResp
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) Locks() ([]director.Lock, error) {
+	fake.locksMutex.Lock()
+	ret, specificReturn := fake.locksReturnsOnCall[len(fake.locksArgsForCall)]
+	fake.locksArgsForCall = append(fake.locksArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Locks", []interface{}{})
+	fake.locksMutex.Unlock()
+	if fake.LocksStub != nil {
+		return fake.LocksStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.locksReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) LocksCallCount() int {
+	fake.locksMutex.RLock()
+	defer fake.locksMutex.RUnlock()
+	return len(fake.locksArgsForCall)
+}
+
+func (fake *FakeDirector) LocksCalls(stub func() ([]director.Lock, error)) {
+	fake.locksMutex.Lock()
+	defer fake.locksMutex.Unlock()
+	fake.LocksStub = stub
+}
+
+func (fake *FakeDirector) LocksReturns(result1 []director.Lock, result2 error) {
+	fake.locksMutex.Lock()
+	defer fake.locksMutex.Unlock()
+	fake.LocksStub = nil
+	fake.locksReturns = struct {
+		result1 []director.Lock
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) LocksReturnsOnCall(i int, result1 []director.Lock, result2 error) {
+	fake.locksMutex.Lock()
+	defer fake.locksMutex.Unlock()
+	fake.LocksStub = nil
+	if fake.locksReturnsOnCall == nil {
+		fake.locksReturnsOnCall = make(map[int]struct {
+			result1 []director.Lock
+			result2 error
+		})
+	}
+	fake.locksReturnsOnCall[i] = struct {
+		result1 []director.Lock
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) MatchPackages(arg1 interface{}, arg2 bool) ([]string, error) {
+	fake.matchPackagesMutex.Lock()
+	ret, specificReturn := fake.matchPackagesReturnsOnCall[len(fake.matchPackagesArgsForCall)]
+	fake.matchPackagesArgsForCall = append(fake.matchPackagesArgsForCall, struct {
+		arg1 interface{}
+		arg2 bool
+	}{arg1, arg2})
+	fake.recordInvocation("MatchPackages", []interface{}{arg1, arg2})
+	fake.matchPackagesMutex.Unlock()
+	if fake.MatchPackagesStub != nil {
+		return fake.MatchPackagesStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.matchPackagesReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) MatchPackagesCallCount() int {
+	fake.matchPackagesMutex.RLock()
+	defer fake.matchPackagesMutex.RUnlock()
+	return len(fake.matchPackagesArgsForCall)
+}
+
+func (fake *FakeDirector) MatchPackagesCalls(stub func(interface{}, bool) ([]string, error)) {
+	fake.matchPackagesMutex.Lock()
+	defer fake.matchPackagesMutex.Unlock()
+	fake.MatchPackagesStub = stub
+}
+
+func (fake *FakeDirector) MatchPackagesArgsForCall(i int) (interface{}, bool) {
+	fake.matchPackagesMutex.RLock()
+	defer fake.matchPackagesMutex.RUnlock()
+	argsForCall := fake.matchPackagesArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) MatchPackagesReturns(result1 []string, result2 error) {
+	fake.matchPackagesMutex.Lock()
+	defer fake.matchPackagesMutex.Unlock()
+	fake.MatchPackagesStub = nil
+	fake.matchPackagesReturns = struct {
+		result1 []string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) MatchPackagesReturnsOnCall(i int, result1 []string, result2 error) {
+	fake.matchPackagesMutex.Lock()
+	defer fake.matchPackagesMutex.Unlock()
+	fake.MatchPackagesStub = nil
+	if fake.matchPackagesReturnsOnCall == nil {
+		fake.matchPackagesReturnsOnCall = make(map[int]struct {
+			result1 []string
+			result2 error
+		})
+	}
+	fake.matchPackagesReturnsOnCall[i] = struct {
+		result1 []string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) OrphanDisk(arg1 string) error {
+	fake.orphanDiskMutex.Lock()
+	ret, specificReturn := fake.orphanDiskReturnsOnCall[len(fake.orphanDiskArgsForCall)]
+	fake.orphanDiskArgsForCall = append(fake.orphanDiskArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("OrphanDisk", []interface{}{arg1})
+	fake.orphanDiskMutex.Unlock()
+	if fake.OrphanDiskStub != nil {
+		return fake.OrphanDiskStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.updateCloudConfigReturns.result1
+	fakeReturns := fake.orphanDiskReturns
+	return fakeReturns.result1
 }
 
-func (fake *FakeDirector) UpdateCloudConfigCallCount() int {
-	fake.updateCloudConfigMutex.RLock()
-	defer fake.updateCloudConfigMutex.RUnlock()
-	return len(fake.updateCloudConfigArgsForCall)
+func (fake *FakeDirector) OrphanDiskCallCount() int {
+	fake.orphanDiskMutex.RLock()
+	defer fake.orphanDiskMutex.RUnlock()
+	return len(fake.orphanDiskArgsForCall)
 }
 
-func (fake *FakeDirector) UpdateCloudConfigArgsForCall(i int) []byte {
-	fake.updateCloudConfigMutex.RLock()
-	defer fake.updateCloudConfigMutex.RUnlock()
-	return fake.updateCloudConfigArgsForCall[i].arg1
+func (fake *FakeDirector) OrphanDiskCalls(stub func(string) error) {
+	fake.orphanDiskMutex.Lock()
+	defer fake.orphanDiskMutex.Unlock()
+	fake.OrphanDiskStub = stub
 }
 
-func (fake *FakeDirector) UpdateCloudConfigReturns(result1 error) {
-	fake.UpdateCloudConfigStub = nil
-	fake.updateCloudConfigReturns = struct {
+func (fake *FakeDirector) OrphanDiskArgsForCall(i int) string {
+	fake.orphanDiskMutex.RLock()
+	defer fake.orphanDiskMutex.RUnlock()
+	argsForCall := fake.orphanDiskArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) OrphanDiskReturns(result1 error) {
+	fake.orphanDiskMutex.Lock()
+	defer fake.orphanDiskMutex.Unlock()
+	fake.OrphanDiskStub = nil
+	fake.orphanDiskReturns = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *FakeDirector) UpdateCloudConfigReturnsOnCall(i int, result1 error) {
-	fake.UpdateCloudConfigStub = nil
-	if fake.updateCloudConfigReturnsOnCall == nil {
-		fake.updateCloudConfigReturnsOnCall = make(map[int]struct {
+func (fake *FakeDirector) OrphanDiskReturnsOnCall(i int, result1 error) {
+	fake.orphanDiskMutex.Lock()
+	defer fake.orphanDiskMutex.Unlock()
+	fake.OrphanDiskStub = nil
+	if fake.orphanDiskReturnsOnCall == nil {
+		fake.orphanDiskReturnsOnCall = make(map[int]struct {
 			result1 error
 		})
 	}
-	fake.updateCloudConfigReturnsOnCall[i] = struct {
+	fake.orphanDiskReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *FakeDirector) DiffCloudConfig(manifest []byte) (director.ConfigDiff, error) {
-	var manifestCopy []byte
-	if manifest != nil {
-		manifestCopy = make([]byte, len(manifest))
-		copy(manifestCopy, manifest)
-	}
-	fake.diffCloudConfigMutex.Lock()
-	ret, specificReturn := fake.diffCloudConfigReturnsOnCall[len(fake.diffCloudConfigArgsForCall)]
-	fake.diffCloudConfigArgsForCall = append(fake.diffCloudConfigArgsForCall, struct {
-		manifest []byte
-	}{manifestCopy})
-	fake.recordInvocation("DiffCloudConfig", []interface{}{manifestCopy})
-	fake.diffCloudConfigMutex.Unlock()
-	if fake.DiffCloudConfigStub != nil {
-		return fake.DiffCloudConfigStub(manifest)
+func (fake *FakeDirector) OrphanDisks() ([]director.OrphanDisk, error) {
+	fake.orphanDisksMutex.Lock()
+	ret, specificReturn := fake.orphanDisksReturnsOnCall[len(fake.orphanDisksArgsForCall)]
+	fake.orphanDisksArgsForCall = append(fake.orphanDisksArgsForCall, struct {
+	}{})
+	fake.recordInvocation("OrphanDisks", []interface{}{})
+	fake.orphanDisksMutex.Unlock()
+	if fake.OrphanDisksStub != nil {
+		return fake.OrphanDisksStub()
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.diffCloudConfigReturns.result1, fake.diffCloudConfigReturns.result2
+	fakeReturns := fake.orphanDisksReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) DiffCloudConfigCallCount() int {
-	fake.diffCloudConfigMutex.RLock()
-	defer fake.diffCloudConfigMutex.RUnlock()
-	return len(fake.diffCloudConfigArgsForCall)
+func (fake *FakeDirector) OrphanDisksCallCount() int {
+	fake.orphanDisksMutex.RLock()
+	defer fake.orphanDisksMutex.RUnlock()
+	return len(fake.orphanDisksArgsForCall)
 }
 
-func (fake *FakeDirector) DiffCloudConfigArgsForCall(i int) []byte {
-	fake.diffCloudConfigMutex.RLock()
-	defer fake.diffCloudConfigMutex.RUnlock()
-	return fake.diffCloudConfigArgsForCall[i].manifest
+func (fake *FakeDirector) OrphanDisksCalls(stub func() ([]director.OrphanDisk, error)) {
+	fake.orphanDisksMutex.Lock()
+	defer fake.orphanDisksMutex.Unlock()
+	fake.OrphanDisksStub = stub
 }
 
-func (fake *FakeDirector) DiffCloudConfigReturns(result1 director.ConfigDiff, result2 error) {
-	fake.DiffCloudConfigStub = nil
-	fake.diffCloudConfigReturns = struct {
-		result1 director.ConfigDiff
+func (fake *FakeDirector) OrphanDisksReturns(result1 []director.OrphanDisk, result2 error) {
+	fake.orphanDisksMutex.Lock()
+	defer fake.orphanDisksMutex.Unlock()
+	fake.OrphanDisksStub = nil
+	fake.orphanDisksReturns = struct {
+		result1 []director.OrphanDisk
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) DiffCloudConfigReturnsOnCall(i int, result1 director.ConfigDiff, result2 error) {
-	fake.DiffCloudConfigStub = nil
-	if fake.diffCloudConfigReturnsOnCall == nil {
-		fake.diffCloudConfigReturnsOnCall = make(map[int]struct {
-			result1 director.ConfigDiff
+func (fake *FakeDirector) OrphanDisksReturnsOnCall(i int, result1 []director.OrphanDisk, result2 error) {
+	fake.orphanDisksMutex.Lock()
+	defer fake.orphanDisksMutex.Unlock()
+	fake.OrphanDisksStub = nil
+	if fake.orphanDisksReturnsOnCall == nil {
+		fake.orphanDisksReturnsOnCall = make(map[int]struct {
+			result1 []director.OrphanDisk
 			result2 error
 		})
 	}
-	fake.diffCloudConfigReturnsOnCall[i] = struct {
-		result1 director.ConfigDiff
+	fake.orphanDisksReturnsOnCall[i] = struct {
+		result1 []director.OrphanDisk
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) LatestCPIConfig() (director.CPIConfig, error) {
-	fake.latestCPIConfigMutex.Lock()
-	ret, specificReturn := fake.latestCPIConfigReturnsOnCall[len(fake.latestCPIConfigArgsForCall)]
-	fake.latestCPIConfigArgsForCall = append(fake.latestCPIConfigArgsForCall, struct{}{})
-	fake.recordInvocation("LatestCPIConfig", []interface{}{})
-	fake.latestCPIConfigMutex.Unlock()
-	if fake.LatestCPIConfigStub != nil {
-		return fake.LatestCPIConfigStub()
+func (fake *FakeDirector) OrphanNetworks() ([]director.OrphanNetwork, error) {
+	fake.orphanNetworksMutex.Lock()
+	ret, specificReturn := fake.orphanNetworksReturnsOnCall[len(fake.orphanNetworksArgsForCall)]
+	fake.orphanNetworksArgsForCall = append(fake.orphanNetworksArgsForCall, struct {
+	}{})
+	fake.recordInvocation("OrphanNetworks", []interface{}{})
+	fake.orphanNetworksMutex.Unlock()
+	if fake.OrphanNetworksStub != nil {
+		return fake.OrphanNetworksStub()
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.latestCPIConfigReturns.result1, fake.latestCPIConfigReturns.result2
+	fakeReturns := fake.orphanNetworksReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeDirector) LatestCPIConfigCallCount() int {
-	fake.latestCPIConfigMutex.RLock()
-	defer fake.latestCPIConfigMutex.RUnlock()
-	return len(fake.latestCPIConfigArgsForCall)
+func (fake *FakeDirector) OrphanNetworksCallCount() int {
+	fake.orphanNetworksMutex.RLock()
+	defer fake.orphanNetworksMutex.RUnlock()
+	return len(fake.orphanNetworksArgsForCall)
 }
 
-func (fake *FakeDirector) LatestCPIConfigReturns(result1 director.CPIConfig, result2 error) {
-	fake.LatestCPIConfigStub = nil
-	fake.latestCPIConfigReturns = struct {
-		result1 director.CPIConfig
+func (fake *FakeDirector) OrphanNetworksCalls(stub func() ([]director.OrphanNetwork, error)) {
+	fake.orphanNetworksMutex.Lock()
+	defer fake.orphanNetworksMutex.Unlock()
+	fake.OrphanNetworksStub = stub
+}
+
+func (fake *FakeDirector) OrphanNetworksReturns(result1 []director.OrphanNetwork, result2 error) {
+	fake.orphanNetworksMutex.Lock()
+	defer fake.orphanNetworksMutex.Unlock()
+	fake.OrphanNetworksStub = nil
+	fake.orphanNetworksReturns = struct {
+		result1 []director.OrphanNetwork
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) LatestCPIConfigReturnsOnCall(i int, result1 director.CPIConfig, result2 error) {
-	fake.LatestCPIConfigStub = nil
-	if fake.latestCPIConfigReturnsOnCall == nil {
-		fake.latestCPIConfigReturnsOnCall = make(map[int]struct {
-			result1 director.CPIConfig
+func (fake *FakeDirector) OrphanNetworksReturnsOnCall(i int, result1 []director.OrphanNetwork, result2 error) {
+	fake.orphanNetworksMutex.Lock()
+	defer fake.orphanNetworksMutex.Unlock()
+	fake.OrphanNetworksStub = nil
+	if fake.orphanNetworksReturnsOnCall == nil {
+		fake.orphanNetworksReturnsOnCall = make(map[int]struct {
+			result1 []director.OrphanNetwork
 			result2 error
 		})
 	}
-	fake.latestCPIConfigReturnsOnCall[i] = struct {
-		result1 director.CPIConfig
+	fake.orphanNetworksReturnsOnCall[i] = struct {
+		result1 []director.OrphanNetwork
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) OrphanedVMs() ([]director.OrphanedVM, error) {
+	fake.orphanedVMsMutex.Lock()
+	ret, specificReturn := fake.orphanedVMsReturnsOnCall[len(fake.orphanedVMsArgsForCall)]
+	fake.orphanedVMsArgsForCall = append(fake.orphanedVMsArgsForCall, struct {
+	}{})
+	fake.recordInvocation("OrphanedVMs", []interface{}{})
+	fake.orphanedVMsMutex.Unlock()
+	if fake.OrphanedVMsStub != nil {
+		return fake.OrphanedVMsStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.orphanedVMsReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) OrphanedVMsCallCount() int {
+	fake.orphanedVMsMutex.RLock()
+	defer fake.orphanedVMsMutex.RUnlock()
+	return len(fake.orphanedVMsArgsForCall)
+}
+
+func (fake *FakeDirector) OrphanedVMsCalls(stub func() ([]director.OrphanedVM, error)) {
+	fake.orphanedVMsMutex.Lock()
+	defer fake.orphanedVMsMutex.Unlock()
+	fake.OrphanedVMsStub = stub
+}
+
+func (fake *FakeDirector) OrphanedVMsReturns(result1 []director.OrphanedVM, result2 error) {
+	fake.orphanedVMsMutex.Lock()
+	defer fake.orphanedVMsMutex.Unlock()
+	fake.OrphanedVMsStub = nil
+	fake.orphanedVMsReturns = struct {
+		result1 []director.OrphanedVM
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) OrphanedVMsReturnsOnCall(i int, result1 []director.OrphanedVM, result2 error) {
+	fake.orphanedVMsMutex.Lock()
+	defer fake.orphanedVMsMutex.Unlock()
+	fake.OrphanedVMsStub = nil
+	if fake.orphanedVMsReturnsOnCall == nil {
+		fake.orphanedVMsReturnsOnCall = make(map[int]struct {
+			result1 []director.OrphanedVM
+			result2 error
+		})
+	}
+	fake.orphanedVMsReturnsOnCall[i] = struct {
+		result1 []director.OrphanedVM
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) RecentTasks(arg1 int, arg2 director.TasksFilter) ([]director.Task, error) {
+	fake.recentTasksMutex.Lock()
+	ret, specificReturn := fake.recentTasksReturnsOnCall[len(fake.recentTasksArgsForCall)]
+	fake.recentTasksArgsForCall = append(fake.recentTasksArgsForCall, struct {
+		arg1 int
+		arg2 director.TasksFilter
+	}{arg1, arg2})
+	fake.recordInvocation("RecentTasks", []interface{}{arg1, arg2})
+	fake.recentTasksMutex.Unlock()
+	if fake.RecentTasksStub != nil {
+		return fake.RecentTasksStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.recentTasksReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) RecentTasksCallCount() int {
+	fake.recentTasksMutex.RLock()
+	defer fake.recentTasksMutex.RUnlock()
+	return len(fake.recentTasksArgsForCall)
+}
+
+func (fake *FakeDirector) RecentTasksCalls(stub func(int, director.TasksFilter) ([]director.Task, error)) {
+	fake.recentTasksMutex.Lock()
+	defer fake.recentTasksMutex.Unlock()
+	fake.RecentTasksStub = stub
+}
+
+func (fake *FakeDirector) RecentTasksArgsForCall(i int) (int, director.TasksFilter) {
+	fake.recentTasksMutex.RLock()
+	defer fake.recentTasksMutex.RUnlock()
+	argsForCall := fake.recentTasksArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) RecentTasksReturns(result1 []director.Task, result2 error) {
+	fake.recentTasksMutex.Lock()
+	defer fake.recentTasksMutex.Unlock()
+	fake.RecentTasksStub = nil
+	fake.recentTasksReturns = struct {
+		result1 []director.Task
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) RecentTasksReturnsOnCall(i int, result1 []director.Task, result2 error) {
+	fake.recentTasksMutex.Lock()
+	defer fake.recentTasksMutex.Unlock()
+	fake.RecentTasksStub = nil
+	if fake.recentTasksReturnsOnCall == nil {
+		fake.recentTasksReturnsOnCall = make(map[int]struct {
+			result1 []director.Task
+			result2 error
+		})
+	}
+	fake.recentTasksReturnsOnCall[i] = struct {
+		result1 []director.Task
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) Releases() ([]director.Release, error) {
+	fake.releasesMutex.Lock()
+	ret, specificReturn := fake.releasesReturnsOnCall[len(fake.releasesArgsForCall)]
+	fake.releasesArgsForCall = append(fake.releasesArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Releases", []interface{}{})
+	fake.releasesMutex.Unlock()
+	if fake.ReleasesStub != nil {
+		return fake.ReleasesStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.releasesReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) ReleasesCallCount() int {
+	fake.releasesMutex.RLock()
+	defer fake.releasesMutex.RUnlock()
+	return len(fake.releasesArgsForCall)
+}
+
+func (fake *FakeDirector) ReleasesCalls(stub func() ([]director.Release, error)) {
+	fake.releasesMutex.Lock()
+	defer fake.releasesMutex.Unlock()
+	fake.ReleasesStub = stub
+}
+
+func (fake *FakeDirector) ReleasesReturns(result1 []director.Release, result2 error) {
+	fake.releasesMutex.Lock()
+	defer fake.releasesMutex.Unlock()
+	fake.ReleasesStub = nil
+	fake.releasesReturns = struct {
+		result1 []director.Release
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) ReleasesReturnsOnCall(i int, result1 []director.Release, result2 error) {
+	fake.releasesMutex.Lock()
+	defer fake.releasesMutex.Unlock()
+	fake.ReleasesStub = nil
+	if fake.releasesReturnsOnCall == nil {
+		fake.releasesReturnsOnCall = make(map[int]struct {
+			result1 []director.Release
+			result2 error
+		})
+	}
+	fake.releasesReturnsOnCall[i] = struct {
+		result1 []director.Release
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) StemcellNeedsUpload(arg1 director.StemcellInfo) (bool, error) {
+	fake.stemcellNeedsUploadMutex.Lock()
+	ret, specificReturn := fake.stemcellNeedsUploadReturnsOnCall[len(fake.stemcellNeedsUploadArgsForCall)]
+	fake.stemcellNeedsUploadArgsForCall = append(fake.stemcellNeedsUploadArgsForCall, struct {
+		arg1 director.StemcellInfo
+	}{arg1})
+	fake.recordInvocation("StemcellNeedsUpload", []interface{}{arg1})
+	fake.stemcellNeedsUploadMutex.Unlock()
+	if fake.StemcellNeedsUploadStub != nil {
+		return fake.StemcellNeedsUploadStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.stemcellNeedsUploadReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) StemcellNeedsUploadCallCount() int {
+	fake.stemcellNeedsUploadMutex.RLock()
+	defer fake.stemcellNeedsUploadMutex.RUnlock()
+	return len(fake.stemcellNeedsUploadArgsForCall)
+}
+
+func (fake *FakeDirector) StemcellNeedsUploadCalls(stub func(director.StemcellInfo) (bool, error)) {
+	fake.stemcellNeedsUploadMutex.Lock()
+	defer fake.stemcellNeedsUploadMutex.Unlock()
+	fake.StemcellNeedsUploadStub = stub
+}
+
+func (fake *FakeDirector) StemcellNeedsUploadArgsForCall(i int) director.StemcellInfo {
+	fake.stemcellNeedsUploadMutex.RLock()
+	defer fake.stemcellNeedsUploadMutex.RUnlock()
+	argsForCall := fake.stemcellNeedsUploadArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) StemcellNeedsUploadReturns(result1 bool, result2 error) {
+	fake.stemcellNeedsUploadMutex.Lock()
+	defer fake.stemcellNeedsUploadMutex.Unlock()
+	fake.StemcellNeedsUploadStub = nil
+	fake.stemcellNeedsUploadReturns = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) StemcellNeedsUploadReturnsOnCall(i int, result1 bool, result2 error) {
+	fake.stemcellNeedsUploadMutex.Lock()
+	defer fake.stemcellNeedsUploadMutex.Unlock()
+	fake.StemcellNeedsUploadStub = nil
+	if fake.stemcellNeedsUploadReturnsOnCall == nil {
+		fake.stemcellNeedsUploadReturnsOnCall = make(map[int]struct {
+			result1 bool
+			result2 error
+		})
+	}
+	fake.stemcellNeedsUploadReturnsOnCall[i] = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) Stemcells() ([]director.Stemcell, error) {
+	fake.stemcellsMutex.Lock()
+	ret, specificReturn := fake.stemcellsReturnsOnCall[len(fake.stemcellsArgsForCall)]
+	fake.stemcellsArgsForCall = append(fake.stemcellsArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Stemcells", []interface{}{})
+	fake.stemcellsMutex.Unlock()
+	if fake.StemcellsStub != nil {
+		return fake.StemcellsStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.stemcellsReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) StemcellsCallCount() int {
+	fake.stemcellsMutex.RLock()
+	defer fake.stemcellsMutex.RUnlock()
+	return len(fake.stemcellsArgsForCall)
+}
+
+func (fake *FakeDirector) StemcellsCalls(stub func() ([]director.Stemcell, error)) {
+	fake.stemcellsMutex.Lock()
+	defer fake.stemcellsMutex.Unlock()
+	fake.StemcellsStub = stub
+}
+
+func (fake *FakeDirector) StemcellsReturns(result1 []director.Stemcell, result2 error) {
+	fake.stemcellsMutex.Lock()
+	defer fake.stemcellsMutex.Unlock()
+	fake.StemcellsStub = nil
+	fake.stemcellsReturns = struct {
+		result1 []director.Stemcell
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) StemcellsReturnsOnCall(i int, result1 []director.Stemcell, result2 error) {
+	fake.stemcellsMutex.Lock()
+	defer fake.stemcellsMutex.Unlock()
+	fake.StemcellsStub = nil
+	if fake.stemcellsReturnsOnCall == nil {
+		fake.stemcellsReturnsOnCall = make(map[int]struct {
+			result1 []director.Stemcell
+			result2 error
+		})
+	}
+	fake.stemcellsReturnsOnCall[i] = struct {
+		result1 []director.Stemcell
 		result2 error
 	}{result1, result2}
 }
@@ -1884,7 +3485,8 @@ func (fake *FakeDirector) UpdateCPIConfig(arg1 []byte) error {
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.updateCPIConfigReturns.result1
+	fakeReturns := fake.updateCPIConfigReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDirector) UpdateCPIConfigCallCount() int {
@@ -1893,13 +3495,22 @@ func (fake *FakeDirector) UpdateCPIConfigCallCount() int {
 	return len(fake.updateCPIConfigArgsForCall)
 }
 
+func (fake *FakeDirector) UpdateCPIConfigCalls(stub func([]byte) error) {
+	fake.updateCPIConfigMutex.Lock()
+	defer fake.updateCPIConfigMutex.Unlock()
+	fake.UpdateCPIConfigStub = stub
+}
+
 func (fake *FakeDirector) UpdateCPIConfigArgsForCall(i int) []byte {
 	fake.updateCPIConfigMutex.RLock()
 	defer fake.updateCPIConfigMutex.RUnlock()
-	return fake.updateCPIConfigArgsForCall[i].arg1
+	argsForCall := fake.updateCPIConfigArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) UpdateCPIConfigReturns(result1 error) {
+	fake.updateCPIConfigMutex.Lock()
+	defer fake.updateCPIConfigMutex.Unlock()
 	fake.UpdateCPIConfigStub = nil
 	fake.updateCPIConfigReturns = struct {
 		result1 error
@@ -1907,6 +3518,8 @@ func (fake *FakeDirector) UpdateCPIConfigReturns(result1 error) {
 }
 
 func (fake *FakeDirector) UpdateCPIConfigReturnsOnCall(i int, result1 error) {
+	fake.updateCPIConfigMutex.Lock()
+	defer fake.updateCPIConfigMutex.Unlock()
 	fake.UpdateCPIConfigStub = nil
 	if fake.updateCPIConfigReturnsOnCall == nil {
 		fake.updateCPIConfigReturnsOnCall = make(map[int]struct {
@@ -1918,135 +3531,164 @@ func (fake *FakeDirector) UpdateCPIConfigReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDirector) DiffCPIConfig(manifest []byte, noRedact bool) (director.ConfigDiff, error) {
-	var manifestCopy []byte
-	if manifest != nil {
-		manifestCopy = make([]byte, len(manifest))
-		copy(manifestCopy, manifest)
+func (fake *FakeDirector) UpdateCloudConfig(arg1 []byte) error {
+	var arg1Copy []byte
+	if arg1 != nil {
+		arg1Copy = make([]byte, len(arg1))
+		copy(arg1Copy, arg1)
 	}
-	fake.diffCPIConfigMutex.Lock()
-	ret, specificReturn := fake.diffCPIConfigReturnsOnCall[len(fake.diffCPIConfigArgsForCall)]
-	fake.diffCPIConfigArgsForCall = append(fake.diffCPIConfigArgsForCall, struct {
-		manifest []byte
-		noRedact bool
-	}{manifestCopy, noRedact})
-	fake.recordInvocation("DiffCPIConfig", []interface{}{manifestCopy, noRedact})
-	fake.diffCPIConfigMutex.Unlock()
-	if fake.DiffCPIConfigStub != nil {
-		return fake.DiffCPIConfigStub(manifest, noRedact)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.diffCPIConfigReturns.result1, fake.diffCPIConfigReturns.result2
-}
-
-func (fake *FakeDirector) DiffCPIConfigCallCount() int {
-	fake.diffCPIConfigMutex.RLock()
-	defer fake.diffCPIConfigMutex.RUnlock()
-	return len(fake.diffCPIConfigArgsForCall)
-}
-
-func (fake *FakeDirector) DiffCPIConfigArgsForCall(i int) ([]byte, bool) {
-	fake.diffCPIConfigMutex.RLock()
-	defer fake.diffCPIConfigMutex.RUnlock()
-	return fake.diffCPIConfigArgsForCall[i].manifest, fake.diffCPIConfigArgsForCall[i].noRedact
-}
-
-func (fake *FakeDirector) DiffCPIConfigReturns(result1 director.ConfigDiff, result2 error) {
-	fake.DiffCPIConfigStub = nil
-	fake.diffCPIConfigReturns = struct {
-		result1 director.ConfigDiff
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) DiffCPIConfigReturnsOnCall(i int, result1 director.ConfigDiff, result2 error) {
-	fake.DiffCPIConfigStub = nil
-	if fake.diffCPIConfigReturnsOnCall == nil {
-		fake.diffCPIConfigReturnsOnCall = make(map[int]struct {
-			result1 director.ConfigDiff
-			result2 error
-		})
-	}
-	fake.diffCPIConfigReturnsOnCall[i] = struct {
-		result1 director.ConfigDiff
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) LatestRuntimeConfig(name string) (director.RuntimeConfig, error) {
-	fake.latestRuntimeConfigMutex.Lock()
-	ret, specificReturn := fake.latestRuntimeConfigReturnsOnCall[len(fake.latestRuntimeConfigArgsForCall)]
-	fake.latestRuntimeConfigArgsForCall = append(fake.latestRuntimeConfigArgsForCall, struct {
-		name string
-	}{name})
-	fake.recordInvocation("LatestRuntimeConfig", []interface{}{name})
-	fake.latestRuntimeConfigMutex.Unlock()
-	if fake.LatestRuntimeConfigStub != nil {
-		return fake.LatestRuntimeConfigStub(name)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.latestRuntimeConfigReturns.result1, fake.latestRuntimeConfigReturns.result2
-}
-
-func (fake *FakeDirector) LatestRuntimeConfigCallCount() int {
-	fake.latestRuntimeConfigMutex.RLock()
-	defer fake.latestRuntimeConfigMutex.RUnlock()
-	return len(fake.latestRuntimeConfigArgsForCall)
-}
-
-func (fake *FakeDirector) LatestRuntimeConfigArgsForCall(i int) string {
-	fake.latestRuntimeConfigMutex.RLock()
-	defer fake.latestRuntimeConfigMutex.RUnlock()
-	return fake.latestRuntimeConfigArgsForCall[i].name
-}
-
-func (fake *FakeDirector) LatestRuntimeConfigReturns(result1 director.RuntimeConfig, result2 error) {
-	fake.LatestRuntimeConfigStub = nil
-	fake.latestRuntimeConfigReturns = struct {
-		result1 director.RuntimeConfig
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) LatestRuntimeConfigReturnsOnCall(i int, result1 director.RuntimeConfig, result2 error) {
-	fake.LatestRuntimeConfigStub = nil
-	if fake.latestRuntimeConfigReturnsOnCall == nil {
-		fake.latestRuntimeConfigReturnsOnCall = make(map[int]struct {
-			result1 director.RuntimeConfig
-			result2 error
-		})
-	}
-	fake.latestRuntimeConfigReturnsOnCall[i] = struct {
-		result1 director.RuntimeConfig
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) UpdateRuntimeConfig(name string, manifest []byte) error {
-	var manifestCopy []byte
-	if manifest != nil {
-		manifestCopy = make([]byte, len(manifest))
-		copy(manifestCopy, manifest)
-	}
-	fake.updateRuntimeConfigMutex.Lock()
-	ret, specificReturn := fake.updateRuntimeConfigReturnsOnCall[len(fake.updateRuntimeConfigArgsForCall)]
-	fake.updateRuntimeConfigArgsForCall = append(fake.updateRuntimeConfigArgsForCall, struct {
-		name     string
-		manifest []byte
-	}{name, manifestCopy})
-	fake.recordInvocation("UpdateRuntimeConfig", []interface{}{name, manifestCopy})
-	fake.updateRuntimeConfigMutex.Unlock()
-	if fake.UpdateRuntimeConfigStub != nil {
-		return fake.UpdateRuntimeConfigStub(name, manifest)
+	fake.updateCloudConfigMutex.Lock()
+	ret, specificReturn := fake.updateCloudConfigReturnsOnCall[len(fake.updateCloudConfigArgsForCall)]
+	fake.updateCloudConfigArgsForCall = append(fake.updateCloudConfigArgsForCall, struct {
+		arg1 []byte
+	}{arg1Copy})
+	fake.recordInvocation("UpdateCloudConfig", []interface{}{arg1Copy})
+	fake.updateCloudConfigMutex.Unlock()
+	if fake.UpdateCloudConfigStub != nil {
+		return fake.UpdateCloudConfigStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.updateRuntimeConfigReturns.result1
+	fakeReturns := fake.updateCloudConfigReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeDirector) UpdateCloudConfigCallCount() int {
+	fake.updateCloudConfigMutex.RLock()
+	defer fake.updateCloudConfigMutex.RUnlock()
+	return len(fake.updateCloudConfigArgsForCall)
+}
+
+func (fake *FakeDirector) UpdateCloudConfigCalls(stub func([]byte) error) {
+	fake.updateCloudConfigMutex.Lock()
+	defer fake.updateCloudConfigMutex.Unlock()
+	fake.UpdateCloudConfigStub = stub
+}
+
+func (fake *FakeDirector) UpdateCloudConfigArgsForCall(i int) []byte {
+	fake.updateCloudConfigMutex.RLock()
+	defer fake.updateCloudConfigMutex.RUnlock()
+	argsForCall := fake.updateCloudConfigArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) UpdateCloudConfigReturns(result1 error) {
+	fake.updateCloudConfigMutex.Lock()
+	defer fake.updateCloudConfigMutex.Unlock()
+	fake.UpdateCloudConfigStub = nil
+	fake.updateCloudConfigReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UpdateCloudConfigReturnsOnCall(i int, result1 error) {
+	fake.updateCloudConfigMutex.Lock()
+	defer fake.updateCloudConfigMutex.Unlock()
+	fake.UpdateCloudConfigStub = nil
+	if fake.updateCloudConfigReturnsOnCall == nil {
+		fake.updateCloudConfigReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.updateCloudConfigReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UpdateConfig(arg1 string, arg2 string, arg3 string, arg4 []byte) (director.Config, error) {
+	var arg4Copy []byte
+	if arg4 != nil {
+		arg4Copy = make([]byte, len(arg4))
+		copy(arg4Copy, arg4)
+	}
+	fake.updateConfigMutex.Lock()
+	ret, specificReturn := fake.updateConfigReturnsOnCall[len(fake.updateConfigArgsForCall)]
+	fake.updateConfigArgsForCall = append(fake.updateConfigArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 string
+		arg4 []byte
+	}{arg1, arg2, arg3, arg4Copy})
+	fake.recordInvocation("UpdateConfig", []interface{}{arg1, arg2, arg3, arg4Copy})
+	fake.updateConfigMutex.Unlock()
+	if fake.UpdateConfigStub != nil {
+		return fake.UpdateConfigStub(arg1, arg2, arg3, arg4)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.updateConfigReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) UpdateConfigCallCount() int {
+	fake.updateConfigMutex.RLock()
+	defer fake.updateConfigMutex.RUnlock()
+	return len(fake.updateConfigArgsForCall)
+}
+
+func (fake *FakeDirector) UpdateConfigCalls(stub func(string, string, string, []byte) (director.Config, error)) {
+	fake.updateConfigMutex.Lock()
+	defer fake.updateConfigMutex.Unlock()
+	fake.UpdateConfigStub = stub
+}
+
+func (fake *FakeDirector) UpdateConfigArgsForCall(i int) (string, string, string, []byte) {
+	fake.updateConfigMutex.RLock()
+	defer fake.updateConfigMutex.RUnlock()
+	argsForCall := fake.updateConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
+}
+
+func (fake *FakeDirector) UpdateConfigReturns(result1 director.Config, result2 error) {
+	fake.updateConfigMutex.Lock()
+	defer fake.updateConfigMutex.Unlock()
+	fake.UpdateConfigStub = nil
+	fake.updateConfigReturns = struct {
+		result1 director.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) UpdateConfigReturnsOnCall(i int, result1 director.Config, result2 error) {
+	fake.updateConfigMutex.Lock()
+	defer fake.updateConfigMutex.Unlock()
+	fake.UpdateConfigStub = nil
+	if fake.updateConfigReturnsOnCall == nil {
+		fake.updateConfigReturnsOnCall = make(map[int]struct {
+			result1 director.Config
+			result2 error
+		})
+	}
+	fake.updateConfigReturnsOnCall[i] = struct {
+		result1 director.Config
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) UpdateRuntimeConfig(arg1 string, arg2 []byte) error {
+	var arg2Copy []byte
+	if arg2 != nil {
+		arg2Copy = make([]byte, len(arg2))
+		copy(arg2Copy, arg2)
+	}
+	fake.updateRuntimeConfigMutex.Lock()
+	ret, specificReturn := fake.updateRuntimeConfigReturnsOnCall[len(fake.updateRuntimeConfigArgsForCall)]
+	fake.updateRuntimeConfigArgsForCall = append(fake.updateRuntimeConfigArgsForCall, struct {
+		arg1 string
+		arg2 []byte
+	}{arg1, arg2Copy})
+	fake.recordInvocation("UpdateRuntimeConfig", []interface{}{arg1, arg2Copy})
+	fake.updateRuntimeConfigMutex.Unlock()
+	if fake.UpdateRuntimeConfigStub != nil {
+		return fake.UpdateRuntimeConfigStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.updateRuntimeConfigReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDirector) UpdateRuntimeConfigCallCount() int {
@@ -2055,13 +3697,22 @@ func (fake *FakeDirector) UpdateRuntimeConfigCallCount() int {
 	return len(fake.updateRuntimeConfigArgsForCall)
 }
 
+func (fake *FakeDirector) UpdateRuntimeConfigCalls(stub func(string, []byte) error) {
+	fake.updateRuntimeConfigMutex.Lock()
+	defer fake.updateRuntimeConfigMutex.Unlock()
+	fake.UpdateRuntimeConfigStub = stub
+}
+
 func (fake *FakeDirector) UpdateRuntimeConfigArgsForCall(i int) (string, []byte) {
 	fake.updateRuntimeConfigMutex.RLock()
 	defer fake.updateRuntimeConfigMutex.RUnlock()
-	return fake.updateRuntimeConfigArgsForCall[i].name, fake.updateRuntimeConfigArgsForCall[i].manifest
+	argsForCall := fake.updateRuntimeConfigArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeDirector) UpdateRuntimeConfigReturns(result1 error) {
+	fake.updateRuntimeConfigMutex.Lock()
+	defer fake.updateRuntimeConfigMutex.Unlock()
 	fake.UpdateRuntimeConfigStub = nil
 	fake.updateRuntimeConfigReturns = struct {
 		result1 error
@@ -2069,6 +3720,8 @@ func (fake *FakeDirector) UpdateRuntimeConfigReturns(result1 error) {
 }
 
 func (fake *FakeDirector) UpdateRuntimeConfigReturnsOnCall(i int, result1 error) {
+	fake.updateRuntimeConfigMutex.Lock()
+	defer fake.updateRuntimeConfigMutex.Unlock()
 	fake.UpdateRuntimeConfigStub = nil
 	if fake.updateRuntimeConfigReturnsOnCall == nil {
 		fake.updateRuntimeConfigReturnsOnCall = make(map[int]struct {
@@ -2080,432 +3733,425 @@ func (fake *FakeDirector) UpdateRuntimeConfigReturnsOnCall(i int, result1 error)
 	}{result1}
 }
 
-func (fake *FakeDirector) DiffRuntimeConfig(name string, manifest []byte, noRedact bool) (director.ConfigDiff, error) {
-	var manifestCopy []byte
-	if manifest != nil {
-		manifestCopy = make([]byte, len(manifest))
-		copy(manifestCopy, manifest)
-	}
-	fake.diffRuntimeConfigMutex.Lock()
-	ret, specificReturn := fake.diffRuntimeConfigReturnsOnCall[len(fake.diffRuntimeConfigArgsForCall)]
-	fake.diffRuntimeConfigArgsForCall = append(fake.diffRuntimeConfigArgsForCall, struct {
-		name     string
-		manifest []byte
-		noRedact bool
-	}{name, manifestCopy, noRedact})
-	fake.recordInvocation("DiffRuntimeConfig", []interface{}{name, manifestCopy, noRedact})
-	fake.diffRuntimeConfigMutex.Unlock()
-	if fake.DiffRuntimeConfigStub != nil {
-		return fake.DiffRuntimeConfigStub(name, manifest, noRedact)
+func (fake *FakeDirector) UploadReleaseFile(arg1 director.UploadFile, arg2 bool, arg3 bool) error {
+	fake.uploadReleaseFileMutex.Lock()
+	ret, specificReturn := fake.uploadReleaseFileReturnsOnCall[len(fake.uploadReleaseFileArgsForCall)]
+	fake.uploadReleaseFileArgsForCall = append(fake.uploadReleaseFileArgsForCall, struct {
+		arg1 director.UploadFile
+		arg2 bool
+		arg3 bool
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("UploadReleaseFile", []interface{}{arg1, arg2, arg3})
+	fake.uploadReleaseFileMutex.Unlock()
+	if fake.UploadReleaseFileStub != nil {
+		return fake.UploadReleaseFileStub(arg1, arg2, arg3)
 	}
 	if specificReturn {
-		return ret.result1, ret.result2
+		return ret.result1
 	}
-	return fake.diffRuntimeConfigReturns.result1, fake.diffRuntimeConfigReturns.result2
+	fakeReturns := fake.uploadReleaseFileReturns
+	return fakeReturns.result1
 }
 
-func (fake *FakeDirector) DiffRuntimeConfigCallCount() int {
-	fake.diffRuntimeConfigMutex.RLock()
-	defer fake.diffRuntimeConfigMutex.RUnlock()
-	return len(fake.diffRuntimeConfigArgsForCall)
+func (fake *FakeDirector) UploadReleaseFileCallCount() int {
+	fake.uploadReleaseFileMutex.RLock()
+	defer fake.uploadReleaseFileMutex.RUnlock()
+	return len(fake.uploadReleaseFileArgsForCall)
 }
 
-func (fake *FakeDirector) DiffRuntimeConfigArgsForCall(i int) (string, []byte, bool) {
-	fake.diffRuntimeConfigMutex.RLock()
-	defer fake.diffRuntimeConfigMutex.RUnlock()
-	return fake.diffRuntimeConfigArgsForCall[i].name, fake.diffRuntimeConfigArgsForCall[i].manifest, fake.diffRuntimeConfigArgsForCall[i].noRedact
+func (fake *FakeDirector) UploadReleaseFileCalls(stub func(director.UploadFile, bool, bool) error) {
+	fake.uploadReleaseFileMutex.Lock()
+	defer fake.uploadReleaseFileMutex.Unlock()
+	fake.UploadReleaseFileStub = stub
 }
 
-func (fake *FakeDirector) DiffRuntimeConfigReturns(result1 director.ConfigDiff, result2 error) {
-	fake.DiffRuntimeConfigStub = nil
-	fake.diffRuntimeConfigReturns = struct {
-		result1 director.ConfigDiff
-		result2 error
-	}{result1, result2}
+func (fake *FakeDirector) UploadReleaseFileArgsForCall(i int) (director.UploadFile, bool, bool) {
+	fake.uploadReleaseFileMutex.RLock()
+	defer fake.uploadReleaseFileMutex.RUnlock()
+	argsForCall := fake.uploadReleaseFileArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
-func (fake *FakeDirector) DiffRuntimeConfigReturnsOnCall(i int, result1 director.ConfigDiff, result2 error) {
-	fake.DiffRuntimeConfigStub = nil
-	if fake.diffRuntimeConfigReturnsOnCall == nil {
-		fake.diffRuntimeConfigReturnsOnCall = make(map[int]struct {
-			result1 director.ConfigDiff
-			result2 error
+func (fake *FakeDirector) UploadReleaseFileReturns(result1 error) {
+	fake.uploadReleaseFileMutex.Lock()
+	defer fake.uploadReleaseFileMutex.Unlock()
+	fake.UploadReleaseFileStub = nil
+	fake.uploadReleaseFileReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UploadReleaseFileReturnsOnCall(i int, result1 error) {
+	fake.uploadReleaseFileMutex.Lock()
+	defer fake.uploadReleaseFileMutex.Unlock()
+	fake.UploadReleaseFileStub = nil
+	if fake.uploadReleaseFileReturnsOnCall == nil {
+		fake.uploadReleaseFileReturnsOnCall = make(map[int]struct {
+			result1 error
 		})
 	}
-	fake.diffRuntimeConfigReturnsOnCall[i] = struct {
-		result1 director.ConfigDiff
-		result2 error
-	}{result1, result2}
+	fake.uploadReleaseFileReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
 }
 
-func (fake *FakeDirector) FindOrphanDisk(arg1 string) (director.OrphanDisk, error) {
-	fake.findOrphanDiskMutex.Lock()
-	ret, specificReturn := fake.findOrphanDiskReturnsOnCall[len(fake.findOrphanDiskArgsForCall)]
-	fake.findOrphanDiskArgsForCall = append(fake.findOrphanDiskArgsForCall, struct {
+func (fake *FakeDirector) UploadReleaseURL(arg1 string, arg2 string, arg3 bool, arg4 bool) error {
+	fake.uploadReleaseURLMutex.Lock()
+	ret, specificReturn := fake.uploadReleaseURLReturnsOnCall[len(fake.uploadReleaseURLArgsForCall)]
+	fake.uploadReleaseURLArgsForCall = append(fake.uploadReleaseURLArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 bool
+		arg4 bool
+	}{arg1, arg2, arg3, arg4})
+	fake.recordInvocation("UploadReleaseURL", []interface{}{arg1, arg2, arg3, arg4})
+	fake.uploadReleaseURLMutex.Unlock()
+	if fake.UploadReleaseURLStub != nil {
+		return fake.UploadReleaseURLStub(arg1, arg2, arg3, arg4)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.uploadReleaseURLReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeDirector) UploadReleaseURLCallCount() int {
+	fake.uploadReleaseURLMutex.RLock()
+	defer fake.uploadReleaseURLMutex.RUnlock()
+	return len(fake.uploadReleaseURLArgsForCall)
+}
+
+func (fake *FakeDirector) UploadReleaseURLCalls(stub func(string, string, bool, bool) error) {
+	fake.uploadReleaseURLMutex.Lock()
+	defer fake.uploadReleaseURLMutex.Unlock()
+	fake.UploadReleaseURLStub = stub
+}
+
+func (fake *FakeDirector) UploadReleaseURLArgsForCall(i int) (string, string, bool, bool) {
+	fake.uploadReleaseURLMutex.RLock()
+	defer fake.uploadReleaseURLMutex.RUnlock()
+	argsForCall := fake.uploadReleaseURLArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
+}
+
+func (fake *FakeDirector) UploadReleaseURLReturns(result1 error) {
+	fake.uploadReleaseURLMutex.Lock()
+	defer fake.uploadReleaseURLMutex.Unlock()
+	fake.UploadReleaseURLStub = nil
+	fake.uploadReleaseURLReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UploadReleaseURLReturnsOnCall(i int, result1 error) {
+	fake.uploadReleaseURLMutex.Lock()
+	defer fake.uploadReleaseURLMutex.Unlock()
+	fake.UploadReleaseURLStub = nil
+	if fake.uploadReleaseURLReturnsOnCall == nil {
+		fake.uploadReleaseURLReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.uploadReleaseURLReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UploadStemcellFile(arg1 director.UploadFile, arg2 bool) error {
+	fake.uploadStemcellFileMutex.Lock()
+	ret, specificReturn := fake.uploadStemcellFileReturnsOnCall[len(fake.uploadStemcellFileArgsForCall)]
+	fake.uploadStemcellFileArgsForCall = append(fake.uploadStemcellFileArgsForCall, struct {
+		arg1 director.UploadFile
+		arg2 bool
+	}{arg1, arg2})
+	fake.recordInvocation("UploadStemcellFile", []interface{}{arg1, arg2})
+	fake.uploadStemcellFileMutex.Unlock()
+	if fake.UploadStemcellFileStub != nil {
+		return fake.UploadStemcellFileStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.uploadStemcellFileReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeDirector) UploadStemcellFileCallCount() int {
+	fake.uploadStemcellFileMutex.RLock()
+	defer fake.uploadStemcellFileMutex.RUnlock()
+	return len(fake.uploadStemcellFileArgsForCall)
+}
+
+func (fake *FakeDirector) UploadStemcellFileCalls(stub func(director.UploadFile, bool) error) {
+	fake.uploadStemcellFileMutex.Lock()
+	defer fake.uploadStemcellFileMutex.Unlock()
+	fake.UploadStemcellFileStub = stub
+}
+
+func (fake *FakeDirector) UploadStemcellFileArgsForCall(i int) (director.UploadFile, bool) {
+	fake.uploadStemcellFileMutex.RLock()
+	defer fake.uploadStemcellFileMutex.RUnlock()
+	argsForCall := fake.uploadStemcellFileArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) UploadStemcellFileReturns(result1 error) {
+	fake.uploadStemcellFileMutex.Lock()
+	defer fake.uploadStemcellFileMutex.Unlock()
+	fake.UploadStemcellFileStub = nil
+	fake.uploadStemcellFileReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UploadStemcellFileReturnsOnCall(i int, result1 error) {
+	fake.uploadStemcellFileMutex.Lock()
+	defer fake.uploadStemcellFileMutex.Unlock()
+	fake.UploadStemcellFileStub = nil
+	if fake.uploadStemcellFileReturnsOnCall == nil {
+		fake.uploadStemcellFileReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.uploadStemcellFileReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UploadStemcellURL(arg1 string, arg2 string, arg3 bool) error {
+	fake.uploadStemcellURLMutex.Lock()
+	ret, specificReturn := fake.uploadStemcellURLReturnsOnCall[len(fake.uploadStemcellURLArgsForCall)]
+	fake.uploadStemcellURLArgsForCall = append(fake.uploadStemcellURLArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 bool
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("UploadStemcellURL", []interface{}{arg1, arg2, arg3})
+	fake.uploadStemcellURLMutex.Unlock()
+	if fake.UploadStemcellURLStub != nil {
+		return fake.UploadStemcellURLStub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.uploadStemcellURLReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeDirector) UploadStemcellURLCallCount() int {
+	fake.uploadStemcellURLMutex.RLock()
+	defer fake.uploadStemcellURLMutex.RUnlock()
+	return len(fake.uploadStemcellURLArgsForCall)
+}
+
+func (fake *FakeDirector) UploadStemcellURLCalls(stub func(string, string, bool) error) {
+	fake.uploadStemcellURLMutex.Lock()
+	defer fake.uploadStemcellURLMutex.Unlock()
+	fake.UploadStemcellURLStub = stub
+}
+
+func (fake *FakeDirector) UploadStemcellURLArgsForCall(i int) (string, string, bool) {
+	fake.uploadStemcellURLMutex.RLock()
+	defer fake.uploadStemcellURLMutex.RUnlock()
+	argsForCall := fake.uploadStemcellURLArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeDirector) UploadStemcellURLReturns(result1 error) {
+	fake.uploadStemcellURLMutex.Lock()
+	defer fake.uploadStemcellURLMutex.Unlock()
+	fake.UploadStemcellURLStub = nil
+	fake.uploadStemcellURLReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UploadStemcellURLReturnsOnCall(i int, result1 error) {
+	fake.uploadStemcellURLMutex.Lock()
+	defer fake.uploadStemcellURLMutex.Unlock()
+	fake.UploadStemcellURLStub = nil
+	if fake.uploadStemcellURLReturnsOnCall == nil {
+		fake.uploadStemcellURLReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.uploadStemcellURLReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) WithContext(arg1 string) director.Director {
+	fake.withContextMutex.Lock()
+	ret, specificReturn := fake.withContextReturnsOnCall[len(fake.withContextArgsForCall)]
+	fake.withContextArgsForCall = append(fake.withContextArgsForCall, struct {
 		arg1 string
 	}{arg1})
-	fake.recordInvocation("FindOrphanDisk", []interface{}{arg1})
-	fake.findOrphanDiskMutex.Unlock()
-	if fake.FindOrphanDiskStub != nil {
-		return fake.FindOrphanDiskStub(arg1)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.findOrphanDiskReturns.result1, fake.findOrphanDiskReturns.result2
-}
-
-func (fake *FakeDirector) FindOrphanDiskCallCount() int {
-	fake.findOrphanDiskMutex.RLock()
-	defer fake.findOrphanDiskMutex.RUnlock()
-	return len(fake.findOrphanDiskArgsForCall)
-}
-
-func (fake *FakeDirector) FindOrphanDiskArgsForCall(i int) string {
-	fake.findOrphanDiskMutex.RLock()
-	defer fake.findOrphanDiskMutex.RUnlock()
-	return fake.findOrphanDiskArgsForCall[i].arg1
-}
-
-func (fake *FakeDirector) FindOrphanDiskReturns(result1 director.OrphanDisk, result2 error) {
-	fake.FindOrphanDiskStub = nil
-	fake.findOrphanDiskReturns = struct {
-		result1 director.OrphanDisk
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) FindOrphanDiskReturnsOnCall(i int, result1 director.OrphanDisk, result2 error) {
-	fake.FindOrphanDiskStub = nil
-	if fake.findOrphanDiskReturnsOnCall == nil {
-		fake.findOrphanDiskReturnsOnCall = make(map[int]struct {
-			result1 director.OrphanDisk
-			result2 error
-		})
-	}
-	fake.findOrphanDiskReturnsOnCall[i] = struct {
-		result1 director.OrphanDisk
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) OrphanDisks() ([]director.OrphanDisk, error) {
-	fake.orphanDisksMutex.Lock()
-	ret, specificReturn := fake.orphanDisksReturnsOnCall[len(fake.orphanDisksArgsForCall)]
-	fake.orphanDisksArgsForCall = append(fake.orphanDisksArgsForCall, struct{}{})
-	fake.recordInvocation("OrphanDisks", []interface{}{})
-	fake.orphanDisksMutex.Unlock()
-	if fake.OrphanDisksStub != nil {
-		return fake.OrphanDisksStub()
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.orphanDisksReturns.result1, fake.orphanDisksReturns.result2
-}
-
-func (fake *FakeDirector) OrphanDisksCallCount() int {
-	fake.orphanDisksMutex.RLock()
-	defer fake.orphanDisksMutex.RUnlock()
-	return len(fake.orphanDisksArgsForCall)
-}
-
-func (fake *FakeDirector) OrphanDisksReturns(result1 []director.OrphanDisk, result2 error) {
-	fake.OrphanDisksStub = nil
-	fake.orphanDisksReturns = struct {
-		result1 []director.OrphanDisk
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) OrphanDisksReturnsOnCall(i int, result1 []director.OrphanDisk, result2 error) {
-	fake.OrphanDisksStub = nil
-	if fake.orphanDisksReturnsOnCall == nil {
-		fake.orphanDisksReturnsOnCall = make(map[int]struct {
-			result1 []director.OrphanDisk
-			result2 error
-		})
-	}
-	fake.orphanDisksReturnsOnCall[i] = struct {
-		result1 []director.OrphanDisk
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) OrphanDisk(arg1 string) error {
-	fake.orphanDiskMutex.Lock()
-	ret, specificReturn := fake.orphanDiskReturnsOnCall[len(fake.orphanDiskArgsForCall)]
-	fake.orphanDiskArgsForCall = append(fake.orphanDiskArgsForCall, struct {
-		arg1 string
-	}{arg1})
-	fake.recordInvocation("OrphanDisk", []interface{}{arg1})
-	fake.orphanDiskMutex.Unlock()
-	if fake.OrphanDiskStub != nil {
-		return fake.OrphanDiskStub(arg1)
+	fake.recordInvocation("WithContext", []interface{}{arg1})
+	fake.withContextMutex.Unlock()
+	if fake.WithContextStub != nil {
+		return fake.WithContextStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.orphanDiskReturns.result1
+	fakeReturns := fake.withContextReturns
+	return fakeReturns.result1
 }
 
-func (fake *FakeDirector) OrphanDiskCallCount() int {
-	fake.orphanDiskMutex.RLock()
-	defer fake.orphanDiskMutex.RUnlock()
-	return len(fake.orphanDiskArgsForCall)
+func (fake *FakeDirector) WithContextCallCount() int {
+	fake.withContextMutex.RLock()
+	defer fake.withContextMutex.RUnlock()
+	return len(fake.withContextArgsForCall)
 }
 
-func (fake *FakeDirector) OrphanDiskArgsForCall(i int) string {
-	fake.orphanDiskMutex.RLock()
-	defer fake.orphanDiskMutex.RUnlock()
-	return fake.orphanDiskArgsForCall[i].arg1
+func (fake *FakeDirector) WithContextCalls(stub func(string) director.Director) {
+	fake.withContextMutex.Lock()
+	defer fake.withContextMutex.Unlock()
+	fake.WithContextStub = stub
 }
 
-func (fake *FakeDirector) OrphanDiskReturns(result1 error) {
-	fake.OrphanDiskStub = nil
-	fake.orphanDiskReturns = struct {
-		result1 error
+func (fake *FakeDirector) WithContextArgsForCall(i int) string {
+	fake.withContextMutex.RLock()
+	defer fake.withContextMutex.RUnlock()
+	argsForCall := fake.withContextArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeDirector) WithContextReturns(result1 director.Director) {
+	fake.withContextMutex.Lock()
+	defer fake.withContextMutex.Unlock()
+	fake.WithContextStub = nil
+	fake.withContextReturns = struct {
+		result1 director.Director
 	}{result1}
 }
 
-func (fake *FakeDirector) OrphanDiskReturnsOnCall(i int, result1 error) {
-	fake.OrphanDiskStub = nil
-	if fake.orphanDiskReturnsOnCall == nil {
-		fake.orphanDiskReturnsOnCall = make(map[int]struct {
-			result1 error
+func (fake *FakeDirector) WithContextReturnsOnCall(i int, result1 director.Director) {
+	fake.withContextMutex.Lock()
+	defer fake.withContextMutex.Unlock()
+	fake.WithContextStub = nil
+	if fake.withContextReturnsOnCall == nil {
+		fake.withContextReturnsOnCall = make(map[int]struct {
+			result1 director.Director
 		})
 	}
-	fake.orphanDiskReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) EnableResurrection(arg1 bool) error {
-	fake.enableResurrectionMutex.Lock()
-	ret, specificReturn := fake.enableResurrectionReturnsOnCall[len(fake.enableResurrectionArgsForCall)]
-	fake.enableResurrectionArgsForCall = append(fake.enableResurrectionArgsForCall, struct {
-		arg1 bool
-	}{arg1})
-	fake.recordInvocation("EnableResurrection", []interface{}{arg1})
-	fake.enableResurrectionMutex.Unlock()
-	if fake.EnableResurrectionStub != nil {
-		return fake.EnableResurrectionStub(arg1)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.enableResurrectionReturns.result1
-}
-
-func (fake *FakeDirector) EnableResurrectionCallCount() int {
-	fake.enableResurrectionMutex.RLock()
-	defer fake.enableResurrectionMutex.RUnlock()
-	return len(fake.enableResurrectionArgsForCall)
-}
-
-func (fake *FakeDirector) EnableResurrectionArgsForCall(i int) bool {
-	fake.enableResurrectionMutex.RLock()
-	defer fake.enableResurrectionMutex.RUnlock()
-	return fake.enableResurrectionArgsForCall[i].arg1
-}
-
-func (fake *FakeDirector) EnableResurrectionReturns(result1 error) {
-	fake.EnableResurrectionStub = nil
-	fake.enableResurrectionReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) EnableResurrectionReturnsOnCall(i int, result1 error) {
-	fake.EnableResurrectionStub = nil
-	if fake.enableResurrectionReturnsOnCall == nil {
-		fake.enableResurrectionReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.enableResurrectionReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) CleanUp(arg1 bool) error {
-	fake.cleanUpMutex.Lock()
-	ret, specificReturn := fake.cleanUpReturnsOnCall[len(fake.cleanUpArgsForCall)]
-	fake.cleanUpArgsForCall = append(fake.cleanUpArgsForCall, struct {
-		arg1 bool
-	}{arg1})
-	fake.recordInvocation("CleanUp", []interface{}{arg1})
-	fake.cleanUpMutex.Unlock()
-	if fake.CleanUpStub != nil {
-		return fake.CleanUpStub(arg1)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.cleanUpReturns.result1
-}
-
-func (fake *FakeDirector) CleanUpCallCount() int {
-	fake.cleanUpMutex.RLock()
-	defer fake.cleanUpMutex.RUnlock()
-	return len(fake.cleanUpArgsForCall)
-}
-
-func (fake *FakeDirector) CleanUpArgsForCall(i int) bool {
-	fake.cleanUpMutex.RLock()
-	defer fake.cleanUpMutex.RUnlock()
-	return fake.cleanUpArgsForCall[i].arg1
-}
-
-func (fake *FakeDirector) CleanUpReturns(result1 error) {
-	fake.CleanUpStub = nil
-	fake.cleanUpReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) CleanUpReturnsOnCall(i int, result1 error) {
-	fake.CleanUpStub = nil
-	if fake.cleanUpReturnsOnCall == nil {
-		fake.cleanUpReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.cleanUpReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) DownloadResourceUnchecked(blobstoreID string, out io.Writer) error {
-	fake.downloadResourceUncheckedMutex.Lock()
-	ret, specificReturn := fake.downloadResourceUncheckedReturnsOnCall[len(fake.downloadResourceUncheckedArgsForCall)]
-	fake.downloadResourceUncheckedArgsForCall = append(fake.downloadResourceUncheckedArgsForCall, struct {
-		blobstoreID string
-		out         io.Writer
-	}{blobstoreID, out})
-	fake.recordInvocation("DownloadResourceUnchecked", []interface{}{blobstoreID, out})
-	fake.downloadResourceUncheckedMutex.Unlock()
-	if fake.DownloadResourceUncheckedStub != nil {
-		return fake.DownloadResourceUncheckedStub(blobstoreID, out)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.downloadResourceUncheckedReturns.result1
-}
-
-func (fake *FakeDirector) DownloadResourceUncheckedCallCount() int {
-	fake.downloadResourceUncheckedMutex.RLock()
-	defer fake.downloadResourceUncheckedMutex.RUnlock()
-	return len(fake.downloadResourceUncheckedArgsForCall)
-}
-
-func (fake *FakeDirector) DownloadResourceUncheckedArgsForCall(i int) (string, io.Writer) {
-	fake.downloadResourceUncheckedMutex.RLock()
-	defer fake.downloadResourceUncheckedMutex.RUnlock()
-	return fake.downloadResourceUncheckedArgsForCall[i].blobstoreID, fake.downloadResourceUncheckedArgsForCall[i].out
-}
-
-func (fake *FakeDirector) DownloadResourceUncheckedReturns(result1 error) {
-	fake.DownloadResourceUncheckedStub = nil
-	fake.downloadResourceUncheckedReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeDirector) DownloadResourceUncheckedReturnsOnCall(i int, result1 error) {
-	fake.DownloadResourceUncheckedStub = nil
-	if fake.downloadResourceUncheckedReturnsOnCall == nil {
-		fake.downloadResourceUncheckedReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.downloadResourceUncheckedReturnsOnCall[i] = struct {
-		result1 error
+	fake.withContextReturnsOnCall[i] = struct {
+		result1 director.Director
 	}{result1}
 }
 
 func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.isAuthenticatedMutex.RLock()
-	defer fake.isAuthenticatedMutex.RUnlock()
-	fake.withContextMutex.RLock()
-	defer fake.withContextMutex.RUnlock()
-	fake.infoMutex.RLock()
-	defer fake.infoMutex.RUnlock()
-	fake.locksMutex.RLock()
-	defer fake.locksMutex.RUnlock()
+	fake.cancelTasksMutex.RLock()
+	defer fake.cancelTasksMutex.RUnlock()
+	fake.certificateExpiryMutex.RLock()
+	defer fake.certificateExpiryMutex.RUnlock()
+	fake.cleanUpMutex.RLock()
+	defer fake.cleanUpMutex.RUnlock()
 	fake.currentTasksMutex.RLock()
 	defer fake.currentTasksMutex.RUnlock()
-	fake.recentTasksMutex.RLock()
-	defer fake.recentTasksMutex.RUnlock()
-	fake.findTaskMutex.RLock()
-	defer fake.findTaskMutex.RUnlock()
-	fake.findTasksByContextIdMutex.RLock()
-	defer fake.findTasksByContextIdMutex.RUnlock()
-	fake.eventsMutex.RLock()
-	defer fake.eventsMutex.RUnlock()
-	fake.eventMutex.RLock()
-	defer fake.eventMutex.RUnlock()
+	fake.deleteConfigMutex.RLock()
+	defer fake.deleteConfigMutex.RUnlock()
+	fake.deleteConfigByIDMutex.RLock()
+	defer fake.deleteConfigByIDMutex.RUnlock()
 	fake.deploymentsMutex.RLock()
 	defer fake.deploymentsMutex.RUnlock()
+	fake.diffCPIConfigMutex.RLock()
+	defer fake.diffCPIConfigMutex.RUnlock()
+	fake.diffCloudConfigMutex.RLock()
+	defer fake.diffCloudConfigMutex.RUnlock()
+	fake.diffConfigMutex.RLock()
+	defer fake.diffConfigMutex.RUnlock()
+	fake.diffConfigByIDOrContentMutex.RLock()
+	defer fake.diffConfigByIDOrContentMutex.RUnlock()
+	fake.diffRuntimeConfigMutex.RLock()
+	defer fake.diffRuntimeConfigMutex.RUnlock()
+	fake.downloadResourceUncheckedMutex.RLock()
+	defer fake.downloadResourceUncheckedMutex.RUnlock()
+	fake.enableResurrectionMutex.RLock()
+	defer fake.enableResurrectionMutex.RUnlock()
+	fake.eventMutex.RLock()
+	defer fake.eventMutex.RUnlock()
+	fake.eventsMutex.RLock()
+	defer fake.eventsMutex.RUnlock()
 	fake.findDeploymentMutex.RLock()
 	defer fake.findDeploymentMutex.RUnlock()
-	fake.releasesMutex.RLock()
-	defer fake.releasesMutex.RUnlock()
-	fake.hasReleaseMutex.RLock()
-	defer fake.hasReleaseMutex.RUnlock()
+	fake.findOrphanDiskMutex.RLock()
+	defer fake.findOrphanDiskMutex.RUnlock()
+	fake.findOrphanNetworkMutex.RLock()
+	defer fake.findOrphanNetworkMutex.RUnlock()
 	fake.findReleaseMutex.RLock()
 	defer fake.findReleaseMutex.RUnlock()
 	fake.findReleaseSeriesMutex.RLock()
 	defer fake.findReleaseSeriesMutex.RUnlock()
-	fake.uploadReleaseURLMutex.RLock()
-	defer fake.uploadReleaseURLMutex.RUnlock()
-	fake.uploadReleaseFileMutex.RLock()
-	defer fake.uploadReleaseFileMutex.RUnlock()
-	fake.matchPackagesMutex.RLock()
-	defer fake.matchPackagesMutex.RUnlock()
-	fake.stemcellsMutex.RLock()
-	defer fake.stemcellsMutex.RUnlock()
-	fake.hasStemcellMutex.RLock()
-	defer fake.hasStemcellMutex.RUnlock()
 	fake.findStemcellMutex.RLock()
 	defer fake.findStemcellMutex.RUnlock()
-	fake.uploadStemcellURLMutex.RLock()
-	defer fake.uploadStemcellURLMutex.RUnlock()
-	fake.uploadStemcellFileMutex.RLock()
-	defer fake.uploadStemcellFileMutex.RUnlock()
-	fake.latestCloudConfigMutex.RLock()
-	defer fake.latestCloudConfigMutex.RUnlock()
-	fake.updateCloudConfigMutex.RLock()
-	defer fake.updateCloudConfigMutex.RUnlock()
-	fake.diffCloudConfigMutex.RLock()
-	defer fake.diffCloudConfigMutex.RUnlock()
+	fake.findTaskMutex.RLock()
+	defer fake.findTaskMutex.RUnlock()
+	fake.findTasksByContextIdMutex.RLock()
+	defer fake.findTasksByContextIdMutex.RUnlock()
+	fake.hasReleaseMutex.RLock()
+	defer fake.hasReleaseMutex.RUnlock()
+	fake.infoMutex.RLock()
+	defer fake.infoMutex.RUnlock()
+	fake.isAuthenticatedMutex.RLock()
+	defer fake.isAuthenticatedMutex.RUnlock()
 	fake.latestCPIConfigMutex.RLock()
 	defer fake.latestCPIConfigMutex.RUnlock()
-	fake.updateCPIConfigMutex.RLock()
-	defer fake.updateCPIConfigMutex.RUnlock()
-	fake.diffCPIConfigMutex.RLock()
-	defer fake.diffCPIConfigMutex.RUnlock()
+	fake.latestCloudConfigMutex.RLock()
+	defer fake.latestCloudConfigMutex.RUnlock()
+	fake.latestConfigMutex.RLock()
+	defer fake.latestConfigMutex.RUnlock()
+	fake.latestConfigByIDMutex.RLock()
+	defer fake.latestConfigByIDMutex.RUnlock()
 	fake.latestRuntimeConfigMutex.RLock()
 	defer fake.latestRuntimeConfigMutex.RUnlock()
-	fake.updateRuntimeConfigMutex.RLock()
-	defer fake.updateRuntimeConfigMutex.RUnlock()
-	fake.diffRuntimeConfigMutex.RLock()
-	defer fake.diffRuntimeConfigMutex.RUnlock()
-	fake.findOrphanDiskMutex.RLock()
-	defer fake.findOrphanDiskMutex.RUnlock()
-	fake.orphanDisksMutex.RLock()
-	defer fake.orphanDisksMutex.RUnlock()
+	fake.listConfigsMutex.RLock()
+	defer fake.listConfigsMutex.RUnlock()
+	fake.listDeploymentConfigsMutex.RLock()
+	defer fake.listDeploymentConfigsMutex.RUnlock()
+	fake.listDeploymentsMutex.RLock()
+	defer fake.listDeploymentsMutex.RUnlock()
+	fake.locksMutex.RLock()
+	defer fake.locksMutex.RUnlock()
+	fake.matchPackagesMutex.RLock()
+	defer fake.matchPackagesMutex.RUnlock()
 	fake.orphanDiskMutex.RLock()
 	defer fake.orphanDiskMutex.RUnlock()
-	fake.enableResurrectionMutex.RLock()
-	defer fake.enableResurrectionMutex.RUnlock()
-	fake.cleanUpMutex.RLock()
-	defer fake.cleanUpMutex.RUnlock()
-	fake.downloadResourceUncheckedMutex.RLock()
-	defer fake.downloadResourceUncheckedMutex.RUnlock()
+	fake.orphanDisksMutex.RLock()
+	defer fake.orphanDisksMutex.RUnlock()
+	fake.orphanNetworksMutex.RLock()
+	defer fake.orphanNetworksMutex.RUnlock()
+	fake.orphanedVMsMutex.RLock()
+	defer fake.orphanedVMsMutex.RUnlock()
+	fake.recentTasksMutex.RLock()
+	defer fake.recentTasksMutex.RUnlock()
+	fake.releasesMutex.RLock()
+	defer fake.releasesMutex.RUnlock()
+	fake.stemcellNeedsUploadMutex.RLock()
+	defer fake.stemcellNeedsUploadMutex.RUnlock()
+	fake.stemcellsMutex.RLock()
+	defer fake.stemcellsMutex.RUnlock()
+	fake.updateCPIConfigMutex.RLock()
+	defer fake.updateCPIConfigMutex.RUnlock()
+	fake.updateCloudConfigMutex.RLock()
+	defer fake.updateCloudConfigMutex.RUnlock()
+	fake.updateConfigMutex.RLock()
+	defer fake.updateConfigMutex.RUnlock()
+	fake.updateRuntimeConfigMutex.RLock()
+	defer fake.updateRuntimeConfigMutex.RUnlock()
+	fake.uploadReleaseFileMutex.RLock()
+	defer fake.uploadReleaseFileMutex.RUnlock()
+	fake.uploadReleaseURLMutex.RLock()
+	defer fake.uploadReleaseURLMutex.RUnlock()
+	fake.uploadStemcellFileMutex.RLock()
+	defer fake.uploadStemcellFileMutex.RUnlock()
+	fake.uploadStemcellURLMutex.RLock()
+	defer fake.uploadStemcellURLMutex.RUnlock()
+	fake.withContextMutex.RLock()
+	defer fake.withContextMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

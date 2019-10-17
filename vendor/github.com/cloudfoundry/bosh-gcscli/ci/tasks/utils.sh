@@ -41,3 +41,28 @@ function add_on_exit {
     trap on_exit EXIT
   fi
 }
+
+function clean_gcs {
+    pushd ${release_dir}
+        make clean-gcs
+    popd
+}
+
+function set_env {
+    my_dir=$(dirname "$(readlink -f "$0")")
+    export release_dir="$( cd ${my_dir} && cd ../.. && pwd )"
+    export workspace_dir="$( cd ${release_dir} && cd ../../../.. && pwd )"
+
+    export GOPATH=${workspace_dir}
+    export PATH=${GOPATH}/bin:${PATH}
+}
+
+function gcloud_login {
+    check_param 'google_project'
+    check_param 'google_json_key_data'
+
+    keyfile=$(mktemp)
+    gcloud config set project ${google_project}
+    echo ${google_json_key_data} > ${keyfile}
+    gcloud auth activate-service-account --key-file=${keyfile}
+}

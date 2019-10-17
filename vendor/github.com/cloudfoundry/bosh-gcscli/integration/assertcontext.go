@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 
 	. "github.com/onsi/gomega"
+	"golang.org/x/net/context"
 )
 
 // GoogleAppCredentialsEnv is the environment variable
@@ -69,6 +70,9 @@ type AssertContext struct {
 	// options are the AssertContextConfigOption which are used to modify
 	// the configuration whenever AddConfig is called.
 	options []AssertContextConfigOption
+
+	// ctx is the context used by the individual test
+	ctx context.Context
 }
 
 // NewAssertContext returns an AssertContext with all fields
@@ -86,6 +90,7 @@ func NewAssertContext(options ...AssertContextConfigOption) AssertContext {
 		GCSFileName:        GenerateRandomString(),
 		serviceAccountFile: serviceAccountFile,
 		options:            options,
+		ctx:                context.Background(),
 	}
 }
 
@@ -115,6 +120,7 @@ func AsReadOnlyCredentials(ctx *AssertContext) {
 		"cannot set read-only AssertContext without config")
 
 	conf.CredentialsSource = config.NoneCredentialsSource
+	conf.ServiceAccountFile = ""
 }
 
 // AsStaticCredentials configures the AssertContext to authenticate explicitly
@@ -145,7 +151,7 @@ func AsDefaultCredentials(ctx *AssertContext) {
 	ctx.serviceAccountPath = tempFile.Name()
 	os.Setenv(GoogleAppCredentialsEnv, ctx.serviceAccountPath)
 
-	conf.CredentialsSource = config.ApplicationDefaultCredentialsSource
+	conf.CredentialsSource = config.DefaultCredentialsSource
 }
 
 // Clone returns a new AssertContext configured using the provided options.

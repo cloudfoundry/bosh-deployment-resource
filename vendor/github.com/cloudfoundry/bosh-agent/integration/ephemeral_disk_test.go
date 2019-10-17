@@ -16,7 +16,6 @@ var _ = Describe("EphemeralDisk", func() {
 	)
 
 	Context("mounted on /var/vcap/data", func() {
-
 		BeforeEach(func() {
 			err := testEnvironment.StopAgent()
 			Expect(err).ToNot(HaveOccurred())
@@ -97,7 +96,7 @@ var _ = Describe("EphemeralDisk", func() {
 
 					JustBeforeEach(func() {
 						Eventually(func() string {
-							result, _ := testEnvironment.RunCommand("sudo mount | grep /tmp | grep -c /var/vcap/data/root_tmp")
+							result, _ := testEnvironment.RunCommand("{ sudo findmnt /var/tmp; sudo findmnt /tmp; } | grep -c '/dev/sdh2\\[/root_tmp\\]'")
 							return strings.TrimSpace(result)
 						}, 2*time.Minute, 1*time.Second).Should(Equal("2"))
 					})
@@ -143,7 +142,7 @@ var _ = Describe("EphemeralDisk", func() {
 					err := testEnvironment.UpdateAgentConfig("root-partition-agent.json")
 					Expect(err).ToNot(HaveOccurred())
 
-					oldRootDevice, err = testEnvironment.AttachPartitionedRootDevice("/dev/sdz", 2048, 128)
+					oldRootDevice, err = testEnvironment.AttachPartitionedRootDevice("/dev/sdz", 1224, 128)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -163,9 +162,35 @@ var _ = Describe("EphemeralDisk", func() {
 					partitionTable, err := testEnvironment.RunCommand("sudo sfdisk -d /dev/sdz")
 					Expect(err).ToNot(HaveOccurred())
 
-					Expect(partitionTable).To(ContainSubstring("/dev/sdz1 : start=        1, size=   273104, Id=83"))
-					Expect(partitionTable).To(ContainSubstring("/dev/sdz2 : start=   274432, size=  1960600, Id=83"))
-					Expect(partitionTable).To(ContainSubstring("/dev/sdz3 : start=  2236416, size=  1957888, Id=83"))
+					Expect(partitionTable).To(MatchRegexp(`/dev/sdz1 : start=\s+1, size=\s+262144, type=83`))
+					Expect(partitionTable).To(MatchRegexp(`/dev/sdz2 : start=\s+264192, size=\s+\d+, type=83`))
+					Expect(partitionTable).To(MatchRegexp(`/dev/sdz3 : start=\s+\d+, size=\s+\d+, type=83`))
+				})
+
+				Context("when swap size is set to 0", func() {
+					BeforeEach(func() {
+						swapSize := uint64(0)
+						registrySettings.Env = boshsettings.Env{
+							Bosh: boshsettings.BoshEnv{
+								SwapSizeInMB: &swapSize,
+							},
+						}
+					})
+
+					It("does not partition a swap device", func() {
+						Eventually(func() string {
+							ephemeralDataDevice, err := testEnvironment.RunCommand(`sudo mount | grep "on /var/vcap/data " | cut -d' ' -f1`)
+							Expect(err).ToNot(HaveOccurred())
+
+							return strings.TrimSpace(ephemeralDataDevice)
+						}, 2*time.Minute, 1*time.Second).Should(Equal("/dev/sdz2"))
+
+						partitionTable, err := testEnvironment.RunCommand("sudo sfdisk -d /dev/sdz")
+						Expect(err).ToNot(HaveOccurred())
+
+						Expect(partitionTable).To(ContainSubstring("/dev/sdz1 : start=           1, size=      262144, type=83"))
+						Expect(partitionTable).To(ContainSubstring("/dev/sdz2 : start=      264192, size=     2242560, type=83"))
+					})
 				})
 			})
 

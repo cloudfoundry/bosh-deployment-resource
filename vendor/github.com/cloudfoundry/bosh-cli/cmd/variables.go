@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshui "github.com/cloudfoundry/bosh-cli/ui"
 	boshtbl "github.com/cloudfoundry/bosh-cli/ui/table"
@@ -15,8 +16,7 @@ func NewVariablesCmd(ui boshui.UI, deployment boshdir.Deployment) VariablesCmd {
 	return VariablesCmd{ui: ui, deployment: deployment}
 }
 
-func (c VariablesCmd) Run() error {
-
+func (c VariablesCmd) Run(opts VariablesOpts) error {
 	variables, err := c.deployment.Variables()
 	if err != nil {
 		return err

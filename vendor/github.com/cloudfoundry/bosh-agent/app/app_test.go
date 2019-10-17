@@ -34,9 +34,7 @@ func init() {
 
 			err = os.Mkdir(filepath.Join(baseDir, "bosh"), os.ModePerm)
 			Expect(err).ToNot(HaveOccurred())
-		})
 
-		BeforeEach(func() {
 			agentConfPath = filepath.Join(baseDir, "bosh", "agent.json")
 
 			agentConfJSON = `{
@@ -65,7 +63,25 @@ func init() {
 				},
 				"env": {
 					"bosh": {
-						"password": "some encrypted password"
+						"password": "some encrypted password",
+						"blobstores": [
+							{
+								"options": {
+									"bucket_name": "2george",
+									"encryption_key": "2optional encryption key",
+									"access_key_id": "2optional access key id",
+									"secret_access_key": "2optional secret access key",
+									"port": 444
+								},
+								"provider": "dummy"
+							},
+							{
+								"options": {
+									"blobstore_path": "/var/vcap/micro_bosh/data/cache"
+								},
+								"provider": "local"
+							}
+						]
 					}
 				},
 				"networks": {
@@ -93,7 +109,7 @@ func init() {
 				}
 			}`
 
-			err := ioutil.WriteFile(settingsPath, []byte(settingsJSON), 0640)
+			err = ioutil.WriteFile(settingsPath, []byte(settingsJSON), 0640)
 			Expect(err).ToNot(HaveOccurred())
 		})
 

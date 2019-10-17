@@ -44,6 +44,26 @@ var _ = Describe("Director", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
+		It("does url encoding for cid", func() {
+			var verifyRawPath = func(path string) http.HandlerFunc {
+				return func(w http.ResponseWriter, req *http.Request) {
+					Expect(req.RequestURI).To(Equal(path))
+				}
+			}
+
+			ConfigureTaskResult(
+				ghttp.CombineHandlers(
+					verifyRawPath("/vms/cid%3Bcid"),
+					ghttp.VerifyRequest("DELETE", "/vms/cid;cid"),
+					ghttp.VerifyBasicAuth("username", "password"),
+				),
+				"",
+				server,
+			)
+			err := deployment.DeleteVM("cid;cid")
+			Expect(err).ToNot(HaveOccurred())
+		})
+
 		It("succeeds even if error occurrs if VM no longer exists", func() {
 			AppendBadRequest(ghttp.VerifyRequest("DELETE", "/vms/cid"), server)
 

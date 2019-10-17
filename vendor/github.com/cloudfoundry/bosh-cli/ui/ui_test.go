@@ -3,7 +3,6 @@ package ui_test
 import (
 	"bytes"
 	"io"
-	"os"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	. "github.com/onsi/ginkgo"
@@ -207,6 +206,39 @@ note2
 		})
 	})
 
+	Describe("PrintTableFiltered", func() {
+		It("prints table", func() {
+			table := Table{
+				Title:   "Title",
+				Content: "things",
+				Header:  []Header{NewHeader("Header1"), NewHeader("Header2")},
+
+				Rows: [][]Value{
+					{ValueString{S: "r1c1"}, ValueString{S: "r1c2"}},
+					{ValueString{S: "r2c1"}, ValueString{S: "r2c2"}},
+				},
+
+				Notes:         []string{"note1", "note2"},
+				BackgroundStr: ".",
+				BorderStr:     "|",
+			}
+			filteredHeader := []Header{}
+			ui.PrintTableFiltered(table, filteredHeader)
+			Expect("\n" + uiOutBuffer.String()).To(Equal(`
+Title
+
+Header1|Header2|
+r1c1...|r1c2|
+r2c1...|r2c2|
+
+note1
+note2
+
+2 things
+`))
+		})
+	})
+
 	Describe("IsInteractive", func() {
 		It("returns true", func() {
 			Expect(ui.IsInteractive()).To(BeTrue())
@@ -216,52 +248,6 @@ note2
 	Describe("Flush", func() {
 		It("does nothing", func() {
 			Expect(func() { ui.Flush() }).ToNot(Panic())
-		})
-	})
-
-	Describe("AskForText", func() {
-		It("allows empty and non-empty text input", func() {
-			r, w, err := os.Pipe()
-			Expect(err).ToNot(HaveOccurred())
-
-			os.Stdin = r
-
-			_, err = w.Write([]byte("\ntest\n"))
-			Expect(err).ToNot(HaveOccurred())
-
-			err = w.Close()
-			Expect(err).ToNot(HaveOccurred())
-
-			text, err := ui.AskForText("ask-test")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(text).To(Equal(""))
-
-			text, err = ui.AskForText("ask-test2")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(text).To(Equal("test"))
-		})
-	})
-
-	Describe("AskForPassword", func() {
-		It("allows empty and non-empty password input", func() {
-			r, w, err := os.Pipe()
-			Expect(err).ToNot(HaveOccurred())
-
-			os.Stdin = r
-
-			_, err = w.Write([]byte("\npassword\n"))
-			Expect(err).ToNot(HaveOccurred())
-
-			err = w.Close()
-			Expect(err).ToNot(HaveOccurred())
-
-			text, err := ui.AskForPassword("ask-test")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(text).To(Equal(""))
-
-			text, err = ui.AskForPassword("ask-test2")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(text).To(Equal("password"))
 		})
 	})
 })

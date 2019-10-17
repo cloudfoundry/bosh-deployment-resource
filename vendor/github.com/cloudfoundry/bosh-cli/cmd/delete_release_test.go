@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/cloudfoundry/bosh-cli/cmd"
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	fakedir "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	fakeui "github.com/cloudfoundry/bosh-cli/ui/fakes"
@@ -46,9 +47,10 @@ var _ = Describe("DeleteReleaseCmd", func() {
 
 				releaseSeries = &fakedir.FakeReleaseSeries{}
 				director.FindReleaseSeriesReturns(releaseSeries, nil)
+				releaseSeries.ExistsReturns(true, nil)
 			})
 
-			It("deletes release series", func() {
+			It("deletes release series that exists", func() {
 				err := act()
 				Expect(err).ToNot(HaveOccurred())
 
@@ -56,8 +58,23 @@ var _ = Describe("DeleteReleaseCmd", func() {
 				Expect(director.FindReleaseSeriesArgsForCall(0)).To(Equal(
 					boshdir.NewReleaseSeriesSlug("some-name")))
 
+				Expect(releaseSeries.ExistsCallCount()).To(Equal(1))
 				Expect(releaseSeries.DeleteCallCount()).To(Equal(1))
 				Expect(releaseSeries.DeleteArgsForCall(0)).To(BeFalse())
+			})
+
+			It("does not delete release series which does not exist", func() {
+				opts.Args.Slug = boshdir.NewReleaseOrSeriesSlug("not-existing-release", "")
+				releaseSeries.ExistsReturns(false, nil)
+				err := act()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(director.FindReleaseSeriesCallCount()).To(Equal(1))
+				Expect(director.FindReleaseSeriesArgsForCall(0)).To(Equal(
+					boshdir.NewReleaseSeriesSlug("not-existing-release")))
+
+				Expect(releaseSeries.ExistsCallCount()).To(Equal(1))
+				Expect(releaseSeries.DeleteCallCount()).To(Equal(0))
 			})
 
 			It("deletes release series forcefully if requested", func() {
@@ -67,6 +84,7 @@ var _ = Describe("DeleteReleaseCmd", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(releaseSeries.DeleteCallCount()).To(Equal(1))
+				Expect(releaseSeries.ExistsCallCount()).To(Equal(1))
 				Expect(releaseSeries.DeleteArgsForCall(0)).To(BeTrue())
 			})
 
@@ -97,6 +115,16 @@ var _ = Describe("DeleteReleaseCmd", func() {
 
 				Expect(releaseSeries.DeleteCallCount()).To(Equal(0))
 			})
+
+			It("returns error if release series existence check failed", func() {
+				releaseSeries.ExistsReturns(false, errors.New("fake-err"))
+
+				err := act()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("fake-err"))
+
+				Expect(releaseSeries.DeleteCallCount()).To(Equal(0))
+			})
 		})
 
 		Context("when release (not series) is requested for deletion", func() {
@@ -109,9 +137,10 @@ var _ = Describe("DeleteReleaseCmd", func() {
 
 				release = &fakedir.FakeRelease{}
 				director.FindReleaseReturns(release, nil)
+				release.ExistsReturns(true, nil)
 			})
 
-			It("deletes release", func() {
+			It("deletes release that exists", func() {
 				err := act()
 				Expect(err).ToNot(HaveOccurred())
 
@@ -119,8 +148,24 @@ var _ = Describe("DeleteReleaseCmd", func() {
 				Expect(director.FindReleaseArgsForCall(0)).To(Equal(
 					boshdir.NewReleaseSlug("some-name", "some-version")))
 
+				Expect(release.ExistsCallCount()).To(Equal(1))
 				Expect(release.DeleteCallCount()).To(Equal(1))
 				Expect(release.DeleteArgsForCall(0)).To(BeFalse())
+			})
+
+			It("does not delete release which does not exist", func() {
+				opts.Args.Slug = boshdir.NewReleaseOrSeriesSlug("some-other-name", "some-version")
+				release.ExistsReturns(false, nil)
+
+				err := act()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(director.FindReleaseCallCount()).To(Equal(1))
+				Expect(director.FindReleaseArgsForCall(0)).To(Equal(
+					boshdir.NewReleaseSlug("some-other-name", "some-version")))
+
+				Expect(release.ExistsCallCount()).To(Equal(1))
+				Expect(release.DeleteCallCount()).To(Equal(0))
 			})
 
 			It("deletes release forcefully if requested", func() {
@@ -129,6 +174,7 @@ var _ = Describe("DeleteReleaseCmd", func() {
 				err := act()
 				Expect(err).ToNot(HaveOccurred())
 
+				Expect(release.ExistsCallCount()).To(Equal(1))
 				Expect(release.DeleteCallCount()).To(Equal(1))
 				Expect(release.DeleteArgsForCall(0)).To(BeTrue())
 			})
@@ -149,6 +195,15 @@ var _ = Describe("DeleteReleaseCmd", func() {
 				err := act()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("fake-err"))
+			})
+
+			It("returns error if release existence check failed", func() {
+				release.ExistsReturns(false, errors.New("fake-err"))
+
+				err := act()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("fake-err"))
+				Expect(release.DeleteCallCount()).To(Equal(0))
 			})
 
 			It("returns error if finding release failed", func() {

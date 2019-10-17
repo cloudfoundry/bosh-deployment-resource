@@ -21,66 +21,65 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/cloudfoundry/bosh-gcscli/client"
 	"github.com/cloudfoundry/bosh-gcscli/config"
+	"golang.org/x/net/context"
 )
 
-var version string
+var version = "dev"
 
 // usageExample provides examples of how to use the CLI.
-//
-// This is used when printing the help text.
 const usageExample = `
 # Usage
 bosh-gcscli --help
 
-# Command: "put"
 # Upload a blob to the GCS blobstore.
 bosh-gcscli -c config.json put <path/to/file> <remote-blob>
 
-# Command: "get"
 # Fetch a blob from the GCS blobstore.
 # Destination file will be overwritten if exists.
 bosh-gcscli -c config.json get <remote-blob> <path/to/file>
 
-# Command: "delete"
 # Remove a blob from the GCS blobstore.
 bosh-gcscli -c config.json delete <remote-blob>
 
-# Command: "exists"
 # Checks if blob exists in the GCS blobstore.
-bosh-gcscli -c config.json exists <remote-blob>`
+bosh-gcscli -c config.json exists <remote-blob>
+
+# Generate a signed url for an object
+bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>
+Where:
+- <http action> is GET, PUT, or DELETE
+- <expiry> is a duration string less than 7 days (e.g. "6h")`
 
 var (
 	showVer    = flag.Bool("v", false, "Print CLI version")
 	shortHelp  = flag.Bool("h", false, "Print this help text")
 	longHelp   = flag.Bool("help", false, "Print this help text")
 	configPath = flag.String("c", "",
-		`JSON config file (ie, config.json).
+		`path to a JSON file with the following contents:
 	{
-		"bucket_name":         "name of GCS bucket (required)",
-
-		"credentials_source":  "flag for credentials
-		                        (optional, defaults to Application Default Credentials)
-		                        (can be "static" for json_key),
-		                        (can be "none" for explicitly no credentials)"
+		"bucket_name":         "name of Google Cloud Storage bucket (required)",
+		"credentials_source":  "Optional, defaults to Application Default Credentials or none)
+		                        (can be 'static' for a service account specified in json_key),
+		                        (can be 'none' for explicitly no credentials)"
+		"json_key":            "JSON Service Account File
+		                        (optional, required for 'static' credentials)",
 		"storage_class":       "storage class for objects
 		                        (optional, defaults to bucket settings)",
-		"json_key":            "JSON Service Account File
-		                        (optional, required for static credentials)",
 		"encryption_key":      "Base64 encoded 32 byte Customer-Supplied
-		                        encryption key used to encrypt objects 
-		                        (optional)"
+		                        encryption key used to encrypt objects
+								(optional, defaults to GCS controlled key)"
 	}
 
 	storage_class is one of MULTI_REGIONAL, REGIONAL, NEARLINE, or COLDLINE.
-	See the docs for characteristics and location compatibility.
-	https://cloud.google.com/storage/docs/storage-classes
+	For more information on characteristics and location compatibility:
+	    https://cloud.google.com/storage/docs/storage-classes
 
-	For more information on Customer-Supplied encryption keys,
-	see the docs.
-	https://cloud.google.com/storage/docs/encryption
+	For more information on Customer-Supplied encryption keys:
+		https://cloud.google.com/storage/docs/encryption
 `)
 )
 
@@ -92,35 +91,30 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *shortHelp || *longHelp {
+	if *shortHelp || *longHelp || len(flag.Args()) == 0 {
 		flag.Usage()
 		fmt.Println(usageExample)
 		os.Exit(0)
 	}
 
 	if *configPath == "" {
-		fmt.Println("no config file provided\nSee -help for usage")
-		os.Exit(1)
+		log.Fatalf("no config file provided\nSee -help for usage\n")
 	}
 
 	configFile, err := os.Open(*configPath)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("opening config %s: %v\n", *configPath, err)
 	}
 
 	gcsConfig, err := config.NewFromReader(configFile)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("reading config %s: %v\n", *configPath, err)
 	}
 
-	ctx, gcsClient, err := client.NewSDK(gcsConfig)
+	ctx := context.Background()
+	blobstoreClient, err := client.New(ctx, &gcsConfig)
 	if err != nil {
-		log.Fatalln(err)
-	}
-
-	blobstoreClient, err := client.New(ctx, gcsClient, &gcsConfig)
-	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("creating gcs client: %v\n", err)
 	}
 
 	nonFlagArgs := flag.Args()
@@ -133,7 +127,7 @@ func main() {
 	switch cmd {
 	case "put":
 		if len(nonFlagArgs) != 3 {
-			log.Fatalf("Put method expected 3 arguments got %d\n", len(nonFlagArgs))
+			log.Fatalf("put method expected 3 arguments got %d\n", len(nonFlagArgs))
 		}
 		src, dst := nonFlagArgs[1], nonFlagArgs[2]
 
@@ -148,7 +142,7 @@ func main() {
 		fmt.Println(err)
 	case "get":
 		if len(nonFlagArgs) != 3 {
-			log.Fatalf("Get method expected 3 arguments got %d\n", len(nonFlagArgs))
+			log.Fatalf("get method expected 3 arguments got %d\n", len(nonFlagArgs))
 		}
 		src, dst := nonFlagArgs[1], nonFlagArgs[2]
 
@@ -162,13 +156,13 @@ func main() {
 		err = blobstoreClient.Get(src, dstFile)
 	case "delete":
 		if len(nonFlagArgs) != 2 {
-			log.Fatalf("Delete method expected 2 arguments got %d\n", len(nonFlagArgs))
+			log.Fatalf("delete method expected 2 arguments got %d\n", len(nonFlagArgs))
 		}
 
 		err = blobstoreClient.Delete(nonFlagArgs[1])
 	case "exists":
 		if len(nonFlagArgs) != 2 {
-			log.Fatalf("Exists method expected 2 arguments got %d\n", len(nonFlagArgs))
+			log.Fatalf("exists method expected 2 arguments got %d\n", len(nonFlagArgs))
 		}
 
 		var exists bool
@@ -178,6 +172,23 @@ func main() {
 		// We are using `3` since `1` and `2` have special meanings
 		if err == nil && !exists {
 			os.Exit(3)
+		}
+	case "sign":
+		if len(nonFlagArgs) != 4 {
+			log.Fatalf("sign method expected 3 arguments got %d\n", len(nonFlagArgs))
+		}
+
+		id, action, expiry := nonFlagArgs[1], nonFlagArgs[2], nonFlagArgs[3]
+
+		var expiryDuration time.Duration
+		expiryDuration, err = time.ParseDuration(expiry)
+		if err != nil {
+			log.Fatalf("Invalid expiry duration: %v", err)
+		}
+		url := ""
+		url, err = blobstoreClient.Sign(id, action, expiryDuration)
+		if err == nil {
+			os.Stdout.WriteString(url)
 		}
 
 	default:

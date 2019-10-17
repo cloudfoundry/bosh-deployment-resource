@@ -1,26 +1,27 @@
 package action_test
 
 import (
+	. "github.com/cloudfoundry/bosh-agent/agent/action"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/cloudfoundry/bosh-agent/agent/action"
+	"github.com/cloudfoundry/bosh-agent/agent/script/scriptfakes"
+	"github.com/cloudfoundry/bosh-agent/platform/platformfakes"
 
 	boshscript "github.com/cloudfoundry/bosh-agent/agent/script"
-	boshntp "github.com/cloudfoundry/bosh-agent/platform/ntp"
 	boshdir "github.com/cloudfoundry/bosh-agent/settings/directories"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	fakeas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec/fakes"
 	fakeappl "github.com/cloudfoundry/bosh-agent/agent/applier/fakes"
+	fakeagentblobstore "github.com/cloudfoundry/bosh-agent/agent/blobstore/blobstorefakes"
 	fakecomp "github.com/cloudfoundry/bosh-agent/agent/compiler/fakes"
-	fakescript "github.com/cloudfoundry/bosh-agent/agent/script/fakes"
+	fakeblobdelegator "github.com/cloudfoundry/bosh-agent/agent/httpblobprovider/blobstore_delegator/blobstore_delegatorfakes"
 	faketask "github.com/cloudfoundry/bosh-agent/agent/task/fakes"
 	fakejobsuper "github.com/cloudfoundry/bosh-agent/jobsupervisor/fakes"
 	fakenotif "github.com/cloudfoundry/bosh-agent/notification/fakes"
-	fakeplatform "github.com/cloudfoundry/bosh-agent/platform/fakes"
 	fakesettings "github.com/cloudfoundry/bosh-agent/settings/fakes"
-	fakeblobstore "github.com/cloudfoundry/bosh-utils/blobstore/fakes"
+	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
 )
 
 //go:generate counterfeiter -o fakes/fake_clock.go ../../vendor/code.cloudfoundry.org/clock Clock
@@ -28,9 +29,8 @@ import (
 var _ = Describe("concreteFactory", func() {
 	var (
 		settingsService   *fakesettings.FakeSettingsService
-		platform          *fakeplatform.FakePlatform
-		blobstore         *fakeblobstore.FakeDigestBlobstore
-		blobManager       *fakeblobstore.FakeBlobManagerInterface
+		platform          *platformfakes.FakePlatform
+		blobManager       *fakeagentblobstore.FakeBlobManagerInterface
 		taskService       *faketask.FakeService
 		notifier          *fakenotif.FakeNotifier
 		applier           *fakeappl.FakeApplier
@@ -40,26 +40,32 @@ var _ = Describe("concreteFactory", func() {
 		jobScriptProvider boshscript.JobScriptProvider
 		factory           Factory
 		logger            boshlog.Logger
+		fileSystem        *fakesys.FakeFileSystem
+		blobDelegator     *fakeblobdelegator.FakeBlobstoreDelegator
 	)
 
 	BeforeEach(func() {
 		settingsService = &fakesettings.FakeSettingsService{}
-		platform = fakeplatform.NewFakePlatform()
-		blobstore = &fakeblobstore.FakeDigestBlobstore{}
-		blobManager = &fakeblobstore.FakeBlobManagerInterface{}
+
+		platform = &platformfakes.FakePlatform{}
+		fileSystem = fakesys.NewFakeFileSystem()
+		platform.GetFsReturns(fileSystem)
+		platform.GetDirProviderReturns(boshdir.NewProvider("/var/vcap"))
+
+		blobManager = &fakeagentblobstore.FakeBlobManagerInterface{}
 		taskService = &faketask.FakeService{}
 		notifier = fakenotif.NewFakeNotifier()
 		applier = fakeappl.NewFakeApplier()
 		compiler = fakecomp.NewFakeCompiler()
 		jobSupervisor = fakejobsuper.NewFakeJobSupervisor()
 		specService = fakeas.NewFakeV1Service()
-		jobScriptProvider = &fakescript.FakeJobScriptProvider{}
+		jobScriptProvider = &scriptfakes.FakeJobScriptProvider{}
 		logger = boshlog.NewLogger(boshlog.LevelNone)
+		blobDelegator = &fakeblobdelegator.FakeBlobstoreDelegator{}
 
 		factory = NewFactory(
 			settingsService,
 			platform,
-			blobstore,
 			blobManager,
 			taskService,
 			notifier,
@@ -69,6 +75,7 @@ var _ = Describe("concreteFactory", func() {
 			specService,
 			jobScriptProvider,
 			logger,
+			blobDelegator,
 		)
 	})
 
@@ -81,7 +88,13 @@ var _ = Describe("concreteFactory", func() {
 	It("apply", func() {
 		action, err := factory.Create("apply")
 		Expect(err).ToNot(HaveOccurred())
-		Expect(action).To(Equal(NewApply(applier, specService, settingsService, boshdir.NewProvider("/var/vcap").InstanceDir(), platform.GetFs())))
+		Expect(action).To(BeEquivalentTo(NewApply(
+			applier,
+			specService,
+			settingsService,
+			boshdir.NewProvider("/var/vcap"),
+			fileSystem,
+		)))
 	})
 
 	It("drain", func() {
@@ -94,7 +107,14 @@ var _ = Describe("concreteFactory", func() {
 	It("fetch_logs", func() {
 		action, err := factory.Create("fetch_logs")
 		Expect(err).ToNot(HaveOccurred())
-		Expect(action).To(Equal(NewFetchLogs(platform.GetCompressor(), platform.GetCopier(), blobstore, platform.GetDirProvider())))
+		Expect(action).To(Equal(NewFetchLogs(platform.GetCompressor(), platform.GetCopier(), blobDelegator, platform.GetDirProvider())))
+	})
+
+	It("fetch_logs_with_signed_url", func() {
+		ac, err := factory.Create("fetch_logs_with_signed_url")
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(ac).To(Equal(NewFetchLogsWithSignedURLAction(platform.GetCompressor(), platform.GetCopier(), platform.GetDirProvider(), blobDelegator)))
 	})
 
 	It("get_task", func() {
@@ -110,10 +130,9 @@ var _ = Describe("concreteFactory", func() {
 	})
 
 	It("get_state", func() {
-		ntpService := boshntp.NewConcreteService(platform.GetFs(), platform.GetDirProvider())
 		action, err := factory.Create("get_state")
 		Expect(err).ToNot(HaveOccurred())
-		Expect(action).To(Equal(NewGetState(settingsService, specService, jobSupervisor, platform.GetVitalsService(), ntpService)))
+		Expect(action).To(Equal(NewGetState(settingsService, specService, jobSupervisor, platform.GetVitalsService())))
 	})
 
 	It("list_disk", func() {
@@ -146,24 +165,6 @@ var _ = Describe("concreteFactory", func() {
 		Expect(action).To(Equal(NewInfo()))
 	})
 
-	It("prepare_network_change", func() {
-		action, err := factory.Create("prepare_network_change")
-		Expect(err).ToNot(HaveOccurred())
-		Expect(action).To(Equal(NewPrepareNetworkChange(platform.GetFs(), settingsService, NewAgentKiller())))
-	})
-
-	It("prepare_configure_networks", func() {
-		action, err := factory.Create("prepare_configure_networks")
-		Expect(err).ToNot(HaveOccurred())
-		Expect(action).To(Equal(NewPrepareConfigureNetworks(platform, settingsService)))
-	})
-
-	It("configure_networks", func() {
-		action, err := factory.Create("configure_networks")
-		Expect(err).ToNot(HaveOccurred())
-		Expect(action).To(Equal(NewConfigureNetworks(NewAgentKiller())))
-	})
-
 	It("ssh", func() {
 		action, err := factory.Create("ssh")
 		Expect(err).ToNot(HaveOccurred())
@@ -182,6 +183,12 @@ var _ = Describe("concreteFactory", func() {
 		Expect(action).To(Equal(NewStop(jobSupervisor)))
 	})
 
+	It("remove_persistent_disk", func() {
+		action, err := factory.Create("remove_persistent_disk")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(action).To(Equal(NewRemovePersistentDiskAction(settingsService)))
+	})
+
 	It("unmount_disk", func() {
 		action, err := factory.Create("unmount_disk")
 		Expect(err).ToNot(HaveOccurred())
@@ -192,6 +199,12 @@ var _ = Describe("concreteFactory", func() {
 		action, err := factory.Create("compile_package")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(action).To(Equal(NewCompilePackage(compiler)))
+	})
+
+	It("compile_package_with_signed_url", func() {
+		action, err := factory.Create("compile_package_with_signed_url")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(action).To(Equal(NewCompilePackageWithSignedURL(compiler)))
 	})
 
 	It("run_errand", func() {
@@ -220,10 +233,16 @@ var _ = Describe("concreteFactory", func() {
 		Expect(action).To(Equal(NewDeleteARPEntries(platform)))
 	})
 
+	It("shutdown", func() {
+		action, err := factory.Create("shutdown")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(action).To(Equal(NewShutdown(platform)))
+	})
+
 	It("sync_dns", func() {
 		action, err := factory.Create("sync_dns")
 		Expect(err).ToNot(HaveOccurred())
-		Expect(action).To(Equal(NewSyncDNS(blobstore, settingsService, platform, logger)))
+		Expect(action).To(Equal(NewSyncDNS(blobDelegator, settingsService, platform, logger)))
 	})
 
 	It("upload_blob", func() {

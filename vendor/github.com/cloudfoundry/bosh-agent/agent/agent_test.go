@@ -10,6 +10,7 @@ import (
 	. "github.com/cloudfoundry/bosh-agent/agent"
 
 	"code.cloudfoundry.org/clock/fakeclock"
+	"github.com/cloudfoundry/bosh-agent/agent/agentfakes"
 	boshalert "github.com/cloudfoundry/bosh-agent/agent/alert"
 	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
 	fakeas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec/fakes"
@@ -17,11 +18,10 @@ import (
 	boshhandler "github.com/cloudfoundry/bosh-agent/handler"
 	fakejobsuper "github.com/cloudfoundry/bosh-agent/jobsupervisor/fakes"
 	fakembus "github.com/cloudfoundry/bosh-agent/mbus/fakes"
-	fakeplatform "github.com/cloudfoundry/bosh-agent/platform/fakes"
+	"github.com/cloudfoundry/bosh-agent/platform/platformfakes"
 	boshvitals "github.com/cloudfoundry/bosh-agent/platform/vitals"
+	"github.com/cloudfoundry/bosh-agent/platform/vitals/vitalsfakes"
 	fakesettings "github.com/cloudfoundry/bosh-agent/settings/fakes"
-	boshsyslog "github.com/cloudfoundry/bosh-agent/syslog"
-	fakesyslog "github.com/cloudfoundry/bosh-agent/syslog/fakes"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	fakeuuid "github.com/cloudfoundry/bosh-utils/uuid/fakes"
 )
@@ -31,28 +31,35 @@ func init() {
 		var (
 			logger           boshlog.Logger
 			handler          *fakembus.FakeHandler
-			platform         *fakeplatform.FakePlatform
+			platform         *platformfakes.FakePlatform
 			actionDispatcher *fakeagent.FakeActionDispatcher
 			jobSupervisor    *fakejobsuper.FakeJobSupervisor
 			specService      *fakeas.FakeV1Service
-			syslogServer     *fakesyslog.FakeServer
 			settingsService  *fakesettings.FakeSettingsService
 			uuidGenerator    *fakeuuid.FakeGenerator
 			timeService      *fakeclock.FakeClock
-			agent            Agent
+			vitalService     *vitalsfakes.FakeService
+			startManager     *agentfakes.FakeStartManager
+
+			agent Agent
 		)
 
 		BeforeEach(func() {
 			logger = boshlog.NewLogger(boshlog.LevelNone)
 			handler = &fakembus.FakeHandler{}
-			platform = fakeplatform.NewFakePlatform()
+			platform = &platformfakes.FakePlatform{}
 			actionDispatcher = &fakeagent.FakeActionDispatcher{}
 			jobSupervisor = fakejobsuper.NewFakeJobSupervisor()
 			specService = fakeas.NewFakeV1Service()
-			syslogServer = &fakesyslog.FakeServer{}
 			settingsService = &fakesettings.FakeSettingsService{}
 			uuidGenerator = &fakeuuid.FakeGenerator{}
 			timeService = fakeclock.NewFakeClock(time.Now())
+			vitalService = &vitalsfakes.FakeService{}
+			startManager = &agentfakes.FakeStartManager{}
+			startManager.CanStartReturns(true)
+
+			platform.GetVitalsServiceReturns(vitalService)
+
 			agent = New(
 				logger,
 				handler,
@@ -60,15 +67,22 @@ func init() {
 				actionDispatcher,
 				jobSupervisor,
 				specService,
-				syslogServer,
 				5*time.Millisecond,
 				settingsService,
 				uuidGenerator,
 				timeService,
+				startManager,
 			)
 		})
 
 		Describe("Run", func() {
+			It("Registers a start with the startManager", func() {
+				err := agent.Run()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(startManager.RegisterStartCallCount()).To(Equal(1))
+			})
+
 			It("lets dispatcher handle requests arriving via handler", func() {
 				err := agent.Run()
 				Expect(err).ToNot(HaveOccurred())
@@ -97,7 +111,6 @@ func init() {
 			Context("when heartbeats can be sent", func() {
 				BeforeEach(func() {
 					handler.KeepOnRunning()
-
 				})
 
 				BeforeEach(func() {
@@ -113,9 +126,9 @@ func init() {
 
 					jobSupervisor.StatusStatus = "fake-state"
 
-					platform.FakeVitalsService.GetVitals = boshvitals.Vitals{
+					vitalService.GetReturns(boshvitals.Vitals{
 						Load: []string{"a", "b", "c"},
-					}
+					}, nil)
 				})
 
 				expectedJobName := "fake-job"
@@ -140,11 +153,11 @@ func init() {
 						actionDispatcher,
 						jobSupervisor,
 						specService,
-						syslogServer,
 						5*time.Hour,
 						settingsService,
 						uuidGenerator,
 						timeService,
+						startManager,
 					)
 
 					// Immediately exit after sending initial heartbeat
@@ -189,6 +202,17 @@ func init() {
 					}
 					Expect(jobSupervisor.GetHealthRecorded()).To(BeNumerically(">=", 3))
 				})
+
+				Context("when the agent may not be rebooted", func() {
+					BeforeEach(func() {
+						startManager.CanStartReturns(false)
+					})
+
+					It("stops the boot process and returns an error", func() {
+						err := agent.Run()
+						Expect(err).To(HaveOccurred())
+					})
+				})
 			})
 
 			Context("when the agent fails to get job spec for a heartbeat", func() {
@@ -206,7 +230,7 @@ func init() {
 
 			Context("when the agent fails to get vitals for a heartbeat", func() {
 				BeforeEach(func() {
-					platform.FakeVitalsService.GetErr = errors.New("fake-vitals-service-error")
+					vitalService.GetReturns(boshvitals.Vitals{}, errors.New("fake-vitals-service-error"))
 					handler.KeepOnRunning()
 				})
 
@@ -247,40 +271,6 @@ func init() {
 					Title:     "fake-service - fake-event - fake-action",
 					Summary:   "fake-description",
 					CreatedAt: int64(1306076861),
-				}
-
-				Expect(handler.SendInputs()).To(ContainElement(fakembus.SendInput{
-					Target:  boshhandler.HealthMonitor,
-					Topic:   boshhandler.Alert,
-					Message: expectedAlert,
-				}))
-			})
-
-			It("sends ssh alerts to health manager", func() {
-				handler.KeepOnRunning()
-
-				syslogMsg := boshsyslog.Msg{Content: "disconnected by user"}
-				syslogServer.StartFirstSyslogMsg = &syslogMsg
-
-				uuidGenerator.GeneratedUUID = "fake-uuid"
-
-				// Fail the first time handler.Send is called for an alert (ignore heartbeats)
-				handler.SendCallback = func(input fakembus.SendInput) {
-					if input.Topic == boshhandler.Alert {
-						handler.SendErr = errors.New("stop")
-					}
-				}
-
-				err := agent.Run()
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("stop"))
-
-				expectedAlert := boshalert.Alert{
-					ID:        "fake-uuid",
-					Severity:  boshalert.SeverityWarning,
-					Title:     "SSH Logout",
-					Summary:   "disconnected by user",
-					CreatedAt: timeService.Now().Unix(),
 				}
 
 				Expect(handler.SendInputs()).To(ContainElement(fakembus.SendInput{

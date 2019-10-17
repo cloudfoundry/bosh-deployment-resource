@@ -24,7 +24,6 @@ var _ = Describe("AgentClient", func() {
 		agentClient agentclient.AgentClient
 
 		agentAddress        string
-		agentEndpoint       string
 		replyToAddress      string
 		toleratedErrorCount int
 	)
@@ -36,7 +35,6 @@ var _ = Describe("AgentClient", func() {
 		httpClient := httpclient.NewHTTPClient(httpclient.DefaultClient, logger)
 
 		agentAddress = server.URL()
-		agentEndpoint = agentAddress + "/agent"
 		replyToAddress = "fake-reply-to-uuid"
 
 		getTaskDelay := time.Duration(0)
@@ -253,10 +251,84 @@ var _ = Describe("AgentClient", func() {
 		})
 	})
 
+	Describe("Drain", func() {
+		Context("when agent responds with a value", func() {
+			BeforeEach(func() {
+				server.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("POST", "/agent"),
+						ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+						ghttp.VerifyJSONRepresenting(AgentRequestMessage{
+							Method:    "drain",
+							Arguments: []interface{}{"shutdown", map[string]interface{}{}},
+							ReplyTo:   replyToAddress,
+						}),
+					),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("POST", "/agent"),
+						ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+						ghttp.VerifyJSONRepresenting(AgentRequestMessage{
+							Method:    "get_task",
+							Arguments: []interface{}{"fake-agent-task-id"},
+							ReplyTo:   replyToAddress,
+						}),
+					),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("POST", "/agent"),
+						ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+						ghttp.VerifyJSONRepresenting(AgentRequestMessage{
+							Method:    "get_task",
+							Arguments: []interface{}{"fake-agent-task-id"},
+							ReplyTo:   replyToAddress,
+						}),
+					),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("POST", "/agent"),
+						ghttp.RespondWith(200, `{"value":15}`),
+					),
+				)
+			})
+
+			It("makes a POST request to the endpoint and waits for the task to be finished", func() {
+				response, err := agentClient.Drain("shutdown")
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(server.ReceivedRequests()).To(HaveLen(4))
+				Expect(response).To(Equal(int64(15)))
+			})
+		})
+
+		Context("when agent does not respond with 200", func() {
+			BeforeEach(func() {
+				server.AppendHandlers(ghttp.RespondWith(http.StatusInternalServerError, ""))
+			})
+
+			It("returns an error", func() {
+				_, err := agentClient.Drain("shutdown")
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError(ContainSubstring("status code: 500")))
+			})
+		})
+
+		Context("when agent responds with exception", func() {
+			BeforeEach(func() {
+				server.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/agent"),
+					ghttp.RespondWith(200, `{"exception":{"message":"bad request"}}`),
+				))
+			})
+
+			It("returns an error", func() {
+				_, err := agentClient.Drain("shutdown")
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError(ContainSubstring("bad request")))
+			})
+		})
+	})
+
 	Describe("Apply", func() {
 		var (
-			specJSON []byte
-			spec     applyspec.ApplySpec
+			spec applyspec.ApplySpec
 		)
 
 		BeforeEach(func() {
@@ -264,7 +336,7 @@ var _ = Describe("AgentClient", func() {
 				Deployment: "fake-deployment-name",
 			}
 			var err error
-			specJSON, err = json.Marshal(spec)
+			_, err = json.Marshal(spec)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -532,14 +604,44 @@ var _ = Describe("AgentClient", func() {
 				)
 			})
 
-			It("makes a POST request to the endpoint", func() {
+			It("makes a POST request to the endpoint and waits for the task to be finished", func() {
 				err := agentClient.MountDisk("fake-disk-cid")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(server.ReceivedRequests()).To(HaveLen(4))
 			})
+		})
 
-			It("waits for the task to be finished", func() {
-				err := agentClient.MountDisk("fake-disk-cid")
+		Describe("RemovePersistentDisk", func() {
+			BeforeEach(func() {
+				server.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/agent"),
+					ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+					ghttp.VerifyJSONRepresenting(AgentRequestMessage{
+						Method:    "remove_persistent_disk",
+						Arguments: []interface{}{"fake-disk-cid"},
+						ReplyTo:   replyToAddress,
+					}),
+				))
+				server.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/agent"),
+					ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+					ghttp.VerifyJSONRepresenting(AgentRequestMessage{
+						Method:    "get_task",
+						Arguments: []interface{}{"fake-agent-task-id"},
+						ReplyTo:   replyToAddress,
+					}),
+				))
+				server.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/agent"),
+					ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+				))
+				server.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/agent"),
+					ghttp.RespondWith(200, `{"value":{}}`),
+				))
+			})
+			It("makes a POST request to the endpoint", func() {
+				err := agentClient.RemovePersistentDisk("fake-disk-cid")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(server.ReceivedRequests()).To(HaveLen(4))
 			})
@@ -924,6 +1026,57 @@ var _ = Describe("AgentClient", func() {
 				_, err := agentClient.SyncDNS("fake-blob-store-id", "fake-blob-store-id-sha1", 42)
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(MatchError(ContainSubstring("bad request")))
+			})
+		})
+	})
+
+	Describe("AddPersistentDisk", func() {
+		Context("when agent adds persistent disk successfully", func() {
+			BeforeEach(func() {
+				server.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("POST", "/agent"),
+						ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+						ghttp.VerifyJSONRepresenting(AgentRequestMessage{
+							Method:    "add_persistent_disk",
+							Arguments: []interface{}{"fake-disk-cid", "/dev/sdf"},
+							ReplyTo:   replyToAddress,
+						}),
+					),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("POST", "/agent"),
+						ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+						ghttp.VerifyJSONRepresenting(AgentRequestMessage{
+							Method:    "get_task",
+							Arguments: []interface{}{"fake-agent-task-id"},
+							ReplyTo:   replyToAddress,
+						}),
+					),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("POST", "/agent"),
+						ghttp.RespondWith(200, `{"value":{"agent_task_id":"fake-agent-task-id","state":"running"}}`),
+					),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("POST", "/agent"),
+						ghttp.RespondWith(200, `{"value":{}}`),
+					),
+				)
+			})
+
+			It("responds with success", func() {
+				err := agentClient.AddPersistentDisk("fake-disk-cid", "/dev/sdf")
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("when agent cannot add persistent disk", func() {
+			BeforeEach(func() {
+				server.AppendHandlers(ghttp.RespondWith(http.StatusInternalServerError, ""))
+			})
+
+			It("responds with error", func() {
+				err := agentClient.AddPersistentDisk("meow", "somewhere")
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})

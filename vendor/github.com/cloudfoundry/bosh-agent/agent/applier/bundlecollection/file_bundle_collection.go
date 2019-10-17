@@ -5,8 +5,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"os"
+
+	"code.cloudfoundry.org/clock"
+	"github.com/cloudfoundry/bosh-agent/agent/tarpath"
 	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"github.com/cloudfoundry/bosh-utils/fileutil"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
@@ -41,24 +46,33 @@ func (bd fileBundleDefinition) BundleName() string    { return bd.name }
 func (bd fileBundleDefinition) BundleVersion() string { return bd.version }
 
 type FileBundleCollection struct {
-	name        string
-	installPath string
-	enablePath  string
-	fs          boshsys.FileSystem
-	logger      boshlog.Logger
+	name         string
+	installPath  string
+	enablePath   string
+	fileMode     os.FileMode
+	fs           boshsys.FileSystem
+	timeProvider clock.Clock
+	compressor   fileutil.Compressor
+	logger       boshlog.Logger
 }
 
 func NewFileBundleCollection(
 	installPath, enablePath, name string,
+	fileMode os.FileMode,
 	fs boshsys.FileSystem,
+	timeProvider clock.Clock,
+	compressor fileutil.Compressor,
 	logger boshlog.Logger,
 ) FileBundleCollection {
 	return FileBundleCollection{
-		name:        cleanPath(name),
-		installPath: cleanPath(installPath),
-		enablePath:  cleanPath(enablePath),
-		fs:          fs,
-		logger:      logger,
+		name:         cleanPath(name),
+		installPath:  cleanPath(installPath),
+		enablePath:   cleanPath(enablePath),
+		fileMode:     fileMode,
+		fs:           fs,
+		timeProvider: timeProvider,
+		compressor:   compressor,
+		logger:       logger,
 	}
 }
 
@@ -79,7 +93,7 @@ func (bc FileBundleCollection) Get(definition BundleDefinition) (Bundle, error) 
 	installPath := path.Join(bc.installPath, bc.name, definition.BundleName(), bundleVersionDigest.String())
 	enablePath := path.Join(bc.enablePath, bc.name, definition.BundleName())
 
-	return NewFileBundle(installPath, enablePath, bc.fs, bc.logger), nil
+	return NewFileBundle(installPath, enablePath, bc.fileMode, bc.fs, bc.timeProvider, bc.compressor, tarpath.NewPrefixDetector(), bc.logger), nil
 }
 
 func (bc FileBundleCollection) getDigested(definition BundleDefinition) (Bundle, error) {
@@ -93,7 +107,7 @@ func (bc FileBundleCollection) getDigested(definition BundleDefinition) (Bundle,
 
 	installPath := path.Join(bc.installPath, bc.name, definition.BundleName(), definition.BundleVersion())
 	enablePath := path.Join(bc.enablePath, bc.name, definition.BundleName())
-	return NewFileBundle(installPath, enablePath, bc.fs, bc.logger), nil
+	return NewFileBundle(installPath, enablePath, bc.fileMode, bc.fs, bc.timeProvider, bc.compressor, tarpath.NewPrefixDetector(), bc.logger), nil
 }
 
 func (bc FileBundleCollection) List() ([]Bundle, error) {

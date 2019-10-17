@@ -11,7 +11,6 @@ import (
 	boshjobsuper "github.com/cloudfoundry/bosh-agent/jobsupervisor"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
-	boshsyslog "github.com/cloudfoundry/bosh-agent/syslog"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
@@ -21,6 +20,13 @@ const (
 	agentLogTag = "agent"
 )
 
+//go:generate counterfeiter . StartManager
+
+type StartManager interface {
+	CanStart() bool
+	RegisterStart() error
+}
+
 type Agent struct {
 	logger            boshlog.Logger
 	mbusHandler       boshhandler.Handler
@@ -29,10 +35,10 @@ type Agent struct {
 	heartbeatInterval time.Duration
 	jobSupervisor     boshjobsuper.JobSupervisor
 	specService       boshas.V1Service
-	syslogServer      boshsyslog.Server
 	settingsService   boshsettings.Service
 	uuidGenerator     boshuuid.Generator
 	timeService       clock.Clock
+	startManager      StartManager
 }
 
 func New(
@@ -42,11 +48,11 @@ func New(
 	actionDispatcher ActionDispatcher,
 	jobSupervisor boshjobsuper.JobSupervisor,
 	specService boshas.V1Service,
-	syslogServer boshsyslog.Server,
 	heartbeatInterval time.Duration,
 	settingsService boshsettings.Service,
 	uuidGenerator boshuuid.Generator,
 	timeService clock.Clock,
+	startManager StartManager,
 ) Agent {
 	return Agent{
 		logger:            logger,
@@ -56,14 +62,21 @@ func New(
 		heartbeatInterval: heartbeatInterval,
 		jobSupervisor:     jobSupervisor,
 		specService:       specService,
-		syslogServer:      syslogServer,
 		settingsService:   settingsService,
 		uuidGenerator:     uuidGenerator,
 		timeService:       timeService,
+		startManager:      startManager,
 	}
 }
 
 func (a Agent) Run() error {
+	if !a.startManager.CanStart() {
+		return bosherr.Error("Refusing to boot")
+	}
+	if err := a.startManager.RegisterStart(); err != nil {
+		return bosherr.WrapError(err, "Registering start")
+	}
+
 	errCh := make(chan error, 1)
 
 	a.actionDispatcher.ResumePreviouslyDispatchedTasks()
@@ -79,17 +92,7 @@ func (a Agent) Run() error {
 		}
 	}()
 
-	go func() {
-		err := a.syslogServer.Start(a.handleSyslogMsg(errCh))
-		if err != nil {
-			a.logger.Warn(agentLogTag, "Failed to start syslogServer: %s", err.Error())
-		}
-	}()
-
-	select {
-	case err := <-errCh:
-		return err
-	}
+	return <-errCh
 }
 
 func (a Agent) subscribeActionDispatcher(errCh chan error) {
@@ -187,31 +190,5 @@ func (a Agent) handleJobFailure(errCh chan error) boshjobsuper.JobFailureHandler
 		}
 
 		return nil
-	}
-}
-
-func (a Agent) handleSyslogMsg(errCh chan error) boshsyslog.CallbackFunc {
-	return func(msg boshsyslog.Msg) {
-		alertAdapter := boshalert.NewSSHAdapter(
-			msg,
-			a.settingsService,
-			a.uuidGenerator,
-			a.timeService,
-			a.logger,
-		)
-		if alertAdapter.IsIgnorable() {
-			a.logger.Debug(agentLogTag, "Ignored ssh event: ", msg.Content)
-			return
-		}
-
-		alert, err := alertAdapter.Alert()
-		if err != nil {
-			errCh <- bosherr.WrapError(err, "Adapting SSH alert")
-		}
-
-		err = a.mbusHandler.Send(boshhandler.HealthMonitor, boshhandler.Alert, alert)
-		if err != nil {
-			errCh <- bosherr.WrapError(err, "Sending SSH alert")
-		}
 	}
 }

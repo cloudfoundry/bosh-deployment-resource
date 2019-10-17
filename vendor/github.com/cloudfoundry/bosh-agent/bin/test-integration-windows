@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
 
-set -ex -o pipefail
+set -e -o pipefail
 
-bin=$(dirname $0)
-
+bin=$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)
 base=$( cd ${bin}/.. && pwd )
+ENV_LOCAL=${bin}/env.windows.local
+ENV_LOCAL_TEMPLATE=${bin}/env.windows.template
+
 if [ ! -d $base/tmp ]; then
   mkdir -p $base/tmp
 fi
 
 cleanup() {
-	echo "Cleaning up"
+  echo "Cleaning up"
+  pkill -f "vagrant up" || true
 
-  (cd integration/windows && vagrant destroy -f)
+  if [ "${SKIP_CLEANUP-false}" != "true" ]; then
+    (cd integration/windows && vagrant destroy -f)
+  else
+    echo "SKIP_CLEANUP set to true, not destroying vagrant instances"
+  fi
 
   if [ -f "$tmpfile" ]; then
     rm -rf $tmpfile
@@ -21,18 +28,21 @@ cleanup() {
 
 trap cleanup EXIT
 
-# Vagrant needs ubuntu to own the private key if aws provider
-# if [ ! -z "$AWS_PRIVATE_KEY" ]; then
-  tmpfile=`mktemp -t bosh-agent-tests-XXXXXXXX`
-  echo "${AWS_SSH_KEY}" > $tmpfile
-  export PRIVATE_KEY_PATH=$tmpfile
-# fi
-
 cd $base
+if [ -f ${ENV_LOCAL} ]; then
+    echo -e "\n ${ENV_LOCAL} detected. Sourcing contents"
+    source ${ENV_LOCAL}
+else
+    echo -e "\n Running integration test with existing env. Edit ${ENV_LOCAL_TEMPLATE} to run integration tests locally."
+fi
+
+tmpfile=`mktemp -t bosh-agent-tests-XXXXXXXX`
+echo "${AWS_SSH_KEY}" > $tmpfile
+chmod 600 $tmpfile
+export PRIVATE_KEY_PATH=$tmpfile
+
 echo -e "\n Running agent integration tests..."
 $bin/env go clean -r github.com/cloudfoundry/bosh-agent/
-
-# vagrant ssh-config > $base/tmp/vagrant-config
 
 echo -e "\n Installing ginkgo..."
 $bin/go install ./vendor/github.com/onsi/ginkgo/ginkgo

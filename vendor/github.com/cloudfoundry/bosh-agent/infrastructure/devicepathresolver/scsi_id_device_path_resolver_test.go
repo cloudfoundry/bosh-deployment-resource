@@ -2,6 +2,7 @@ package devicepathresolver_test
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -47,10 +48,13 @@ var _ = Describe("ScsiIDDevicePathResolver", func() {
 	Describe("GetRealDevicePath", func() {
 		Context("when path exists", func() {
 			BeforeEach(func() {
-				err := fs.MkdirAll("fake-device-path", os.FileMode(0750))
+				err := fs.MkdirAll("/fake-device-path", os.FileMode(0750))
 				Expect(err).ToNot(HaveOccurred())
 
-				err = fs.Symlink("fake-device-path", "/dev/disk/by-id/scsi-3"+id)
+				err = fs.MkdirAll("/dev/disk/by-id", os.FileMode(0750))
+				Expect(err).ToNot(HaveOccurred())
+
+				err = fs.Symlink("/fake-device-path", "/dev/disk/by-id/scsi-3"+id)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -58,7 +62,10 @@ var _ = Describe("ScsiIDDevicePathResolver", func() {
 				path, timeout, err := pathResolver.GetRealDevicePath(diskSettings)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(path).To(Equal("fake-device-path"))
+				devicePath, err := filepath.Abs("/fake-device-path")
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(path).To(Equal(devicePath))
 				Expect(timeout).To(BeFalse())
 
 				for _, host := range hosts {
@@ -70,7 +77,10 @@ var _ = Describe("ScsiIDDevicePathResolver", func() {
 
 		Context("when path does not exist", func() {
 			BeforeEach(func() {
-				err := fs.Symlink("fake-device-path", "/dev/disk/by-id/scsi-3"+id)
+				err := fs.MkdirAll("/dev/disk/by-id", os.FileMode(0750))
+				Expect(err).ToNot(HaveOccurred())
+
+				err = fs.Symlink("/fake-device-path", "/dev/disk/by-id/scsi-3"+id)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -91,10 +101,13 @@ var _ = Describe("ScsiIDDevicePathResolver", func() {
 			Context("when the timeout has not expired", func() {
 				BeforeEach(func() {
 					time.AfterFunc(100*time.Millisecond, func() {
-						err := fs.MkdirAll("fake-device-path", os.FileMode(0750))
+						err := fs.MkdirAll("/fake-device-path", os.FileMode(0750))
 						Expect(err).ToNot(HaveOccurred())
 
-						err = fs.Symlink("fake-device-path", "/dev/disk/by-id/scsi-3"+id)
+						err = fs.MkdirAll("/dev/disk/by-id", os.FileMode(0750))
+						Expect(err).ToNot(HaveOccurred())
+
+						err = fs.Symlink("/fake-device-path", "/dev/disk/by-id/scsi-3"+id)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -103,7 +116,10 @@ var _ = Describe("ScsiIDDevicePathResolver", func() {
 					path, timeout, err := pathResolver.GetRealDevicePath(diskSettings)
 					Expect(err).ToNot(HaveOccurred())
 
-					Expect(path).To(Equal("fake-device-path"))
+					devicePath, err := filepath.Abs("/fake-device-path")
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(path).To(Equal(devicePath))
 					Expect(timeout).To(BeFalse())
 				})
 			})

@@ -12,9 +12,11 @@ import (
 	boshnet "github.com/cloudfoundry/bosh-agent/platform/net"
 	bosharp "github.com/cloudfoundry/bosh-agent/platform/net/arp"
 	boship "github.com/cloudfoundry/bosh-agent/platform/net/ip"
+	boshiscsi "github.com/cloudfoundry/bosh-agent/platform/openiscsi"
 	boshstats "github.com/cloudfoundry/bosh-agent/platform/stats"
 	boshudev "github.com/cloudfoundry/bosh-agent/platform/udevdevice"
 	boshvitals "github.com/cloudfoundry/bosh-agent/platform/vitals"
+	boshwindisk "github.com/cloudfoundry/bosh-agent/platform/windows/disk"
 	boshdirs "github.com/cloudfoundry/bosh-agent/settings/directories"
 	bosherror "github.com/cloudfoundry/bosh-utils/errors"
 	boshcmd "github.com/cloudfoundry/bosh-utils/fileutil"
@@ -43,7 +45,8 @@ type provider struct {
 }
 
 type Options struct {
-	Linux LinuxOptions
+	Linux   LinuxOptions
+	Windows WindowsOptions
 }
 
 func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsCollector boshstats.Collector, fs boshsys.FileSystem, options Options, bootstrapState *BootstrapState, clock clock.Clock, auditLogger AuditLogger) Provider {
@@ -57,6 +60,7 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 	auditLogger.StartLogging()
 
 	linuxDiskManager := boshdisk.NewLinuxDiskManager(logger, runner, fs, diskManagerOpts)
+	windowsDiskManager := boshwindisk.NewWindowsDiskManager(runner)
 	udev := boshudev.NewConcreteUdevDevice(runner, logger)
 	linuxCdrom := boshcdrom.NewLinuxCdrom("/dev/sr0", udev, runner)
 	linuxCdutil := boshcdrom.NewCdUtil(dirProvider.SettingsDir(), fs, linuxCdrom, logger)
@@ -77,14 +81,17 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 	interfaceAddressesProvider := boship.NewSystemInterfaceAddressesProvider()
 	interfaceAddressesValidator := boship.NewInterfaceAddressesValidator(interfaceAddressesProvider)
 	dnsValidator := boshnet.NewDNSValidator(fs)
+	kernelIPv6 := boshnet.NewKernelIPv6Impl(fs, runner, logger)
+	macAddressDetector := boshnet.NewMacAddressDetector(fs)
 
-	centosNetManager := boshnet.NewCentosNetManager(fs, runner, ipResolver, interfaceConfigurationCreator, interfaceAddressesValidator, dnsValidator, arping, logger)
-	ubuntuNetManager := boshnet.NewUbuntuNetManager(fs, runner, ipResolver, interfaceConfigurationCreator, interfaceAddressesValidator, dnsValidator, arping, logger)
+	centosNetManager := boshnet.NewCentosNetManager(fs, runner, ipResolver, macAddressDetector, interfaceConfigurationCreator, interfaceAddressesValidator, dnsValidator, arping, logger)
+	ubuntuNetManager := boshnet.NewUbuntuNetManager(fs, runner, ipResolver, macAddressDetector, interfaceConfigurationCreator, interfaceAddressesValidator, dnsValidator, arping, kernelIPv6, logger)
+	opensuseNetManager := boshnet.NewOpensuseNetManager(fs, runner, ipResolver, macAddressDetector, interfaceConfigurationCreator, interfaceAddressesValidator, dnsValidator, arping, logger)
 
 	windowsNetManager := boshnet.NewWindowsNetManager(
 		runner,
 		interfaceConfigurationCreator,
-		boshnet.NewMACAddressDetector(),
+		boshnet.NewMacAddressDetector(nil),
 		logger,
 		clock,
 		fs,
@@ -94,8 +101,11 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 	centosCertManager := boshcert.NewCentOSCertManager(fs, runner, 0, logger)
 	ubuntuCertManager := boshcert.NewUbuntuCertManager(fs, runner, 60, logger)
 	windowsCertManager := boshcert.NewWindowsCertManager(fs, runner, dirProvider, logger)
+	opensuseCertManager := boshcert.NewOpensuseOSCertManager(fs, runner, 0, logger)
 
-	routesSearcher := boshnet.NewRoutesSearcher(runner)
+	interfaceManager := boshnet.NewInterfaceManager()
+
+	routesSearcher := boshnet.NewRoutesSearcher(runner, interfaceManager)
 	defaultNetworkResolver := boshnet.NewDefaultNetworkResolver(routesSearcher, ipResolver)
 
 	monitRetryable := NewMonitRetryable(runner)
@@ -113,6 +123,12 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 		scsiVolumeIDPathResolver := devicepathresolver.NewSCSIVolumeIDDevicePathResolver(500*time.Millisecond, fs)
 		scsiLunPathResolver := devicepathresolver.NewSCSILunDevicePathResolver(50000*time.Millisecond, fs, logger)
 		devicePathResolver = devicepathresolver.NewScsiDevicePathResolver(scsiVolumeIDPathResolver, scsiIDPathResolver, scsiLunPathResolver)
+	case "iscsi":
+		identityPathResolver := devicepathresolver.NewIdentityDevicePathResolver()
+		iscsiAdm := boshiscsi.NewConcreteOpenIscsiAdmin(fs, runner, logger)
+		iscsiPathResolver := devicepathresolver.NewIscsiDevicePathResolver(50000*time.Millisecond, runner, iscsiAdm, fs, dirProvider, logger)
+		devicePathResolver = devicepathresolver.NewMultipathDevicePathResolver(identityPathResolver, iscsiPathResolver, logger)
+
 	default:
 		devicePathResolver = devicepathresolver.NewIdentityDevicePathResolver()
 	}
@@ -176,10 +192,12 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 			windowsNetManager,
 			windowsCertManager,
 			devicePathResolver,
+			options,
 			logger,
 			defaultNetworkResolver,
 			auditLogger,
 			uuidGenerator,
+			windowsDiskManager,
 		)
 	}
 
@@ -195,12 +213,37 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsColl
 		)
 	}
 
+	var opensuse = func() Platform {
+		return NewLinuxPlatform(
+			fs,
+			runner,
+			statsCollector,
+			compressor,
+			copier,
+			dirProvider,
+			vitalsService,
+			linuxCdutil,
+			linuxDiskManager,
+			opensuseNetManager,
+			opensuseCertManager,
+			monitRetryStrategy,
+			devicePathResolver,
+			bootstrapState,
+			options.Linux,
+			logger,
+			defaultNetworkResolver,
+			uuidGenerator,
+			auditLogger,
+		)
+	}
+
 	return provider{
 		platforms: map[string]func() Platform{
-			"ubuntu":  ubuntu,
-			"centos":  centos,
-			"dummy":   dummy,
-			"windows": windows,
+			"ubuntu":   ubuntu,
+			"centos":   centos,
+			"dummy":    dummy,
+			"windows":  windows,
+			"opensuse": opensuse,
 		},
 	}
 }

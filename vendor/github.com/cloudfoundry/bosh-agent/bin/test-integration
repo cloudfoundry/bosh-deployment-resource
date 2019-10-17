@@ -2,15 +2,16 @@
 
 set -e -o pipefail
 
-bin=$(dirname $0)
+bin=$(dirname "$0")
 
-base=$( cd ${bin}/.. && pwd )
-if [ ! -d $base/tmp ]; then
-  mkdir -p $base/tmp
+base=$( cd "${bin}"/.. && pwd )
+
+if [ ! -d "${base}"/tmp ]; then
+  mkdir -p "${base}"/tmp
 fi
 
 cleanup() {
-	echo "Cleaning up"
+  echo "Cleaning up"
 
   (cd $base && vagrant destroy -f)
 
@@ -36,12 +37,17 @@ fi
 cd $base
 echo -e "\n Running agent integration tests..."
 $bin/env go clean -r github.com/cloudfoundry/bosh-agent/
-vagrant up $@
+vagrant up "$@"
 
 vagrant ssh-config > $base/tmp/vagrant-config
 
 echo -e "\n Installing ginkgo..."
 $bin/go install ./vendor/github.com/onsi/ginkgo/ginkgo
+
+echo -e "\n Rebuilding agent..."
+vagrant rsync
+vagrant ssh -- "sudo /home/vagrant/go/src/github.com/cloudfoundry/bosh-agent/integration/assets/install-agent.sh"
+vagrant ssh -- "sudo /home/vagrant/go/src/github.com/cloudfoundry/bosh-agent/integration/assets/install-fake-registry.sh"
 
 echo -e "\n Running tests..."
 focus=""

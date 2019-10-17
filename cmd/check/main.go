@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"io/ioutil"
 
@@ -34,7 +35,7 @@ func main() {
 	} else {
 
 		hostKeyGetter := proxy.NewHostKey()
-		socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(ioutil.Discard, "", log.LstdFlags))
+		socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(ioutil.Discard, "", log.LstdFlags), 1*time.Minute)
 		cliCoordinator := bosh.NewCLICoordinator(checkRequest.Source, os.Stderr, socks5Proxy)
 		commandRunner := bosh.NewCommandRunner(cliCoordinator)
 		cliDirector, err := cliCoordinator.Director()

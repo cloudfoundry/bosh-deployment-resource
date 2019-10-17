@@ -112,19 +112,17 @@ var _ = Describe("Client", func() {
 			})
 		})
 
-		Context("unexpected http status code returned", func() {
-			BeforeEach(func() {
+		Context("when the status code is not in the 2xx range", func() {
+			It("returns an error saying an unexpected error occurred when the status code is greater than 299", func() {
 				server.AppendHandlers(
-					ghttp.RespondWith(601, ""),
-					ghttp.RespondWith(601, ""),
-					ghttp.RespondWith(601, ""),
+					ghttp.RespondWith(300, ""),
+					ghttp.RespondWith(300, ""),
+					ghttp.RespondWith(300, ""),
 				)
-			})
 
-			It("returns an error saying an unexpected error occurred", func() {
 				err := client.Delete("/somefile")
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError(Equal("Deleting blob '/somefile': Request failed, response: Response{ StatusCode: 601, Status: '601 status code 601' }")))
+				Expect(err).To(MatchError(Equal("Deleting blob '/somefile': invalid status: 300")))
 			})
 		})
 	})
@@ -166,7 +164,7 @@ var _ = Describe("Client", func() {
 				responseBody, err := client.Get("/")
 				Expect(responseBody).To(BeNil())
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError(ContainSubstring("Getting dav blob /: Request failed, response: Response{ StatusCode: 300, Status: '300 Multiple Choices' }")))
+				Expect(err).To(MatchError(ContainSubstring("Getting dav blob /: Wrong response code: 300")))
 				Expect(server.ReceivedRequests()).To(HaveLen(3))
 			})
 		})
@@ -236,7 +234,7 @@ var _ = Describe("Client", func() {
 				body := ioutil.NopCloser(strings.NewReader("content"))
 				err := client.Put("/", body, int64(7))
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError(ContainSubstring("Putting dav blob /: Request failed, response: Response{ StatusCode: 300, Status: '300 Multiple Choices' }")))
+				Expect(err).To(MatchError(ContainSubstring("Putting dav blob /: Wrong response code: 300")))
 			})
 		})
 	})

@@ -12,6 +12,7 @@ import (
 
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	cmdconf "github.com/cloudfoundry/bosh-cli/cmd/config"
+	boshcmdopts "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshui "github.com/cloudfoundry/bosh-cli/ui"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -38,10 +39,10 @@ func NewCLICoordinator(source concourse.Source, out io.Writer, proxy Proxy) CLIC
 	}
 }
 
-func (c CLICoordinator) GlobalOpts(proxyAddr string) boshcmd.BoshOpts {
-	globalOpts := &boshcmd.BoshOpts{
+func (c CLICoordinator) GlobalOpts(proxyAddr string) boshcmdopts.BoshOpts {
+	globalOpts := &boshcmdopts.BoshOpts{
 		NonInteractiveOpt: true,
-		CACertOpt:         boshcmd.CACertArg{Content: c.source.CACert},
+		CACertOpt:         boshcmdopts.CACertArg{Content: c.source.CACert},
 		ClientOpt:         c.source.Client,
 		ClientSecretOpt:   c.source.ClientSecret,
 		EnvironmentOpt:    c.source.Target,

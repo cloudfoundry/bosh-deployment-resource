@@ -2,6 +2,8 @@ package ssh
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -10,6 +12,7 @@ import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshhttp "github.com/cloudfoundry/bosh-utils/httpclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	proxy "github.com/cloudfoundry/socks5-proxy"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -114,7 +117,8 @@ func (s *ClientImpl) newClient(network, addr string, config *ssh.ClientConfig) (
 	dialFunc := net.Dial
 
 	if !s.opts.DisableSOCKS {
-		dialFunc = boshhttp.SOCKS5DialFuncFromEnvironment(net.Dial)
+		socksProxy := proxy.NewSocks5Proxy(proxy.NewHostKey(), log.New(ioutil.Discard, "", log.LstdFlags), 1*time.Minute)
+		dialFunc = boshhttp.SOCKS5DialFuncFromEnvironment(net.Dial, socksProxy)
 	}
 
 	conn, err := dialFunc(network, addr)

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -ex
 
-cpi_release_version=21
-cpi_release_sha1=dafcf251469562c1bf8edbba0da1a9775fdd201b
+cpi_release_version=40
+cpi_release_sha1=9f579b1615bc95494eaa8579728fe4764e3b1e16
 stemcell_file=registry-test-warden-stemcell.tgz
-stemcell_sha1=9c318db741302e08be6db0acb1a1293f98a519c8
+stemcell_sha1=07a7dad0968b61e10daa613de23465de4af7a02f
 
 if [ ! -z ${BOSH_INIT_CPI_RELEASE_URL+x} ]; then
   cpi_release_url=$BOSH_INIT_CPI_RELEASE_URL

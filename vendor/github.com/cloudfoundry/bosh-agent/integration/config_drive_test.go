@@ -16,8 +16,9 @@ var _ = Describe("ConfigDrive", func() {
 			err := testEnvironment.StopAgent()
 			Expect(err).ToNot(HaveOccurred())
 
-			err = testEnvironment.SetupConfigDrive()
-			Expect(err).ToNot(HaveOccurred())
+			Eventually(func() error {
+				return testEnvironment.SetupConfigDrive()
+			}, 1*time.Minute).ShouldNot(HaveOccurred())
 
 			registrySettings := boshsettings.Settings{
 				AgentID: "fake-agent-id",
@@ -33,17 +34,29 @@ var _ = Describe("ConfigDrive", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("using config drive to get registry URL", func() {
-			settingsJSON, err := testEnvironment.GetFileContents("/var/vcap/bosh/settings.json")
+		AfterEach(func() {
+			err := testEnvironment.CleanupDataDir()
 			Expect(err).ToNot(HaveOccurred())
+
+			err = testEnvironment.DetachLoopDevices()
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("using config drive to get registry URL", func() {
+			var settingsJSON string
+			var err error
+			Eventually(func() error {
+				settingsJSON, err = testEnvironment.GetFileContents("/var/vcap/bosh/settings.json")
+				return err
+			}).ShouldNot(HaveOccurred())
 			Expect(settingsJSON).To(ContainSubstring("fake-agent-id"))
 		})
 
 		It("config drive is being unmounted", func() {
-			Eventually(func() string {
-				result, _ := testEnvironment.RunCommand("sudo mount | grep -c /dev/loop2")
-				return strings.TrimSpace(result)
-			}, 5*time.Second, 1*time.Second).Should(Equal("0"))
+			Eventually(func() int {
+				result, _ := testEnvironment.RunCommand("sudo mount")
+				return strings.Count(result, "/dev/loop2")
+			}, 5*time.Second, 1*time.Second).Should(BeZero())
 		})
 	})
 })

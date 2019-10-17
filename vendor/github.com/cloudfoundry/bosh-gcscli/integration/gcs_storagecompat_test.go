@@ -23,7 +23,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Integration", func() {
+var _ = Describe("StorageCompat Integration", func() {
 	Context("invalid storage_class for bucket (Default Applicaton Credentials) configuration", func() {
 		var ctx AssertContext
 		BeforeEach(func() {
@@ -33,15 +33,15 @@ var _ = Describe("Integration", func() {
 			ctx.Cleanup()
 		})
 
-		configurations, configErr := getStorageCompatConfigs()
-		It("fetches configurations", func() {
-			Expect(configErr).To(BeNil(), "failed to get configurations")
-		})
+		configurations := getInvalidStorageClassConfigs()
 
 		DescribeTable("Invalid Put should fail",
 			func(config *config.GCSCli) {
 				ctx.AddConfig(config)
-				AssertPutFails(gcsCLIPath, ctx)
+
+				session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "put", ctx.ContentFile, ctx.GCSFileName)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(session.ExitCode()).ToNot(BeZero())
 			},
 			configurations...)
 	})

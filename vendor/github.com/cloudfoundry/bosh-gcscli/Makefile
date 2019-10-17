@@ -11,16 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+SHELL = bash
 default: test-int
 
 # build the binary
 build:
-	go build
+	go install
 
 # Fetch base dependencies as well as testing packages
 get-deps:
-	go get github.com/golang/lint/golint
+	go get golang.org/x/lint/golint
 	# Ginkgo and omega test tools
 	go get github.com/onsi/ginkgo/ginkgo
 	go get github.com/onsi/gomega
@@ -39,7 +39,7 @@ lint:
 
 # Vet code
 vet:
-	go tool vet $$(ls -d */ | grep -v vendor)
+	go vet $$(ls -d */ | grep -v vendor | grep -v ci | xargs -n1 -I{} echo ./{})
 
 # Generate a $StorageClass.lock which contains our bucket name
 # used for testing. Buckets must be unique among all in GCS,
@@ -47,7 +47,7 @@ vet:
 .PHONY: FORCE
 regional.lock:
 	@test -s "regional.lock" || \
-	{ echo -n "bosh-gcs"; \
+	{ echo -n bosh-gcs; \
 	cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 40 | head -n 1 ;} > regional.lock
 
 # Create a bucket using the name located in $StorageClass.lock with
@@ -60,7 +60,7 @@ regional-bucket: regional.lock
 .PHONY: FORCE
 multiregional.lock:
 	@test -s "multiregional.lock" || \
-	{ echo -n "bosh-gcs"; \
+	{ echo -n bosh-gcs; \
 	cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 40 | head -n 1 ;} > multiregional.lock
 
 multiregional-bucket: multiregional.lock
@@ -71,7 +71,7 @@ multiregional-bucket: multiregional.lock
 .PHONY: FORCE
 public.lock:
 	@test -s "public.lock" || \
-	{ echo -n "bosh-gcs"; \
+	{ echo -n bosh-gcs; \
 	cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 40 | head -n 1 ;} > public.lock
 
 
@@ -91,15 +91,16 @@ prep-gcs: regional-bucket multiregional-bucket public-bucket
 
 # Remove all buckets listed in $StorageClass.lock files.
 clean-gcs:
-	test -s "multiregional.lock" && \
-	test -s "regional.lock" && \
-	test -s "public.lock"
+	@test -s "multiregional.lock" && test -s "regional.lock" && test -s "public.lock"
+	@gsutil rm "gs://$$(cat regional.lock)/*" || true
 	@gsutil rb "gs://$$(cat regional.lock)"
-	rm regional.lock
+	@rm regional.lock
+	@gsutil rm "gs://$$(cat multiregional.lock)/*" || true
 	@gsutil rb "gs://$$(cat multiregional.lock)"
-	rm multiregional.lock
+	@rm multiregional.lock
+	@gsutil rm "gs://$$(cat public.lock)/*" || true
 	@gsutil rb "gs://$$(cat public.lock)"
-	rm public.lock
+	@rm public.lock
 
 # Perform only unit tests
 test-unit: get-deps clean fmt lint vet build
@@ -125,3 +126,20 @@ test-fast-int: get-deps clean fmt lint vet build prep-gcs check-int-env
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
 	 export SKIP_LONG_TESTS="yes" && \
 	 ginkgo -r
+
+help:
+	 @echo "common developer commands:"
+	 @echo "  get-deps: fetch developer dependencies"
+	 @echo "  fmt: run gofmt on the codebase"
+	 @echo "  clean: run go clean on the codebase"
+	 @echo "  lint: run go lint on the codebase"
+	 @echo "  vet: run go vet on the codebase"
+	 @echo ""
+	 @echo "common testing commands:"
+	 @echo "  prep-gcs: create external GCS buckets needed for integration testing"
+	 @echo "  clean-gcs: remove external GCS buckets"
+	 @echo "  test-fast-int: run an reduced integration test suite (presubmit)"
+	 @echo "  test-int: run the full integration test (CI only)"
+	 @echo ""
+	 @echo "expected environment variables:"
+	 @echo "  GOOGLE_SERVICE_ACCOUNT=contents of a JSON service account key"

@@ -8,10 +8,12 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/cloudfoundry/bosh-cli/cmd"
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	fakedir "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	fakeui "github.com/cloudfoundry/bosh-cli/ui/fakes"
 	boshtbl "github.com/cloudfoundry/bosh-cli/ui/table"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 var _ = Describe("InstancesCmd", func() {
@@ -24,7 +26,7 @@ var _ = Describe("InstancesCmd", func() {
 	BeforeEach(func() {
 		ui = &fakeui.FakeUI{}
 		director = &fakedir.FakeDirector{}
-		command = NewInstancesCmd(ui, director)
+		command = NewInstancesCmd(ui, director, 1)
 	})
 
 	Describe("Run", func() {
@@ -57,16 +59,16 @@ var _ = Describe("InstancesCmd", func() {
 					ProcessState: "in1-process-state",
 					ResourcePool: "in1-rp",
 
-					IPs: []string{"in1-ip1", "in1-ip2"},
-					DNS: []string{"in1-dns1", "in1-dns2"},
+					IPs:        []string{"in1-ip1", "in1-ip2"},
+					Deployment: "dep",
+					DNS:        []string{"in1-dns1", "in1-dns2"},
 
-					State:              "in1-state",
-					VMID:               "in1-cid",
-					AgentID:            "in1-agent-id",
-					ResurrectionPaused: false,
-					Ignore:             true,
-					DiskIDs:            []string{"diskcid1", "diskcid2"},
-					VMCreatedAt:        time.Date(2016, time.January, 9, 6, 23, 25, 0, time.UTC),
+					State:       "in1-state",
+					VMID:        "in1-cid",
+					AgentID:     "in1-agent-id",
+					Ignore:      true,
+					DiskIDs:     []string{"diskcid1", "diskcid2"},
+					VMCreatedAt: time.Date(2016, time.January, 9, 6, 23, 25, 0, time.UTC),
 
 					Vitals: boshdir.VMInfoVitals{
 						Load: []string{"0.02", "0.06", "0.11"},
@@ -111,16 +113,16 @@ var _ = Describe("InstancesCmd", func() {
 					AZ:           "in2-az",
 					ResourcePool: "in2-rp",
 
-					IPs: []string{"in2-ip1"},
-					DNS: []string{"in2-dns1"},
+					IPs:        []string{"in2-ip1"},
+					Deployment: "dep",
+					DNS:        []string{"in2-dns1"},
 
-					State:              "in2-state",
-					VMID:               "in2-cid",
-					AgentID:            "in2-agent-id",
-					ResurrectionPaused: true,
-					Ignore:             false,
-					DiskIDs:            []string{"diskcid1", "diskcid2"},
-					VMCreatedAt:        time.Date(2016, time.January, 9, 6, 23, 25, 0, time.UTC),
+					State:       "in2-state",
+					VMID:        "in2-cid",
+					AgentID:     "in2-agent-id",
+					Ignore:      false,
+					DiskIDs:     []string{"diskcid1", "diskcid2"},
+					VMCreatedAt: time.Date(2016, time.January, 9, 6, 23, 25, 0, time.UTC),
 
 					Vitals: boshdir.VMInfoVitals{
 						Load: []string{"0.52", "0.56", "0.51"},
@@ -147,6 +149,7 @@ var _ = Describe("InstancesCmd", func() {
 					JobName:      "",
 					Index:        nil,
 					ProcessState: "unresponsive agent",
+					Deployment:   "dep",
 					ResourcePool: "",
 				},
 			}
@@ -160,6 +163,7 @@ var _ = Describe("InstancesCmd", func() {
 							NameStub: func() string { return "dep1" },
 							InstanceInfosStub: func() ([]boshdir.VMInfo, error) {
 								infos0 := infos[0]
+								infos0.Deployment = "dep1"
 								infos0.JobName = "dep1-" + infos0.JobName
 								return []boshdir.VMInfo{infos0}, nil
 							},
@@ -168,6 +172,7 @@ var _ = Describe("InstancesCmd", func() {
 							NameStub: func() string { return "dep2" },
 							InstanceInfosStub: func() ([]boshdir.VMInfo, error) {
 								infos0 := infos[0]
+								infos0.Deployment = "dep2"
 								infos0.JobName = "dep2-" + infos0.JobName
 								return []boshdir.VMInfo{infos0}, nil
 							},
@@ -191,6 +196,7 @@ var _ = Describe("InstancesCmd", func() {
 								boshtbl.NewHeader("Process State"),
 								boshtbl.NewHeader("AZ"),
 								boshtbl.NewHeader("IPs"),
+								boshtbl.NewHeader("Deployment"),
 							},
 
 							SortBy: []boshtbl.ColumnSort{
@@ -207,6 +213,7 @@ var _ = Describe("InstancesCmd", func() {
 											boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 											boshtbl.ValueString{},
 											boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+											boshtbl.NewValueString("dep1"),
 										},
 									},
 								},
@@ -222,6 +229,7 @@ var _ = Describe("InstancesCmd", func() {
 								boshtbl.NewHeader("Process State"),
 								boshtbl.NewHeader("AZ"),
 								boshtbl.NewHeader("IPs"),
+								boshtbl.NewHeader("Deployment"),
 							},
 
 							SortBy: []boshtbl.ColumnSort{
@@ -238,6 +246,7 @@ var _ = Describe("InstancesCmd", func() {
 											boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 											boshtbl.ValueString{},
 											boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+											boshtbl.NewValueString("dep2"),
 										},
 									},
 								},
@@ -303,6 +312,7 @@ var _ = Describe("InstancesCmd", func() {
 							boshtbl.NewHeader("Process State"),
 							boshtbl.NewHeader("AZ"),
 							boshtbl.NewHeader("IPs"),
+							boshtbl.NewHeader("Deployment"),
 						},
 
 						SortBy: []boshtbl.ColumnSort{
@@ -319,6 +329,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 										boshtbl.ValueString{},
 										boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+										boshtbl.NewValueString("dep"),
 									},
 								},
 							},
@@ -330,6 +341,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in2-process-state"), true),
 										boshtbl.NewValueString("in2-az"),
 										boshtbl.NewValueStrings([]string{"in2-ip1"}),
+										boshtbl.NewValueString("dep"),
 									},
 								},
 							},
@@ -341,6 +353,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("unresponsive agent"), true),
 										boshtbl.ValueString{},
 										boshtbl.ValueStrings{},
+										boshtbl.NewValueString("dep"),
 									},
 								},
 							},
@@ -363,6 +376,7 @@ var _ = Describe("InstancesCmd", func() {
 							boshtbl.NewHeader("Process State"),
 							boshtbl.NewHeader("AZ"),
 							boshtbl.NewHeader("IPs"),
+							boshtbl.NewHeader("Deployment"),
 						},
 
 						SortBy: []boshtbl.ColumnSort{
@@ -380,6 +394,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 										boshtbl.ValueString{},
 										boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+										boshtbl.NewValueString("dep"),
 									},
 									{
 										boshtbl.ValueString{},
@@ -387,11 +402,13 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-proc1-state"), true),
 										nil,
 										nil,
+										nil,
 									},
 									{
 										boshtbl.ValueString{},
 										boshtbl.NewValueString("in1-proc2-name"),
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-proc2-state"), true),
+										nil,
 										nil,
 										nil,
 									},
@@ -406,11 +423,13 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in2-process-state"), true),
 										boshtbl.NewValueString("in2-az"),
 										boshtbl.NewValueStrings([]string{"in2-ip1"}),
+										boshtbl.NewValueString("dep"),
 									},
 									{
 										boshtbl.ValueString{},
 										boshtbl.NewValueString("in2-proc1-name"),
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in2-proc1-state"), true),
+										nil,
 										nil,
 										nil,
 									},
@@ -425,6 +444,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("unresponsive agent"), true),
 										boshtbl.ValueString{},
 										boshtbl.ValueStrings{},
+										boshtbl.NewValueString("dep"),
 									},
 								},
 							},
@@ -446,13 +466,13 @@ var _ = Describe("InstancesCmd", func() {
 							boshtbl.NewHeader("Process State"),
 							boshtbl.NewHeader("AZ"),
 							boshtbl.NewHeader("IPs"),
+							boshtbl.NewHeader("Deployment"),
 							boshtbl.NewHeader("State"),
 							boshtbl.NewHeader("VM CID"),
 							boshtbl.NewHeader("VM Type"),
 							boshtbl.NewHeader("Disk CIDs"),
 							boshtbl.NewHeader("Agent ID"),
 							boshtbl.NewHeader("Index"),
-							boshtbl.NewHeader("Resurrection\nPaused"),
 							boshtbl.NewHeader("Bootstrap"),
 							boshtbl.NewHeader("Ignore"),
 						},
@@ -471,13 +491,13 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 										boshtbl.ValueString{},
 										boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+										boshtbl.NewValueString("dep"),
 										boshtbl.NewValueString("in1-state"),
 										boshtbl.NewValueString("in1-cid"),
 										boshtbl.NewValueString("in1-rp"),
 										boshtbl.NewValueStrings([]string{"diskcid1", "diskcid2"}),
 										boshtbl.NewValueString("in1-agent-id"),
 										boshtbl.NewValueInt(1),
-										boshtbl.NewValueBool(false),
 										boshtbl.NewValueBool(false),
 										boshtbl.NewValueBool(true),
 									},
@@ -491,13 +511,13 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in2-process-state"), true),
 										boshtbl.NewValueString("in2-az"),
 										boshtbl.NewValueStrings([]string{"in2-ip1"}),
+										boshtbl.NewValueString("dep"),
 										boshtbl.NewValueString("in2-state"),
 										boshtbl.NewValueString("in2-cid"),
 										boshtbl.NewValueString("in2-rp"),
 										boshtbl.NewValueStrings([]string{"diskcid1", "diskcid2"}),
 										boshtbl.NewValueString("in2-agent-id"),
 										boshtbl.NewValueInt(2),
-										boshtbl.NewValueBool(true),
 										boshtbl.NewValueBool(false),
 										boshtbl.NewValueBool(false),
 									},
@@ -511,13 +531,13 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("unresponsive agent"), true),
 										boshtbl.ValueString{},
 										boshtbl.ValueStrings{},
+										boshtbl.NewValueString("dep"),
 										boshtbl.NewValueString(""),
 										boshtbl.ValueString{},
 										boshtbl.ValueString{},
 										boshtbl.ValueStrings{},
 										boshtbl.ValueString{},
 										boshtbl.NewValueInt(0),
-										boshtbl.NewValueBool(false),
 										boshtbl.NewValueBool(false),
 										boshtbl.NewValueBool(false),
 									},
@@ -541,6 +561,7 @@ var _ = Describe("InstancesCmd", func() {
 							boshtbl.NewHeader("Process State"),
 							boshtbl.NewHeader("AZ"),
 							boshtbl.NewHeader("IPs"),
+							boshtbl.NewHeader("Deployment"),
 							boshtbl.NewHeader("DNS A Records"),
 						},
 
@@ -558,6 +579,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 										boshtbl.ValueString{},
 										boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+										boshtbl.NewValueString("dep"),
 										boshtbl.NewValueStrings([]string{"in1-dns1", "in1-dns2"}),
 									},
 								},
@@ -570,6 +592,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in2-process-state"), true),
 										boshtbl.NewValueString("in2-az"),
 										boshtbl.NewValueStrings([]string{"in2-ip1"}),
+										boshtbl.NewValueString("dep"),
 										boshtbl.NewValueStrings([]string{"in2-dns1"}),
 									},
 								},
@@ -582,6 +605,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("unresponsive agent"), true),
 										boshtbl.ValueString{},
 										boshtbl.ValueStrings{},
+										boshtbl.NewValueString("dep"),
 										boshtbl.ValueStrings{},
 									},
 								},
@@ -606,6 +630,7 @@ var _ = Describe("InstancesCmd", func() {
 							boshtbl.NewHeader("Process State"),
 							boshtbl.NewHeader("AZ"),
 							boshtbl.NewHeader("IPs"),
+							boshtbl.NewHeader("Deployment"),
 							boshtbl.NewHeader("VM Created At"),
 							boshtbl.NewHeader("Uptime"),
 							boshtbl.NewHeader("Load\n(1m, 5m, 15m)"),
@@ -635,6 +660,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 										boshtbl.ValueString{},
 										boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+										boshtbl.NewValueString("dep"),
 										boshtbl.NewValueTime(time.Date(2016, time.January, 9, 6, 23, 25, 0, time.UTC)),
 										ValueUptime{},
 										boshtbl.NewValueString("0.02, 0.06, 0.11"),
@@ -655,6 +681,7 @@ var _ = Describe("InstancesCmd", func() {
 										nil,
 										nil,
 										nil,
+										nil,
 										ValueUptime{Secs: &procUptime},
 										nil,
 										ValueCPUTotal{Total: &procCPUTotal},
@@ -671,6 +698,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.ValueString{},
 										boshtbl.NewValueString("in1-proc2-name"),
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-proc2-state"), true),
+										nil,
 										nil,
 										nil,
 										nil,
@@ -697,6 +725,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in2-process-state"), true),
 										boshtbl.NewValueString("in2-az"),
 										boshtbl.NewValueStrings([]string{"in2-ip1"}),
+										boshtbl.NewValueString("dep"),
 										boshtbl.NewValueTime(time.Date(2016, time.January, 9, 6, 23, 25, 0, time.UTC)),
 										ValueUptime{},
 										boshtbl.NewValueString("0.52, 0.56, 0.51"),
@@ -714,6 +743,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.ValueString{},
 										boshtbl.NewValueString("in2-proc1-name"),
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in2-proc1-state"), true),
+										nil,
 										nil,
 										nil,
 										nil,
@@ -740,6 +770,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("unresponsive agent"), true),
 										boshtbl.ValueString{},
 										boshtbl.ValueStrings{},
+										boshtbl.NewValueString("dep"),
 										boshtbl.NewValueTime(time.Time{}.UTC()),
 										ValueUptime{},
 										boshtbl.ValueString{},
@@ -777,6 +808,7 @@ var _ = Describe("InstancesCmd", func() {
 							boshtbl.NewHeader("Process State"),
 							boshtbl.NewHeader("AZ"),
 							boshtbl.NewHeader("IPs"),
+							boshtbl.NewHeader("Deployment"),
 						},
 
 						SortBy: []boshtbl.ColumnSort{
@@ -793,6 +825,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 										boshtbl.ValueString{},
 										boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+										boshtbl.NewValueString("dep"),
 									},
 								},
 							},
@@ -804,6 +837,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("unresponsive agent"), true),
 										boshtbl.ValueString{},
 										boshtbl.ValueStrings{},
+										boshtbl.NewValueString("dep"),
 									},
 								},
 							},
@@ -834,6 +868,7 @@ var _ = Describe("InstancesCmd", func() {
 							boshtbl.NewHeader("Process State"),
 							boshtbl.NewHeader("AZ"),
 							boshtbl.NewHeader("IPs"),
+							boshtbl.NewHeader("Deployment"),
 						},
 
 						SortBy: []boshtbl.ColumnSort{
@@ -851,11 +886,13 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
 										boshtbl.ValueString{},
 										boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+										boshtbl.NewValueString("dep"),
 									},
 									{
 										boshtbl.ValueString{},
 										boshtbl.NewValueString("in1-proc2-name"),
 										boshtbl.NewValueFmt(boshtbl.NewValueString("in1-proc2-state"), true),
+										nil,
 										nil,
 										nil,
 									},
@@ -870,6 +907,7 @@ var _ = Describe("InstancesCmd", func() {
 										boshtbl.NewValueFmt(boshtbl.NewValueString("unresponsive agent"), true),
 										boshtbl.ValueString{},
 										boshtbl.ValueStrings{},
+										boshtbl.NewValueString("dep"),
 									},
 								},
 							},
@@ -892,6 +930,124 @@ var _ = Describe("InstancesCmd", func() {
 				err := act()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("fake-err"))
+			})
+		})
+
+		Context("when listing multiple deployments", func() {
+			BeforeEach(func() {
+				command = NewInstancesCmd(ui, director, 5)
+			})
+
+			It("retrieves deployment vms in parallel", func() {
+				dep1 := &fakedir.FakeDeployment{
+					NameStub: func() string { return "dep1" },
+					InstanceInfosStub: func() ([]boshdir.VMInfo, error) {
+						time.Sleep(1500 * time.Millisecond)
+						return infos, nil
+					},
+				}
+				dep2 := &fakedir.FakeDeployment{
+					NameStub: func() string { return "dep2" },
+					InstanceInfosStub: func() ([]boshdir.VMInfo, error) {
+						time.Sleep(1500 * time.Millisecond)
+						return infos, nil
+					},
+				}
+				deployments := []boshdir.Deployment{
+					dep1,
+					dep2,
+				}
+
+				director.DeploymentsReturns(deployments, nil)
+				startTime := time.Now()
+				err := act()
+				cmdDuration := time.Since(startTime)
+				Expect(err).To(BeNil())
+				Expect(int64(cmdDuration / time.Millisecond)).To(BeNumerically("<", 2000))
+				Expect(dep1.InstanceInfosCallCount()).To(Equal(1))
+				Expect(dep2.InstanceInfosCallCount()).To(Equal(1))
+			})
+		})
+
+		Context("when fetching vms infos from subset of deployment fail", func() {
+			It("returns instance info and errors", func() {
+				vmError := bosherr.Error("failed")
+				dep1 := &fakedir.FakeDeployment{
+					NameStub: func() string { return "dep1" },
+					InstanceInfosStub: func() ([]boshdir.VMInfo, error) {
+						infos[0].Deployment = "dep1"
+						infos[1].Deployment = "dep1"
+						infos[2].Deployment = "dep1"
+						return infos, nil
+					},
+				}
+				dep2 := &fakedir.FakeDeployment{
+					NameStub: func() string { return "dep2" },
+					InstanceInfosStub: func() ([]boshdir.VMInfo, error) {
+						return nil, vmError
+					},
+				}
+				deployments := []boshdir.Deployment{
+					dep1,
+					dep2,
+				}
+				director.DeploymentsReturns(deployments, nil)
+				err := act()
+				Expect(err).To(Equal(bosherr.NewMultiError(vmError)))
+				Expect(ui.Table).To(Equal(boshtbl.Table{
+					Title: "Deployment 'dep1'",
+
+					Content: "instances",
+
+					Header: []boshtbl.Header{
+						boshtbl.NewHeader("Instance"),
+						boshtbl.NewHeader("Process State"),
+						boshtbl.NewHeader("AZ"),
+						boshtbl.NewHeader("IPs"),
+						boshtbl.NewHeader("Deployment"),
+					},
+
+					SortBy: []boshtbl.ColumnSort{{Column: 0, Asc: true}, {Column: 1, Asc: true}},
+
+					Sections: []boshtbl.Section{
+						{
+							FirstColumn: boshtbl.NewValueString("job-name"),
+							Rows: [][]boshtbl.Value{
+								{
+									boshtbl.NewValueString("job-name"),
+									boshtbl.NewValueFmt(boshtbl.NewValueString("in1-process-state"), true),
+									boshtbl.ValueString{},
+									boshtbl.NewValueStrings([]string{"in1-ip1", "in1-ip2"}),
+									boshtbl.NewValueString("dep1"),
+								},
+							},
+						}, {
+							FirstColumn: boshtbl.NewValueString("job-name"),
+							Rows: [][]boshtbl.Value{
+								{
+									boshtbl.NewValueString("job-name"),
+									boshtbl.NewValueFmt(boshtbl.NewValueString("in2-process-state"), true),
+									boshtbl.NewValueString("in2-az"),
+									boshtbl.NewValueStrings([]string{"in2-ip1"}),
+									boshtbl.NewValueString("dep1"),
+								},
+							},
+						}, {
+							FirstColumn: boshtbl.NewValueString("?"),
+							Rows: [][]boshtbl.Value{
+								{
+									boshtbl.NewValueString("?"),
+									boshtbl.NewValueFmt(boshtbl.NewValueString("unresponsive agent"), true),
+									boshtbl.ValueString{},
+									boshtbl.ValueStrings{},
+									boshtbl.NewValueString("dep1"),
+								},
+							},
+						},
+					},
+				}))
+				Expect(dep1.InstanceInfosCallCount()).To(Equal(1))
+				Expect(dep2.InstanceInfosCallCount()).To(Equal(1))
 			})
 		})
 	})

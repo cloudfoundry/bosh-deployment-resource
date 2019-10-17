@@ -53,7 +53,10 @@ var _ = Describe("generating TLS configurations", func() {
 					})
 
 					It("uses approved curves", func() {
-						Expect(config.CurvePreferences).To(ConsistOf(tls.CurveP384))
+						Expect(config.CurvePreferences).To(Equal([]tls.CurveID{
+							tls.CurveP384,
+							tls.CurveP256,
+						}))
 					})
 				})
 			}

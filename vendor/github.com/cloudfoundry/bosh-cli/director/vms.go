@@ -9,6 +9,8 @@ import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
+const runningState = "running"
+
 type VMInfo struct {
 	AgentID string `json:"agent_id"`
 
@@ -16,21 +18,24 @@ type VMInfo struct {
 	ID           string `json:"id"`
 	Index        *int   `json:"index"`
 	ProcessState string `json:"job_state"` // e.g. "running"
+	Active       *bool  `json:"active"`
 	Bootstrap    bool
 
-	IPs []string `json:"ips"`
-	DNS []string `json:"dns"`
+	IPs        []string `json:"ips"`
+	Deployment string   `json:"deployment_name"`
+	DNS        []string `json:"dns"`
 
-	AZ             string    `json:"az"`
-	State          string    `json:"state"`
-	VMID           string    `json:"vm_cid"`
-	VMType         string    `json:"vm_type"`
-	ResourcePool   string    `json:"resource_pool"`
-	DiskID         string    `json:"disk_cid"`
-	Ignore         bool      `json:"ignore"`
-	DiskIDs        []string  `json:"disk_cids"`
-	VMCreatedAtRaw string    `json:"vm_created_at"`
-	VMCreatedAt    time.Time `json:"-"`
+	AZ              string      `json:"az"`
+	State           string      `json:"state"`
+	VMID            string      `json:"vm_cid"`
+	VMType          string      `json:"vm_type"`
+	ResourcePool    string      `json:"resource_pool"`
+	DiskID          string      `json:"disk_cid"`
+	Ignore          bool        `json:"ignore"`
+	DiskIDs         []string    `json:"disk_cids"`
+	VMCreatedAtRaw  string      `json:"vm_created_at"`
+	VMCreatedAt     time.Time   `json:"-"`
+	CloudProperties interface{} `json:"cloud_properties"`
 
 	Processes []VMInfoProcess
 
@@ -88,8 +93,16 @@ type VMInfoVitalsUptime struct {
 	Seconds *uint64 `json:"secs"` // e.g. 48307
 }
 
+func (i VMInfo) InstanceState() string {
+	if i.ProcessState != runningState || len(i.Processes) > 0 {
+		return i.ProcessState
+	}
+
+	return ""
+}
+
 func (i VMInfo) IsRunning() bool {
-	if i.ProcessState != "running" {
+	if i.InstanceState() != runningState {
 		return false
 	}
 
@@ -103,7 +116,7 @@ func (i VMInfo) IsRunning() bool {
 }
 
 func (p VMInfoProcess) IsRunning() bool {
-	return p.State == "running"
+	return p.State == runningState
 }
 
 func (d DeploymentImpl) VMInfos() ([]VMInfo, error) {
@@ -146,6 +159,8 @@ func (c Client) deploymentResourceInfos(deploymentName string, resourceType stri
 			return nil, bosherr.WrapErrorf(
 				err, "Unmarshaling %s info response: '%s'", strings.TrimSuffix(resourceType, "s"), string(piece))
 		}
+
+		resp.Deployment = deploymentName
 
 		if len(resp.DiskIDs) == 0 && resp.DiskID != "" {
 			resp.DiskIDs = []string{resp.DiskID}

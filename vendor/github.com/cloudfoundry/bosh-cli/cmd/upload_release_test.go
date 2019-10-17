@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/cloudfoundry/bosh-cli/cmd"
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	fakedir "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	boshrel "github.com/cloudfoundry/bosh-cli/release"
@@ -175,7 +176,7 @@ var _ = Describe("UploadReleaseCmd", func() {
 				Expect(stemcell).To(Equal(boshdir.NewOSVersionSlug("ubuntu-trusty", "3421")))
 
 				Expect(ui.Said).To(Equal(
-					[]string{"Release 'existing-name/existing-ver' already exists."}))
+					[]string{"Release 'existing-name/existing-ver' for stemcell 'ubuntu-trusty/3421' already exists."}))
 			})
 
 			It("uploads release if name and version does not match existing release", func() {

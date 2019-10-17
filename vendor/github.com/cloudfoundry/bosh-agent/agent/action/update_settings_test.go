@@ -6,30 +6,39 @@ import (
 
 	"errors"
 
-	. "github.com/cloudfoundry/bosh-agent/agent/action"
-	"github.com/cloudfoundry/bosh-agent/platform/cert/fakes"
-	fakeplatform "github.com/cloudfoundry/bosh-agent/platform/fakes"
-	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
-	fakesettings "github.com/cloudfoundry/bosh-agent/settings/fakes"
-	"github.com/cloudfoundry/bosh-utils/logger"
 	"path/filepath"
+
+	. "github.com/cloudfoundry/bosh-agent/agent/action"
+	"github.com/cloudfoundry/bosh-agent/platform/cert/certfakes"
+	"github.com/cloudfoundry/bosh-agent/platform/platformfakes"
+	"github.com/cloudfoundry/bosh-utils/logger"
+
+	fakesettings "github.com/cloudfoundry/bosh-agent/settings/fakes"
+	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
+
+	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 )
 
 var _ = Describe("UpdateSettings", func() {
 	var (
 		action            UpdateSettingsAction
-		certManager       *fakes.FakeManager
+		certManager       *certfakes.FakeManager
 		settingsService   *fakesettings.FakeSettingsService
 		log               logger.Logger
-		platform          *fakeplatform.FakePlatform
+		platform          *platformfakes.FakePlatform
 		newUpdateSettings boshsettings.UpdateSettings
+		fileSystem        *fakesys.FakeFileSystem
 	)
 
 	BeforeEach(func() {
 		log = logger.NewLogger(logger.LevelNone)
-		certManager = new(fakes.FakeManager)
+		certManager = new(certfakes.FakeManager)
 		settingsService = &fakesettings.FakeSettingsService{}
-		platform = fakeplatform.NewFakePlatform()
+
+		platform = &platformfakes.FakePlatform{}
+		fileSystem = fakesys.NewFakeFileSystem()
+		platform.GetFsReturns(fileSystem)
+
 		action = NewUpdateSettings(settingsService, platform, certManager, log)
 		newUpdateSettings = boshsettings.UpdateSettings{}
 	})
@@ -58,7 +67,7 @@ var _ = Describe("UpdateSettings", func() {
 
 	Context("when it cannot write the update settings file", func() {
 		BeforeEach(func() {
-			platform.Fs.WriteFileError = errors.New("Fake write error")
+			fileSystem.WriteFileError = errors.New("Fake write error")
 		})
 
 		It("returns an error", func() {
@@ -71,7 +80,7 @@ var _ = Describe("UpdateSettings", func() {
 	Context("when updating the certificates fails", func() {
 		BeforeEach(func() {
 			log = logger.NewLogger(logger.LevelNone)
-			certManager = new(fakes.FakeManager)
+			certManager = new(certfakes.FakeManager)
 			certManager.UpdateCertificatesReturns(errors.New("Error"))
 			action = NewUpdateSettings(settingsService, platform, certManager, log)
 		})
@@ -111,34 +120,34 @@ var _ = Describe("UpdateSettings", func() {
 			newUpdateSettings = boshsettings.UpdateSettings{
 				DiskAssociations: []boshsettings.DiskAssociation{diskAssociation},
 			}
+			settingsService.GetPersistentDiskSettingsError = errors.New("Disk DNE")
 		})
 
 		It("returns the error", func() {
 			_, err := action.Run(newUpdateSettings)
 
 			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Fetching disk settings: Disk DNE"))
 		})
 	})
 
 	It("associates the disks", func() {
-		settingsService.Settings = boshsettings.Settings{
-			Disks: boshsettings.Disks{
-				Persistent: map[string]interface{}{
-					"fake-disk-id": map[string]interface{}{
-						"volume_id":      "fake-disk-volume-id",
-						"id":             "fake-disk-device-id",
-						"path":           "fake-disk-path",
-						"lun":            "fake-disk-lun",
-						"host_device_id": "fake-disk-host-device-id",
-					},
-					"fake-disk-id-2": map[string]interface{}{
-						"volume_id":      "fake-disk-volume-id-2",
-						"id":             "fake-disk-device-id-2",
-						"path":           "fake-disk-path-2",
-						"lun":            "fake-disk-lun-2",
-						"host_device_id": "fake-disk-host-device-id-2",
-					},
-				},
+		settingsService.PersistentDiskSettings = map[string]boshsettings.DiskSettings{
+			"fake-disk-id": {
+				VolumeID:     "fake-disk-volume-id",
+				ID:           "fake-disk-id",
+				DeviceID:     "fake-disk-device-id",
+				Path:         "fake-disk-path",
+				Lun:          "fake-disk-lun",
+				HostDeviceID: "fake-disk-host-device-id",
+			},
+			"fake-disk-id-2": {
+				VolumeID:     "fake-disk-volume-id-2",
+				ID:           "fake-disk-id-2",
+				DeviceID:     "fake-disk-device-id-2",
+				Path:         "fake-disk-path-2",
+				Lun:          "fake-disk-lun-2",
+				HostDeviceID: "fake-disk-host-device-id-2",
 			},
 		}
 
@@ -161,6 +170,7 @@ var _ = Describe("UpdateSettings", func() {
 
 		Expect(err).ToNot(HaveOccurred())
 		Expect(result).To(Equal("updated"))
+		Expect(platform.AssociateDiskCallCount()).To(Equal(2))
 
 		actualDiskName, actualDiskSettings := platform.AssociateDiskArgsForCall(0)
 		Expect(actualDiskName).To(Equal(diskAssociation.Name))
@@ -172,8 +182,6 @@ var _ = Describe("UpdateSettings", func() {
 			HostDeviceID: "fake-disk-host-device-id",
 			Path:         "fake-disk-path",
 		}))
-
-		Expect(platform.AssociateDiskCallCount).To(Equal(2))
 
 		actualDiskName, actualDiskSettings = platform.AssociateDiskArgsForCall(1)
 		Expect(actualDiskName).To(Equal(diskAssociation2.Name))

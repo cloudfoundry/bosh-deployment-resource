@@ -109,8 +109,8 @@ func (c *SessionImpl) Director() (boshdir.Director, error) {
 		if creds.IsUAAClient() {
 			dirConfig.TokenFunc = boshuaa.NewClientTokenSession(uaa).TokenFunc
 		} else {
-			origToken := uaa.NewStaleAccessToken(creds.RefreshToken)
-			dirConfig.TokenFunc = boshuaa.NewAccessTokenSession(origToken).TokenFunc
+			origToken := boshuaa.NewRefreshableAccessToken(creds.AccessTokenType, creds.AccessToken, creds.RefreshToken)
+			dirConfig.TokenFunc = boshuaa.NewAccessTokenSession(uaa, origToken, c.context.Config(), c.Environment()).TokenFunc
 		}
 	}
 
@@ -126,7 +126,7 @@ func (c *SessionImpl) Director() (boshdir.Director, error) {
 		return nil, err
 	}
 
-	// Memoize only on successfuly creation
+	// Memoize only on successful creation
 	c.director = director
 
 	return c.director, nil

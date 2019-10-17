@@ -16,11 +16,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"
-	"google.golang.org/grpc/test/grpc_testing"
 
 	"github.com/pivotal-cf/paraphernalia/serve/grpcacl"
 	"github.com/pivotal-cf/paraphernalia/serve/grpcrunner"
 	"github.com/pivotal-cf/paraphernalia/test/certtest"
+	"github.com/pivotal-cf/paraphernalia/test/grpctest"
 )
 
 var _ = Describe("GRPC Server", func() {
@@ -64,7 +64,7 @@ var _ = Describe("GRPC Server", func() {
 		creds := grpcacl.NewTLS(config, "allowed-client")
 
 		runner = grpcrunner.New(logger, listenAddr, func(server *grpc.Server) {
-			grpc_testing.RegisterTestServiceServer(server, dummyServer)
+			grpctest.RegisterTestServiceServer(server, dummyServer)
 		}, grpc.Creds(creds))
 		process = ginkgomon.Invoke(runner)
 	})
@@ -83,8 +83,8 @@ var _ = Describe("GRPC Server", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			client := grpc_testing.NewTestServiceClient(conn)
-			_, err = client.EmptyCall(context.Background(), &grpc_testing.Empty{})
+			client := grpctest.NewTestServiceClient(conn)
+			_, err = client.SimpleCall(context.Background(), &grpctest.Empty{})
 			Expect(err).NotTo(HaveOccurred())
 
 			conn.Close()
@@ -97,12 +97,11 @@ var _ = Describe("GRPC Server", func() {
 			conn, err := grpc.Dial(
 				listenAddr,
 				grpc.WithTransportCredentials(creds),
-				grpc.WithBlock(),
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			client := grpc_testing.NewTestServiceClient(conn)
-			_, err = client.EmptyCall(context.Background(), &grpc_testing.Empty{})
+			client := grpctest.NewTestServiceClient(conn)
+			_, err = client.SimpleCall(context.Background(), &grpctest.Empty{})
 			Expect(err).To(HaveOccurred())
 
 			conn.Close()
@@ -135,28 +134,8 @@ func (d *DummyServer) CallCount() int {
 	return d.callCount
 }
 
-func (d *DummyServer) EmptyCall(ctx context.Context, e *grpc_testing.Empty) (*grpc_testing.Empty, error) {
+func (d *DummyServer) SimpleCall(ctx context.Context, e *grpctest.Empty) (*grpctest.Empty, error) {
 	d.callCount++
 
 	return e, nil
-}
-
-func (d *DummyServer) UnaryCall(context.Context, *grpc_testing.SimpleRequest) (*grpc_testing.SimpleResponse, error) {
-	return nil, nil
-}
-
-func (d *DummyServer) StreamingOutputCall(*grpc_testing.StreamingOutputCallRequest, grpc_testing.TestService_StreamingOutputCallServer) error {
-	return nil
-}
-
-func (d *DummyServer) StreamingInputCall(grpc_testing.TestService_StreamingInputCallServer) error {
-	return nil
-}
-
-func (d *DummyServer) FullDuplexCall(grpc_testing.TestService_FullDuplexCallServer) error {
-	return nil
-}
-
-func (d *DummyServer) HalfDuplexCall(grpc_testing.TestService_HalfDuplexCallServer) error {
-	return nil
 }

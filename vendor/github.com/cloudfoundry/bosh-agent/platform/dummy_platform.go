@@ -21,8 +21,9 @@ import (
 )
 
 type mount struct {
-	MountDir string
-	DiskCid  string
+	MountDir     string
+	MountOptions []string
+	DiskCid      string
 }
 
 type formattedDisk struct {
@@ -147,6 +148,24 @@ func (p dummyPlatform) SaveDNSRecords(dnsRecords boshsettings.DNSRecords, hostna
 	return p.fs.WriteFileString(etcHostsPath, dnsRecordsContents.String())
 }
 
+func (p dummyPlatform) SetupBoshSettingsDisk() error {
+	return p.fs.MkdirAll(filepath.Dir(p.GetAgentSettingsPath(true)), 0700)
+}
+
+func (p dummyPlatform) GetAgentSettingsPath(tmpfs bool) string {
+	if tmpfs {
+		return filepath.Join(p.dirProvider.BoshSettingsDir(), "settings.json")
+	}
+	return filepath.Join(p.dirProvider.BoshDir(), "settings.json")
+}
+
+func (p dummyPlatform) GetPersistentDiskSettingsPath(tmpfs bool) string {
+	if tmpfs {
+		return filepath.Join(p.dirProvider.BoshSettingsDir(), "persistent_disk_hints.json")
+	}
+	return filepath.Join(p.dirProvider.BoshDir(), "persistent_disk_hints.json")
+}
+
 func (p dummyPlatform) SetupIPv6(config boshsettings.IPv6) error {
 	return nil
 }
@@ -175,7 +194,7 @@ func (p dummyPlatform) SetTimeWithNtpServers(servers []string) (err error) {
 	return
 }
 
-func (p dummyPlatform) SetupEphemeralDiskWithPath(devicePath string, desiredSwapSizeInBytes *uint64) (err error) {
+func (p dummyPlatform) SetupEphemeralDiskWithPath(devicePath string, desiredSwapSizeInBytes *uint64, labelPrefix string) (err error) {
 	return
 }
 
@@ -183,7 +202,7 @@ func (p dummyPlatform) SetupRawEphemeralDisks(devices []boshsettings.DiskSetting
 	return
 }
 
-func (p dummyPlatform) SetupDataDir() error {
+func (p dummyPlatform) SetupDataDir(_ boshsettings.JobDir) error {
 	dataDir := p.dirProvider.DataDir()
 
 	sysDataDir := filepath.Join(dataDir, "sys")
@@ -203,6 +222,10 @@ func (p dummyPlatform) SetupDataDir() error {
 	return nil
 }
 
+func (p dummyPlatform) SetupCanRestartDir() error {
+	return nil
+}
+
 func (p dummyPlatform) SetupTmpDir() error {
 	return nil
 }
@@ -212,6 +235,10 @@ func (p dummyPlatform) SetupHomeDir() error {
 }
 
 func (p dummyPlatform) SetupLogDir() error {
+	return nil
+}
+
+func (p dummyPlatform) SetupSharedMemory() error {
 	return nil
 }
 
@@ -263,7 +290,11 @@ func (p dummyPlatform) MountPersistentDisk(diskSettings boshsettings.DiskSetting
 
 	p.fs.WriteFile(filepath.Join(p.dirProvider.BoshDir(), "formatted_disks.json"), diskJSON)
 
-	mounts = append(mounts, mount{MountDir: mountPoint, DiskCid: diskSettings.ID})
+	mounts = append(mounts, mount{
+		MountDir:     mountPoint,
+		MountOptions: diskSettings.MountOptions,
+		DiskCid:      diskSettings.ID,
+	})
 	mountsJSON, err := json.Marshal(mounts)
 	if err != nil {
 		return err
@@ -489,5 +520,9 @@ func (p dummyPlatform) existingMounts() ([]mount, error) {
 }
 
 func (p dummyPlatform) SetupRecordsJSONPermission(path string) error {
+	return nil
+}
+
+func (p dummyPlatform) Shutdown() error {
 	return nil
 }

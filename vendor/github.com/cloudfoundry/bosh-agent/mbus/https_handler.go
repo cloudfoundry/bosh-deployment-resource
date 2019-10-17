@@ -10,39 +10,34 @@ import (
 
 	"github.com/cloudfoundry/bosh-agent/platform"
 	"github.com/cloudfoundry/bosh-agent/settings"
-	"github.com/cloudfoundry/bosh-utils/blobstore"
 
+	boshagentblobstore "github.com/cloudfoundry/bosh-agent/agent/blobstore"
 	boshhandler "github.com/cloudfoundry/bosh-agent/handler"
-	boshdir "github.com/cloudfoundry/bosh-agent/settings/directories"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const httpsHandlerLogTag = "https_handler"
 
 type HTTPSHandler struct {
 	parsedURL   *url.URL
+	blobManager boshagentblobstore.BlobManagerInterface
 	logger      boshlog.Logger
 	dispatcher  *HTTPSDispatcher
-	fs          boshsys.FileSystem
-	dirProvider boshdir.Provider
 	auditLogger platform.AuditLogger
 }
 
 func NewHTTPSHandler(
 	parsedURL *url.URL,
 	keyPair settings.CertKeyPair,
+	blobManager boshagentblobstore.BlobManagerInterface,
 	logger boshlog.Logger,
-	fs boshsys.FileSystem,
-	dirProvider boshdir.Provider,
 	auditLogger platform.AuditLogger,
 ) HTTPSHandler {
 	return HTTPSHandler{
 		parsedURL:   parsedURL,
 		logger:      logger,
-		fs:          fs,
-		dirProvider: dirProvider,
+		blobManager: blobManager,
 		dispatcher:  NewHTTPSDispatcher(parsedURL, keyPair, logger),
 		auditLogger: auditLogger,
 	}
@@ -136,9 +131,8 @@ func (h HTTPSHandler) blobsHandler() (blobsHandler func(http.ResponseWriter, *ht
 
 func (h HTTPSHandler) putBlob(w http.ResponseWriter, r *http.Request) {
 	_, blobID := path.Split(r.URL.Path)
-	blobManager := blobstore.NewBlobManager(h.fs, h.dirProvider.MicroStore())
 
-	err := blobManager.Write(blobID, r.Body)
+	err := h.blobManager.Write(blobID, r.Body)
 	if err != nil {
 		w.WriteHeader(500)
 		h.generateCEFLog(r, 500, "")
@@ -154,10 +148,8 @@ func (h HTTPSHandler) putBlob(w http.ResponseWriter, r *http.Request) {
 
 func (h HTTPSHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 	_, blobID := path.Split(r.URL.Path)
-	blobManager := blobstore.NewBlobManager(h.fs, h.dirProvider.MicroStore())
 
-	file, err, statusCode := blobManager.Fetch(blobID)
-
+	file, statusCode, err := h.blobManager.Fetch(blobID)
 	if err != nil {
 		h.logger.Error(httpsHandlerLogTag, "Failed to fetch blob: %s", err.Error())
 

@@ -10,23 +10,29 @@ import (
 	"github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
 	fakeapplyspec "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec/fakes"
 	boshscript "github.com/cloudfoundry/bosh-agent/agent/script"
-	fakescript "github.com/cloudfoundry/bosh-agent/agent/script/fakes"
+	"github.com/cloudfoundry/bosh-agent/agent/script/scriptfakes"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 var _ = Describe("RunScript", func() {
 	var (
-		fakeJobScriptProvider *fakescript.FakeJobScriptProvider
+		fakeJobScriptProvider *scriptfakes.FakeJobScriptProvider
 		specService           *fakeapplyspec.FakeV1Service
 		action                RunScriptAction
+		options               RunScriptOptions
 	)
 
 	BeforeEach(func() {
-		fakeJobScriptProvider = &fakescript.FakeJobScriptProvider{}
+		fakeJobScriptProvider = &scriptfakes.FakeJobScriptProvider{}
 		specService = fakeapplyspec.NewFakeV1Service()
 		specService.Spec.RenderedTemplatesArchiveSpec = &applyspec.RenderedTemplatesArchiveSpec{}
 		logger := boshlog.NewLogger(boshlog.LevelNone)
 		action = NewRunScript(fakeJobScriptProvider, specService, logger)
+		options = RunScriptOptions{
+			Env: map[string]string{
+				"FOO": "foo",
+			},
+		}
 	})
 
 	AssertActionIsAsynchronous(action)
@@ -37,13 +43,13 @@ var _ = Describe("RunScript", func() {
 	AssertActionIsNotCancelable(action)
 
 	Describe("Run", func() {
-		act := func() (map[string]string, error) { return action.Run("run-me", map[string]interface{}{}) }
+		act := func() (map[string]string, error) { return action.Run("run-me", options) }
 
 		Context("when current spec can be retrieved", func() {
-			var parallelScript *fakescript.FakeCancellableScript
+			var parallelScript *scriptfakes.FakeCancellableScript
 
 			BeforeEach(func() {
-				parallelScript = &fakescript.FakeCancellableScript{}
+				parallelScript = &scriptfakes.FakeCancellableScript{}
 				fakeJobScriptProvider.NewParallelScriptReturns(parallelScript)
 			})
 
@@ -54,15 +60,16 @@ var _ = Describe("RunScript", func() {
 
 			It("runs specified job scripts in parallel", func() {
 				createFakeJob("fake-job-1")
-				script1 := &fakescript.FakeScript{}
+				script1 := &scriptfakes.FakeScript{}
 				script1.TagReturns("fake-job-1")
 
 				createFakeJob("fake-job-2")
-				script2 := &fakescript.FakeScript{}
+				script2 := &scriptfakes.FakeScript{}
 				script2.TagReturns("fake-job-2")
 
-				fakeJobScriptProvider.NewScriptStub = func(jobName, scriptName string) boshscript.Script {
+				fakeJobScriptProvider.NewScriptStub = func(jobName, scriptName string, scriptEnv map[string]string) boshscript.Script {
 					Expect(scriptName).To(Equal("run-me"))
+					Expect(scriptEnv["FOO"]).To(Equal("foo"))
 
 					if jobName == "fake-job-1" {
 						return script1

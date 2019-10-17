@@ -54,6 +54,7 @@ func (f *factory) SetConfig(config davconf.Config) (err error) {
 		"get":    newGetCmd(client),
 		"exists": newExistsCmd(client),
 		"delete": newDeleteCmd(client),
+		"sign":   newSignCmd(client),
 	}
 
 	return

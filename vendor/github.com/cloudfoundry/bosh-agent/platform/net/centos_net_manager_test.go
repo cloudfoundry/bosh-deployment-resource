@@ -1,3 +1,5 @@
+// +build !windows
+
 package net_test
 
 import (
@@ -11,6 +13,7 @@ import (
 	fakearp "github.com/cloudfoundry/bosh-agent/platform/net/arp/fakes"
 	boship "github.com/cloudfoundry/bosh-agent/platform/net/ip"
 	fakeip "github.com/cloudfoundry/bosh-agent/platform/net/ip/fakes"
+	"github.com/cloudfoundry/bosh-agent/platform/net/netfakes"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
@@ -27,13 +30,24 @@ func describeCentosNetManager() {
 		addressBroadcaster            *fakearp.FakeAddressBroadcaster
 		netManager                    Manager
 		interfaceConfigurationCreator InterfaceConfigurationCreator
+		fakeMACAddressDetector        *netfakes.FakeMACAddressDetector
 	)
+
+	stubInterfaces := func(physicalInterfaces map[string]boshsettings.Network) {
+		addresses := map[string]string{}
+		for iface, networkSettings := range physicalInterfaces {
+			addresses[networkSettings.Mac] = iface
+		}
+
+		fakeMACAddressDetector.DetectMacAddressesReturns(addresses, nil)
+	}
 
 	BeforeEach(func() {
 		fs = fakesys.NewFakeFileSystem()
 		cmdRunner = fakesys.NewFakeCmdRunner()
 		ipResolver = &fakeip.FakeResolver{}
 		logger := boshlog.NewLogger(boshlog.LevelNone)
+		fakeMACAddressDetector = &netfakes.FakeMACAddressDetector{}
 		interfaceConfigurationCreator = NewInterfaceConfigurationCreator(logger)
 		interfaceAddrsProvider = &fakeip.FakeInterfaceAddressesProvider{}
 		interfaceAddrsValidator := boship.NewInterfaceAddressesValidator(interfaceAddrsProvider)
@@ -43,6 +57,7 @@ func describeCentosNetManager() {
 			fs,
 			cmdRunner,
 			ipResolver,
+			fakeMACAddressDetector,
 			interfaceConfigurationCreator,
 			interfaceAddrsValidator,
 			dnsValidator,
@@ -50,17 +65,6 @@ func describeCentosNetManager() {
 			logger,
 		)
 	})
-
-	writeNetworkDevice := func(iface string, macAddress string, isPhysical bool) string {
-		interfacePath := fmt.Sprintf("/sys/class/net/%s", iface)
-		fs.WriteFile(interfacePath, []byte{})
-		if isPhysical {
-			fs.WriteFile(fmt.Sprintf("/sys/class/net/%s/device", iface), []byte{})
-		}
-		fs.WriteFileString(fmt.Sprintf("/sys/class/net/%s/address", iface), fmt.Sprintf("%s\n", macAddress))
-
-		return interfacePath
-	}
 
 	Describe("SetupNetworking", func() {
 		var (
@@ -125,24 +129,6 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 `
 		})
 
-		stubInterfacesWithVirtual := func(physicalInterfaces map[string]boshsettings.Network, virtualInterfaces []string) {
-			interfacePaths := []string{}
-
-			for iface, networkSettings := range physicalInterfaces {
-				interfacePaths = append(interfacePaths, writeNetworkDevice(iface, networkSettings.Mac, true))
-			}
-
-			for _, iface := range virtualInterfaces {
-				interfacePaths = append(interfacePaths, writeNetworkDevice(iface, "virtual", false))
-			}
-
-			fs.SetGlob("/sys/class/net/*", interfacePaths)
-		}
-
-		stubInterfaces := func(physicalInterfaces map[string]boshsettings.Network) {
-			stubInterfacesWithVirtual(physicalInterfaces, nil)
-		}
-
 		It("writes a network script for static and dynamic interfaces", func() {
 			stubInterfaces(map[string]boshsettings.Network{
 				"ethdhcp":   dhcpNetwork,
@@ -159,13 +145,6 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 			dhcpConfig := fs.GetFileTestStat("/etc/sysconfig/network-scripts/ifcfg-ethdhcp")
 			Expect(dhcpConfig).ToNot(BeNil())
 			Expect(dhcpConfig.StringContents()).To(Equal(expectedNetworkConfigurationForDHCP))
-		})
-
-		It("returns errors from glob /sys/class/net/", func() {
-			fs.GlobErr = errors.New("fs-glob-error")
-			err := netManager.SetupNetworking(boshsettings.Networks{"dhcp-network": dhcpNetwork, "static-network": staticNetwork}, nil)
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("fs-glob-error"))
 		})
 
 		It("returns errors from writing the network configuration", func() {
@@ -413,7 +392,7 @@ request subnet-mask, broadcast-address, time-offset, routers,
 			broadcastErr := <-errCh // wait for all arpings
 			Expect(broadcastErr).ToNot(HaveOccurred())
 
-			Expect(addressBroadcaster.BroadcastMACAddressesAddresses).To(Equal([]boship.InterfaceAddress{
+			Expect(addressBroadcaster.Value()).To(Equal([]boship.InterfaceAddress{
 				boship.NewSimpleInterfaceAddress("ethstatic", "1.2.3.4"),
 				boship.NewResolvingInterfaceAddress("ethdhcp", ipResolver),
 			}))
@@ -501,27 +480,6 @@ request subnet-mask, broadcast-address, time-offset, routers,
 				Expect(networkConfig).ToNot(BeNil())
 				Expect(networkConfig.StringContents()).To(Equal(expectedNetworkConfigurationForStatic))
 			})
-
-			It("configures network for single device, when a virtual device is also present", func() {
-				stubInterfacesWithVirtual(
-					map[string]boshsettings.Network{
-						"ethstatic": staticNetwork,
-					},
-					[]string{"virtual"},
-				)
-
-				err := netManager.SetupNetworking(boshsettings.Networks{
-					"static-network": staticNetworkWithoutMAC,
-				}, nil)
-				Expect(err).ToNot(HaveOccurred())
-
-				physicalNetworkConfig := fs.GetFileTestStat("/etc/sysconfig/network-scripts/ifcfg-ethstatic")
-				Expect(physicalNetworkConfig).ToNot(BeNil())
-				Expect(physicalNetworkConfig.StringContents()).To(Equal(expectedNetworkConfigurationForStatic))
-
-				virtualNetworkConfig := fs.GetFileTestStat("/etc/sysconfig/network-scripts/ifcfg-virtual")
-				Expect(virtualNetworkConfig).To(BeNil())
-			})
 		})
 
 		It("configures gateway, broadcast and dns for default network only", func() {
@@ -589,11 +547,12 @@ DNS1=8.8.8.8
 	Describe("GetConfiguredNetworkInterfaces", func() {
 		Context("when there are network devices", func() {
 			BeforeEach(func() {
-				interfacePaths := []string{}
-				interfacePaths = append(interfacePaths, writeNetworkDevice("fake-eth0", "aa:bb", true))
-				interfacePaths = append(interfacePaths, writeNetworkDevice("fake-eth1", "cc:dd", true))
-				interfacePaths = append(interfacePaths, writeNetworkDevice("fake-eth2", "ee:ff", true))
-				fs.SetGlob("/sys/class/net/*", interfacePaths)
+				stubInterfaces(map[string]boshsettings.Network{
+					"fake-eth0": boshsettings.Network{Mac: "aa:bb"},
+					"fake-eth1": boshsettings.Network{Mac: "cc:dd"},
+					"fake-eth2": boshsettings.Network{Mac: "ee:ff"},
+					"fake-ens4": boshsettings.Network{Mac: "yy:zz"},
+				})
 			})
 
 			writeIfcgfFile := func(iface string) {

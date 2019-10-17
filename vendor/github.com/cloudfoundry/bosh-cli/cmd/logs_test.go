@@ -9,6 +9,7 @@ import (
 
 	. "github.com/cloudfoundry/bosh-cli/cmd"
 	fakecmd "github.com/cloudfoundry/bosh-cli/cmd/cmdfakes"
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	fakedir "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	boshssh "github.com/cloudfoundry/bosh-cli/ssh"
@@ -218,7 +219,7 @@ var _ = Describe("LogsCmd", func() {
 				Expect(runConnOpts.GatewayPrivateKeyPath).To(Equal("gw-private-key"))
 				Expect(runConnOpts.SOCKS5Proxy).To(Equal("some-proxy"))
 				Expect(runResult).To(Equal(boshdir.SSHResult{Hosts: []boshdir.Host{{Host: "ip1"}}}))
-				Expect(runCommand).To(Equal([]string{"sudo", "tail", "-F", "/var/vcap/sys/log/{**/,}*.log"}))
+				Expect(runCommand).To(Equal([]string{"sudo", "bash", "-c", "'exec tail -F /var/vcap/sys/log/**/*.log $(if [ -f /var/vcap/sys/log/*.log ]; then echo /var/vcap/sys/log/*.log ; fi)'"}))
 			})
 
 			It("runs tail command with specified number of lines and quiet option", func() {
@@ -230,7 +231,7 @@ var _ = Describe("LogsCmd", func() {
 
 				_, _, runCommand := nonIntSSHRunner.RunArgsForCall(0)
 				Expect(runCommand).To(Equal([]string{
-					"sudo", "tail", "-F", "-n", "10", "-q", "/var/vcap/sys/log/{**/,}*.log"}))
+					"sudo", "bash", "-c", "'exec tail -F -n 10 -q /var/vcap/sys/log/**/*.log $(if [ -f /var/vcap/sys/log/*.log ]; then echo /var/vcap/sys/log/*.log ; fi)'"}))
 			})
 
 			It("runs tail command with specified number of lines even if following is not requested", func() {
@@ -242,7 +243,7 @@ var _ = Describe("LogsCmd", func() {
 
 				_, _, runCommand := nonIntSSHRunner.RunArgsForCall(0)
 				Expect(runCommand).To(Equal([]string{
-					"sudo", "tail", "-n", "10", "/var/vcap/sys/log/{**/,}*.log"}))
+					"sudo", "bash", "-c", "'exec tail -n 10 /var/vcap/sys/log/**/*.log $(if [ -f /var/vcap/sys/log/*.log ]; then echo /var/vcap/sys/log/*.log ; fi)'"}))
 			})
 
 			It("runs tail command for the agent log if agent is specified", func() {
@@ -253,7 +254,7 @@ var _ = Describe("LogsCmd", func() {
 
 				_, _, runCommand := nonIntSSHRunner.RunArgsForCall(0)
 				Expect(runCommand).To(Equal([]string{
-					"sudo", "tail", "-F", "/var/vcap/bosh/log/{**/,}*.log"}))
+					"sudo", "bash", "-c", "'exec tail -F /var/vcap/bosh/log/**/*.log $(if [ -f /var/vcap/bosh/log/*.log ]; then echo /var/vcap/bosh/log/*.log ; fi)'"}))
 			})
 
 			It("runs tail command with jobs filters if specified", func() {
@@ -264,7 +265,7 @@ var _ = Describe("LogsCmd", func() {
 
 				_, _, runCommand := nonIntSSHRunner.RunArgsForCall(0)
 				Expect(runCommand).To(Equal([]string{
-					"sudo", "tail", "-F", "/var/vcap/sys/log/job1/*.log", "/var/vcap/sys/log/job2/*.log"}))
+					"sudo", "bash", "-c", "'exec tail -F /var/vcap/sys/log/job1/*.log /var/vcap/sys/log/job2/*.log'"}))
 			})
 
 			It("runs tail command with custom filters if specified", func() {
@@ -275,7 +276,7 @@ var _ = Describe("LogsCmd", func() {
 
 				_, _, runCommand := nonIntSSHRunner.RunArgsForCall(0)
 				Expect(runCommand).To(Equal([]string{
-					"sudo", "tail", "-F", "/var/vcap/sys/log/other/*.log", "/var/vcap/sys/log/**/*.log"}))
+					"sudo", "bash", "-c", "'exec tail -F /var/vcap/sys/log/other/*.log /var/vcap/sys/log/**/*.log'"}))
 			})
 
 			It("returns error if non-interactive SSH session errors", func() {

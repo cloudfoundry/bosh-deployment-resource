@@ -18,6 +18,10 @@ func (p Provider) BoshDir() string {
 	return filepath.Join(p.BaseDir(), "bosh")
 }
 
+func (p Provider) BoshSettingsDir() string {
+	return filepath.Join(p.BaseDir(), "bosh", "settings")
+}
+
 func (p Provider) BoshBinDir() string {
 	return filepath.Join(p.BoshDir(), "bin")
 }
@@ -58,12 +62,24 @@ func (p Provider) JobsDir() string {
 	return filepath.Join(p.BaseDir(), "jobs")
 }
 
-func (p Provider) JobBinDir(jobName string) string {
-	return filepath.Join(p.JobsDir(), jobName, "bin")
+func (p Provider) DataJobsDir() string {
+	return filepath.Join(p.DataDir(), "jobs")
 }
 
-func (p Provider) MicroStore() string {
-	return filepath.Join(p.BaseDir(), "micro_bosh", "data", "cache")
+func (p Provider) JobLogDir(jobName string) string {
+	return filepath.Join(p.DataDir(), "sys", "log", jobName)
+}
+
+func (p Provider) JobRunDir(jobName string) string {
+	return filepath.Join(p.DataDir(), "sys", "run", jobName)
+}
+
+func (p Provider) JobDir(jobName string) string {
+	return filepath.Join(p.DataDir(), jobName)
+}
+
+func (p Provider) JobBinDir(jobName string) string {
+	return filepath.Join(p.JobsDir(), jobName, "bin")
 }
 
 func (p Provider) SettingsDir() string {
@@ -72,6 +88,10 @@ func (p Provider) SettingsDir() string {
 
 func (p Provider) TmpDir() string {
 	return filepath.Join(p.DataDir(), "tmp")
+}
+
+func (p Provider) CanRestartDir() string {
+	return filepath.Join(p.BoshDir(), "canrestart")
 }
 
 func (p Provider) LogsDir() string {
@@ -96,4 +116,8 @@ func (p Provider) InstanceDNSDir() string {
 
 func (p Provider) BlobsDir() string {
 	return filepath.Join(p.DataDir(), "blobs")
+}
+
+func (p Provider) SensitiveBlobsDir() string {
+	return filepath.Join(p.DataDir(), "sensitive_blobs")
 }

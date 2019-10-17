@@ -5,13 +5,14 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry/bosh-cli/cmd"
+	"github.com/cloudfoundry/bosh-cli/cmd/opts"
 )
 
 type FakeReleaseUploadingCmd struct {
-	RunStub        func(cmd.UploadReleaseOpts) error
+	RunStub        func(opts.UploadReleaseOpts) error
 	runMutex       sync.RWMutex
 	runArgsForCall []struct {
-		arg1 cmd.UploadReleaseOpts
+		arg1 opts.UploadReleaseOpts
 	}
 	runReturns struct {
 		result1 error
@@ -23,11 +24,11 @@ type FakeReleaseUploadingCmd struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeReleaseUploadingCmd) Run(arg1 cmd.UploadReleaseOpts) error {
+func (fake *FakeReleaseUploadingCmd) Run(arg1 opts.UploadReleaseOpts) error {
 	fake.runMutex.Lock()
 	ret, specificReturn := fake.runReturnsOnCall[len(fake.runArgsForCall)]
 	fake.runArgsForCall = append(fake.runArgsForCall, struct {
-		arg1 cmd.UploadReleaseOpts
+		arg1 opts.UploadReleaseOpts
 	}{arg1})
 	fake.recordInvocation("Run", []interface{}{arg1})
 	fake.runMutex.Unlock()
@@ -46,7 +47,7 @@ func (fake *FakeReleaseUploadingCmd) RunCallCount() int {
 	return len(fake.runArgsForCall)
 }
 
-func (fake *FakeReleaseUploadingCmd) RunArgsForCall(i int) cmd.UploadReleaseOpts {
+func (fake *FakeReleaseUploadingCmd) RunArgsForCall(i int) opts.UploadReleaseOpts {
 	fake.runMutex.RLock()
 	defer fake.runMutex.RUnlock()
 	return fake.runArgsForCall[i].arg1
@@ -76,11 +77,7 @@ func (fake *FakeReleaseUploadingCmd) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.runMutex.RLock()
 	defer fake.runMutex.RUnlock()
-	copiedInvocations := map[string][][]interface{}{}
-	for key, value := range fake.invocations {
-		copiedInvocations[key] = value
-	}
-	return copiedInvocations
+	return fake.invocations
 }
 
 func (fake *FakeReleaseUploadingCmd) recordInvocation(key string, args []interface{}) {

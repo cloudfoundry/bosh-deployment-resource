@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	"github.com/cloudfoundry/bosh-cli/crypto"
 	boshrel "github.com/cloudfoundry/bosh-cli/release"
 	boshjob "github.com/cloudfoundry/bosh-cli/release/job"
@@ -29,12 +30,12 @@ func NewRedigestReleaseCmd(
 	ui boshui.UI,
 ) RedigestReleaseCmd {
 	return RedigestReleaseCmd{
-		reader:           reader,
-		writer:           writer,
-		digestCalculator: digestCalculator,
-		mv:               mv,
+		reader:                reader,
+		writer:                writer,
+		digestCalculator:      digestCalculator,
+		mv:                    mv,
 		archiveFilePathReader: archiveFilePathReader,
-		ui: ui,
+		ui:                    ui,
 	}
 }
 

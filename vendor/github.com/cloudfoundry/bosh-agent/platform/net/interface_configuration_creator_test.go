@@ -151,6 +151,85 @@ func describeInterfaceConfigurationCreator() {
 					})
 				})
 			})
+
+			Context("And the network has an alias", func() {
+				BeforeEach(func() {
+					staticNetwork.Alias = "static-interface-alias"
+					networks["foo"] = staticNetwork
+					interfacesByMAC["fake-static-mac-address"] = "any-interface-alias"
+				})
+
+				It("creates an interface configuration when matching interface exists", func() {
+					staticInterfaceConfigurations, dhcpInterfaceConfigurations, err := interfaceConfigurationCreator.CreateInterfaceConfigurations(networks, interfacesByMAC)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(staticInterfaceConfigurations).To(Equal([]StaticInterfaceConfiguration{
+						StaticInterfaceConfiguration{
+							Name:                "any-interface-alias",
+							Address:             "1.2.3.4",
+							Netmask:             "255.255.255.0",
+							Network:             "1.2.3.0",
+							IsDefaultForGateway: false,
+							Broadcast:           "1.2.3.255",
+							Mac:                 "fake-static-mac-address",
+							Gateway:             "3.4.5.6",
+						},
+					}))
+
+					Expect(len(dhcpInterfaceConfigurations)).To(Equal(0))
+				})
+			})
+
+			Context("And the network has postup routes", func() {
+				BeforeEach(func() {
+					staticNetwork.Routes = []boshsettings.Route{
+						boshsettings.Route{
+							Destination: "10.0.0.0",
+							Gateway:     "3.4.5.6",
+							Netmask:     "255.0.0.0",
+						},
+						boshsettings.Route{
+							Destination: "161.26.0.0",
+							Gateway:     "3.4.5.6",
+							Netmask:     "255.255.0.0",
+						},
+					}
+					networks["foo"] = staticNetwork
+					interfacesByMAC["fake-static-mac-address"] = "any-interface-name"
+				})
+
+				It("creates an interface configuration when matching interface exists", func() {
+					staticInterfaceConfigurations, dhcpInterfaceConfigurations, err := interfaceConfigurationCreator.CreateInterfaceConfigurations(networks, interfacesByMAC)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(staticInterfaceConfigurations).To(Equal([]StaticInterfaceConfiguration{
+						StaticInterfaceConfiguration{
+							Name:                "any-interface-name",
+							Address:             "1.2.3.4",
+							Netmask:             "255.255.255.0",
+							Network:             "1.2.3.0",
+							IsDefaultForGateway: false,
+							Broadcast:           "1.2.3.255",
+							Mac:                 "fake-static-mac-address",
+							Gateway:             "3.4.5.6",
+							PostUpRoutes: boshsettings.Routes{
+								boshsettings.Route{
+									Destination: "10.0.0.0",
+									Gateway:     "3.4.5.6",
+									Netmask:     "255.0.0.0",
+								},
+								boshsettings.Route{
+									Destination: "161.26.0.0",
+									Gateway:     "3.4.5.6",
+									Netmask:     "255.255.0.0",
+								},
+							},
+						},
+					}))
+
+					Expect(len(dhcpInterfaceConfigurations)).To(Equal(0))
+				})
+			})
 		})
 
 		Context("Multiple networks", func() {
@@ -239,6 +318,134 @@ func describeInterfaceConfigurationCreator() {
 					})
 				})
 			})
+
+			Context("when static network has alias, dhcp network is not allowed to have alias", func() {
+				BeforeEach(func() {
+					staticNetwork.Alias = "static-interface-name"
+					staticNetworkWithoutMAC.Alias = "static-interface-name:1"
+					staticNetworkWithoutMAC.IP = "1.2.3.5"
+					networks["foo"] = staticNetwork
+					networks["bar"] = dhcpNetwork
+					networks["baz"] = staticNetworkWithoutMAC
+					interfacesByMAC[staticNetwork.Mac] = "static-interface-name"
+					interfacesByMAC[dhcpNetwork.Mac] = "dhcp-interface-name"
+				})
+
+				It("creates interface configurations for each network when matching interfaces exist", func() {
+					staticInterfaceConfigurations, _, err := interfaceConfigurationCreator.CreateInterfaceConfigurations(networks, interfacesByMAC)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(staticInterfaceConfigurations).To(ConsistOf([]StaticInterfaceConfiguration{
+						{
+							Name:                "static-interface-name",
+							Address:             "1.2.3.4",
+							Netmask:             "255.255.255.0",
+							Network:             "1.2.3.0",
+							Broadcast:           "1.2.3.255",
+							IsDefaultForGateway: false,
+							Mac:                 "fake-static-mac-address",
+							Gateway:             "3.4.5.6",
+						},
+						{
+							Name:                "static-interface-name:1",
+							Address:             "1.2.3.5",
+							Netmask:             "255.255.255.0",
+							Network:             "1.2.3.0",
+							Broadcast:           "1.2.3.255",
+							IsDefaultForGateway: false,
+							Gateway:             "3.4.5.6",
+						},
+					}))
+				})
+			})
+
+			Context("when static network has postup routes, dhcp network has no postup routes", func() {
+				BeforeEach(func() {
+					staticNetwork.Routes = []boshsettings.Route{
+						boshsettings.Route{
+							Destination: "10.0.0.0",
+							Gateway:     "3.4.5.6",
+							Netmask:     "255.0.0.0",
+						},
+					}
+					networks["foo"] = staticNetwork
+					networks["bar"] = dhcpNetwork
+					interfacesByMAC[staticNetwork.Mac] = "static-interface-name"
+					interfacesByMAC[dhcpNetwork.Mac] = "dhcp-interface-name"
+				})
+
+				It("creates interface configurations for each network when matching interfaces exist", func() {
+					staticInterfaceConfigurations, _, err := interfaceConfigurationCreator.CreateInterfaceConfigurations(networks, interfacesByMAC)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(staticInterfaceConfigurations).To(ConsistOf([]StaticInterfaceConfiguration{
+						{
+							Name:                "static-interface-name",
+							Address:             "1.2.3.4",
+							Netmask:             "255.255.255.0",
+							Network:             "1.2.3.0",
+							Broadcast:           "1.2.3.255",
+							IsDefaultForGateway: false,
+							Mac:                 "fake-static-mac-address",
+							Gateway:             "3.4.5.6",
+							PostUpRoutes: boshsettings.Routes{
+								boshsettings.Route{
+									Destination: "10.0.0.0",
+									Gateway:     "3.4.5.6",
+									Netmask:     "255.0.0.0",
+								},
+							},
+						},
+					}))
+				})
+			})
+
+			Context("when static network has no postup routes, dhcp network has postup routes", func() {
+				BeforeEach(func() {
+					dhcpNetwork.Routes = []boshsettings.Route{
+						boshsettings.Route{
+							Destination: "10.0.0.0",
+							Gateway:     "3.4.5.6",
+							Netmask:     "255.0.0.0",
+						},
+					}
+					networks["foo"] = staticNetwork
+					networks["bar"] = dhcpNetwork
+					interfacesByMAC[staticNetwork.Mac] = "static-interface-name"
+					interfacesByMAC[dhcpNetwork.Mac] = "dhcp-interface-name"
+				})
+
+				It("creates interface configurations for each network when matching interfaces exist", func() {
+					staticInterfaceConfigurations, dhcpInterfaceConfigurations, err := interfaceConfigurationCreator.CreateInterfaceConfigurations(networks, interfacesByMAC)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(staticInterfaceConfigurations).To(ConsistOf([]StaticInterfaceConfiguration{
+						{
+							Name:                "static-interface-name",
+							Address:             "1.2.3.4",
+							Netmask:             "255.255.255.0",
+							Network:             "1.2.3.0",
+							Broadcast:           "1.2.3.255",
+							IsDefaultForGateway: false,
+							Mac:                 "fake-static-mac-address",
+							Gateway:             "3.4.5.6",
+						},
+					}))
+
+					Expect(dhcpInterfaceConfigurations).To(ConsistOf([]DHCPInterfaceConfiguration{
+						{
+							Name: "dhcp-interface-name",
+							PostUpRoutes: boshsettings.Routes{
+								boshsettings.Route{
+									Destination: "10.0.0.0",
+									Gateway:     "3.4.5.6",
+									Netmask:     "255.0.0.0",
+								},
+							},
+						},
+					}))
+				})
+			})
 		})
 
 		Context("when the number of networks does not match the number of devices", func() {
@@ -270,8 +477,100 @@ func describeInterfaceConfigurationCreator() {
 		}
 
 		_, _, err := interfaceConfigurationCreator.CreateInterfaceConfigurations(boshsettings.Networks{"foo": invalidNetwork}, interfacesByMAC)
-
 		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("Creating interface configuration: Calculating Network and Broadcast:"))
+		Expect(err.Error()).To(ContainSubstring("Invalid IP 'not an ip'"))
 	})
 }
+
+var _ = Describe("StaticInterfaceConfiguration", func() {
+	Describe("Version6", func() {
+		It("returns '6' when network and broadcast are empty", func() {
+			Expect(StaticInterfaceConfiguration{}.Version6()).To(Equal("6"))
+		})
+
+		It("returns '' when network and/or broadcast are not empty", func() {
+			Expect(StaticInterfaceConfiguration{Network: "network"}.Version6()).To(Equal(""))
+			Expect(StaticInterfaceConfiguration{Broadcast: "broadcast"}.Version6()).To(Equal(""))
+		})
+	})
+
+	Describe("IsVersion6", func() {
+		It("returns '6' when network and broadcast are empty", func() {
+			Expect(StaticInterfaceConfiguration{}.IsVersion6()).To(BeTrue())
+		})
+
+		It("returns '' when network and/or broadcast are not empty", func() {
+			Expect(StaticInterfaceConfiguration{Network: "network"}.IsVersion6()).To(BeFalse())
+			Expect(StaticInterfaceConfiguration{Broadcast: "broadcast"}.IsVersion6()).To(BeFalse())
+		})
+	})
+
+	Describe("CIDR", func() {
+		It("returns number of ones in IPv6 netmask when network and broadcast are empty", func() {
+			Expect(StaticInterfaceConfiguration{Netmask: "ffff:ffff:ff00::"}.CIDR()).To(Equal("40"))
+		})
+
+		It("returns number of ones in IPv4 netmask", func() {
+			Expect(StaticInterfaceConfiguration{Netmask: "255.255.255.0", Network: "network"}.CIDR()).To(Equal("24"))
+			Expect(StaticInterfaceConfiguration{Netmask: "255.0.0.0", Broadcast: "broadcast"}.CIDR()).To(Equal("8"))
+		})
+	})
+})
+
+var _ = Describe("StaticInterfaceConfigurations", func() {
+	Describe("HasVersion6", func() {
+		It("returns true if there is at least one IPv6 static config", func() {
+			Expect(StaticInterfaceConfigurations{}.HasVersion6()).To(BeFalse())
+
+			Expect(StaticInterfaceConfigurations{
+				StaticInterfaceConfiguration{Network: "network"},
+				StaticInterfaceConfiguration{},
+			}.HasVersion6()).To(BeTrue())
+
+			Expect(StaticInterfaceConfigurations{
+				StaticInterfaceConfiguration{Network: "network"},
+			}.HasVersion6()).To(BeFalse())
+		})
+	})
+})
+
+var _ = Describe("DHCPInterfaceConfiguration", func() {
+	Describe("Version6", func() {
+		It("returns '6' when address is not IPv4 and not empty", func() {
+			Expect(DHCPInterfaceConfiguration{Address: "ff00::"}.Version6()).To(Equal("6"))
+		})
+
+		It("returns '' when address is empty or IPv4", func() {
+			Expect(DHCPInterfaceConfiguration{}.Version6()).To(Equal(""))
+			Expect(DHCPInterfaceConfiguration{Address: "1.2.3.4"}.Version6()).To(Equal(""))
+		})
+	})
+
+	Describe("IsVersion6", func() {
+		It("returns '6' when address is not IPv4 and not empty", func() {
+			Expect(DHCPInterfaceConfiguration{Address: "ff00::"}.IsVersion6()).To(BeTrue())
+		})
+
+		It("returns '' when address is empty or IPv4", func() {
+			Expect(DHCPInterfaceConfiguration{}.IsVersion6()).To(BeFalse())
+			Expect(DHCPInterfaceConfiguration{Address: "1.2.3.4"}.IsVersion6()).To(BeFalse())
+		})
+	})
+})
+
+var _ = Describe("DHCPInterfaceConfigurations", func() {
+	Describe("HasVersion6", func() {
+		It("returns true if there is at least one IPv6 DHCP config", func() {
+			Expect(DHCPInterfaceConfigurations{}.HasVersion6()).To(BeFalse())
+
+			Expect(DHCPInterfaceConfigurations{
+				DHCPInterfaceConfiguration{Address: "ff00::"},
+				DHCPInterfaceConfiguration{},
+			}.HasVersion6()).To(BeTrue())
+
+			Expect(DHCPInterfaceConfigurations{
+				DHCPInterfaceConfiguration{Address: "1.2.3.4"},
+			}.HasVersion6()).To(BeFalse())
+		})
+	})
+})

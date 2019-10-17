@@ -6,6 +6,7 @@ import (
 	"net/http"
 	gourl "net/url"
 
+	urlhelper "github.com/cloudfoundry/bosh-cli/common/util"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	semver "github.com/cppforlife/go-semi-semantic/version"
 )
@@ -62,6 +63,11 @@ type StemcellResp struct {
 	Deployments []interface{}
 }
 
+type StemcellInfo struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
 func (d DirectorImpl) Stemcells() ([]Stemcell, error) {
 	resps, err := d.client.Stemcells()
 	if err != nil {
@@ -112,8 +118,8 @@ func (d DirectorImpl) FindStemcell(slug StemcellSlug) (Stemcell, error) {
 	return stem, nil
 }
 
-func (d DirectorImpl) HasStemcell(name, version string) (bool, error) {
-	return d.client.HasStemcell(name, version)
+func (d DirectorImpl) StemcellNeedsUpload(stemcells StemcellInfo) (bool, error) {
+	return d.client.StemcellNeedsUpload(stemcells)
 }
 
 func (d DirectorImpl) UploadStemcellURL(url, sha1 string, fix bool) error {
@@ -150,6 +156,27 @@ func (c Client) HasStemcell(name, version string) (bool, error) {
 	return false, nil
 }
 
+func (c Client) StemcellNeedsUpload(stemcells StemcellInfo) (bool, error) {
+	setHeaders := func(req *http.Request) {
+		req.Header.Add("Content-Type", "application/json")
+	}
+
+	jsonBody, err := json.Marshal(map[string]StemcellInfo{"stemcell": stemcells})
+	if err != nil {
+		return false, err
+	}
+
+	var parsedResponse struct {
+		Needed bool
+	}
+	err = c.clientRequest.Post("/stemcell_uploads", jsonBody, setHeaders, &parsedResponse)
+	if err != nil {
+		return false, bosherr.WrapErrorf(err, "Finding stemcells")
+	}
+
+	return parsedResponse.Needed, nil
+}
+
 func (c Client) UploadStemcellURL(url, sha1 string, fix bool) error {
 	if len(url) == 0 {
 		return bosherr.Error("Expected non-empty URL")
@@ -180,7 +207,7 @@ func (c Client) UploadStemcellURL(url, sha1 string, fix bool) error {
 
 	_, err = c.taskClientRequest.PostResult(path, reqBody, setHeaders)
 	if err != nil {
-		return bosherr.WrapErrorf(err, "Uploading remote stemcell '%s'", url)
+		return bosherr.WrapErrorf(err, "Uploading remote stemcell '%s'", urlhelper.RedactBasicAuth(url))
 	}
 
 	return nil

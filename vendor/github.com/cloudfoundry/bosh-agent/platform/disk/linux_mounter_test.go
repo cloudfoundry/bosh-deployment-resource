@@ -43,12 +43,77 @@ var _ = Describe("linuxMounter", func() {
 		mounter = NewLinuxMounter(runner, mountsSearcher, 1*time.Millisecond)
 	})
 
-	Describe("Mount", func() {
+	Describe("MountTmpfs", func() {
+		Context("when the tmpfs has not been mounted yet", func() {
+			BeforeEach(func() {
+				mountsSearcher.SearchMountsMounts = []Mount{
+					Mount{PartitionPath: "/dev/bob1", MountPoint: "/mnt/bob"},
+				}
+			})
+
+			It("mounts it", func() {
+				err := mounter.MountTmpfs("/mnt/joe", "16mb")
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(1).To(Equal(len(runner.RunCommands)))
+				Expect(runner.RunCommands[0]).To(Equal([]string{"mount", "tmpfs", "/mnt/joe", "-t", "tmpfs", "-o", "size=16mb"}))
+			})
+		})
+
+		Context("when the tmpfs is already mounted", func() {
+			BeforeEach(func() {
+				mountsSearcher.SearchMountsMounts = []Mount{
+					Mount{PartitionPath: "/dev/bob1", MountPoint: "/mnt/bob"},
+					Mount{PartitionPath: "/dev/joe1", MountPoint: "/mnt/joe"},
+				}
+			})
+
+			It("does not mount again", func() {
+				err := mounter.MountTmpfs("/mnt/joe", "16mb")
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(0).To(Equal(len(runner.RunCommands)))
+			})
+		})
+
+		Context("When searching for mounts returns an error", func() {
+			It("wraps the error", func() {
+				mountsSearcher.SearchMountsErr = errors.New("u crazy fam")
+
+				err := mounter.MountTmpfs("/mnt/joe", "16mb")
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Searching mounts: u crazy fam"))
+			})
+		})
+
+		Context("When mounting tmpfs returns an error", func() {
+			BeforeEach(func() {
+				runner.AddCmdResult("mount tmpfs /mnt/joe -t tmpfs -o size=16mb", fakesys.FakeCmdResult{Error: errors.New("KAZAM")})
+			})
+
+			It("wraps the error", func() {
+				err := mounter.MountTmpfs("/mnt/joe", "16mb")
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Mounting tmpfs to /mnt/joe: Shelling out to mount: KAZAM"))
+			})
+		})
+	})
+
+	Describe("MountFilesystem", func() {
 		It("allows to mount disk at given mount point", func() {
-			err := mounter.Mount("/dev/foo", "/mnt/foo")
+			err := mounter.MountFilesystem("/dev/foo", "/mnt/foo", "goodfs")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(1).To(Equal(len(runner.RunCommands)))
-			Expect(runner.RunCommands[0]).To(Equal([]string{"mount", "/dev/foo", "/mnt/foo"}))
+			Expect(runner.RunCommands[0]).To(Equal([]string{"mount", "/dev/foo", "/mnt/foo", "-t", "goodfs"}))
+		})
+
+		Context("when there are mount options", func() {
+			It("mounts the disk with specified options", func() {
+				err := mounter.MountFilesystem("/dev/foo", "/mnt/foo", "goodfs", "opt1", "opt2")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(1).To(Equal(len(runner.RunCommands)))
+				Expect(runner.RunCommands[0]).To(Equal([]string{"mount", "/dev/foo", "/mnt/foo", "-t", "goodfs", "-o", "opt1", "-o", "opt2"}))
+			})
 		})
 
 		It("does not try to mount disk again when disk is already mounted to the expected mount point", func() {
@@ -57,7 +122,7 @@ var _ = Describe("linuxMounter", func() {
 				Mount{PartitionPath: "/dev/bar", MountPoint: "/mnt/bar"},
 			}
 
-			err := mounter.Mount("/dev/foo", "/mnt/foo")
+			err := mounter.MountFilesystem("/dev/foo", "/mnt/foo", "goodfs")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(0).To(Equal(len(runner.RunCommands)))
 		})
@@ -68,7 +133,7 @@ var _ = Describe("linuxMounter", func() {
 				Mount{PartitionPath: "/dev/bar", MountPoint: "/mnt/bar"},
 			}
 
-			err := mounter.Mount("/dev/foo", "/mnt/foo")
+			err := mounter.MountFilesystem("/dev/foo", "/mnt/foo", "goodfs")
 			Expect(err).To(HaveOccurred())
 			Expect(0).To(Equal(len(runner.RunCommands)))
 		})
@@ -78,10 +143,10 @@ var _ = Describe("linuxMounter", func() {
 				Mount{PartitionPath: "tmpfs", MountPoint: "/mnt/foo1"},
 			}
 
-			err := mounter.Mount("tmpfs", "/mnt/foo2")
+			err := mounter.MountFilesystem("tmpfs", "/mnt/foo2", "tmpfs")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(1).To(Equal(len(runner.RunCommands)))
-			Expect(runner.RunCommands[0]).To(Equal([]string{"mount", "tmpfs", "/mnt/foo2"}))
+			Expect(runner.RunCommands[0]).To(Equal([]string{"mount", "tmpfs", "/mnt/foo2", "-t", "tmpfs"}))
 		})
 
 		It("returns error when another disk is already mounted to mount point", func() {
@@ -90,7 +155,7 @@ var _ = Describe("linuxMounter", func() {
 				Mount{PartitionPath: "/dev/bar", MountPoint: "/mnt/bar"},
 			}
 
-			err := mounter.Mount("/dev/foo", "/mnt/foo")
+			err := mounter.MountFilesystem("/dev/foo", "/mnt/foo", "goodfs")
 			Expect(err).To(HaveOccurred())
 			Expect(0).To(Equal(len(runner.RunCommands)))
 		})
@@ -98,16 +163,35 @@ var _ = Describe("linuxMounter", func() {
 		It("returns error and does not try to mount anything when searching mounts fails", func() {
 			mountsSearcher.SearchMountsErr = errors.New("fake-search-mounts-err")
 
-			err := mounter.Mount("/dev/foo", "/mnt/foo")
+			err := mounter.MountFilesystem("/dev/foo", "/mnt/foo", "goodfs")
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("fake-search-mounts-err"))
 			Expect(0).To(Equal(len(runner.RunCommands)))
 		})
+
+		Context("when the filesystem type is empty", func() {
+			It("mounts the disk without filesystem type (so that it can be inferred)", func() {
+				err := mounter.MountFilesystem("/dev/foo", "/mnt/foo", "")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(1).To(Equal(len(runner.RunCommands)))
+				Expect(runner.RunCommands[0]).To(Equal([]string{"mount", "/dev/foo", "/mnt/foo"}))
+			})
+		})
 	})
+
+	Describe("Mount", func() {
+		It("mounts the disk without filesystem type (so that it can be inferred)", func() {
+			err := mounter.Mount("/dev/foo", "/mnt/foo")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(1).To(Equal(len(runner.RunCommands)))
+			Expect(runner.RunCommands[0]).To(Equal([]string{"mount", "/dev/foo", "/mnt/foo"}))
+		})
+	})
+
 	Describe("RemountInPlace", func() {
 		Context("when the mount exists", func() {
 			BeforeEach(func() {
-				err := mounter.Mount("/mnt/foo", "/mnt/foo", "-o", "bind")
+				err := mounter.Mount("/mnt/foo", "/mnt/foo", "bind")
 				Expect(err).ToNot(HaveOccurred())
 
 				mountsSearcher.SearchMountsMounts = []Mount{
@@ -116,15 +200,16 @@ var _ = Describe("linuxMounter", func() {
 			})
 
 			It("remounts in place", func() {
-				err := mounter.RemountInPlace("/mnt/foo", "-o", "nodev")
+				err := mounter.RemountInPlace("/mnt/foo", "nodev")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(runner.RunCommands[1]).To(Equal([]string{"mount", "/mnt/foo", "/mnt/foo", "-o", "nodev", "-o", "remount"}))
+				Expect(runner.RunCommands).To(HaveLen(2))
+				Expect(runner.RunCommands[1]).To(Equal([]string{"mount", "", "/mnt/foo", "-o", "remount", "-o", "nodev"}))
 			})
 		})
 
 		Context("when the mount does not exist", func() {
 			It("raises error", func() {
-				err := mounter.RemountInPlace("/mnt/foo", "-o", "remount,nodev")
+				err := mounter.RemountInPlace("/mnt/foo", "remount,nodev")
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Error finding existing mount point /mnt/foo"))
 			})

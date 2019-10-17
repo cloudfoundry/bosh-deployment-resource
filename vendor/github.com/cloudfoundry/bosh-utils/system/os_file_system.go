@@ -46,7 +46,7 @@ func (fs *osFileSystem) ExpandPath(path string) (string, error) {
 	fs.logger.Debug(fs.logTag, "Expanding path for '%s'", path)
 
 	if strings.HasPrefix(path, "~") {
-		home, err := fs.currentHomeDir()
+		home, err := os.UserHomeDir()
 		if err != nil {
 			return "", bosherr.WrapError(err, "Getting current user home dir")
 		}
@@ -84,9 +84,19 @@ func (fs *osFileSystem) OpenFile(path string, flag int, perm os.FileMode) (File,
 	return fs.openFile(path, flag, perm)
 }
 
-func (fs *osFileSystem) Stat(path string) (os.FileInfo, error) {
-	fs.logger.Debug(fs.logTag, "Stat '%s'", path)
+type StatOpts struct {
+	Quiet bool
+}
+
+func (fs *osFileSystem) StatWithOpts(path string, opts StatOpts) (os.FileInfo, error) {
+	if !opts.Quiet {
+		fs.logger.Debug(fs.logTag, "Stat '%s'", path)
+	}
 	return fsWrapper.Stat(path)
+}
+
+func (fs *osFileSystem) Stat(path string) (os.FileInfo, error) {
+	return fs.StatWithOpts(path, StatOpts{})
 }
 
 func (fs *osFileSystem) Lstat(path string) (os.FileInfo, error) {
@@ -179,6 +189,10 @@ func (fs *osFileSystem) ConvergeFileContents(path string, content []byte, opts .
 	return true, nil
 }
 
+type ReadOpts struct {
+	Quiet bool
+}
+
 func (fs *osFileSystem) ReadFileString(path string) (content string, err error) {
 	bytes, err := fs.ReadFile(path)
 	if err != nil {
@@ -189,8 +203,10 @@ func (fs *osFileSystem) ReadFileString(path string) (content string, err error) 
 	return
 }
 
-func (fs *osFileSystem) ReadFile(path string) (content []byte, err error) {
-	fs.logger.Debug(fs.logTag, "Reading file %s", path)
+func (fs *osFileSystem) ReadFileWithOpts(path string, opts ReadOpts) (content []byte, err error) {
+	if !opts.Quiet {
+		fs.logger.Debug(fs.logTag, "Reading file %s", path)
+	}
 
 	file, err := fs.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
@@ -206,8 +222,14 @@ func (fs *osFileSystem) ReadFile(path string) (content []byte, err error) {
 		return
 	}
 
-	fs.logger.DebugWithDetails(fs.logTag, "Read content", content)
+	if !opts.Quiet {
+		fs.logger.DebugWithDetails(fs.logTag, "Read content", content)
+	}
 	return
+}
+
+func (fs *osFileSystem) ReadFile(path string) (content []byte, err error) {
+	return fs.ReadFileWithOpts(path, ReadOpts{})
 }
 
 func (fs *osFileSystem) FileExists(path string) bool {
@@ -273,10 +295,14 @@ func (fs *osFileSystem) CopyFile(srcPath, dstPath string) error {
 	if err != nil {
 		return bosherr.WrapError(err, "Opening source path")
 	}
-
 	defer srcFile.Close()
 
-	dstFile, err := fs.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	srcFi, err := fs.Stat(srcPath)
+	if err != nil {
+		return bosherr.WrapError(err, "Stating source path")
+	}
+
+	dstFile, err := fs.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcFi.Mode())
 	if err != nil {
 		return bosherr.WrapError(err, "Creating destination file")
 	}

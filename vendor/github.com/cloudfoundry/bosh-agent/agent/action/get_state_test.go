@@ -11,10 +11,8 @@ import (
 	fakeas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec/fakes"
 	boshjobsuper "github.com/cloudfoundry/bosh-agent/jobsupervisor"
 	fakejobsuper "github.com/cloudfoundry/bosh-agent/jobsupervisor/fakes"
-	boshntp "github.com/cloudfoundry/bosh-agent/platform/ntp"
-	fakentp "github.com/cloudfoundry/bosh-agent/platform/ntp/fakes"
 	boshvitals "github.com/cloudfoundry/bosh-agent/platform/vitals"
-	fakevitals "github.com/cloudfoundry/bosh-agent/platform/vitals/fakes"
+	"github.com/cloudfoundry/bosh-agent/platform/vitals/vitalsfakes"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	fakesettings "github.com/cloudfoundry/bosh-agent/settings/fakes"
 	boshassert "github.com/cloudfoundry/bosh-utils/assert"
@@ -25,7 +23,7 @@ var _ = Describe("GetState", func() {
 		settingsService *fakesettings.FakeSettingsService
 		specService     *fakeas.FakeV1Service
 		jobSupervisor   *fakejobsuper.FakeJobSupervisor
-		vitalsService   *fakevitals.FakeService
+		vitalsService   *vitalsfakes.FakeService
 		action          GetStateAction
 	)
 
@@ -33,14 +31,8 @@ var _ = Describe("GetState", func() {
 		settingsService = &fakesettings.FakeSettingsService{}
 		jobSupervisor = fakejobsuper.NewFakeJobSupervisor()
 		specService = fakeas.NewFakeV1Service()
-		vitalsService = fakevitals.NewFakeService()
-		ntpService := &fakentp.FakeService{
-			GetOffsetNTPOffset: boshntp.Info{
-				Offset:    "0.34958",
-				Timestamp: "12 Oct 17:37:58",
-			},
-		}
-		action = NewGetState(settingsService, specService, jobSupervisor, vitalsService, ntpService)
+		vitalsService = &vitalsfakes.FakeService{}
+		action = NewGetState(settingsService, specService, jobSupervisor, vitalsService)
 	})
 
 	AssertActionIsNotAsynchronous(action)
@@ -72,10 +64,6 @@ var _ = Describe("GetState", func() {
 						AgentID:  "my-agent-id",
 						JobState: "running",
 						VM:       boshsettings.VM{Name: "vm-abc-def"},
-						Ntp: boshntp.Info{
-							Offset:    "0.34958",
-							Timestamp: "12 Oct 17:37:58",
-						},
 					}
 					expectedSpec.Deployment = "fake-deployment"
 
@@ -114,7 +102,7 @@ var _ = Describe("GetState", func() {
 						Load: []string{"foo", "bar", "baz"},
 					}
 
-					vitalsService.GetVitals = expectedVitals
+					vitalsService.GetReturns(expectedVitals, nil)
 					expectedVM := map[string]interface{}{"name": "vm-abc-def"}
 
 					expectedProcesses := []boshjobsuper.Process{
@@ -188,9 +176,11 @@ var _ = Describe("GetState", func() {
 			})
 
 			Context("when vitals cannot be retrieved", func() {
-				It("returns error", func() {
-					vitalsService.GetErr = errors.New("fake-vitals-get-error")
+				BeforeEach(func() {
+					vitalsService.GetReturns(boshvitals.Vitals{}, errors.New("fake-vitals-get-error"))
+				})
 
+				It("returns error", func() {
 					_, err := action.Run("full")
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("fake-vitals-get-error"))

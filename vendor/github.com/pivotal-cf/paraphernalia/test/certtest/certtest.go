@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"net"
+	"time"
 
 	"github.com/square/certstrap/pkix"
 )
@@ -40,7 +41,10 @@ func BuildCA(name string) (*Authority, error) {
 		return nil, err
 	}
 
-	crt, err := pkix.CreateCertificateAuthority(key, ou, 1, o, country, province, city, name)
+	// XXX: Add a month so CA expires after its certificates.
+	expiry := time.Now().AddDate(1, 1, 0)
+
+	crt, err := pkix.CreateCertificateAuthority(key, ou, expiry, o, country, province, city, name)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +93,9 @@ func (a *Authority) BuildSignedCertificate(name string, options ...SignOption) (
 		return nil, err
 	}
 
-	crt, err := pkix.CreateCertificateHost(a.cert, a.key, csr, 1)
+	expiry := time.Now().AddDate(1, 0, 0)
+
+	crt, err := pkix.CreateCertificateHost(a.cert, a.key, csr, expiry)
 	if err != nil {
 		return nil, err
 	}

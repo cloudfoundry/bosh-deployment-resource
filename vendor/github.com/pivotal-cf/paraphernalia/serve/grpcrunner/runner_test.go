@@ -13,9 +13,9 @@ import (
 	"github.com/tedsuo/ifrit/ginkgomon"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/grpc_testing"
 
 	"github.com/pivotal-cf/paraphernalia/serve/grpcrunner"
+	"github.com/pivotal-cf/paraphernalia/test/grpctest"
 )
 
 var _ = Describe("GRPC Server", func() {
@@ -34,7 +34,7 @@ var _ = Describe("GRPC Server", func() {
 
 		logger = lagertest.NewTestLogger("grpc-server")
 		runner = grpcrunner.New(logger, listenAddr, func(server *grpc.Server) {
-			grpc_testing.RegisterTestServiceServer(server, dummyServer)
+			grpctest.RegisterTestServiceServer(server, dummyServer)
 		})
 		process = ginkgomon.Invoke(runner)
 	})
@@ -51,7 +51,7 @@ var _ = Describe("GRPC Server", func() {
 	Context("when given a request", func() {
 		var (
 			conn   *grpc.ClientConn
-			client grpc_testing.TestServiceClient
+			client grpctest.TestServiceClient
 		)
 
 		BeforeEach(func() {
@@ -63,7 +63,7 @@ var _ = Describe("GRPC Server", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			client = grpc_testing.NewTestServiceClient(conn)
+			client = grpctest.NewTestServiceClient(conn)
 		})
 
 		AfterEach(func() {
@@ -71,7 +71,7 @@ var _ = Describe("GRPC Server", func() {
 		})
 
 		It("is a real GRPC server", func() {
-			_, err := client.EmptyCall(context.Background(), &grpc_testing.Empty{})
+			_, err := client.SimpleCall(context.Background(), &grpctest.Empty{})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(dummyServer.CallCount()).To(Equal(1))
@@ -87,28 +87,8 @@ func (d *DummyServer) CallCount() int {
 	return d.callCount
 }
 
-func (d *DummyServer) EmptyCall(ctx context.Context, e *grpc_testing.Empty) (*grpc_testing.Empty, error) {
+func (d *DummyServer) SimpleCall(ctx context.Context, e *grpctest.Empty) (*grpctest.Empty, error) {
 	d.callCount++
 
 	return e, nil
-}
-
-func (d *DummyServer) UnaryCall(context.Context, *grpc_testing.SimpleRequest) (*grpc_testing.SimpleResponse, error) {
-	return nil, nil
-}
-
-func (d *DummyServer) StreamingOutputCall(*grpc_testing.StreamingOutputCallRequest, grpc_testing.TestService_StreamingOutputCallServer) error {
-	return nil
-}
-
-func (d *DummyServer) StreamingInputCall(grpc_testing.TestService_StreamingInputCallServer) error {
-	return nil
-}
-
-func (d *DummyServer) FullDuplexCall(grpc_testing.TestService_FullDuplexCallServer) error {
-	return nil
-}
-
-func (d *DummyServer) HalfDuplexCall(grpc_testing.TestService_HalfDuplexCallServer) error {
-	return nil
 }

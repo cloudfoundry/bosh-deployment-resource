@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/cloudfoundry/bosh-cli/cmd"
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	fakedir "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	fakeui "github.com/cloudfoundry/bosh-cli/ui/fakes"
@@ -33,7 +34,7 @@ var _ = Describe("RecreateCmd", func() {
 		BeforeEach(func() {
 			opts = RecreateOpts{
 				Args: AllOrInstanceGroupOrInstanceSlugArgs{
-					Slug: boshdir.NewAllOrInstanceGroupOrInstanceSlug("some-name", ""),
+					Slug: boshdir.NewAllOrInstanceGroupOrInstanceSlug("some-name", "0"),
 				},
 			}
 		})
@@ -47,7 +48,7 @@ var _ = Describe("RecreateCmd", func() {
 			Expect(deployment.RecreateCallCount()).To(Equal(1))
 
 			slug, recreateOpts := deployment.RecreateArgsForCall(0)
-			Expect(slug).To(Equal(boshdir.NewAllOrInstanceGroupOrInstanceSlug("some-name", "")))
+			Expect(slug).To(Equal(boshdir.NewAllOrInstanceGroupOrInstanceSlug("some-name", "0")))
 			Expect(recreateOpts.SkipDrain).To(BeFalse())
 			Expect(recreateOpts.Force).To(BeFalse())
 		})
@@ -61,7 +62,7 @@ var _ = Describe("RecreateCmd", func() {
 			Expect(deployment.RecreateCallCount()).To(Equal(1))
 
 			slug, recreateOpts := deployment.RecreateArgsForCall(0)
-			Expect(slug).To(Equal(boshdir.NewAllOrInstanceGroupOrInstanceSlug("some-name", "")))
+			Expect(slug).To(Equal(boshdir.NewAllOrInstanceGroupOrInstanceSlug("some-name", "0")))
 			Expect(recreateOpts.SkipDrain).To(BeTrue())
 			Expect(recreateOpts.Force).To(BeFalse())
 		})
@@ -114,20 +115,6 @@ var _ = Describe("RecreateCmd", func() {
 			Expect(recreateOpts.Fix).To(BeTrue())
 		})
 
-		It("recreate forcefully", func() {
-			opts.Force = true
-
-			err := act()
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(deployment.RecreateCallCount()).To(Equal(1))
-
-			slug, recreateOpts := deployment.RecreateArgsForCall(0)
-			Expect(slug).To(Equal(boshdir.NewAllOrInstanceGroupOrInstanceSlug("some-name", "")))
-			Expect(recreateOpts.SkipDrain).To(BeFalse())
-			Expect(recreateOpts.Force).To(BeTrue())
-		})
-
 		It("does not recreate if confirmation is rejected", func() {
 			ui.AskedConfirmationErr = errors.New("stop")
 
@@ -144,6 +131,96 @@ var _ = Describe("RecreateCmd", func() {
 			err := act()
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("fake-err"))
+		})
+
+		Context("coverge and no-converge flags", func() {
+			It("can set converge", func() {
+				opts.Converge = true
+				err := act()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(deployment.RecreateCallCount()).To(Equal(1))
+
+				_, opts := deployment.RecreateArgsForCall(0)
+				Expect(opts.Converge).To(BeTrue())
+			})
+
+			It("converge by default", func() {
+				opts.Converge = false
+				opts.NoConverge = false
+				err := act()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(deployment.RecreateCallCount()).To(Equal(1))
+
+				_, opts := deployment.RecreateArgsForCall(0)
+				Expect(opts.Converge).To(BeTrue())
+			})
+
+			It("can set no-converge", func() {
+				opts.NoConverge = true
+				err := act()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(deployment.RecreateCallCount()).To(Equal(1))
+
+				_, opts := deployment.RecreateArgsForCall(0)
+				Expect(opts.Converge).To(BeFalse())
+			})
+
+			It("rejects combining converge and no-converge", func() {
+				opts.Converge = true
+				opts.NoConverge = true
+				err := act()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Can't set converge and no-converge"))
+				Expect(deployment.RecreateCallCount()).To(Equal(0))
+			})
+
+			It("doesn't allow canaries flag when no-converge is specified", func() {
+				opts.NoConverge = true
+				opts.Canaries = "1"
+				err := act()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Can't set canaries and no-converge"))
+				Expect(deployment.RecreateCallCount()).To(Equal(0))
+			})
+
+			It("doesn't allow max-in-flight flag when no-converge is specified", func() {
+				opts.NoConverge = true
+				opts.MaxInFlight = "1"
+				err := act()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Can't set max-in-flight and no-converge"))
+				Expect(deployment.RecreateCallCount()).To(Equal(0))
+			})
+
+			It("doesn't allow dry-run flag when no-converge is specified", func() {
+				opts.NoConverge = true
+				opts.DryRun = true
+				err := act()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Can't set dry-run and no-converge"))
+				Expect(deployment.RecreateCallCount()).To(Equal(0))
+			})
+
+			Context("with invalid slugs for no-converge on a deployment", func() {
+
+				BeforeEach(func() {
+					opts = RecreateOpts{
+						Args: AllOrInstanceGroupOrInstanceSlugArgs{
+							Slug: boshdir.NewAllOrInstanceGroupOrInstanceSlug("", ""),
+						},
+					}
+				})
+				It("errors", func() {
+					opts.NoConverge = true
+					err := act()
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("You are trying to run recreate with --no-converge on an entire instance group. This operation is not allowed. Trying using the --converge flag or running it against a specific instance."))
+					Expect(deployment.RecreateCallCount()).To(Equal(0))
+				})
+			})
 		})
 	})
 })

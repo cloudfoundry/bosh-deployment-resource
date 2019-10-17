@@ -97,6 +97,10 @@ func (ms HTTPMetadataService) GetPublicKey() (string, error) {
 	if err != nil {
 		return "", bosherr.WrapErrorf(err, "Getting open ssh key from url %s", url)
 	}
+	if resp != nil && resp.StatusCode == http.StatusNotFound {
+		ms.logger.Warn(ms.logTag, "The open ssh keys path is not present: %s.", url)
+		return "", nil
+	}
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -144,7 +148,7 @@ func (ms HTTPMetadataService) GetInstanceID() (string, error) {
 
 func (ms HTTPMetadataService) GetValueAtPath(path string) (string, error) {
 	if path == "" {
-		return "", fmt.Errorf("Can not retrieve metadata value for empthy path")
+		return "", fmt.Errorf("Can not retrieve metadata value for empty path")
 	}
 
 	err := ms.ensureMinimalNetworkSetup()
@@ -171,6 +175,7 @@ func (ms HTTPMetadataService) GetValueAtPath(path string) (string, error) {
 
 	return string(bytes), nil
 }
+
 func (ms HTTPMetadataService) GetServerName() (string, error) {
 	userData, err := ms.getUserData()
 	if err != nil {
@@ -211,6 +216,20 @@ func (ms HTTPMetadataService) GetNetworks() (boshsettings.Networks, error) {
 
 func (ms HTTPMetadataService) IsAvailable() bool { return true }
 
+func (ms HTTPMetadataService) GetSettings() (boshsettings.Settings, error) {
+	userData, err := ms.getUserData()
+	if err != nil {
+		return boshsettings.Settings{}, bosherr.WrapError(err, "Getting user data")
+	}
+
+	settings := userData.Settings
+
+	if settings.AgentID == "" {
+		return boshsettings.Settings{}, bosherr.Error("Metadata does not provide settings")
+	}
+	return settings, nil
+}
+
 func (ms HTTPMetadataService) getUserData() (UserDataContentsType, error) {
 	var userData UserDataContentsType
 
@@ -222,14 +241,13 @@ func (ms HTTPMetadataService) getUserData() (UserDataContentsType, error) {
 	userDataURL := fmt.Sprintf("%s%s", ms.metadataHost, ms.userdataPath)
 	userDataResp, err := ms.client.GetCustomized(userDataURL, ms.addHeaders())
 	if err != nil {
-		return userData, bosherr.WrapErrorf(err, "Getting user data from url %s", userDataURL)
+		return userData, bosherr.WrapErrorf(err, "request failed from url %s", userDataURL)
 	}
+	defer userDataResp.Body.Close()
 
-	defer func() {
-		if err := userDataResp.Body.Close(); err != nil {
-			ms.logger.Warn(ms.logTag, "Failed to close response body when getting user data: %s", err.Error())
-		}
-	}()
+	if !isSuccessful(userDataResp) {
+		return userData, fmt.Errorf("invalid status from url %s: %d", userDataURL, userDataResp.StatusCode)
+	}
 
 	userDataBytes, err := ioutil.ReadAll(userDataResp.Body)
 	if err != nil {
@@ -290,4 +308,8 @@ func createRetryClient(delay time.Duration, logger boshlog.Logger) *httpclient.H
 		httpclient.NewRetryClient(
 			httpclient.CreateDefaultClient(nil), 10, delay, logger),
 		logger)
+}
+
+func isSuccessful(resp *http.Response) bool {
+	return resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices
 }

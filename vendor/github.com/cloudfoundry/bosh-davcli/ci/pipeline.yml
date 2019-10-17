@@ -1,5 +1,4 @@
 ---
-# fly -t cpi set-pipeline -p davcli -c ci/pipeline.yml -l <(lpass show -G "davcli concourse secrets" --notes) -l <(lpass show --notes "pivotal-tracker-resource-keys")
 groups:
   - name: davcli
     jobs:
@@ -17,7 +16,7 @@ jobs:
 
   - name: promote
     plan:
-      - aggregate:
+      - in_parallel:
         - get: davcli-src
           trigger: true
           passed:
@@ -26,7 +25,7 @@ jobs:
         params:
           bump: patch
 
-      - aggregate:
+      - in_parallel:
         - task: build-linux
           file: davcli-src/ci/tasks/build.yml
           output_mapping: { out: out-linux }
@@ -46,7 +45,7 @@ jobs:
             GOOS: windows
             GOARCH: amd64
 
-      - aggregate:
+      - in_parallel:
         - put: release-bucket-linux
           params: {file: out-linux/davcli-*-linux-amd64}
         - put: release-bucket-linux-ppc64le
@@ -59,10 +58,6 @@ jobs:
           file: version-semver/number
       - put: davcli-src
         params: {repository: davcli-src, tag: version-semver/number, tag_prefix: v}
-      - put: tracker-output
-        params:
-          repos:
-          - davcli-src
 
 resources:
   - name: davcli-src
@@ -104,10 +99,3 @@ resources:
       bucket: {{davcli_release_bucket}}
       access_key_id: {{davcli_release_bucket_access_key}}
       secret_access_key: {{davcli_release_bucket_secret_key}}
-
-  - name: tracker-output
-    type: tracker
-    source:
-      token: {{tracker_api_token}}
-      project_id: {{tracker_project_id}}
-      tracker_url: https://www.pivotaltracker.com

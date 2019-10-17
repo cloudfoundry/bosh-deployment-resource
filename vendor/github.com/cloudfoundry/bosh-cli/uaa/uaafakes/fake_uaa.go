@@ -8,37 +8,16 @@ import (
 )
 
 type FakeUAA struct {
-	NewStaleAccessTokenStub        func(refreshValue string) uaa.StaleAccessToken
-	newStaleAccessTokenMutex       sync.RWMutex
-	newStaleAccessTokenArgsForCall []struct {
-		refreshValue string
-	}
-	newStaleAccessTokenReturns struct {
-		result1 uaa.StaleAccessToken
-	}
-	newStaleAccessTokenReturnsOnCall map[int]struct {
-		result1 uaa.StaleAccessToken
-	}
-	PromptsStub        func() ([]uaa.Prompt, error)
-	promptsMutex       sync.RWMutex
-	promptsArgsForCall []struct{}
-	promptsReturns     struct {
-		result1 []uaa.Prompt
-		result2 error
-	}
-	promptsReturnsOnCall map[int]struct {
-		result1 []uaa.Prompt
-		result2 error
-	}
-	ClientCredentialsGrantStub        func() (uaa.Token, error)
+	ClientCredentialsGrantStub        func() (uaa.AccessToken, error)
 	clientCredentialsGrantMutex       sync.RWMutex
-	clientCredentialsGrantArgsForCall []struct{}
-	clientCredentialsGrantReturns     struct {
-		result1 uaa.Token
+	clientCredentialsGrantArgsForCall []struct {
+	}
+	clientCredentialsGrantReturns struct {
+		result1 uaa.AccessToken
 		result2 error
 	}
 	clientCredentialsGrantReturnsOnCall map[int]struct {
-		result1 uaa.Token
+		result1 uaa.AccessToken
 		result2 error
 	}
 	OwnerPasswordCredentialsGrantStub        func([]uaa.PromptAnswer) (uaa.AccessToken, error)
@@ -54,105 +33,40 @@ type FakeUAA struct {
 		result1 uaa.AccessToken
 		result2 error
 	}
+	PromptsStub        func() ([]uaa.Prompt, error)
+	promptsMutex       sync.RWMutex
+	promptsArgsForCall []struct {
+	}
+	promptsReturns struct {
+		result1 []uaa.Prompt
+		result2 error
+	}
+	promptsReturnsOnCall map[int]struct {
+		result1 []uaa.Prompt
+		result2 error
+	}
+	RefreshTokenGrantStub        func(string) (uaa.AccessToken, error)
+	refreshTokenGrantMutex       sync.RWMutex
+	refreshTokenGrantArgsForCall []struct {
+		arg1 string
+	}
+	refreshTokenGrantReturns struct {
+		result1 uaa.AccessToken
+		result2 error
+	}
+	refreshTokenGrantReturnsOnCall map[int]struct {
+		result1 uaa.AccessToken
+		result2 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeUAA) NewStaleAccessToken(refreshValue string) uaa.StaleAccessToken {
-	fake.newStaleAccessTokenMutex.Lock()
-	ret, specificReturn := fake.newStaleAccessTokenReturnsOnCall[len(fake.newStaleAccessTokenArgsForCall)]
-	fake.newStaleAccessTokenArgsForCall = append(fake.newStaleAccessTokenArgsForCall, struct {
-		refreshValue string
-	}{refreshValue})
-	fake.recordInvocation("NewStaleAccessToken", []interface{}{refreshValue})
-	fake.newStaleAccessTokenMutex.Unlock()
-	if fake.NewStaleAccessTokenStub != nil {
-		return fake.NewStaleAccessTokenStub(refreshValue)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.newStaleAccessTokenReturns.result1
-}
-
-func (fake *FakeUAA) NewStaleAccessTokenCallCount() int {
-	fake.newStaleAccessTokenMutex.RLock()
-	defer fake.newStaleAccessTokenMutex.RUnlock()
-	return len(fake.newStaleAccessTokenArgsForCall)
-}
-
-func (fake *FakeUAA) NewStaleAccessTokenArgsForCall(i int) string {
-	fake.newStaleAccessTokenMutex.RLock()
-	defer fake.newStaleAccessTokenMutex.RUnlock()
-	return fake.newStaleAccessTokenArgsForCall[i].refreshValue
-}
-
-func (fake *FakeUAA) NewStaleAccessTokenReturns(result1 uaa.StaleAccessToken) {
-	fake.NewStaleAccessTokenStub = nil
-	fake.newStaleAccessTokenReturns = struct {
-		result1 uaa.StaleAccessToken
-	}{result1}
-}
-
-func (fake *FakeUAA) NewStaleAccessTokenReturnsOnCall(i int, result1 uaa.StaleAccessToken) {
-	fake.NewStaleAccessTokenStub = nil
-	if fake.newStaleAccessTokenReturnsOnCall == nil {
-		fake.newStaleAccessTokenReturnsOnCall = make(map[int]struct {
-			result1 uaa.StaleAccessToken
-		})
-	}
-	fake.newStaleAccessTokenReturnsOnCall[i] = struct {
-		result1 uaa.StaleAccessToken
-	}{result1}
-}
-
-func (fake *FakeUAA) Prompts() ([]uaa.Prompt, error) {
-	fake.promptsMutex.Lock()
-	ret, specificReturn := fake.promptsReturnsOnCall[len(fake.promptsArgsForCall)]
-	fake.promptsArgsForCall = append(fake.promptsArgsForCall, struct{}{})
-	fake.recordInvocation("Prompts", []interface{}{})
-	fake.promptsMutex.Unlock()
-	if fake.PromptsStub != nil {
-		return fake.PromptsStub()
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.promptsReturns.result1, fake.promptsReturns.result2
-}
-
-func (fake *FakeUAA) PromptsCallCount() int {
-	fake.promptsMutex.RLock()
-	defer fake.promptsMutex.RUnlock()
-	return len(fake.promptsArgsForCall)
-}
-
-func (fake *FakeUAA) PromptsReturns(result1 []uaa.Prompt, result2 error) {
-	fake.PromptsStub = nil
-	fake.promptsReturns = struct {
-		result1 []uaa.Prompt
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeUAA) PromptsReturnsOnCall(i int, result1 []uaa.Prompt, result2 error) {
-	fake.PromptsStub = nil
-	if fake.promptsReturnsOnCall == nil {
-		fake.promptsReturnsOnCall = make(map[int]struct {
-			result1 []uaa.Prompt
-			result2 error
-		})
-	}
-	fake.promptsReturnsOnCall[i] = struct {
-		result1 []uaa.Prompt
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeUAA) ClientCredentialsGrant() (uaa.Token, error) {
+func (fake *FakeUAA) ClientCredentialsGrant() (uaa.AccessToken, error) {
 	fake.clientCredentialsGrantMutex.Lock()
 	ret, specificReturn := fake.clientCredentialsGrantReturnsOnCall[len(fake.clientCredentialsGrantArgsForCall)]
-	fake.clientCredentialsGrantArgsForCall = append(fake.clientCredentialsGrantArgsForCall, struct{}{})
+	fake.clientCredentialsGrantArgsForCall = append(fake.clientCredentialsGrantArgsForCall, struct {
+	}{})
 	fake.recordInvocation("ClientCredentialsGrant", []interface{}{})
 	fake.clientCredentialsGrantMutex.Unlock()
 	if fake.ClientCredentialsGrantStub != nil {
@@ -161,7 +75,8 @@ func (fake *FakeUAA) ClientCredentialsGrant() (uaa.Token, error) {
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.clientCredentialsGrantReturns.result1, fake.clientCredentialsGrantReturns.result2
+	fakeReturns := fake.clientCredentialsGrantReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeUAA) ClientCredentialsGrantCallCount() int {
@@ -170,24 +85,34 @@ func (fake *FakeUAA) ClientCredentialsGrantCallCount() int {
 	return len(fake.clientCredentialsGrantArgsForCall)
 }
 
-func (fake *FakeUAA) ClientCredentialsGrantReturns(result1 uaa.Token, result2 error) {
+func (fake *FakeUAA) ClientCredentialsGrantCalls(stub func() (uaa.AccessToken, error)) {
+	fake.clientCredentialsGrantMutex.Lock()
+	defer fake.clientCredentialsGrantMutex.Unlock()
+	fake.ClientCredentialsGrantStub = stub
+}
+
+func (fake *FakeUAA) ClientCredentialsGrantReturns(result1 uaa.AccessToken, result2 error) {
+	fake.clientCredentialsGrantMutex.Lock()
+	defer fake.clientCredentialsGrantMutex.Unlock()
 	fake.ClientCredentialsGrantStub = nil
 	fake.clientCredentialsGrantReturns = struct {
-		result1 uaa.Token
+		result1 uaa.AccessToken
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeUAA) ClientCredentialsGrantReturnsOnCall(i int, result1 uaa.Token, result2 error) {
+func (fake *FakeUAA) ClientCredentialsGrantReturnsOnCall(i int, result1 uaa.AccessToken, result2 error) {
+	fake.clientCredentialsGrantMutex.Lock()
+	defer fake.clientCredentialsGrantMutex.Unlock()
 	fake.ClientCredentialsGrantStub = nil
 	if fake.clientCredentialsGrantReturnsOnCall == nil {
 		fake.clientCredentialsGrantReturnsOnCall = make(map[int]struct {
-			result1 uaa.Token
+			result1 uaa.AccessToken
 			result2 error
 		})
 	}
 	fake.clientCredentialsGrantReturnsOnCall[i] = struct {
-		result1 uaa.Token
+		result1 uaa.AccessToken
 		result2 error
 	}{result1, result2}
 }
@@ -211,7 +136,8 @@ func (fake *FakeUAA) OwnerPasswordCredentialsGrant(arg1 []uaa.PromptAnswer) (uaa
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.ownerPasswordCredentialsGrantReturns.result1, fake.ownerPasswordCredentialsGrantReturns.result2
+	fakeReturns := fake.ownerPasswordCredentialsGrantReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeUAA) OwnerPasswordCredentialsGrantCallCount() int {
@@ -220,13 +146,22 @@ func (fake *FakeUAA) OwnerPasswordCredentialsGrantCallCount() int {
 	return len(fake.ownerPasswordCredentialsGrantArgsForCall)
 }
 
+func (fake *FakeUAA) OwnerPasswordCredentialsGrantCalls(stub func([]uaa.PromptAnswer) (uaa.AccessToken, error)) {
+	fake.ownerPasswordCredentialsGrantMutex.Lock()
+	defer fake.ownerPasswordCredentialsGrantMutex.Unlock()
+	fake.OwnerPasswordCredentialsGrantStub = stub
+}
+
 func (fake *FakeUAA) OwnerPasswordCredentialsGrantArgsForCall(i int) []uaa.PromptAnswer {
 	fake.ownerPasswordCredentialsGrantMutex.RLock()
 	defer fake.ownerPasswordCredentialsGrantMutex.RUnlock()
-	return fake.ownerPasswordCredentialsGrantArgsForCall[i].arg1
+	argsForCall := fake.ownerPasswordCredentialsGrantArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeUAA) OwnerPasswordCredentialsGrantReturns(result1 uaa.AccessToken, result2 error) {
+	fake.ownerPasswordCredentialsGrantMutex.Lock()
+	defer fake.ownerPasswordCredentialsGrantMutex.Unlock()
 	fake.OwnerPasswordCredentialsGrantStub = nil
 	fake.ownerPasswordCredentialsGrantReturns = struct {
 		result1 uaa.AccessToken
@@ -235,6 +170,8 @@ func (fake *FakeUAA) OwnerPasswordCredentialsGrantReturns(result1 uaa.AccessToke
 }
 
 func (fake *FakeUAA) OwnerPasswordCredentialsGrantReturnsOnCall(i int, result1 uaa.AccessToken, result2 error) {
+	fake.ownerPasswordCredentialsGrantMutex.Lock()
+	defer fake.ownerPasswordCredentialsGrantMutex.Unlock()
 	fake.OwnerPasswordCredentialsGrantStub = nil
 	if fake.ownerPasswordCredentialsGrantReturnsOnCall == nil {
 		fake.ownerPasswordCredentialsGrantReturnsOnCall = make(map[int]struct {
@@ -248,17 +185,135 @@ func (fake *FakeUAA) OwnerPasswordCredentialsGrantReturnsOnCall(i int, result1 u
 	}{result1, result2}
 }
 
+func (fake *FakeUAA) Prompts() ([]uaa.Prompt, error) {
+	fake.promptsMutex.Lock()
+	ret, specificReturn := fake.promptsReturnsOnCall[len(fake.promptsArgsForCall)]
+	fake.promptsArgsForCall = append(fake.promptsArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Prompts", []interface{}{})
+	fake.promptsMutex.Unlock()
+	if fake.PromptsStub != nil {
+		return fake.PromptsStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.promptsReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeUAA) PromptsCallCount() int {
+	fake.promptsMutex.RLock()
+	defer fake.promptsMutex.RUnlock()
+	return len(fake.promptsArgsForCall)
+}
+
+func (fake *FakeUAA) PromptsCalls(stub func() ([]uaa.Prompt, error)) {
+	fake.promptsMutex.Lock()
+	defer fake.promptsMutex.Unlock()
+	fake.PromptsStub = stub
+}
+
+func (fake *FakeUAA) PromptsReturns(result1 []uaa.Prompt, result2 error) {
+	fake.promptsMutex.Lock()
+	defer fake.promptsMutex.Unlock()
+	fake.PromptsStub = nil
+	fake.promptsReturns = struct {
+		result1 []uaa.Prompt
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeUAA) PromptsReturnsOnCall(i int, result1 []uaa.Prompt, result2 error) {
+	fake.promptsMutex.Lock()
+	defer fake.promptsMutex.Unlock()
+	fake.PromptsStub = nil
+	if fake.promptsReturnsOnCall == nil {
+		fake.promptsReturnsOnCall = make(map[int]struct {
+			result1 []uaa.Prompt
+			result2 error
+		})
+	}
+	fake.promptsReturnsOnCall[i] = struct {
+		result1 []uaa.Prompt
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeUAA) RefreshTokenGrant(arg1 string) (uaa.AccessToken, error) {
+	fake.refreshTokenGrantMutex.Lock()
+	ret, specificReturn := fake.refreshTokenGrantReturnsOnCall[len(fake.refreshTokenGrantArgsForCall)]
+	fake.refreshTokenGrantArgsForCall = append(fake.refreshTokenGrantArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("RefreshTokenGrant", []interface{}{arg1})
+	fake.refreshTokenGrantMutex.Unlock()
+	if fake.RefreshTokenGrantStub != nil {
+		return fake.RefreshTokenGrantStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.refreshTokenGrantReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeUAA) RefreshTokenGrantCallCount() int {
+	fake.refreshTokenGrantMutex.RLock()
+	defer fake.refreshTokenGrantMutex.RUnlock()
+	return len(fake.refreshTokenGrantArgsForCall)
+}
+
+func (fake *FakeUAA) RefreshTokenGrantCalls(stub func(string) (uaa.AccessToken, error)) {
+	fake.refreshTokenGrantMutex.Lock()
+	defer fake.refreshTokenGrantMutex.Unlock()
+	fake.RefreshTokenGrantStub = stub
+}
+
+func (fake *FakeUAA) RefreshTokenGrantArgsForCall(i int) string {
+	fake.refreshTokenGrantMutex.RLock()
+	defer fake.refreshTokenGrantMutex.RUnlock()
+	argsForCall := fake.refreshTokenGrantArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeUAA) RefreshTokenGrantReturns(result1 uaa.AccessToken, result2 error) {
+	fake.refreshTokenGrantMutex.Lock()
+	defer fake.refreshTokenGrantMutex.Unlock()
+	fake.RefreshTokenGrantStub = nil
+	fake.refreshTokenGrantReturns = struct {
+		result1 uaa.AccessToken
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeUAA) RefreshTokenGrantReturnsOnCall(i int, result1 uaa.AccessToken, result2 error) {
+	fake.refreshTokenGrantMutex.Lock()
+	defer fake.refreshTokenGrantMutex.Unlock()
+	fake.RefreshTokenGrantStub = nil
+	if fake.refreshTokenGrantReturnsOnCall == nil {
+		fake.refreshTokenGrantReturnsOnCall = make(map[int]struct {
+			result1 uaa.AccessToken
+			result2 error
+		})
+	}
+	fake.refreshTokenGrantReturnsOnCall[i] = struct {
+		result1 uaa.AccessToken
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeUAA) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.newStaleAccessTokenMutex.RLock()
-	defer fake.newStaleAccessTokenMutex.RUnlock()
-	fake.promptsMutex.RLock()
-	defer fake.promptsMutex.RUnlock()
 	fake.clientCredentialsGrantMutex.RLock()
 	defer fake.clientCredentialsGrantMutex.RUnlock()
 	fake.ownerPasswordCredentialsGrantMutex.RLock()
 	defer fake.ownerPasswordCredentialsGrantMutex.RUnlock()
+	fake.promptsMutex.RLock()
+	defer fake.promptsMutex.RUnlock()
+	fake.refreshTokenGrantMutex.RLock()
+	defer fake.refreshTokenGrantMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

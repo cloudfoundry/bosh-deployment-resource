@@ -1,5 +1,10 @@
 required = ["github.com/onsi/ginkgo/ginkgo"]
 
+[prune]
+  unused-packages = true
+  go-tests = true
+  non-go = true
+
 [[constraint]]
   name = "github.com/bmatcuk/doublestar"
   version = "1.0.9"
@@ -29,13 +34,18 @@ required = ["github.com/onsi/ginkgo/ginkgo"]
   name = "github.com/pivotal-cf/paraphernalia"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/pivotal-golang/clock"
-
-[[constraint]]
   name = "github.com/stretchr/testify"
   version = "1.1.4"
 
 [[constraint]]
   branch = "master"
   name = "golang.org/x/net"
+
+[[constraint]]
+  name = "github.com/cloudfoundry/socks5-proxy"
+  version = "v0.2.0"
+
+# dep ensure issue in https://github.com/golang/dep/issues/1799
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"

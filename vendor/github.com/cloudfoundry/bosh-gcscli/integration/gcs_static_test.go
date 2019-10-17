@@ -19,61 +19,47 @@ package integration
 import (
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	"net/http"
+	"strings"
 )
 
 var _ = Describe("Integration", func() {
-	Context("static credentials configuration", func() {
-		var ctx AssertContext
+	Context("static credentials configuration with a regional bucket", func() {
+		var (
+			ctx AssertContext
+			cfg *config.GCSCli
+		)
 		BeforeEach(func() {
+			cfg = getRegionalConfig()
 			ctx = NewAssertContext(AsStaticCredentials)
+			ctx.AddConfig(cfg)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
 		})
 
-		baseConfigs, baseConfigErr := getBaseConfigs()
-		encryptedConfigs, encryptedConfigErr := getEncryptedConfigs()
-		configurations := append(baseConfigs, encryptedConfigs...)
-		It("fetches configurations", func() {
-			Expect(baseConfigErr).To(BeNil(), "failed to get configurations")
-			Expect(encryptedConfigErr).To(BeNil(), "failed to get configurations")
+		It("can perform blobstore lifecycle", func() {
+			AssertLifecycleWorks(gcsCLIPath, ctx)
 		})
 
-		DescribeTable("Blobstore lifecycle works",
-			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertLifecycleWorks(gcsCLIPath, ctx)
-			},
-			configurations...)
+		It("can generate a signed url for a given object and action", func() {
+			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
+				"sign", ctx.GCSFileName, "PUT", "1h")
 
-		DescribeTable("Invalid Delete works",
-			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertDeleteNonexistentWorks(gcsCLIPath, ctx)
-			},
-			configurations...)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session.ExitCode()).To(Equal(0))
+			url := string(session.Out.Contents())
+			Expect(url).To(MatchRegexp("https://"))
 
-		DescribeTable("Multipart Put works",
-			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertMultipartPutWorks(gcsCLIPath, ctx)
-			},
-			configurations...)
+			body := strings.NewReader(`bar`)
+			req, err := http.NewRequest("PUT", url, body)
+			Expect(err).ToNot(HaveOccurred())
 
-		DescribeTable("Invalid Put should fail",
-			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertBrokenSourcePutFails(gcsCLIPath, ctx)
-			},
-			configurations...)
-
-		DescribeTable("Invalid Get should fail",
-			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertGetNonexistentFails(gcsCLIPath, ctx)
-			},
-			configurations...)
+			resp, err := http.DefaultClient.Do(req)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(200))
+			defer resp.Body.Close()
+		})
 	})
 })

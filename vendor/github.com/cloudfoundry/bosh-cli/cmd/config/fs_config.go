@@ -1,9 +1,13 @@
 package config
 
 import (
+	"os"
+
+	"github.com/cloudfoundry/bosh-cli/uaa"
+	"gopkg.in/yaml.v2"
+
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
-	"gopkg.in/yaml.v2"
 )
 
 /*
@@ -32,9 +36,11 @@ type fsConfigSchema_Environment struct {
 	Alias string `yaml:"alias,omitempty"`
 
 	// Auth
-	Username     string `yaml:"username,omitempty"`
-	Password     string `yaml:"password,omitempty"`
-	RefreshToken string `yaml:"refresh_token,omitempty"`
+	Username        string `yaml:"username,omitempty"`
+	Password        string `yaml:"password,omitempty"`
+	AccessTokenType string `yaml:"access_token_type,omitempty"`
+	AccessToken     string `yaml:"access_token,omitempty"`
+	RefreshToken    string `yaml:"refresh_token,omitempty"`
 }
 
 func NewFSConfigFromPath(path string, fs boshsys.FileSystem) (FSConfig, error) {
@@ -96,6 +102,26 @@ func (c FSConfig) AliasEnvironment(url, alias, caCert string) (Config, error) {
 	return config, nil
 }
 
+func (c FSConfig) UnaliasEnvironment(alias string) (Config, error) {
+	if len(alias) == 0 {
+		return nil, bosherr.Error("expected non-empty environment alias")
+	}
+
+	idx := -1
+	for i, tg := range c.schema.Environments {
+		if alias == tg.Alias {
+			idx = i
+			break
+		}
+	}
+	if idx == -1 {
+		return nil, bosherr.Errorf("alias %s not found", alias)
+	}
+	config := c.deepCopy()
+	config.schema.Environments = append(c.schema.Environments[:idx], c.schema.Environments[idx+1:]...)
+	return config, nil
+}
+
 func (c FSConfig) CACert(urlOrAlias string) string {
 	_, tg := c.findOrCreateEnvironment(urlOrAlias)
 
@@ -109,7 +135,9 @@ func (c FSConfig) Credentials(urlOrAlias string) Creds {
 		Client:       tg.Username,
 		ClientSecret: tg.Password,
 
-		RefreshToken: tg.RefreshToken,
+		AccessTokenType: tg.AccessTokenType,
+		AccessToken:     tg.AccessToken,
+		RefreshToken:    tg.RefreshToken,
 	}
 }
 
@@ -119,6 +147,8 @@ func (c FSConfig) SetCredentials(urlOrAlias string, creds Creds) Config {
 	i, tg := config.findOrCreateEnvironment(urlOrAlias)
 	tg.Username = creds.Client
 	tg.Password = creds.ClientSecret
+	tg.AccessTokenType = creds.AccessTokenType
+	tg.AccessToken = creds.AccessToken
 	tg.RefreshToken = creds.RefreshToken
 	config.schema.Environments[i] = tg
 
@@ -131,6 +161,8 @@ func (c FSConfig) UnsetCredentials(urlOrAlias string) Config {
 	i, tg := config.findOrCreateEnvironment(urlOrAlias)
 	tg.Username = ""
 	tg.Password = ""
+	tg.AccessTokenType = ""
+	tg.AccessToken = ""
 	tg.RefreshToken = ""
 	config.schema.Environments[i] = tg
 
@@ -147,8 +179,25 @@ func (c FSConfig) Save() error {
 	if err != nil {
 		return bosherr.WrapErrorf(err, "Writing config '%s'", c.path)
 	}
+	err = c.fs.Chmod(c.path, os.FileMode(0600))
+	if err != nil {
+		return bosherr.WrapErrorf(err, "Setting config '%s' permissions", c.path)
+	}
 
 	return nil
+}
+
+func (c FSConfig) UpdateConfigWithToken(environment string, t uaa.AccessToken) error {
+	creds := Creds{
+		AccessToken:     t.Value(),
+		AccessTokenType: t.Type(),
+	}
+
+	if refreshToken, ok := t.(uaa.RefreshableAccessToken); ok {
+		creds.RefreshToken = refreshToken.RefreshValue()
+	}
+	config := c.SetCredentials(environment, creds)
+	return config.Save()
 }
 
 func (c *FSConfig) findOrCreateEnvironment(urlOrAlias string) (int, fsConfigSchema_Environment) {

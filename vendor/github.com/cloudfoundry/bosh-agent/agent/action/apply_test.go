@@ -34,13 +34,12 @@ var _ = Describe("ApplyAction", func() {
 		settingsService = &fakesettings.FakeSettingsService{}
 		dirProvider = boshdir.NewProvider("/var/vcap")
 		fs = fakesys.NewFakeFileSystem()
-		action = NewApply(applier, specService, settingsService, dirProvider.InstanceDir(), fs)
+		action = NewApply(applier, specService, settingsService, dirProvider, fs)
 	})
 
 	AssertActionIsAsynchronous(action)
 	AssertActionIsNotPersistent(action)
 	AssertActionIsLoggable(action)
-
 	AssertActionIsNotCancelable(action)
 	AssertActionIsNotResumable(action)
 
@@ -79,7 +78,6 @@ var _ = Describe("ApplyAction", func() {
 						_, err := action.Run(desiredApplySpec)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(applier.Applied).To(BeTrue())
-						Expect(applier.ApplyCurrentApplySpec).To(Equal(currentApplySpec))
 						Expect(applier.ApplyDesiredApplySpec).To(Equal(populatedDesiredApplySpec))
 					})
 
@@ -178,31 +176,6 @@ var _ = Describe("ApplyAction", func() {
 						Expect(err).To(HaveOccurred())
 						Expect(specService.Spec).To(Equal(currentApplySpec))
 					})
-				})
-			})
-
-			Context("when current spec cannot be retrieved", func() {
-				BeforeEach(func() {
-					specService.Spec = currentApplySpec
-					specService.GetErr = errors.New("fake-get-error")
-				})
-
-				It("returns error and does not apply desired spec", func() {
-					_, err := action.Run(desiredApplySpec)
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("fake-get-error"))
-				})
-
-				It("does not run applier with desired spec", func() {
-					_, err := action.Run(desiredApplySpec)
-					Expect(err).To(HaveOccurred())
-					Expect(applier.Applied).To(BeFalse())
-				})
-
-				It("does not save desired spec as current spec", func() {
-					_, err := action.Run(desiredApplySpec)
-					Expect(err).To(HaveOccurred())
-					Expect(specService.Spec).To(Equal(currentApplySpec))
 				})
 			})
 		})

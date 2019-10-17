@@ -1,8 +1,11 @@
+// +build !windows
+
 package net_test
 
 import (
 	"errors"
-	"fmt"
+	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,53 +13,35 @@ import (
 	"github.com/cloudfoundry/bosh-agent/factory"
 	. "github.com/cloudfoundry/bosh-agent/platform/net"
 	fakearp "github.com/cloudfoundry/bosh-agent/platform/net/arp/fakes"
+	fakenet "github.com/cloudfoundry/bosh-agent/platform/net/fakes"
 	boship "github.com/cloudfoundry/bosh-agent/platform/net/ip"
 	fakeip "github.com/cloudfoundry/bosh-agent/platform/net/ip/fakes"
+	"github.com/cloudfoundry/bosh-agent/platform/net/netfakes"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
 )
 
-var _ = Describe("ubuntuNetManager", describeUbuntuNetManager)
-
-func describeUbuntuNetManager() {
+var _ = Describe("ubuntuNetManager", func() {
 	var (
 		fs                            *fakesys.FakeFileSystem
 		cmdRunner                     *fakesys.FakeCmdRunner
 		ipResolver                    *fakeip.FakeResolver
 		addressBroadcaster            *fakearp.FakeAddressBroadcaster
 		interfaceAddrsProvider        *fakeip.FakeInterfaceAddressesProvider
+		kernelIPv6                    *fakenet.FakeKernelIPv6
 		netManager                    UbuntuNetManager
 		interfaceConfigurationCreator InterfaceConfigurationCreator
+		fakeMACAddressDetector        *netfakes.FakeMACAddressDetector
 	)
 
-	writeNetworkDevice := func(iface string, macAddress string, isPhysical bool) string {
-		interfacePath := fmt.Sprintf("/sys/class/net/%s", iface)
-		fs.WriteFile(interfacePath, []byte{})
-		if isPhysical {
-			fs.WriteFile(fmt.Sprintf("/sys/class/net/%s/device", iface), []byte{})
-		}
-		fs.WriteFileString(fmt.Sprintf("/sys/class/net/%s/address", iface), fmt.Sprintf("%s\n", macAddress))
-
-		return interfacePath
-	}
-
-	stubInterfacesWithVirtual := func(physicalInterfaces map[string]boshsettings.Network, virtualInterfaces []string) {
-		interfacePaths := []string{}
-
-		for iface, networkSettings := range physicalInterfaces {
-			interfacePaths = append(interfacePaths, writeNetworkDevice(iface, networkSettings.Mac, true))
-		}
-
-		for _, iface := range virtualInterfaces {
-			interfacePaths = append(interfacePaths, writeNetworkDevice(iface, "virtual", false))
-		}
-
-		fs.SetGlob("/sys/class/net/*", interfacePaths)
-	}
-
 	stubInterfaces := func(physicalInterfaces map[string]boshsettings.Network) {
-		stubInterfacesWithVirtual(physicalInterfaces, nil)
+		addresses := map[string]string{}
+		for iface, networkSettings := range physicalInterfaces {
+			addresses[networkSettings.Mac] = iface
+		}
+
+		fakeMACAddressDetector.DetectMacAddressesReturns(addresses, nil)
 	}
 
 	BeforeEach(func() {
@@ -64,19 +49,23 @@ func describeUbuntuNetManager() {
 		cmdRunner = fakesys.NewFakeCmdRunner()
 		ipResolver = &fakeip.FakeResolver{}
 		logger := boshlog.NewLogger(boshlog.LevelNone)
+		fakeMACAddressDetector = &netfakes.FakeMACAddressDetector{}
 		interfaceConfigurationCreator = NewInterfaceConfigurationCreator(logger)
 		addressBroadcaster = &fakearp.FakeAddressBroadcaster{}
 		interfaceAddrsProvider = &fakeip.FakeInterfaceAddressesProvider{}
 		interfaceAddrsValidator := boship.NewInterfaceAddressesValidator(interfaceAddrsProvider)
 		dnsValidator := NewDNSValidator(fs)
+		kernelIPv6 = &fakenet.FakeKernelIPv6{}
 		netManager = NewUbuntuNetManager(
 			fs,
 			cmdRunner,
 			ipResolver,
+			fakeMACAddressDetector,
 			interfaceConfigurationCreator,
 			interfaceAddrsValidator,
 			dnsValidator,
 			addressBroadcaster,
+			kernelIPv6,
 			logger,
 		).(UbuntuNetManager)
 	})
@@ -129,6 +118,40 @@ func describeUbuntuNetManager() {
 						Default: []string{"dns", "gateway"},
 						DNS:     &[]string{"54.209.78.6", "127.0.0.5"},
 						Gateway: "10.10.0.1",
+					}.Build(),
+				}
+				stubInterfaces(networks)
+				staticInterfaceConfigurations, dhcpInterfaceConfigurations, dnsServers, err := netManager.ComputeNetworkConfig(networks)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(staticInterfaceConfigurations).To(Equal([]StaticInterfaceConfiguration{
+					{
+						Name:                "default",
+						Address:             "10.10.0.32",
+						Netmask:             "255.255.255.0",
+						Network:             "10.10.0.0",
+						IsDefaultForGateway: true,
+						Broadcast:           "10.10.0.255",
+						Mac:                 "aa::bb::cc",
+						Gateway:             "10.10.0.1",
+					},
+				}))
+				Expect(dhcpInterfaceConfigurations).To(BeEmpty())
+				Expect(dnsServers).To(Equal([]string{"54.209.78.6", "127.0.0.5"}))
+			})
+		})
+
+		Context("when interface alias exists in network settings", func() {
+			It("static interface configuration should be construted by alias name", func() {
+				networks := boshsettings.Networks{
+					"default": factory.Network{
+						IP:      "10.10.0.32",
+						Netmask: "255.255.255.0",
+						Mac:     "aa::bb::cc",
+						Default: []string{"dns", "gateway"},
+						DNS:     &[]string{"54.209.78.6", "127.0.0.5"},
+						Gateway: "10.10.0.1",
+						Alias:   "eth0:0",
 					}.Build(),
 				}
 				stubInterfaces(networks)
@@ -300,7 +323,10 @@ nameserver 9.9.9.9
 				Expect(err).ToNot(HaveOccurred())
 				linkContents, err := fs.Readlink("/etc/resolv.conf")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(linkContents).To(Equal("/run/resolvconf/resolv.conf"))
+
+				expectedContents, err := filepath.Abs("/run/resolvconf/resolv.conf")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(linkContents).To(Equal(expectedContents))
 			})
 
 			Context("when symlink command fails", func() {
@@ -354,52 +380,6 @@ nameserver 9.9.9.9
 			})
 		})
 
-		It("writes interfaces in /etc/network/interfaces in alphabetic order", func() {
-			anotherDHCPNetwork := boshsettings.Network{
-				Type:    "dynamic",
-				Default: []string{"dns"},
-				DNS:     []string{"8.8.8.8", "9.9.9.9"},
-				Mac:     "fake-another-mac-address",
-			}
-
-			stubInterfaces(map[string]boshsettings.Network{
-				"ethstatic": staticNetwork,
-				"ethdhcp1":  dhcpNetwork,
-				"ethdhcp0":  anotherDHCPNetwork,
-			})
-
-			err := netManager.SetupNetworking(boshsettings.Networks{
-				"dhcp-network-1": dhcpNetwork,
-				"dhcp-network-2": anotherDHCPNetwork,
-				"static-network": staticNetwork,
-			}, nil)
-			Expect(err).ToNot(HaveOccurred())
-
-			networkConfig := fs.GetFileTestStat("/etc/network/interfaces")
-			Expect(networkConfig).ToNot(BeNil())
-
-			expectedNetworkConfigurationForStaticAndDhcp = `# Generated by bosh-agent
-auto lo
-iface lo inet loopback
-
-auto ethdhcp0
-iface ethdhcp0 inet dhcp
-
-auto ethdhcp1
-iface ethdhcp1 inet dhcp
-
-auto ethstatic
-iface ethstatic inet static
-    address 1.2.3.4
-    network 1.2.3.0
-    netmask 255.255.255.0
-    broadcast 1.2.3.255
-    gateway 3.4.5.6
-
-dns-nameservers 8.8.8.8 9.9.9.9`
-			Expect(networkConfig.StringContents()).To(Equal(expectedNetworkConfigurationForStaticAndDhcp))
-		})
-
 		It("configures gateway, broadcast and dns for default network only", func() {
 			staticNetwork = boshsettings.Network{
 				Type:    "manual",
@@ -434,28 +414,234 @@ dns-nameservers 8.8.8.8 9.9.9.9`
 			}, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			networkConfig := fs.GetFileTestStat("/etc/network/interfaces")
+			matches, err := fs.Ls("/etc/systemd/network/")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(matches).To(ConsistOf(
+				"/etc/systemd/network/10_eth0.network",
+				"/etc/systemd/network/10_eth1.network",
+			))
+			networkConfig := fs.GetFileTestStat("/etc/systemd/network/10_eth0.network")
 			Expect(networkConfig).ToNot(BeNil())
 			Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
-auto lo
-iface lo inet loopback
+[Match]
+Name=eth0
 
-auto eth0
-iface eth0 inet static
-    address 1.2.3.4
-    network 1.2.3.0
-    netmask 255.255.255.0
+[Address]
+Address=1.2.3.4/24
 
-auto eth1
-iface eth1 inet static
-    address 5.6.7.8
-    network 5.6.7.0
-    netmask 255.255.255.0
-    broadcast 5.6.7.255
-    gateway 6.7.8.9
 
-dns-nameservers 8.8.8.8`))
+[Network]
 
+
+DNS=8.8.8.8
+
+
+[Route]
+`))
+			networkConfig = fs.GetFileTestStat("/etc/systemd/network/10_eth1.network")
+			Expect(networkConfig).ToNot(BeNil())
+			Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=eth1
+
+[Address]
+Address=5.6.7.8/24
+Broadcast=5.6.7.255
+
+[Network]
+Gateway=6.7.8.9
+
+DNS=8.8.8.8
+
+
+[Route]
+`))
+		})
+
+		It("ensures the only interfaces configured are the ones currently configured when SetupNetworking is re-run", func() {
+			By("Pre-configuring the network to have two devices", func() {
+				staticNetwork = boshsettings.Network{
+					Type:    "manual",
+					IP:      "1.2.3.4",
+					Netmask: "255.255.255.0",
+					Gateway: "3.4.5.6",
+					Mac:     "fake-static-mac-address",
+				}
+				secondStaticNetwork := boshsettings.Network{
+					Type:    "manual",
+					IP:      "5.6.7.8",
+					Netmask: "255.255.255.0",
+					Gateway: "6.7.8.9",
+					Mac:     "second-fake-static-mac-address",
+					DNS:     []string{"8.8.8.8"},
+					Default: []string{"gateway", "dns"},
+				}
+
+				stubInterfaces(map[string]boshsettings.Network{
+					"eth0": staticNetwork,
+					"eth1": secondStaticNetwork,
+				})
+
+				interfaceAddrsProvider.GetInterfaceAddresses = []boship.InterfaceAddress{
+					boship.NewSimpleInterfaceAddress("eth0", "1.2.3.4"),
+					boship.NewSimpleInterfaceAddress("eth1", "5.6.7.8"),
+				}
+
+				err := netManager.SetupNetworking(boshsettings.Networks{
+					"static-1": staticNetwork,
+					"static-2": secondStaticNetwork,
+				}, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				matches, err := fs.Ls("/etc/systemd/network/")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(matches).To(ConsistOf(
+					"/etc/systemd/network/10_eth0.network",
+					"/etc/systemd/network/10_eth1.network",
+				))
+				networkConfig := fs.GetFileTestStat("/etc/systemd/network/10_eth0.network")
+				Expect(networkConfig).ToNot(BeNil())
+				networkConfig = fs.GetFileTestStat("/etc/systemd/network/10_eth1.network")
+				Expect(networkConfig).ToNot(BeNil())
+			})
+
+			By("Reconfiguring to only have one", func() {
+				// Otherwise, running SetupNetworking twice with different networks could leak networks
+				staticNetwork = boshsettings.Network{
+					Type:    "manual",
+					IP:      "5.6.7.8",
+					Netmask: "255.255.255.0",
+					Gateway: "6.7.8.9",
+					Mac:     "second-fake-static-mac-address",
+					DNS:     []string{"8.8.8.8"},
+					Default: []string{"gateway", "dns"},
+				}
+
+				stubInterfaces(map[string]boshsettings.Network{
+					"eth0": staticNetwork,
+				})
+
+				interfaceAddrsProvider.GetInterfaceAddresses = []boship.InterfaceAddress{
+					boship.NewSimpleInterfaceAddress("eth0", "5.6.7.8"),
+				}
+
+				err := netManager.SetupNetworking(boshsettings.Networks{
+					"static-1": staticNetwork,
+				}, nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				matches, err := fs.Ls("/etc/systemd/network/")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(matches).To(ConsistOf(
+					"/etc/systemd/network/10_eth0.network",
+				))
+				networkConfig := fs.GetFileTestStat("/etc/systemd/network/10_eth0.network")
+				Expect(networkConfig).ToNot(BeNil())
+				Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=eth0
+
+[Address]
+Address=5.6.7.8/24
+Broadcast=5.6.7.255
+
+[Network]
+Gateway=6.7.8.9
+
+DNS=8.8.8.8
+
+
+[Route]
+`))
+			})
+		})
+
+		It("configures postup routes for static network", func() {
+			staticNetwork = boshsettings.Network{
+				Type:    "manual",
+				IP:      "1.2.3.4",
+				Netmask: "255.255.255.0",
+				Gateway: "3.4.5.6",
+				Mac:     "fake-static-mac-address",
+				Routes: []boshsettings.Route{
+					boshsettings.Route{
+						Destination: "10.0.0.0",
+						Gateway:     "3.4.5.6",
+						Netmask:     "255.0.0.0",
+					},
+				},
+			}
+			secondStaticNetwork := boshsettings.Network{
+				Type:    "manual",
+				IP:      "5.6.7.8",
+				Netmask: "255.255.255.0",
+				Gateway: "6.7.8.9",
+				Mac:     "second-fake-static-mac-address",
+				DNS:     []string{"8.8.8.8"},
+				Default: []string{"gateway", "dns"},
+			}
+
+			stubInterfaces(map[string]boshsettings.Network{
+				"eth0": staticNetwork,
+				"eth1": secondStaticNetwork,
+			})
+
+			interfaceAddrsProvider.GetInterfaceAddresses = []boship.InterfaceAddress{
+				boship.NewSimpleInterfaceAddress("eth0", "1.2.3.4"),
+				boship.NewSimpleInterfaceAddress("eth1", "5.6.7.8"),
+			}
+
+			err := netManager.SetupNetworking(boshsettings.Networks{
+				"static-1": staticNetwork,
+				"static-2": secondStaticNetwork,
+			}, nil)
+			Expect(err).ToNot(HaveOccurred())
+
+			matches, err := fs.Ls("/etc/systemd/network/")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(matches).To(ConsistOf(
+				"/etc/systemd/network/10_eth0.network",
+				"/etc/systemd/network/10_eth1.network",
+			))
+			networkConfig := fs.GetFileTestStat("/etc/systemd/network/10_eth0.network")
+			Expect(networkConfig).ToNot(BeNil())
+			Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=eth0
+
+[Address]
+Address=1.2.3.4/24
+
+
+[Network]
+
+
+DNS=8.8.8.8
+
+
+[Route]
+
+Destination=10.0.0.0/8
+Gateway=3.4.5.6
+`))
+			networkConfig = fs.GetFileTestStat("/etc/systemd/network/10_eth1.network")
+			Expect(networkConfig).ToNot(BeNil())
+			Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=eth1
+
+[Address]
+Address=5.6.7.8/24
+Broadcast=5.6.7.255
+
+[Network]
+Gateway=6.7.8.9
+
+DNS=8.8.8.8
+
+
+[Route]
+`))
 		})
 
 		It("writes /etc/network/interfaces without dns-namservers if there are no dns servers", func() {
@@ -475,27 +661,27 @@ dns-nameservers 8.8.8.8`))
 			err := netManager.SetupNetworking(boshsettings.Networks{"static-network": staticNetworkWithoutDNS}, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			networkConfig := fs.GetFileTestStat("/etc/network/interfaces")
+			matches, err := fs.Ls("/etc/systemd/network/")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(matches).To(ConsistOf("/etc/systemd/network/10_ethstatic.network"))
+
+			networkConfig := fs.GetFileTestStat("/etc/systemd/network/10_ethstatic.network")
 			Expect(networkConfig).ToNot(BeNil())
 			Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
-auto lo
-iface lo inet loopback
+[Match]
+Name=ethstatic
 
-auto ethstatic
-iface ethstatic inet static
-    address 1.2.3.4
-    network 1.2.3.0
-    netmask 255.255.255.0
-    broadcast 1.2.3.255
-    gateway 3.4.5.6
+[Address]
+Address=1.2.3.4/24
+Broadcast=1.2.3.255
+
+[Network]
+Gateway=3.4.5.6
+
+
+
+[Route]
 `))
-		})
-
-		It("returns errors from glob /sys/class/net/", func() {
-			fs.GlobErr = errors.New("fs-glob-error")
-			err := netManager.SetupNetworking(boshsettings.Networks{"dhcp-network": dhcpNetwork, "static-network": staticNetwork}, nil)
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("fs-glob-error"))
 		})
 
 		It("returns errors from writing the network configuration", func() {
@@ -520,6 +706,30 @@ iface ethstatic inet static
 			Expect(err.Error()).To(ContainSubstring("Creating interface configurations"))
 		})
 
+		It("returns errors when there a netmask cannot be converted to a CIDR", func() {
+			staticNetwork = boshsettings.Network{
+				Type:    "manual",
+				IP:      "1.2.3.4",
+				Netmask: "255.0.255.0",
+				Gateway: "3.4.5.6",
+				Mac:     "fake-static-mac-address",
+			}
+
+			stubInterfaces(map[string]boshsettings.Network{
+				"eth0": staticNetwork,
+			})
+
+			interfaceAddrsProvider.GetInterfaceAddresses = []boship.InterfaceAddress{
+				boship.NewSimpleInterfaceAddress("eth0", "1.2.3.4"),
+			}
+
+			err := netManager.SetupNetworking(boshsettings.Networks{
+				"static-1": staticNetwork,
+			}, nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(`Updating network configs: Writing network configuration: Updating network configuration for eth0: Generating config from template eth0: template: eth0:6:58: executing "eth0" at <.InterfaceConfig.CIDR>: error calling CIDR: netmask cannot be converted to CIDR: 255.0.255.0`))
+		})
+
 		It("writes a dhcp configuration if there are dhcp networks", func() {
 			stubInterfaces(map[string]boshsettings.Network{
 				"ethdhcp":   dhcpNetwork,
@@ -535,7 +745,7 @@ iface ethstatic inet static
 
 option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
 
-send host-name "<hostname>";
+send host-name = gethostname();
 
 request subnet-mask, broadcast-address, time-offset, routers,
 	domain-name, domain-name-servers, domain-search, host-name,
@@ -566,7 +776,7 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 
 option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
 
-send host-name "<hostname>";
+send host-name = gethostname();
 
 request subnet-mask, broadcast-address, time-offset, routers,
 	domain-name, domain-name-servers, domain-search, host-name,
@@ -607,7 +817,7 @@ request subnet-mask, broadcast-address, time-offset, routers,
 
 option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
 
-send host-name "<hostname>";
+send host-name = gethostname();
 
 request subnet-mask, broadcast-address, time-offset, routers,
 	domain-name, domain-name-servers, domain-search, host-name,
@@ -624,6 +834,22 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 
 			fs.WriteFileString("/etc/dhcp/dhclient.conf", initialDhcpConfig)
 
+			// check that config files change after stop and before start
+			cmdRunner.SetCmdCallback("ip --force link set ethdhcp down", func() {
+				Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
+			})
+
+			cmdRunner.SetCmdCallback("ip --force link set ethstatic down", func() {
+				Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
+			})
+
+			cmdRunner.SetCmdCallback("ip --force link up ethdhcp", func() {
+				Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
+			})
+			cmdRunner.SetCmdCallback("ip --force link up ethstatic", func() {
+				Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
+			})
+
 			err := netManager.SetupNetworking(boshsettings.Networks{"dhcp-network": dhcpNetwork, "static-network": staticNetwork}, nil)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -631,8 +857,10 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 			Expect(cmdRunner.RunCommands[0]).To(Equal([]string{"pkill", "dhclient"}))
 			Expect(cmdRunner.RunCommands[1:3]).To(ContainElement([]string{"resolvconf", "-d", "ethdhcp.dhclient"}))
 			Expect(cmdRunner.RunCommands[1:3]).To(ContainElement([]string{"resolvconf", "-d", "ethstatic.dhclient"}))
-			Expect(cmdRunner.RunCommands[3]).To(Equal([]string{"ifdown", "--force", "ethdhcp", "ethstatic"}))
-			Expect(cmdRunner.RunCommands[4]).To(Equal([]string{"ifup", "--force", "ethdhcp", "ethstatic"}))
+			Expect(cmdRunner.RunCommands[3]).To(Equal([]string{"/var/vcap/bosh/bin/restart_networking"}))
+			Expect(cmdRunner.RunCommands[4]).To(Equal([]string{"resolvconf", "-u"}))
+
+			Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
 		})
 
 		It("doesn't restart the networks if /etc/network/interfaces and /etc/dhcp/dhclient.conf don't change", func() {
@@ -640,7 +868,7 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 
 option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
 
-send host-name "<hostname>";
+send host-name = gethostname();
 
 request subnet-mask, broadcast-address, time-offset, routers,
 	domain-name, domain-name-servers, domain-search, host-name,
@@ -665,29 +893,51 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 			dhcpConfig := fs.GetFileTestStat("/etc/dhcp/dhclient.conf")
 			Expect(dhcpConfig.StringContents()).To(Equal(initialDhcpConfig))
 
-			Expect(len(cmdRunner.RunCommands)).To(Equal(0))
+			Expect(len(cmdRunner.RunCommands)).To(Equal(5))
+			Expect(cmdRunner.RunCommands[0]).To(Equal([]string{"pkill", "dhclient"}))
+			Expect(cmdRunner.RunCommands[1:3]).To(ContainElement([]string{"resolvconf", "-d", "ethdhcp.dhclient"}))
+			Expect(cmdRunner.RunCommands[1:3]).To(ContainElement([]string{"resolvconf", "-d", "ethstatic.dhclient"}))
+			Expect(cmdRunner.RunCommands[3]).To(Equal([]string{"/var/vcap/bosh/bin/restart_networking"}))
+			Expect(cmdRunner.RunCommands[4]).To(Equal([]string{"resolvconf", "-u"}))
 		})
 
 		It("restarts the networks if /etc/dhcp/dhclient.conf changes", func() {
+			initialDhcpConfig := "initial-dhcp-config"
+
 			stubInterfaces(map[string]boshsettings.Network{
 				"ethdhcp":   dhcpNetwork,
 				"ethstatic": staticNetwork,
 			})
 
-			fs.WriteFileString("/etc/network/interfaces", expectedNetworkConfigurationForStaticAndDhcp)
+			fs.WriteFileString("/etc/dhcp/dhclient.conf", initialDhcpConfig)
+
+			// check that config files change after stop and before start
+			cmdRunner.SetCmdCallback("ip --force link set ethdhcp down", func() {
+				Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
+			})
+
+			cmdRunner.SetCmdCallback("ip --force link set ethstatic down", func() {
+				Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
+			})
+
+			cmdRunner.SetCmdCallback("ip --force link up ethdhcp", func() {
+				Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
+			})
+			cmdRunner.SetCmdCallback("ip --force link up ethstatic", func() {
+				Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).To(Equal(initialDhcpConfig))
+			})
 
 			err := netManager.SetupNetworking(boshsettings.Networks{"dhcp-network": dhcpNetwork, "static-network": staticNetwork}, nil)
 			Expect(err).ToNot(HaveOccurred())
-
-			networkConfig := fs.GetFileTestStat("/etc/network/interfaces")
-			Expect(networkConfig.StringContents()).To(Equal(expectedNetworkConfigurationForStaticAndDhcp))
 
 			Expect(len(cmdRunner.RunCommands)).To(Equal(5))
 			Expect(cmdRunner.RunCommands[0]).To(Equal([]string{"pkill", "dhclient"}))
 			Expect(cmdRunner.RunCommands[1:3]).To(ContainElement([]string{"resolvconf", "-d", "ethdhcp.dhclient"}))
 			Expect(cmdRunner.RunCommands[1:3]).To(ContainElement([]string{"resolvconf", "-d", "ethstatic.dhclient"}))
-			Expect(cmdRunner.RunCommands[3]).To(Equal([]string{"ifdown", "--force", "ethdhcp", "ethstatic"}))
-			Expect(cmdRunner.RunCommands[4]).To(Equal([]string{"ifup", "--force", "ethdhcp", "ethstatic"}))
+			Expect(cmdRunner.RunCommands[3]).To(Equal([]string{"/var/vcap/bosh/bin/restart_networking"}))
+			Expect(cmdRunner.RunCommands[4]).To(Equal([]string{"resolvconf", "-u"}))
+
+			Expect(fs.ReadFileString("/etc/dhcp/dhclient.conf")).ToNot(Equal(initialDhcpConfig))
 		})
 
 		It("broadcasts MAC addresses for all interfaces", func() {
@@ -696,18 +946,15 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 				"ethstatic": staticNetwork,
 			})
 
-			errCh := make(chan error)
-			err := netManager.SetupNetworking(boshsettings.Networks{"dhcp-network": dhcpNetwork, "static-network": staticNetwork}, errCh)
+			err := netManager.SetupNetworking(boshsettings.Networks{"dhcp-network": dhcpNetwork, "static-network": staticNetwork}, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			broadcastErr := <-errCh // wait for all arpings
-			Expect(broadcastErr).ToNot(HaveOccurred())
-
-			Expect(addressBroadcaster.BroadcastMACAddressesAddresses).To(Equal([]boship.InterfaceAddress{
-				boship.NewSimpleInterfaceAddress("ethstatic", "1.2.3.4"),
-				boship.NewResolvingInterfaceAddress("ethdhcp", ipResolver),
-			}))
-
+			Eventually(func() []boship.InterfaceAddress { return addressBroadcaster.Value() }).Should(
+				Equal([]boship.InterfaceAddress{
+					boship.NewSimpleInterfaceAddress("ethstatic", "1.2.3.4"),
+					boship.NewResolvingInterfaceAddress("ethdhcp", ipResolver),
+				}),
+			)
 		})
 
 		It("skips vip networks", func() {
@@ -731,9 +978,48 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 			}, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			networkConfig := fs.GetFileTestStat("/etc/network/interfaces")
+			matches, err := fs.Ls("/etc/systemd/network/")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(matches).To(ConsistOf(
+				"/etc/systemd/network/10_ethdhcp.network",
+				"/etc/systemd/network/10_ethstatic.network",
+			))
+
+			networkConfig := fs.GetFileTestStat("/etc/systemd/network/10_ethdhcp.network")
 			Expect(networkConfig).ToNot(BeNil())
-			Expect(networkConfig.StringContents()).To(Equal(expectedNetworkConfigurationForStaticAndDhcp))
+			Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=ethdhcp
+
+[Network]
+DHCP=yes
+
+DNS=8.8.8.8
+DNS=9.9.9.9
+
+
+[Route]
+`))
+
+			networkConfig = fs.GetFileTestStat("/etc/systemd/network/10_ethstatic.network")
+			Expect(networkConfig).ToNot(BeNil())
+			Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=ethstatic
+
+[Address]
+Address=1.2.3.4/24
+Broadcast=1.2.3.255
+
+[Network]
+Gateway=3.4.5.6
+
+DNS=8.8.8.8
+DNS=9.9.9.9
+
+
+[Route]
+`))
 		})
 
 		Context("when manual networks were not configured with proper IP addresses", func() {
@@ -806,66 +1092,161 @@ prepend domain-name-servers 8.8.8.8, 9.9.9.9;
 				}, nil)
 				Expect(err).ToNot(HaveOccurred())
 
-				networkConfig := fs.GetFileTestStat("/etc/network/interfaces")
+				matches, err := fs.Ls("/etc/systemd/network/")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(matches).To(ConsistOf(
+					"/etc/systemd/network/10_ethstatic.network",
+				))
+
+				networkConfig := fs.GetFileTestStat("/etc/systemd/network/10_ethstatic.network")
 				Expect(networkConfig).ToNot(BeNil())
+				Expect(networkConfig.StringContents()).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=ethstatic
 
-				expectedNetworkConfiguration := `# Generated by bosh-agent
-auto lo
-iface lo inet loopback
+[Address]
+Address=2.2.2.2/24
+Broadcast=2.2.2.255
 
-auto ethstatic
-iface ethstatic inet static
-    address 2.2.2.2
-    network 2.2.2.0
-    netmask 255.255.255.0
-    broadcast 2.2.2.255
-    gateway 3.4.5.6
-`
+[Network]
+Gateway=3.4.5.6
 
-				Expect(networkConfig.StringContents()).To(Equal(expectedNetworkConfiguration))
+
+
+[Route]
+`))
+			})
+		})
+
+		Context("when manual networks were configured with portable IP", func() {
+			var (
+				portableNetwork boshsettings.Network
+				staticNetwork   boshsettings.Network
+				staticNetwork1  boshsettings.Network
+			)
+			BeforeEach(func() {
+				portableNetwork = boshsettings.Network{
+					Type:     "manual",
+					IP:       "10.112.166.136",
+					Netmask:  "255.255.255.192",
+					Resolved: false,
+					UseDHCP:  false,
+					DNS:      []string{"8.8.8.8"},
+					Alias:    "eth0:0",
+				}
+				staticNetwork = boshsettings.Network{
+					Type:     "dynamic",
+					IP:       "169.50.68.75",
+					Netmask:  "255.255.255.224",
+					Gateway:  "169.50.68.65",
+					Default:  []string{"gateway", "dns"},
+					Resolved: false,
+					UseDHCP:  false,
+					DNS:      []string{"8.8.8.8", "10.0.80.11", "10.0.80.12"},
+					Mac:      "06:64:d4:7d:63:71",
+					Alias:    "eth1",
+				}
+				staticNetwork1 = boshsettings.Network{
+					Type:     "dynamic",
+					IP:       "10.112.39.113",
+					Netmask:  "255.255.255.128",
+					Resolved: false,
+					UseDHCP:  false,
+					DNS:      []string{"8.8.8.8", "10.0.80.11", "10.0.80.12"},
+					Mac:      "06:b7:e8:0c:38:d8",
+					Alias:    "eth0",
+				}
+				interfaceAddrsProvider.GetInterfaceAddresses = []boship.InterfaceAddress{
+					boship.NewSimpleInterfaceAddress("eth0", "10.112.39.113"),
+					boship.NewSimpleInterfaceAddress("eth1", "169.50.68.75"),
+				}
+				fs.WriteFileString("/etc/resolv.conf", `
+nameserver 8.8.8.8
+nameserver 10.0.80.11
+nameserver 10.0.80.12
+`)
 			})
 
-			It("configures network for a single physical device, when a virtual device is also present", func() {
-				staticNetworkWithoutMAC := boshsettings.Network{
-					Type:    "manual",
-					IP:      "2.2.2.2",
-					Default: []string{"gateway"},
-					Netmask: "255.255.255.0",
-					Gateway: "3.4.5.6",
-				}
+			scrubMultipleLines := func(in string) string {
+				return strings.Replace(in, "\n\n\n", "\n\n", -1)
+			}
 
-				stubInterfacesWithVirtual(
-					map[string]boshsettings.Network{
-						"ethstatic": staticNetwork,
-					},
-					[]string{"virtual"},
+			It("succeeds", func() {
+				stubInterfaces(map[string]boshsettings.Network{
+					"eth1": staticNetwork,
+					"eth0": staticNetwork1,
+				})
+
+				err := netManager.SetupNetworking(boshsettings.Networks{"default": portableNetwork, "dynamic": staticNetwork, "dynamic_1": staticNetwork1}, nil)
+
+				Eventually(func() []boship.InterfaceAddress { return addressBroadcaster.Value() }).Should(
+					Equal([]boship.InterfaceAddress{
+						boship.NewSimpleInterfaceAddress("eth0", "10.112.39.113"),
+						boship.NewSimpleInterfaceAddress("eth1", "169.50.68.75"),
+					}),
 				)
-				interfaceAddrsProvider.GetInterfaceAddresses = []boship.InterfaceAddress{
-					boship.NewSimpleInterfaceAddress("ethstatic", "2.2.2.2"),
-				}
 
-				err := netManager.SetupNetworking(boshsettings.Networks{
-					"static-network": staticNetworkWithoutMAC,
-				}, nil)
-				Expect(err).ToNot(HaveOccurred())
+				matches, err := fs.Ls("/etc/systemd/network/")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(matches).To(ConsistOf(
+					"/etc/systemd/network/10_eth0.network",
+					"/etc/systemd/network/10_eth0:0.network",
+					"/etc/systemd/network/10_eth1.network",
+				))
 
-				networkConfig := fs.GetFileTestStat("/etc/network/interfaces")
+				networkConfig := fs.GetFileTestStat("/etc/systemd/network/10_eth0.network")
 				Expect(networkConfig).ToNot(BeNil())
+				Expect(scrubMultipleLines(networkConfig.StringContents())).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=eth0
 
-				expectedNetworkConfiguration := `# Generated by bosh-agent
-auto lo
-iface lo inet loopback
+[Address]
+Address=10.112.39.113/25
 
-auto ethstatic
-iface ethstatic inet static
-    address 2.2.2.2
-    network 2.2.2.0
-    netmask 255.255.255.0
-    broadcast 2.2.2.255
-    gateway 3.4.5.6
-`
+[Network]
 
-				Expect(networkConfig.StringContents()).To(Equal(expectedNetworkConfiguration))
+DNS=8.8.8.8
+DNS=10.0.80.11
+DNS=10.0.80.12
+
+[Route]
+`))
+				networkConfig = fs.GetFileTestStat("/etc/systemd/network/10_eth0:0.network")
+				Expect(networkConfig).ToNot(BeNil())
+				Expect(scrubMultipleLines(networkConfig.StringContents())).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=eth0:0
+
+[Address]
+Address=10.112.166.136/26
+
+[Network]
+
+DNS=8.8.8.8
+DNS=10.0.80.11
+DNS=10.0.80.12
+
+[Route]
+`))
+				networkConfig = fs.GetFileTestStat("/etc/systemd/network/10_eth1.network")
+				Expect(networkConfig).ToNot(BeNil())
+				Expect(scrubMultipleLines(networkConfig.StringContents())).To(Equal(`# Generated by bosh-agent
+[Match]
+Name=eth1
+
+[Address]
+Address=169.50.68.75/27
+Broadcast=169.50.68.95
+
+[Network]
+Gateway=169.50.68.65
+
+DNS=8.8.8.8
+DNS=10.0.80.11
+DNS=10.0.80.12
+
+[Route]
+`))
 			})
 		})
 	})
@@ -873,31 +1254,17 @@ iface ethstatic inet static
 	Describe("GetConfiguredNetworkInterfaces", func() {
 		Context("when there are network devices", func() {
 			BeforeEach(func() {
-				interfacePaths := []string{}
-				interfacePaths = append(interfacePaths, writeNetworkDevice("fake-eth0", "aa:bb", true))
-				interfacePaths = append(interfacePaths, writeNetworkDevice("fake-eth1", "cc:dd", true))
-				interfacePaths = append(interfacePaths, writeNetworkDevice("fake-eth2", "ee:ff", true))
-				fs.SetGlob("/sys/class/net/*", interfacePaths)
+				stubInterfaces(map[string]boshsettings.Network{
+					"fake-eth0": boshsettings.Network{Mac: "aa:bb"},
+					"fake-eth1": boshsettings.Network{Mac: "cc:dd"},
+					"fake-eth2": boshsettings.Network{Mac: "ee:ff"},
+					"fake-eth3": boshsettings.Network{Mac: "yy:zz"},
+				})
 			})
 
 			It("returns networks that are defined in /etc/network/interfaces", func() {
-				cmdRunner.AddCmdResult("ifup --no-act fake-eth0", fakesys.FakeCmdResult{
-					Stdout:     "",
-					Stderr:     "ifup: interface fake-eth0 already configured",
-					ExitStatus: 0,
-				})
-
-				cmdRunner.AddCmdResult("ifup --no-act fake-eth1", fakesys.FakeCmdResult{
-					Stdout:     "",
-					Stderr:     "Ignoring unknown interface fake-eth1=fake-eth1.",
-					ExitStatus: 0,
-				})
-
-				cmdRunner.AddCmdResult("ifup --no-act fake-eth2", fakesys.FakeCmdResult{
-					Stdout:     "",
-					Stderr:     "ifup: interface fake-eth2 already configured",
-					ExitStatus: 0,
-				})
+				fs.WriteFileString("/etc/systemd/network/10_fake-eth0.network", ``)
+				fs.WriteFileString("/etc/systemd/network/10_fake-eth2.network", ``)
 
 				interfaces, err := netManager.GetConfiguredNetworkInterfaces()
 				Expect(err).ToNot(HaveOccurred())
@@ -928,125 +1295,20 @@ iface ethstatic inet static
 
 		act := func() error { return netManager.SetupIPv6(config, stopCh) }
 
-		Context("when grub.conf disables IPv6", func() {
-			BeforeEach(func() {
-				err := fs.WriteFileString("/boot/grub/grub.conf", "before ipv6.disable=1 after")
-				Expect(err).ToNot(HaveOccurred())
-			})
-
-			Context("when IPv6 is enabled by the user", func() {
-				BeforeEach(func() {
-					config.Enable = true
-				})
-
-				It("removes ipv6.disable=1 from grub.conf", func() {
-					stopCh <- struct{}{}
-					Expect(act()).ToNot(HaveOccurred())
-					Expect(fs.ReadFileString("/boot/grub/grub.conf")).To(Equal("before  after"))
-				})
-
-				It("reboots after changing grub.conf and continue waiting until reboot event succeeds", func() {
-					stopCh <- struct{}{}
-					Expect(act()).ToNot(HaveOccurred())
-					Expect(cmdRunner.RunCommands).To(Equal([][]string{{"shutdown", "-r", "now"}}))
-				})
-
-				It("returns an error if it fails to read grub.conf", func() {
-					fs.ReadFileError = errors.New("fake-err")
-
-					err := act()
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("fake-err"))
-				})
-
-				It("returns an error if update to grub.conf fails", func() {
-					fs.WriteFileError = errors.New("fake-err")
-
-					err := act()
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("fake-err"))
-				})
-
-				It("returns an error if shutdown fails", func() {
-					cmdRunner.AddCmdResult("shutdown -r now", fakesys.FakeCmdResult{
-						Error: errors.New("fake-err"),
-					})
-
-					err := act()
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("fake-err"))
-				})
-			})
-
-			Context("when IPv6 is NOT enabled by the user", func() {
-				BeforeEach(func() {
-					config.Enable = false
-				})
-
-				It("does not change grub.conf", func() {
-					Expect(act()).ToNot(HaveOccurred())
-					Expect(fs.ReadFileString("/boot/grub/grub.conf")).To(Equal("before ipv6.disable=1 after"))
-				})
-
-				It("does not reboot and does not set sysctl", func() {
-					Expect(act()).ToNot(HaveOccurred())
-					Expect(cmdRunner.RunCommands).To(BeEmpty())
-				})
+		Context("when IPv6 is enabled by the user", func() {
+			It("enables IPv6", func() {
+				config.Enable = true
+				Expect(act()).ToNot(HaveOccurred())
+				Expect(kernelIPv6.Enabled).To(BeTrue())
 			})
 		})
 
-		Context("when grub.conf allows IPv6", func() {
-			BeforeEach(func() {
-				err := fs.WriteFileString("/boot/grub/grub.conf", "before after")
-				Expect(err).ToNot(HaveOccurred())
-			})
-
-			Context("when IPv6 is enabled by the user", func() {
-				BeforeEach(func() {
-					config.Enable = true
-				})
-
-				It("does not change grub.conf", func() {
-					Expect(act()).ToNot(HaveOccurred())
-					Expect(fs.ReadFileString("/boot/grub/grub.conf")).To(Equal("before after"))
-				})
-
-				It("does not reboot but sets IPv6 sysctl", func() {
-					Expect(act()).ToNot(HaveOccurred())
-					Expect(cmdRunner.RunCommands).To(Equal([][]string{
-						{"sysctl", "net.ipv6.conf.all.accept_ra=1"},
-						{"sysctl", "net.ipv6.conf.default.accept_ra=1"},
-						{"sysctl", "net.ipv6.conf.all.disable_ipv6=0"},
-						{"sysctl", "net.ipv6.conf.default.disable_ipv6=0"},
-					}))
-				})
-
-				It("fails if the underlying sysctl fails", func() {
-					cmdRunner.AddCmdResult("sysctl net.ipv6.conf.all.accept_ra=1", fakesys.FakeCmdResult{
-						Error: errors.New("fake-err"),
-					})
-
-					err := act()
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("fake-err"))
-				})
-			})
-
-			Context("when IPv6 is NOT enabled by the user", func() {
-				BeforeEach(func() {
-					config.Enable = false
-				})
-
-				It("does not change grub.conf", func() {
-					Expect(act()).ToNot(HaveOccurred())
-					Expect(fs.ReadFileString("/boot/grub/grub.conf")).To(Equal("before after"))
-				})
-
-				It("does not reboot and does not set sysctl", func() {
-					Expect(act()).ToNot(HaveOccurred())
-					Expect(cmdRunner.RunCommands).To(BeEmpty())
-				})
+		Context("when IPv6 is NOT enabled by the user", func() {
+			It("does not enable IPv6", func() {
+				config.Enable = false
+				Expect(act()).ToNot(HaveOccurred())
+				Expect(kernelIPv6.Enabled).To(BeFalse())
 			})
 		})
 	})
-}
+})

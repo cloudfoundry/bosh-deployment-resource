@@ -16,7 +16,7 @@ import (
 	"github.com/cppforlife/go-patch/patch"
 	"github.com/cppforlife/go-semi-semantic/version"
 
-	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
+	boshcmdopts "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshdirfakes "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
@@ -85,7 +85,7 @@ var _ = Describe("BoshDirector", func() {
 
 			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
 
-			deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+			deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.DeployOpts)
 			Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 			Expect(deployOpts.NoRedact).To(Equal(noRedact))
 			Expect(deployOpts.DryRun).To(Equal(dryRun))
@@ -120,7 +120,7 @@ var _ = Describe("BoshDirector", func() {
 					})
 					Expect(err).ToNot(HaveOccurred())
 
-					deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+					deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.DeployOpts)
 					Expect(deployOpts.VarsFSStore.FS).ToNot(BeNil())
 				})
 			})
@@ -130,7 +130,7 @@ var _ = Describe("BoshDirector", func() {
 					err := director.Deploy(sillyBytes, bosh.DeployParams{})
 					Expect(err).ToNot(HaveOccurred())
 
-					deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+					deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.DeployOpts)
 					Expect(deployOpts.VarsFSStore.FS).To(BeNil())
 				})
 			})
@@ -153,10 +153,10 @@ var _ = Describe("BoshDirector", func() {
 
 				Expect(commandRunner.ExecuteCallCount()).To(Equal(2))
 
-				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.DeployOpts)
 				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 
-				cleanUpOpts := commandRunner.ExecuteArgsForCall(1).(*boshcmd.CleanUpOpts)
+				cleanUpOpts := commandRunner.ExecuteArgsForCall(1).(*boshcmdopts.CleanUpOpts)
 				Expect(cleanUpOpts.All).To(Equal(false))
 			})
 		})
@@ -171,7 +171,7 @@ var _ = Describe("BoshDirector", func() {
 
 				Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
 
-				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.DeployOpts)
 				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 				Expect(deployOpts.DryRun).To(Equal(dryRun))
 			})
@@ -187,7 +187,7 @@ var _ = Describe("BoshDirector", func() {
 
 				Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
 
-				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.DeployOpts)
 				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 				Expect(deployOpts.MaxInFlight).To(Equal(strconv.Itoa(maxInFlight)))
 			})
@@ -206,7 +206,7 @@ var _ = Describe("BoshDirector", func() {
 					{All: true},
 				}
 
-				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeployOpts)
+				deployOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.DeployOpts)
 				Expect(deployOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 				Expect(deployOpts.SkipDrain).To(Equal(skipDrain))
 			})
@@ -219,8 +219,8 @@ var _ = Describe("BoshDirector", func() {
 
 			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
 
-			deleteOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.DeleteDeploymentOpts)
-			Expect(deleteOpts).To(Equal(&boshcmd.DeleteDeploymentOpts{Force: true}))
+			deleteOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.DeleteDeploymentOpts)
+			Expect(deleteOpts).To(Equal(&boshcmdopts.DeleteDeploymentOpts{Force: true}))
 		})
 
 		Context("when delete fails", func() {
@@ -280,7 +280,7 @@ var _ = Describe("BoshDirector", func() {
 			Expect(commandRunner.ExecuteWithWriterCallCount()).To(Equal(1))
 
 			opts, _ := commandRunner.ExecuteWithWriterArgsForCall(0)
-			interpolateOpts := opts.(*boshcmd.InterpolateOpts)
+			interpolateOpts := opts.(*boshcmdopts.InterpolateOpts)
 			Expect(interpolateOpts.Args.Manifest.Bytes).To(Equal(sillyBytes))
 			Expect(interpolateOpts.VarKVs).To(Equal(varKVs))
 			Expect(len(interpolateOpts.VarsFiles)).To(Equal(1))
@@ -351,7 +351,7 @@ var _ = Describe("BoshDirector", func() {
 
 			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
 
-			uploadReleaseOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.UploadReleaseOpts)
+			uploadReleaseOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.UploadReleaseOpts)
 			Expect(string(uploadReleaseOpts.Args.URL)).To(Equal("my-cool-release"))
 		})
 
@@ -428,18 +428,18 @@ var _ = Describe("BoshDirector", func() {
 			Expect(commandRunner.ExecuteWithDefaultOverrideCallCount()).To(Equal(2))
 
 			opts, optFunc, _ := commandRunner.ExecuteWithDefaultOverrideArgsForCall(0)
-			exportReleaseOpts, _ := opts.(*boshcmd.ExportReleaseOpts)
+			exportReleaseOpts, _ := opts.(*boshcmdopts.ExportReleaseOpts)
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("cool-release"))
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("123.45"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.Version())).To(Equal("3.4.0"))
 
-			fixedOpts, err := optFunc(&boshcmd.ExportReleaseOpts{Directory: boshcmd.DirOrCWDArg{Path: "wrong-path"}})
+			fixedOpts, err := optFunc(&boshcmdopts.ExportReleaseOpts{Directory: boshcmdopts.DirOrCWDArg{Path: "wrong-path"}})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(fixedOpts.(*boshcmd.ExportReleaseOpts).Directory.Path).To(Equal("/tmp/foo"))
+			Expect(fixedOpts.(*boshcmdopts.ExportReleaseOpts).Directory.Path).To(Equal("/tmp/foo"))
 
 			opts, optFunc, _ = commandRunner.ExecuteWithDefaultOverrideArgsForCall(1)
-			exportReleaseOpts, _ = opts.(*boshcmd.ExportReleaseOpts)
+			exportReleaseOpts, _ = opts.(*boshcmdopts.ExportReleaseOpts)
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("awesome-release"))
 			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("987.65"))
 			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
@@ -542,7 +542,7 @@ var _ = Describe("BoshDirector", func() {
 
 			Expect(commandRunner.ExecuteCallCount()).To(Equal(1))
 
-			uploadStemcellOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmd.UploadStemcellOpts)
+			uploadStemcellOpts := commandRunner.ExecuteArgsForCall(0).(*boshcmdopts.UploadStemcellOpts)
 			Expect(string(uploadStemcellOpts.Args.URL)).To(Equal("my-cool-stemcell"))
 		})
 

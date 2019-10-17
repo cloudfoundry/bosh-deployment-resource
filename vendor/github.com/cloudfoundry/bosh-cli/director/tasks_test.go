@@ -46,9 +46,9 @@ var _ = Describe("Director", func() {
 	},
 	{
 		"id": 166,
-		"started_at": 1440318199,
-		"timestamp": 1440318200,
-		"state": "state2",
+		"started_at": null,
+		"timestamp": null,
+		"state": "queued",
 		"user": "user2",
 		"deployment": "deployment2",
 		"description": "desc2",
@@ -64,7 +64,7 @@ var _ = Describe("Director", func() {
 
 			Expect(tasks[0].ID()).To(Equal(165))
 			Expect(tasks[0].StartedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 19, 0, time.UTC)))
-			Expect(tasks[0].LastActivityAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
+			Expect(tasks[0].FinishedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
 			Expect(tasks[0].State()).To(Equal("state1"))
 			Expect(tasks[0].User()).To(Equal("user1"))
 			Expect(tasks[0].DeploymentName()).To(Equal("deployment1"))
@@ -72,9 +72,9 @@ var _ = Describe("Director", func() {
 			Expect(tasks[0].Result()).To(Equal("result1"))
 
 			Expect(tasks[1].ID()).To(Equal(166))
-			Expect(tasks[1].StartedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 19, 0, time.UTC)))
-			Expect(tasks[1].LastActivityAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
-			Expect(tasks[1].State()).To(Equal("state2"))
+			Expect(tasks[1].StartedAt()).To(Equal(time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)))
+			Expect(tasks[1].FinishedAt()).To(Equal(time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)))
+			Expect(tasks[1].State()).To(Equal("queued"))
 			Expect(tasks[1].User()).To(Equal("user2"))
 			Expect(tasks[1].DeploymentName()).To(Equal("deployment2"))
 			Expect(tasks[1].Description()).To(Equal("desc2"))
@@ -168,7 +168,7 @@ var _ = Describe("Director", func() {
 
 			Expect(tasks[0].ID()).To(Equal(165))
 			Expect(tasks[0].StartedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 19, 0, time.UTC)))
-			Expect(tasks[0].LastActivityAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
+			Expect(tasks[0].FinishedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
 			Expect(tasks[0].State()).To(Equal("state1"))
 			Expect(tasks[0].User()).To(Equal("user1"))
 			Expect(tasks[0].DeploymentName()).To(Equal("deployment1"))
@@ -177,7 +177,7 @@ var _ = Describe("Director", func() {
 
 			Expect(tasks[1].ID()).To(Equal(166))
 			Expect(tasks[1].StartedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 19, 0, time.UTC)))
-			Expect(tasks[1].LastActivityAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
+			Expect(tasks[1].FinishedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
 			Expect(tasks[1].State()).To(Equal("state2"))
 			Expect(tasks[1].User()).To(Equal("user2"))
 			Expect(tasks[1].DeploymentName()).To(Equal("deployment2"))
@@ -260,7 +260,7 @@ var _ = Describe("Director", func() {
 
 			Expect(task.ID()).To(Equal(123))
 			Expect(task.StartedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 19, 0, time.UTC)))
-			Expect(task.LastActivityAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
+			Expect(task.FinishedAt()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
 			Expect(task.State()).To(Equal("state1"))
 			Expect(task.IsError()).To(BeFalse())
 			Expect(task.User()).To(Equal("user1"))
@@ -338,6 +338,71 @@ var _ = Describe("Director", func() {
 			Expect(tasks).To(HaveLen(1))
 			Expect(tasks[0].ID()).To(Equal(123))
 			Expect(tasks[0].ContextID()).To(Equal(contextId))
+		})
+	})
+
+	Describe("CancelTasks", func() {
+		It("returns no error if no filter is specified", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/tasks/cancel"),
+					ghttp.RespondWith(204, ``),
+				),
+			)
+
+			err := director.CancelTasks(TasksFilter{})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns no error if deployment filter is specified", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/tasks/cancel"),
+					ghttp.VerifyBody([]byte(`{"deployment":"dep1"}`)),
+					ghttp.VerifyHeader(http.Header{"Content-Type": []string{"application/json"}}),
+					ghttp.RespondWith(204, ``),
+				),
+			)
+
+			err := director.CancelTasks(TasksFilter{Deployment: "dep1"})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns no error if types filter is specified", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/tasks/cancel"),
+					ghttp.VerifyBody([]byte(`{"types":["processing","queued"]}`)),
+					ghttp.VerifyHeader(http.Header{"Content-Type": []string{"application/json"}}),
+					ghttp.RespondWith(204, ``),
+				),
+			)
+
+			err := director.CancelTasks(TasksFilter{Types: []string{"processing", "queued"}})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns no error if states filter is specified", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("POST", "/tasks/cancel"),
+					ghttp.VerifyBody([]byte(`{"states":["ssh","update_deployment","delete_deployment"]}`)),
+					ghttp.VerifyHeader(http.Header{"Content-Type": []string{"application/json"}}),
+					ghttp.RespondWith(204, ``),
+				),
+			)
+
+			err := director.CancelTasks(TasksFilter{States: []string{"ssh", "update_deployment", "delete_deployment"}})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns error if response is non-204", func() {
+			AppendBadRequest(ghttp.VerifyRequest("POST", "/tasks/cancel"), server)
+
+			err := director.CancelTasks(TasksFilter{})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(
+				"Cancelling tasks: Director responded with non-successful status code '400' response"))
 		})
 	})
 })

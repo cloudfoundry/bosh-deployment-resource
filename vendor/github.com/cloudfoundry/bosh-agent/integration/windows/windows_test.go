@@ -9,8 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"golang.org/x/crypto/ssh"
+
 	"github.com/cloudfoundry/bosh-agent/agent/action"
-	"github.com/cloudfoundry/bosh-agent/integration/windows/utils"
+	"github.com/cloudfoundry/bosh-agent/integration/utils"
 	boshfileutil "github.com/cloudfoundry/bosh-utils/fileutil"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
@@ -23,36 +25,50 @@ const (
 	agentGUID       = "123-456-789"
 	agentID         = "agent." + agentGUID
 	senderID        = "director.987-654-321"
-	DefaultTimeout  = time.Second * 30
+	DefaultTimeout  = time.Minute
 	DefaultInterval = time.Second
+	sshTestUser     = "bosh_testuser"
 )
 
-func natsIP() string {
+func getNatsIP() string {
 	if ip := os.Getenv("NATS_PRIVATE_IP"); ip != "" {
 		return ip
 	}
 	return ""
 }
 
-func natsURI() string {
-	if VagrantProvider == "aws" {
-		return fmt.Sprintf("nats://%s:4222", os.Getenv("NATS_ELASTIC_IP"))
-	}
-	return fmt.Sprintf("nats://%s:4222", natsIP())
-
-}
-
 func blobstoreURI() string {
 	if VagrantProvider == "aws" {
-		return fmt.Sprintf("http://%s:25250", os.Getenv("NATS_ELASTIC_IP"))
+		return fmt.Sprintf("http://%s:25250", NATSPublicIP)
 	}
-	return fmt.Sprintf("http://%s:25250", natsIP())
+	return fmt.Sprintf("http://%s:25250", getNatsIP())
+}
+
+func getNetworkProperty(key string, natsClient *utils.NatsClient) string {
+	message := fmt.Sprintf(`{"method":"get_state","arguments":["full"],"reply_to":"%s"}`, senderID)
+	rawResponse, err := natsClient.SendRawMessage(message)
+	Expect(err).NotTo(HaveOccurred())
+
+	response := map[string]action.GetStateV1ApplySpec{}
+	err = json.Unmarshal(rawResponse, &response)
+	Expect(err).NotTo(HaveOccurred())
+
+	for _, spec := range response["value"].NetworkSpecs {
+		field, ok := spec.Fields[key]
+		if !ok {
+			return ""
+		}
+		if val, ok := field.(string); ok {
+			return val
+		}
+	}
+	return ""
 }
 
 var _ = Describe("An Agent running on Windows", func() {
 	var (
 		fs              boshsys.FileSystem
-		natsClient      *NatsClient
+		natsClient      *utils.NatsClient
 		blobstoreClient utils.BlobClient
 	)
 
@@ -66,7 +82,14 @@ var _ = Describe("An Agent running on Windows", func() {
 		fs = boshsys.NewOsFileSystem(logger)
 		compressor := boshfileutil.NewTarballCompressor(cmdRunner, fs)
 
-		natsClient = NewNatsClient(compressor, blobstoreClient)
+		var natsIP string
+		if VagrantProvider == "aws" {
+			natsIP = NATSPublicIP
+		} else {
+			natsIP = getNatsIP()
+		}
+
+		natsClient = utils.NewNatsClient(compressor, blobstoreClient, natsIP)
 		err := natsClient.Setup()
 		Expect(err).NotTo(HaveOccurred())
 
@@ -79,6 +102,16 @@ var _ = Describe("An Agent running on Windows", func() {
 	})
 
 	AfterEach(func() {
+		message := fmt.Sprintf(`{"method":"ssh","arguments":["cleanup", {"user_regex":"^%s"}],"reply_to":"%s"}`, sshTestUser, senderID)
+		rawResponse, err := natsClient.SendRawMessage(message)
+		Expect(err).NotTo(HaveOccurred())
+
+		response := map[string]action.SSHResult{}
+		err = json.Unmarshal(rawResponse, &response)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(response["value"].Status).To(Equal("success"))
+
 		natsClient.Cleanup()
 	})
 
@@ -86,6 +119,7 @@ var _ = Describe("An Agent running on Windows", func() {
 		getStateSpecAgentID := func() string {
 			message := fmt.Sprintf(`{"method":"get_state","arguments":[],"reply_to":"%s"}`, senderID)
 			rawResponse, err := natsClient.SendRawMessage(message)
+			Expect(err).NotTo(HaveOccurred())
 
 			response := map[string]action.GetStateV1ApplySpec{}
 			err = json.Unmarshal(rawResponse, &response)
@@ -95,6 +129,36 @@ var _ = Describe("An Agent running on Windows", func() {
 		}
 
 		Eventually(getStateSpecAgentID, DefaultTimeout, DefaultInterval).Should(Equal(agentGUID))
+	})
+
+	It("cleans up SSH users after session exits", func() {
+		setupResult, sshClientConfig, err := natsClient.SetupSSH(sshTestUser, senderID)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(setupResult.Status).To(Equal("success"))
+
+		output := agent.RunPowershellCommand(`get-wmiobject -class win32_userprofile | Where { $_.LocalPath -eq 'C:\Users\%s'}`, sshTestUser)
+		Expect(output).To(MatchRegexp(sshTestUser))
+
+		client, err := ssh.Dial("tcp", fmt.Sprintf("%s:22", AgentPublicIP), sshClientConfig)
+		Expect(err).NotTo(HaveOccurred())
+
+		session, err := client.NewSession()
+		Expect(err).NotTo(HaveOccurred())
+
+		err = session.Close()
+		Expect(err).NotTo(HaveOccurred())
+
+		cleanupResult, err := natsClient.CleanupSSH(sshTestUser, senderID)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(cleanupResult.Status).To(Equal("success"))
+
+		_, _, exitCode, _ := agent.RunPowershellCommandWithResponses(`NET.exe USER %s`, sshTestUser)
+		Expect(exitCode).To(Equal(1))
+
+		deletableUserProfileContent := agent.RunPowershellCommand(`Get-ChildItem -force -recurse -attributes !Directory -Exclude 'ntuser.dat*' , 'usrclass.dat*' /users/%s`, sshTestUser)
+		Expect(deletableUserProfileContent).To(BeEmpty())
 	})
 
 	It("includes memory vitals in the 'get_state' response", func() {
@@ -268,41 +332,54 @@ var _ = Describe("An Agent running on Windows", func() {
 	})
 
 	It("Includes the default IP in the 'get_state' response", func() {
-		getNetworkProperty := func(key string) func() string {
-			return func() string {
-				message := fmt.Sprintf(`{"method":"get_state","arguments":["full"],"reply_to":"%s"}`, senderID)
-				rawResponse, err := natsClient.SendRawMessage(message)
-				Expect(err).NotTo(HaveOccurred())
-
-				response := map[string]action.GetStateV1ApplySpec{}
-				err = json.Unmarshal(rawResponse, &response)
-				Expect(err).NotTo(HaveOccurred())
-
-				for _, spec := range response["value"].NetworkSpecs {
-					field, ok := spec.Fields[key]
-					if !ok {
-						return ""
-					}
-					if val, ok := field.(string); ok {
-						return val
-					}
-				}
-				return ""
-			}
+		getNetwork := func(key string) string {
+			return getNetworkProperty(key, natsClient)
 		}
-
-		Eventually(getNetworkProperty("ip"), DefaultTimeout, DefaultInterval).ShouldNot(BeEmpty())
-		Eventually(getNetworkProperty("gateway"), DefaultTimeout, DefaultInterval).ShouldNot(BeEmpty())
-		Eventually(getNetworkProperty("netmask"), DefaultTimeout, DefaultInterval).ShouldNot(BeEmpty())
+		Eventually(getNetwork("ip"), DefaultTimeout, DefaultInterval).ShouldNot(BeEmpty())
+		Eventually(getNetwork("gateway"), DefaultTimeout, DefaultInterval).ShouldNot(BeEmpty())
+		Eventually(getNetwork("netmask"), DefaultTimeout, DefaultInterval).ShouldNot(BeEmpty())
 	})
 
-	It("can compile longpath complex pakcage", func() {
-		const (
-			blobName     = "blob.tar"
-			fileName     = "output.txt"
-			fileContents = "i'm a compiled package!"
-		)
+	It("can compile longpath complex package", func() {
 		_, err := natsClient.CompilePackage("longpath-package")
 		Expect(err).NotTo(HaveOccurred())
+	})
+
+	It("can cleanup package compilation dependencies when they are initially still in use", func() {
+		blobref, err := natsClient.CompilePackage("go")
+		Expect(err).NotTo(HaveOccurred())
+
+		_, err = natsClient.CompilePackageWithDeps(
+			"execution-lock",
+			map[string]utils.MarshalableBlobRef{"go": *blobref},
+		)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	Context("when there are multiple networks", func() {
+		BeforeEach(func() {
+			if OsVersion == "2012R2" {
+				Skip("Cannot create virtual interfaces in 2012R2")
+			}
+			natsClient.PrepareJob("add-network-interface")
+
+			err := natsClient.RunScript("run")
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			natsClient.PrepareJob("remove-network-interface")
+
+			err := natsClient.RunScript("run")
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("chooses correct IP for default network", func() {
+			getNetwork := func(key string) string {
+				return getNetworkProperty(key, natsClient)
+			}
+			Eventually(getNetwork("ip"), DefaultTimeout, DefaultInterval).ShouldNot(BeEmpty())
+			Expect(getNetwork("ip")).ToNot(HavePrefix("172."))
+		})
 	})
 })

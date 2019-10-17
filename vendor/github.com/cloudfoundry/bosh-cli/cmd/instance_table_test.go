@@ -19,7 +19,7 @@ var _ = Describe("InstanceTable", func() {
 
 		BeforeEach(func() {
 			info = boshdir.VMInfo{}
-			tbl = InstanceTable{Details: true, DNS: true, Vitals: true}
+			tbl = InstanceTable{Details: true, DNS: true, Vitals: true, CloudProperties: true}
 		})
 
 		Describe("name, id", func() {
@@ -81,6 +81,8 @@ var _ = Describe("InstanceTable", func() {
 		Describe("vm created at", func() {
 			It("returns empty if vm_created_at is empty", func() {
 				info.VMCreatedAt = time.Time{}
+				Expect(tbl.ForVMInfo(info).VMCreatedAt.String()).To(Equal(""))
+				info.VMCreatedAt = time.Unix(0, 0).UTC()
 				Expect(tbl.ForVMInfo(info).VMCreatedAt.String()).To(Equal(""))
 			})
 

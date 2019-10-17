@@ -2,50 +2,56 @@ package jobs
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"strings"
 
-	boshbc "github.com/cloudfoundry/bosh-agent/agent/applier/bundlecollection"
-	models "github.com/cloudfoundry/bosh-agent/agent/applier/models"
+	"github.com/cloudfoundry/bosh-agent/agent/applier/models"
 	"github.com/cloudfoundry/bosh-agent/agent/applier/packages"
+	"github.com/cloudfoundry/bosh-agent/agent/httpblobprovider/blobstore_delegator"
+	"github.com/cloudfoundry/bosh-agent/settings/directories"
+
+	boshbc "github.com/cloudfoundry/bosh-agent/agent/applier/bundlecollection"
 	boshjobsuper "github.com/cloudfoundry/bosh-agent/jobsupervisor"
-	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
+	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	boshcmd "github.com/cloudfoundry/bosh-utils/fileutil"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const logTag = "renderedJobApplier"
 
+type FixPermissionsFunc func(boshsys.FileSystem, string, string, string) error
+
 type renderedJobApplier struct {
-	jobsBc                 boshbc.BundleCollection
-	jobSupervisor          boshjobsuper.JobSupervisor
-	packageApplierProvider packages.ApplierProvider
-	blobstore              boshblob.DigestBlobstore
-	compressor             boshcmd.Compressor
+	blobstore              blobstore_delegator.BlobstoreDelegator
+	dirProvider            directories.Provider
+	fixPermissions         FixPermissionsFunc
 	fs                     boshsys.FileSystem
+	jobSupervisor          boshjobsuper.JobSupervisor
+	jobsBc                 boshbc.BundleCollection
 	logger                 boshlog.Logger
+	packageApplierProvider packages.ApplierProvider
 }
 
 func NewRenderedJobApplier(
+	blobstore blobstore_delegator.BlobstoreDelegator,
+	dirProvider directories.Provider,
 	jobsBc boshbc.BundleCollection,
 	jobSupervisor boshjobsuper.JobSupervisor,
 	packageApplierProvider packages.ApplierProvider,
-	blobstore boshblob.DigestBlobstore,
-	compressor boshcmd.Compressor,
+	fixPermissions FixPermissionsFunc,
 	fs boshsys.FileSystem,
 	logger boshlog.Logger,
 ) Applier {
 	return &renderedJobApplier{
-		jobsBc:                 jobsBc,
-		jobSupervisor:          jobSupervisor,
-		packageApplierProvider: packageApplierProvider,
 		blobstore:              blobstore,
-		compressor:             compressor,
+		dirProvider:            dirProvider,
+		fixPermissions:         fixPermissions,
 		fs:                     fs,
+		jobSupervisor:          jobSupervisor,
+		jobsBc:                 jobsBc,
 		logger:                 logger,
+		packageApplierProvider: packageApplierProvider,
 	}
 }
 
@@ -63,7 +69,7 @@ func (s renderedJobApplier) Prepare(job models.Job) error {
 	}
 
 	if !jobInstalled {
-		err := s.downloadAndInstall(job, jobBundle)
+		err = s.downloadAndInstall(job, jobBundle)
 		if err != nil {
 			return err
 		}
@@ -80,12 +86,16 @@ func (s *renderedJobApplier) Apply(job models.Job) error {
 		return bosherr.WrapError(err, "Preparing job")
 	}
 
+	if err := job.CreateDirectories(s.fs, s.dirProvider); err != nil {
+		return bosherr.WrapErrorf(err, "Creating directories for job %s", job.Name)
+	}
+
 	jobBundle, err := s.jobsBc.Get(job)
 	if err != nil {
 		return bosherr.WrapError(err, "Getting job bundle")
 	}
 
-	_, _, err = jobBundle.Enable()
+	_, err = jobBundle.Enable()
 	if err != nil {
 		return bosherr.WrapError(err, "Enabling job")
 	}
@@ -94,50 +104,30 @@ func (s *renderedJobApplier) Apply(job models.Job) error {
 }
 
 func (s *renderedJobApplier) downloadAndInstall(job models.Job, jobBundle boshbc.Bundle) error {
-	tmpDir, err := s.fs.TempDir("bosh-agent-applier-jobs-RenderedJobApplier-Apply")
-	if err != nil {
-		return bosherr.WrapError(err, "Getting temp dir")
-	}
-
-	defer func() {
-		if err = s.fs.RemoveAll(tmpDir); err != nil {
-			s.logger.Warn(logTag, "Failed to clean up temp directory: %s", err.Error())
-		}
-	}()
-
-	file, err := s.blobstore.Get(job.Source.BlobstoreID, job.Source.Sha1)
+	file, err := s.blobstore.Get(boshcrypto.MustNewMultipleDigest(job.Source.Sha1), job.Source.SignedURL, job.Source.BlobstoreID)
 	if err != nil {
 		return bosherr.WrapError(err, "Getting job source from blobstore")
 	}
 
 	defer func() {
-		if err = s.blobstore.CleanUp(file); err != nil {
+		if err = s.blobstore.CleanUp("", file); err != nil {
 			s.logger.Warn(logTag, "Failed to clean up blobstore blob: %s", err.Error())
 		}
 	}()
 
-	err = s.compressor.DecompressFileToDir(file, tmpDir, boshcmd.CompressorOptions{})
-	if err != nil {
-		return bosherr.WrapError(err, "Decompressing files to temp dir")
-	}
-
-	binPath := path.Join(tmpDir, job.Source.PathInArchive, "bin") + "/"
-	err = s.fs.Walk(path.Join(tmpDir, job.Source.PathInArchive), func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		} else if info.IsDir() || strings.HasPrefix(path, binPath) {
-			return s.fs.Chmod(path, os.FileMode(0755))
-		} else {
-			return s.fs.Chmod(path, os.FileMode(0644))
-		}
-	})
-	if err != nil {
-		return bosherr.WrapError(err, "Correcting file permissions")
-	}
-
-	_, _, err = jobBundle.Install(path.Join(tmpDir, job.Source.PathInArchive))
+	_, err = jobBundle.Install(file, job.Source.PathInArchive)
 	if err != nil {
 		return bosherr.WrapError(err, "Installing job bundle")
+	}
+
+	installPath, err := jobBundle.GetInstallPath()
+	if err != nil {
+		return bosherr.WrapError(err, "Getting the install path")
+	}
+
+	err = s.fixPermissions(s.fs, installPath, "root", "vcap")
+	if err != nil {
+		return bosherr.WrapError(err, "Fixing job bundle permissions")
 	}
 
 	return nil
@@ -172,14 +162,14 @@ func (s *renderedJobApplier) Configure(job models.Job, jobIndex int) (err error)
 		return
 	}
 
-	fs, jobDir, err := jobBundle.GetInstallPath()
+	jobDir, err := jobBundle.GetInstallPath()
 	if err != nil {
 		err = bosherr.WrapError(err, "Looking up job directory")
 		return
 	}
 
 	monitFilePath := path.Join(jobDir, "monit")
-	if fs.FileExists(monitFilePath) {
+	if s.fs.FileExists(monitFilePath) {
 		err = s.jobSupervisor.AddJob(job.Name, jobIndex, monitFilePath)
 		if err != nil {
 			err = bosherr.WrapError(err, "Adding monit configuration")
@@ -187,7 +177,7 @@ func (s *renderedJobApplier) Configure(job models.Job, jobIndex int) (err error)
 		}
 	}
 
-	monitFilePaths, err := fs.Glob(path.Join(jobDir, "*.monit"))
+	monitFilePaths, err := s.fs.Glob(path.Join(jobDir, "*.monit"))
 	if err != nil {
 		err = bosherr.WrapError(err, "Looking for additional monit files")
 		return
@@ -244,6 +234,25 @@ func (s *renderedJobApplier) KeepOnly(jobs []models.Job) error {
 				return bosherr.WrapError(err, "Uninstalling job bundle")
 			}
 		}
+	}
+
+	return nil
+}
+
+func (s *renderedJobApplier) DeleteSourceBlobs(jobs []models.Job) error {
+	deletedBlobs := map[string]bool{}
+
+	for _, job := range jobs {
+		if _, ok := deletedBlobs[job.Source.BlobstoreID]; ok {
+			continue
+		}
+
+		err := s.blobstore.Delete("", job.Source.BlobstoreID)
+		if err != nil {
+			return err
+		}
+
+		deletedBlobs[job.Source.BlobstoreID] = true
 	}
 
 	return nil

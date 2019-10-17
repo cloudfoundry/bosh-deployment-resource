@@ -10,13 +10,14 @@ import (
 	"time"
 
 	boshhttp "github.com/cloudfoundry/bosh-utils/httpclient"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
 	. "github.com/cloudfoundry/bosh-cli/director"
 	fakedir "github.com/cloudfoundry/bosh-cli/director/directorfakes"
-	"github.com/cloudfoundry/bosh-cli/ui"
+	bio "github.com/cloudfoundry/bosh-cli/io"
 )
 
 var _ = Describe("ClientRequest", func() {
@@ -27,16 +28,13 @@ var _ = Describe("ClientRequest", func() {
 		buildReq func(FileReporter) ClientRequest
 		req      ClientRequest
 
-		logger   fakedir.Logger
-		logCalls []fakedir.LogCallArgs
-
+		logger         *loggerfakes.FakeLogger
 		locationHeader http.Header
 	)
 
 	BeforeEach(func() {
 		_, server = BuildServer()
-		logCalls = []fakedir.LogCallArgs{}
-		logger = fakedir.NewFakeLogger(&logCalls)
+		logger = &loggerfakes.FakeLogger{}
 
 		buildReq = func(fileReporter FileReporter) ClientRequest {
 			httpTransport := &http.Transport{
@@ -167,13 +165,13 @@ var _ = Describe("ClientRequest", func() {
 			It("includes response body in the error if response errors", func() {
 				server.SetHandler(0, ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/path"),
-					ghttp.RespondWith(0, "body"),
+					ghttp.RespondWith(500, "body"),
 				))
 
 				body, resp, err := req.RawGet("/path", nil, nil)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("'body'"))
-				Expect(body).To(BeNil())
+				Expect(body).To(Equal([]byte("body")))
 				Expect(resp).ToNot(BeNil())
 			})
 
@@ -203,7 +201,7 @@ var _ = Describe("ClientRequest", func() {
 			It("is not used if response errors", func() {
 				server.SetHandler(0, ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/path"),
-					ghttp.RespondWith(0, "body"),
+					ghttp.RespondWith(500, "body"),
 				))
 
 				buf := bytes.NewBufferString("")
@@ -263,7 +261,6 @@ var _ = Describe("ClientRequest", func() {
 
 		Describe("Request logging", func() {
 			It("Sanitizes requests for logging", func() {
-
 				_, resp, err := req.RawGet("/path", nil, func(r *http.Request) {
 					r.Header.Add("Authorization", "basic=")
 				})
@@ -271,20 +268,13 @@ var _ = Describe("ClientRequest", func() {
 				Expect(resp).ToNot(BeNil())
 
 				host := resp.Request.Host
-				expectedLogCallArgs := fakedir.LogCallArgs{
-					LogLevel: "Debug",
-					Tag:      "director.clientRequest",
-					Msg:      "Dumping Director client request:\n%s",
-					Args: []string{
-						fmt.Sprintf("GET /path HTTP/1.1\r\nHost: %s\r\nAuthorization: [removed]\r\n\r\n", host),
-					},
-				}
-				actualLogCallArgs := (*logger.LogCallArgs)[1]
-
-				Expect(expectedLogCallArgs.LogLevel).To(Equal(actualLogCallArgs.LogLevel))
-				Expect(expectedLogCallArgs.Tag).To(Equal(actualLogCallArgs.Tag))
-				Expect(expectedLogCallArgs.Msg).To(Equal(actualLogCallArgs.Msg))
-				Expect(expectedLogCallArgs.Args[0]).To(Equal(actualLogCallArgs.Args[0]))
+				Expect(logger.DebugCallCount()).To(Equal(3))
+				tag, msg, s := logger.DebugArgsForCall(1)
+				Expect(s).To(HaveLen(1))
+				format := s[0].(string)
+				Expect(tag).To(Equal("director.clientRequest"))
+				Expect(msg).To(Equal("Dumping Director client request:\n%s"))
+				Expect(format).To(Equal(fmt.Sprintf("GET /path HTTP/1.1\r\nHost: %s\r\nAuthorization: [removed]\r\n\r\n", host)))
 			})
 		})
 	})
@@ -400,7 +390,7 @@ var _ = Describe("ClientRequest", func() {
 
 			It("tracks uploading", func() {
 				fileReporter := &fakedir.FakeFileReporter{
-					TrackUploadStub: func(size int64, reader io.ReadCloser) ui.ReadSeekCloser {
+					TrackUploadStub: func(size int64, reader io.ReadCloser) bio.ReadSeekCloser {
 						Expect(size).To(Equal(int64(8)))
 						Expect(ioutil.ReadAll(reader)).To(Equal([]byte("req-body")))
 						return NoopReadSeekCloser{Reader: ioutil.NopCloser(bytes.NewBufferString("req-body"))}
@@ -647,6 +637,48 @@ var _ = Describe("ClientRequest", func() {
 					err := act()
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("Unmarshaling Director response"))
+				})
+			})
+
+			Context("when context id is not set", func() {
+				verifyContextIdNotSet := func(_ http.ResponseWriter, req *http.Request) {
+					_, found := req.Header["X-Bosh-Context-Id"]
+					Expect(found).To(BeFalse())
+				}
+
+				It("does not set a X-Bosh-Context-Id header", func() {
+					server.AppendHandlers(
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("DELETE", "/path", ""),
+							ghttp.VerifyBody([]byte("")),
+							verifyContextIdNotSet,
+							ghttp.RespondWith(code, `["val"]`),
+						),
+					)
+
+					err := act()
+					Expect(err).ToNot(HaveOccurred())
+				})
+			})
+
+			Context("when context id set", func() {
+				contextId := "example-context-id"
+				BeforeEach(func() {
+					req = req.WithContext(contextId)
+				})
+
+				It("makes request with correct header", func() {
+					server.AppendHandlers(
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("DELETE", "/path", ""),
+							ghttp.VerifyBody([]byte("")),
+							ghttp.VerifyHeaderKV("X-Bosh-Context-Id", contextId),
+							ghttp.RespondWith(code, `["val"]`),
+						),
+					)
+
+					err := act()
+					Expect(err).ToNot(HaveOccurred())
 				})
 			})
 		}

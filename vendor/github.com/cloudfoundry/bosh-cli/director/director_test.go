@@ -3,26 +3,84 @@ package director_test
 import (
 	"bytes"
 	"net/http"
+	"time"
 
+	"github.com/cloudfoundry/bosh-cli/director"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
-
-	. "github.com/cloudfoundry/bosh-cli/director"
 )
 
 var _ = Describe("Director", func() {
 	var (
-		director Director
-		server   *ghttp.Server
+		dir    director.Director
+		server *ghttp.Server
 	)
 
 	BeforeEach(func() {
-		director, server = BuildServer()
+		dir, server = BuildServer()
 	})
 
 	AfterEach(func() {
 		server.Close()
+	})
+
+	Describe("OrphanedVMs", func() {
+		It("returns parsed orphaned vms", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/orphaned_vms"),
+					ghttp.VerifyBasicAuth("username", "password"),
+					ghttp.RespondWithJSONEncoded(http.StatusOK, []map[string]interface{}{
+						{
+							"az":              "az1",
+							"cid":             "cid-1",
+							"deployment_name": "d-1",
+							"instance_name":   "i-1",
+							"ip_addresses":    []string{"1.1.1.1", "2.2.2.2"},
+							"orphaned_at":     "2020-04-03 08:08:08 UTC",
+						},
+						{
+							"az":              "az2",
+							"cid":             "cid-2",
+							"deployment_name": "d-2",
+							"instance_name":   "i-2",
+							"ip_addresses":    []string{"3.3.3.3"},
+							"orphaned_at":     "2021-06-04 08:08:08 UTC",
+						},
+					}),
+				),
+			)
+
+			orphanedVMs, err := dir.OrphanedVMs()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(orphanedVMs).To(ConsistOf(
+				director.OrphanedVM{
+					AZName:         "az1",
+					CID:            "cid-1",
+					DeploymentName: "d-1",
+					InstanceName:   "i-1",
+					IPAddresses:    []string{"1.1.1.1", "2.2.2.2"},
+					OrphanedAt:     time.Date(2020, 04, 03, 8, 8, 8, 0, time.UTC),
+				},
+				director.OrphanedVM{
+					AZName:         "az2",
+					CID:            "cid-2",
+					DeploymentName: "d-2",
+					InstanceName:   "i-2",
+					IPAddresses:    []string{"3.3.3.3"},
+					OrphanedAt:     time.Date(2021, 06, 04, 8, 8, 8, 0, time.UTC),
+				},
+			))
+		})
+
+		It("returns error if response is non-200", func() {
+			AppendBadRequest(ghttp.VerifyRequest("GET", "/orphaned_vms"), server)
+
+			_, err := dir.OrphanedVMs()
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("Director responded with non-successful status code '400'"))
+		})
 	})
 
 	Describe("EnableResurrection", func() {
@@ -38,7 +96,7 @@ var _ = Describe("Director", func() {
 				),
 			)
 
-			err := director.EnableResurrection(true)
+			err := dir.EnableResurrection(true)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -54,14 +112,14 @@ var _ = Describe("Director", func() {
 				),
 			)
 
-			err := director.EnableResurrection(false)
+			err := dir.EnableResurrection(false)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("returns error if response is non-200", func() {
 			AppendBadRequest(ghttp.VerifyRequest("PUT", "/resurrection"), server)
 
-			err := director.EnableResurrection(true)
+			err := dir.EnableResurrection(true)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("Changing VM resurrection state"))
 		})
@@ -82,7 +140,7 @@ var _ = Describe("Director", func() {
 				server,
 			)
 
-			err := director.CleanUp(true)
+			err := dir.CleanUp(true)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -100,14 +158,14 @@ var _ = Describe("Director", func() {
 				server,
 			)
 
-			err := director.CleanUp(false)
+			err := dir.CleanUp(false)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("returns error if response is non-200", func() {
 			AppendBadRequest(ghttp.VerifyRequest("POST", "/cleanup"), server)
 
-			err := director.CleanUp(true)
+			err := dir.CleanUp(true)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("Cleaning up resources"))
 		})
@@ -131,7 +189,7 @@ var _ = Describe("Director", func() {
 				),
 			)
 
-			err := director.DownloadResourceUnchecked("blob-id", buf)
+			err := dir.DownloadResourceUnchecked("blob-id", buf)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(buf.String()).To(Equal("result"))
@@ -140,7 +198,7 @@ var _ = Describe("Director", func() {
 		It("returns error if response is non-200", func() {
 			AppendBadRequest(ghttp.VerifyRequest("GET", "/resources/blob-id"), server)
 
-			err := director.DownloadResourceUnchecked("blob-id", buf)
+			err := dir.DownloadResourceUnchecked("blob-id", buf)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("Downloading resource 'blob-id'"))
 		})
@@ -159,9 +217,91 @@ var _ = Describe("Director", func() {
 				),
 			)
 
-			director = director.WithContext(contextId)
-			err := director.DownloadResourceUnchecked("blob-id", buf)
+			dir = dir.WithContext(contextId)
+			err := dir.DownloadResourceUnchecked("blob-id", buf)
 			Expect(err).ToNot(HaveOccurred())
+		})
+	})
+
+	Describe("Certificate Expiry info", func() {
+		It("Returns the director's certificates expiry info", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/director/certificate_expiry"),
+					ghttp.VerifyBasicAuth("username", "password"),
+					ghttp.RespondWithJSONEncoded(http.StatusOK, []map[string]interface{}{
+						{
+							"certificate_path": "foo",
+							"expiry":           "2019-11-21T21:43:58Z",
+							"days_left":        351,
+						},
+						{
+							"certificate_path": "bar",
+							"expiry":           "2018-12-04T21:43:58Z",
+							"days_left":        0,
+						},
+						{
+							"certificate_path": "baz",
+							"expiry":           "2018-11-21T21:43:58Z",
+							"days_left":        -5,
+						},
+					}),
+				),
+			)
+
+			certificateInfo, err := dir.CertificateExpiry()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(certificateInfo).To(ConsistOf(
+				[]director.CertificateExpiryInfo{
+					{Path: "foo", Expiry: "2019-11-21T21:43:58Z", DaysLeft: 351},
+					{Path: "bar", Expiry: "2018-12-04T21:43:58Z", DaysLeft: 0},
+					{Path: "baz", Expiry: "2018-11-21T21:43:58Z", DaysLeft: -5},
+				}))
+		})
+
+		It("returns 'not supported' if endpoint does not exist on director", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/director/certificate_expiry"),
+					ghttp.VerifyBasicAuth("username", "password"),
+					ghttp.RespondWith(http.StatusNotFound, ``),
+				),
+			)
+
+			resp, err := dir.CertificateExpiry()
+
+			Expect(resp).To(BeNil())
+			Expect(err.Error()).To(ContainSubstring("Certificate expiry information not supported"))
+		})
+
+		It("promotes non-404 response errors", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/director/certificate_expiry"),
+					ghttp.VerifyBasicAuth("username", "password"),
+					ghttp.RespondWith(http.StatusInternalServerError, ``),
+				),
+			)
+
+			resp, err := dir.CertificateExpiry()
+
+			Expect(resp).To(BeNil())
+			Expect(err.Error()).To(ContainSubstring("Getting certificate expiry endpoint error:"))
+		})
+
+		It("Returns an error when the response is invalid JSON", func() {
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/director/certificate_expiry"),
+					ghttp.VerifyBasicAuth("username", "password"),
+					ghttp.RespondWith(http.StatusOK, "{ 'foo"),
+				),
+			)
+
+			resp, err := dir.CertificateExpiry()
+
+			Expect(resp).To(BeNil())
+			Expect(err.Error()).To(ContainSubstring("Getting certificate expiry endpoint error:"))
 		})
 	})
 })

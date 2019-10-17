@@ -1,15 +1,13 @@
 package disk
 
-import (
-	boshdevutil "github.com/cloudfoundry/bosh-agent/platform/deviceutil"
-)
+//go:generate counterfeiter . Manager
 
 type Manager interface {
-	GetPartitioner() Partitioner
-	GetRootDevicePartitioner() Partitioner
-	GetPartedPartitioner() Partitioner
+	GetEphemeralDevicePartitioner() Partitioner
 	GetFormatter() Formatter
 	GetMounter() Mounter
 	GetMountsSearcher() MountsSearcher
-	GetDiskUtil(diskPath string) boshdevutil.DeviceUtil
+	GetPersistentDevicePartitioner(partitionerType string) (Partitioner, error)
+	GetRootDevicePartitioner() Partitioner
+	GetUtil() Util
 }

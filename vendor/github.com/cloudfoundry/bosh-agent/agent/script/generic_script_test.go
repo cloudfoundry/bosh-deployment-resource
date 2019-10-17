@@ -10,6 +10,7 @@ import (
 	boshscript "github.com/cloudfoundry/bosh-agent/agent/script"
 	boshenv "github.com/cloudfoundry/bosh-agent/agent/script/pathenv"
 	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
+	"runtime"
 )
 
 var _ = Describe("GenericScript", func() {
@@ -19,6 +20,8 @@ var _ = Describe("GenericScript", func() {
 		genericScript boshscript.GenericScript
 		stdoutLogPath string
 		stderrLogPath string
+		fullCommand   string
+		scriptEnv     map[string]string
 	)
 
 	BeforeEach(func() {
@@ -26,6 +29,11 @@ var _ = Describe("GenericScript", func() {
 		cmdRunner = fakesys.NewFakeCmdRunner()
 		stdoutLogPath = filepath.Join("base", "stdout", "logdir", "stdout.log")
 		stderrLogPath = filepath.Join("base", "stderr", "logdir", "stderr.log")
+		scriptEnv = map[string]string{
+			"FOO":           "foo",
+			"BAR":           "bar",
+			"OTHER_EXAMPLE": "1243=abcd",
+		}
 		genericScript = boshscript.NewScript(
 			fs,
 			cmdRunner,
@@ -33,7 +41,13 @@ var _ = Describe("GenericScript", func() {
 			"/path-to-script",
 			stdoutLogPath,
 			stderrLogPath,
+			scriptEnv,
 		)
+		if runtime.GOOS == "windows" {
+			fullCommand = "powershell /path-to-script"
+		} else {
+			fullCommand = "/path-to-script"
+		}
 	})
 
 	Describe("Tag", func() {
@@ -86,9 +100,16 @@ var _ = Describe("GenericScript", func() {
 			Expect(cmd.Env).To(HaveKeyWithValue("PATH", boshenv.Path()))
 		})
 
+		It("sets the command ENV according to the provided env", func() {
+			Expect(genericScript.Run()).To(Succeed())
+			Expect(cmdRunner.RunComplexCommands).To(HaveLen(1))
+			cmd := cmdRunner.RunComplexCommands[0]
+			Expect(cmd.Env).To(HaveKeyWithValue("OTHER_EXAMPLE", "1243=abcd"))
+		})
+
 		Context("when command succeeds", func() {
 			BeforeEach(func() {
-				cmdRunner.AddCmdResult("/path-to-script", fakesys.FakeCmdResult{
+				cmdRunner.AddCmdResult(fullCommand, fakesys.FakeCmdResult{
 					Stdout:     "fake-stdout",
 					Stderr:     "fake-stderr",
 					ExitStatus: 0,
@@ -115,7 +136,7 @@ var _ = Describe("GenericScript", func() {
 
 		Context("when command fails", func() {
 			BeforeEach(func() {
-				cmdRunner.AddCmdResult("/path-to-script", fakesys.FakeCmdResult{
+				cmdRunner.AddCmdResult(fullCommand, fakesys.FakeCmdResult{
 					Stdout:     "fake-stdout",
 					Stderr:     "fake-stderr",
 					ExitStatus: 1,

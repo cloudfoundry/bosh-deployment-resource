@@ -3,6 +3,7 @@ package cmd
 import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 	boshui "github.com/cloudfoundry/bosh-cli/ui"
@@ -58,13 +59,14 @@ func (c DeployCmd) Run(opts DeployOpts) error {
 	}
 
 	updateOpts := boshdir.UpdateOpts{
-		Recreate:    opts.Recreate,
-		Fix:         opts.Fix,
-		SkipDrain:   opts.SkipDrain,
-		DryRun:      opts.DryRun,
-		Canaries:    opts.Canaries,
-		MaxInFlight: opts.MaxInFlight,
-		Diff:        deploymentDiff,
+		RecreatePersistentDisks: opts.RecreatePersistentDisks,
+		Recreate:                opts.Recreate,
+		Fix:                     opts.Fix,
+		SkipDrain:               opts.SkipDrain,
+		DryRun:                  opts.DryRun,
+		Canaries:                opts.Canaries,
+		MaxInFlight:             opts.MaxInFlight,
+		Diff:                    deploymentDiff,
 	}
 
 	return c.deployment.Update(bytes, updateOpts)

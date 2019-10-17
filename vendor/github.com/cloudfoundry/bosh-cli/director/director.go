@@ -13,8 +13,51 @@ type DirectorImpl struct {
 	client Client
 }
 
+type OrphanedVMResponse struct {
+	AZName         string   `json:"az"`
+	CID            string   `json:"cid"`
+	DeploymentName string   `json:"deployment_name"`
+	IPAddresses    []string `json:"ip_addresses"`
+	InstanceName   string   `json:"instance_name"`
+	OrphanedAt     string   `json:"orphaned_at"`
+}
+
 func (d DirectorImpl) WithContext(id string) Director {
 	return DirectorImpl{client: d.client.WithContext(id)}
+}
+
+func (c Client) OrphanedVMs() ([]OrphanedVM, error) {
+	var (
+		orphanedVMs []OrphanedVM
+		resps       []OrphanedVMResponse
+	)
+
+	err := c.clientRequest.Get("/orphaned_vms", &resps)
+	if err != nil {
+		return nil, bosherr.WrapErrorf(err, "Finding orphaned VMs")
+	}
+
+	for _, r := range resps {
+		orphanedAt, err := TimeParser{}.Parse(r.OrphanedAt)
+		if err != nil {
+			return nil, bosherr.WrapErrorf(err, "Converting orphaned at '%s' to time", r.OrphanedAt)
+		}
+
+		orphanedVMs = append(orphanedVMs, OrphanedVM{
+			CID:            r.CID,
+			DeploymentName: r.DeploymentName,
+			InstanceName:   r.InstanceName,
+			AZName:         r.AZName,
+			IPAddresses:    r.IPAddresses,
+			OrphanedAt:     orphanedAt,
+		})
+	}
+
+	return orphanedVMs, nil
+}
+
+func (d DirectorImpl) OrphanedVMs() ([]OrphanedVM, error) {
+	return d.client.OrphanedVMs()
 }
 
 func (d DirectorImpl) EnableResurrection(enabled bool) error {
@@ -80,4 +123,23 @@ func (c Client) DownloadResourceUnchecked(blobstoreID string, out io.Writer) err
 	}
 
 	return nil
+}
+
+func (d DirectorImpl) CertificateExpiry() ([]CertificateExpiryInfo, error) {
+	var resps []CertificateExpiryInfo
+	responseBody, response, err := d.client.clientRequest.RawGet("/director/certificate_expiry", nil, nil)
+
+	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			return nil, bosherr.WrapErrorf(err, "Certificate expiry information not supported")
+		}
+		return nil, bosherr.WrapErrorf(err, "Getting certificate expiry endpoint error")
+	}
+
+	err = json.Unmarshal(responseBody, &resps)
+	if err != nil {
+		return nil, bosherr.WrapErrorf(err, "Getting certificate expiry endpoint error")
+	}
+
+	return resps, nil
 }

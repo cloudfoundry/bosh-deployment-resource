@@ -6,10 +6,10 @@ import (
 	"github.com/cloudfoundry/yagnats"
 
 	"code.cloudfoundry.org/clock"
+	boshagentblobstore "github.com/cloudfoundry/bosh-agent/agent/blobstore"
 	boshhandler "github.com/cloudfoundry/bosh-agent/handler"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
-	boshdir "github.com/cloudfoundry/bosh-agent/settings/directories"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
@@ -34,14 +34,14 @@ func NewHandlerProvider(
 
 func (p HandlerProvider) Get(
 	platform boshplatform.Platform,
-	dirProvider boshdir.Provider,
+	blobManager boshagentblobstore.BlobManagerInterface,
 ) (handler boshhandler.Handler, err error) {
 	if p.handler != nil {
 		handler = p.handler
 		return
 	}
 
-	mbusURL, err := url.Parse(p.settingsService.GetSettings().Mbus)
+	mbusURL, err := url.Parse(p.settingsService.GetSettings().GetMbusURL())
 	if err != nil {
 		err = bosherr.WrapError(err, "Parsing handler URL")
 		return
@@ -53,7 +53,7 @@ func (p HandlerProvider) Get(
 		handler = NewNatsHandler(p.settingsService, natsClient, p.logger, platform)
 	case "https":
 		mbusKeyPair := p.settingsService.GetSettings().Env.Bosh.Mbus.Cert
-		handler = NewHTTPSHandler(mbusURL, mbusKeyPair, p.logger, platform.GetFs(), dirProvider, p.auditLogger)
+		handler = NewHTTPSHandler(mbusURL, mbusKeyPair, blobManager, p.logger, p.auditLogger)
 	default:
 		err = bosherr.Errorf("Message Bus Handler with scheme %s could not be found", mbusURL.Scheme)
 	}

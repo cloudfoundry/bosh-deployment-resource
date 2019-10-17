@@ -27,10 +27,7 @@ var _ = Describe("Sha1Calculator", func() {
 	Describe("Calculate", func() {
 		Context("when path is a file", func() {
 			BeforeEach(func() {
-				fs.RegisterOpenFile(filepath.Join("/", "fake-archived-templates-path"), &fakesys.FakeFile{
-					Contents: []byte("fake-archive-contents"),
-					Stats:    &fakesys.FakeFileStats{FileType: fakesys.FakeFileTypeFile},
-				})
+				fs.WriteFileString(filepath.Join("/", "fake-archived-templates-path"), "fake-archive-contents")
 			})
 
 			It("returns sha1 of the file", func() {
@@ -48,7 +45,7 @@ var _ = Describe("Sha1Calculator", func() {
 
 				multipleDigestStr, err := digestCalculator.Calculate(filepath.Join("/", "fake-archived-templates-path"))
 				Expect(err).ToNot(HaveOccurred())
-				Expect(multipleDigestStr).To(Equal("4603db250d7b5b78dfe17869649784353177b549;sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
+				Expect(multipleDigestStr).To(Equal("4603db250d7b5b78dfe17869649784353177b549;sha256:7fc7c4986b7c2167816f3f1459755c3e9488014455ef06a77b96cf27e40f09e7"))
 			})
 		})
 

@@ -11,7 +11,7 @@ import (
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
-	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
+	boshcmdopts "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -74,7 +74,7 @@ func NewBoshDirector(source concourse.Source, commandRunner Runner, cliDirector 
 }
 
 func (d BoshDirector) Delete(force bool) error {
-	return d.commandRunner.Execute(&boshcmd.DeleteDeploymentOpts{Force: force})
+	return d.commandRunner.Execute(&boshcmdopts.DeleteDeploymentOpts{Force: force})
 }
 
 func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) error {
@@ -98,26 +98,26 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 		return err
 	}
 
-	deployOpts := boshcmd.DeployOpts{
-		Args:        boshcmd.DeployArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
+	deployOpts := boshcmdopts.DeployOpts{
+		Args:        boshcmdopts.DeployArgs{Manifest: boshcmdopts.FileBytesArg{Bytes: manifestBytes}},
 		NoRedact:    deployParams.NoRedact,
 		DryRun:      deployParams.DryRun,
 		MaxInFlight: convertMaxInFlight(deployParams.MaxInFlight),
 		Recreate:    deployParams.Recreate,
 		SkipDrain:   skipDrains,
 		Fix:         deployParams.Fix,
-		VarFlags: boshcmd.VarFlags{
+		VarFlags: boshcmdopts.VarFlags{
 			VarKVs:    varKVsFromVars(deployParams.Vars),
 			VarsFiles: boshVarsFiles,
 			VarFiles:  boshVarFiles,
 		},
-		OpsFlags: boshcmd.OpsFlags{
+		OpsFlags: boshcmdopts.OpsFlags{
 			OpsFiles: boshOpsFiles,
 		},
 	}
 
 	if deployParams.VarsStore != "" {
-		varsFSStore := boshcmd.VarsFSStore{}
+		varsFSStore := boshcmdopts.VarsFSStore{}
 		varsFSStore.FS = boshFileSystem()
 		varsFSStore.UnmarshalFlag(deployParams.VarsStore)
 		deployOpts.VarsFSStore = varsFSStore
@@ -129,7 +129,7 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 	}
 
 	if deployParams.Cleanup {
-		d.commandRunner.Execute(&boshcmd.CleanUpOpts{})
+		d.commandRunner.Execute(&boshcmdopts.CleanUpOpts{})
 	}
 
 	return nil
@@ -146,13 +146,13 @@ func (d BoshDirector) Interpolate(manifestBytes []byte, interpolateParams Interp
 		return nil, err
 	}
 
-	interpolateOpts := boshcmd.InterpolateOpts{
-		Args: boshcmd.InterpolateArgs{Manifest: boshcmd.FileBytesArg{Bytes: manifestBytes}},
-		VarFlags: boshcmd.VarFlags{
+	interpolateOpts := boshcmdopts.InterpolateOpts{
+		Args: boshcmdopts.InterpolateArgs{Manifest: boshcmdopts.FileBytesArg{Bytes: manifestBytes}},
+		VarFlags: boshcmdopts.VarFlags{
 			VarKVs:    varKVsFromVars(interpolateParams.Vars),
 			VarsFiles: boshVarsFiles,
 		},
-		OpsFlags: boshcmd.OpsFlags{
+		OpsFlags: boshcmdopts.OpsFlags{
 			OpsFiles: boshOpsFiles,
 		},
 	}
@@ -177,8 +177,8 @@ func (d BoshDirector) DownloadManifest() ([]byte, error) {
 }
 
 func (d BoshDirector) UploadRelease(URL string) error {
-	err := d.commandRunner.Execute(&boshcmd.UploadReleaseOpts{
-		Args: boshcmd.UploadReleaseArgs{URL: boshcmd.URLArg(URL)},
+	err := d.commandRunner.Execute(&boshcmdopts.UploadReleaseOpts{
+		Args: boshcmdopts.UploadReleaseArgs{URL: boshcmdopts.URLArg(URL)},
 	})
 
 	if err != nil {
@@ -251,18 +251,18 @@ func (d BoshDirector) ExportReleases(targetDirectory string, releases []ReleaseS
 		releaseSlug := boshdir.NewReleaseSlug(deploymentRelease.Name(), deploymentRelease.Version().AsString())
 		osVersionSlug := boshdir.NewOSVersionSlug(stemcell.OSName(), stemcell.Version().AsString())
 
-		directory := boshcmd.DirOrCWDArg{}
+		directory := boshcmdopts.DirOrCWDArg{}
 		directoryFixFunction := func(defaultedOps interface{}) (interface{}, error) {
 			switch v := defaultedOps.(type) {
-			case (*boshcmd.ExportReleaseOpts):
+			case (*boshcmdopts.ExportReleaseOpts):
 				v.Directory.Path = targetDirectory
 			default:
 				panic("todo")
 			}
 			return defaultedOps, nil
 		}
-		err = d.commandRunner.ExecuteWithDefaultOverride(&boshcmd.ExportReleaseOpts{
-			Args:      boshcmd.ExportReleaseArgs{ReleaseSlug: releaseSlug, OSVersionSlug: osVersionSlug},
+		err = d.commandRunner.ExecuteWithDefaultOverride(&boshcmdopts.ExportReleaseOpts{
+			Args:      boshcmdopts.ExportReleaseArgs{ReleaseSlug: releaseSlug, OSVersionSlug: osVersionSlug},
 			Jobs:      releases[i].Jobs,
 			Directory: directory,
 		}, directoryFixFunction, nil)
@@ -275,8 +275,8 @@ func (d BoshDirector) ExportReleases(targetDirectory string, releases []ReleaseS
 }
 
 func (d BoshDirector) UploadStemcell(URL string) error {
-	err := d.commandRunner.Execute(&boshcmd.UploadStemcellOpts{
-		Args: boshcmd.UploadStemcellArgs{URL: boshcmd.URLArg(URL)},
+	err := d.commandRunner.Execute(&boshcmdopts.UploadStemcellOpts{
+		Args: boshcmdopts.UploadStemcellArgs{URL: boshcmdopts.URLArg(URL)},
 	})
 
 	if err != nil {
@@ -361,13 +361,13 @@ func parsedVarFiles(varFiles map[string]string) ([]boshtpl.VarFileArg, error) {
 	return varFileArgs, nil
 }
 
-func parsedOpsFiles(opsFiles []string) ([]boshcmd.OpsFileArg, error) {
+func parsedOpsFiles(opsFiles []string) ([]boshcmdopts.OpsFileArg, error) {
 	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard)
 	boshFS := boshsys.NewOsFileSystemWithStrictTempRoot(nullLogger)
 
-	opsFileArgs := []boshcmd.OpsFileArg{}
+	opsFileArgs := []boshcmdopts.OpsFileArg{}
 	for _, opsFile := range opsFiles {
-		opsFileArg := boshcmd.OpsFileArg{FS: boshFS}
+		opsFileArg := boshcmdopts.OpsFileArg{FS: boshFS}
 		if err := opsFileArg.UnmarshalFlag(opsFile); err != nil {
 			return nil, err
 		}

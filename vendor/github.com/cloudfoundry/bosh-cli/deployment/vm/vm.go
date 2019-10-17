@@ -1,6 +1,8 @@
 package vm
 
 import (
+	"math"
+	"strings"
 	"time"
 
 	biagentclient "github.com/cloudfoundry/bosh-agent/agentclient"
@@ -21,6 +23,8 @@ type Clock interface {
 	Now() time.Time
 }
 
+// go:generate counterfeiter . VM
+
 type VM interface {
 	CID() string
 	Exists() (bool, error)
@@ -28,6 +32,7 @@ type VM interface {
 	WaitUntilReady(timeout time.Duration, delay time.Duration) error
 	Start() error
 	Stop() error
+	Drain() error
 	Apply(bias.ApplySpec) error
 	UpdateDisks(bideplmanifest.DiskPool, biui.Stage) ([]bidisk.Disk, error)
 	WaitToBeRunning(maxAttempts int, delay time.Duration) error
@@ -139,6 +144,25 @@ func (vm *vm) Start() error {
 	return nil
 }
 
+func (vm *vm) Drain() error {
+	vm.logger.Debug(vm.logTag, "Draining VM")
+	drainTime, err := vm.agentClient.Drain("shutdown")
+	if err != nil {
+		return bosherr.WrapError(err, "Draining VM")
+	}
+
+	for drainTime < 0 {
+		vm.timeService.Sleep(time.Duration(math.Abs(float64(drainTime))) * time.Second)
+		drainTime, err = vm.agentClient.Drain("status")
+		if err != nil {
+			return bosherr.WrapError(err, "Draining VM")
+		}
+	}
+	vm.timeService.Sleep(time.Duration(drainTime) * time.Second)
+
+	return nil
+}
+
 func (vm *vm) Stop() error {
 	vm.logger.Debug(vm.logTag, "Stopping agent")
 	err := vm.agentClient.Stop()
@@ -174,7 +198,7 @@ func (vm *vm) WaitToBeRunning(maxAttempts int, delay time.Duration) error {
 }
 
 func (vm *vm) AttachDisk(disk bidisk.Disk) error {
-	err := vm.cloud.AttachDisk(vm.cid, disk.CID())
+	diskHints, err := vm.cloud.AttachDisk(vm.cid, disk.CID())
 	if err != nil {
 		return bosherr.WrapError(err, "Attaching disk in the cloud")
 	}
@@ -194,6 +218,13 @@ func (vm *vm) AttachDisk(disk bidisk.Disk) error {
 		return bosherr.WrapError(err, "Waiting for agent to be accessible after attaching disk")
 	}
 
+	if diskHints != nil {
+		err = vm.agentClient.AddPersistentDisk(disk.CID(), diskHints)
+		if err != nil && !strings.Contains(err.Error(), "unknown message add_persistent_disk") {
+			return bosherr.WrapError(err, "Adding persistent disk")
+		}
+	}
+
 	err = vm.agentClient.MountDisk(disk.CID())
 	if err != nil {
 		return bosherr.WrapError(err, "Mounting disk")
@@ -203,7 +234,13 @@ func (vm *vm) AttachDisk(disk bidisk.Disk) error {
 }
 
 func (vm *vm) DetachDisk(disk bidisk.Disk) error {
-	err := vm.cloud.DetachDisk(vm.cid, disk.CID())
+
+	err := vm.agentClient.RemovePersistentDisk(disk.CID())
+	if err != nil && !strings.Contains(err.Error(), "Agent responded with error: unknown message remove_persistent_disk") {
+		return bosherr.WrapError(err, "Removing persistent disk")
+	}
+
+	err = vm.cloud.DetachDisk(vm.cid, disk.CID())
 	if err != nil {
 		return bosherr.WrapError(err, "Detaching disk in the cloud")
 	}
@@ -285,6 +322,7 @@ func (vm *vm) createDiskMetadata() bicloud.DiskMetadata {
 	}
 
 	delete(diskMetadata, "job")
+	delete(diskMetadata, "name")
 	delete(diskMetadata, "index")
 	delete(diskMetadata, "created_at")
 	diskMetadata["instance_index"] = vm.metadata["index"]

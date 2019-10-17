@@ -14,6 +14,7 @@ import (
 	biconfig "github.com/cloudfoundry/bosh-cli/config"
 	bidisk "github.com/cloudfoundry/bosh-cli/deployment/disk"
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/deployment/manifest"
+	"github.com/cloudfoundry/bosh-utils/logger/loggerfakes"
 	biproperty "github.com/cloudfoundry/bosh-utils/property"
 	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
 
@@ -22,7 +23,6 @@ import (
 	fakebiconfig "github.com/cloudfoundry/bosh-cli/config/fakes"
 	fakebidisk "github.com/cloudfoundry/bosh-cli/deployment/disk/fakes"
 	fakebivm "github.com/cloudfoundry/bosh-cli/deployment/vm/fakes"
-	fakedir "github.com/cloudfoundry/bosh-cli/director/directorfakes"
 	fakebiui "github.com/cloudfoundry/bosh-cli/ui/fakes"
 )
 
@@ -38,8 +38,7 @@ var _ = Describe("VM", func() {
 		diskPool         bideplmanifest.DiskPool
 		timeService      *FakeClock
 		fs               *fakesys.FakeFileSystem
-		logger           fakedir.Logger
-		logCalls         []fakedir.LogCallArgs
+		logger           *loggerfakes.FakeLogger
 	)
 
 	BeforeEach(func() {
@@ -59,8 +58,7 @@ var _ = Describe("VM", func() {
 			},
 		}
 
-		logCalls = []fakedir.LogCallArgs{}
-		logger = fakedir.NewFakeLogger(&logCalls)
+		logger = &loggerfakes.FakeLogger{}
 		fs = fakesys.NewFakeFileSystem()
 		fakeCloud = fakebicloud.NewFakeCloud()
 		fakeVMRepo = fakebiconfig.NewFakeVMRepo()
@@ -132,6 +130,58 @@ var _ = Describe("VM", func() {
 		})
 	})
 
+	Describe("Drain", func() {
+		It("drains and waits a specific amount of time", func() {
+			fakeAgentClient.DrainReturns(15, nil)
+			err := vm.Drain()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(fakeAgentClient.DrainCallCount()).To(Equal(1))
+			Expect(len(timeService.SleepCalls)).To(Equal(1))
+			Expect(timeService.SleepCalls[0]).To(Equal(15 * time.Second))
+		})
+
+		It("drains, waits, and retries until given a positive result", func() {
+			fakeAgentClient.DrainReturnsOnCall(0, -15, nil)
+			fakeAgentClient.DrainReturnsOnCall(1, -16, nil)
+			fakeAgentClient.DrainReturnsOnCall(2, 10, nil)
+			err := vm.Drain()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(fakeAgentClient.DrainCallCount()).To(Equal(3))
+			Expect(fakeAgentClient.DrainArgsForCall(0)).To(Equal("shutdown"))
+			Expect(fakeAgentClient.DrainArgsForCall(1)).To(Equal("status"))
+			Expect(fakeAgentClient.DrainArgsForCall(2)).To(Equal("status"))
+			Expect(len(timeService.SleepCalls)).To(Equal(3))
+			Expect(timeService.SleepCalls[0]).To(Equal(15 * time.Second))
+			Expect(timeService.SleepCalls[1]).To(Equal(16 * time.Second))
+			Expect(timeService.SleepCalls[2]).To(Equal(10 * time.Second))
+		})
+
+		Context("when draining an agent fails", func() {
+			BeforeEach(func() {
+				fakeAgentClient.DrainReturns(0, errors.New("fake-drain-error"))
+			})
+
+			It("returns an error", func() {
+				err := vm.Drain()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("fake-drain-error"))
+			})
+		})
+
+		Context("when drain get_status fails", func() {
+			BeforeEach(func() {
+				fakeAgentClient.DrainReturnsOnCall(0, -15, nil)
+				fakeAgentClient.DrainReturnsOnCall(1, 0, errors.New("fake-drain-error"))
+			})
+
+			It("returns an error", func() {
+				err := vm.Drain()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("fake-drain-error"))
+			})
+		})
+	})
+
 	Describe("Stop", func() {
 		It("stops agent services", func() {
 			err := vm.Stop()
@@ -194,6 +244,7 @@ var _ = Describe("VM", func() {
 
 	Describe("WaitToBeRunning", func() {
 		var invocations int
+
 		BeforeEach(func() {
 			responses := []struct {
 				state biagentclient.AgentState
@@ -228,6 +279,8 @@ var _ = Describe("VM", func() {
 			metadata := bicloud.VMMetadata{
 				"director":       "bosh-init",
 				"deployment":     "some-deployment",
+				"name":           "some-instance-group/0",
+				"job":            "some-instance-group",
 				"instance_group": "some-instance-group",
 				"index":          "0",
 				"custom_tag1":    "custom_value1",
@@ -254,6 +307,27 @@ var _ = Describe("VM", func() {
 				VMCID:   "fake-vm-cid",
 				DiskCID: "fake-disk-cid",
 			}))
+		})
+
+		It("does not call agent AddPersistentDisk when diskHints are nil", func() {
+			fakeCloud.AttachDiskHints = nil
+
+			err := vm.AttachDisk(disk)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(fakeAgentClient.AddPersistentDiskCallCount()).To(Equal(0))
+		})
+
+		It("adds the persistent disk to the agent", func() {
+			fakeCloud.AttachDiskHints = "/dev/sdb"
+
+			err := vm.AttachDisk(disk)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(fakeAgentClient.AddPersistentDiskCallCount()).To(Equal(1))
+			diskCid, diskHints := fakeAgentClient.AddPersistentDiskArgsForCall(0)
+			Expect(diskCid).To(Equal("fake-disk-cid"))
+			Expect(diskHints).To(Equal("/dev/sdb"))
 		})
 
 		It("sends mount disk to the agent after pinging the agent", func() {
@@ -294,18 +368,10 @@ var _ = Describe("VM", func() {
 					err := vm.AttachDisk(disk)
 					Expect(err).ToNot(HaveOccurred())
 
-					expectedLogCallArgs := fakedir.LogCallArgs{
-						LogLevel: "Warn",
-						Tag:      "vm",
-						Msg:      "'SetDiskMetadata' not implemented by CPI",
-						Args:     []string{},
-					}
-					actualLogCallArgs := (*logger.LogCallArgs)[0]
-
-					Expect(expectedLogCallArgs.LogLevel).To(Equal(actualLogCallArgs.LogLevel))
-					Expect(expectedLogCallArgs.Tag).To(Equal(actualLogCallArgs.Tag))
-					Expect(expectedLogCallArgs.Msg).To(Equal(actualLogCallArgs.Msg))
-					Expect(actualLogCallArgs.Args).To(BeEmpty())
+					Expect(logger.WarnCallCount()).To(Equal(1))
+					tag, msg, _ := logger.WarnArgsForCall(0)
+					Expect(tag).To(Equal("vm"))
+					Expect(msg).To(Equal("'SetDiskMetadata' not implemented by CPI"))
 				})
 			})
 
@@ -323,6 +389,31 @@ var _ = Describe("VM", func() {
 					Expect(err.Error()).To(ContainSubstring("some error"))
 					Expect(err.Error()).To(ContainSubstring("Setting disk metadata"))
 				})
+			})
+		})
+
+		Context("when AddPersistentDisk returns 'unknown message add_persistent_disk'", func() {
+			BeforeEach(func() {
+				fakeCloud.AttachDiskHints = "/dev/sdb"
+				fakeAgentClient.AddPersistentDiskReturns(errors.New("Agent responded with error: unknown message add_persistent_disk"))
+			})
+
+			It("recovers from unimplemented AddPersistentDisk in the agent", func() {
+				err := vm.AttachDisk(disk)
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("when AddPersistentDisk returns anything other than 'unknown message add_persistent_disk'", func() {
+			BeforeEach(func() {
+				fakeCloud.AttachDiskHints = "/dev/sdb"
+				fakeAgentClient.AddPersistentDiskReturns(errors.New("fake-agent-error"))
+			})
+
+			It("fails with the AddPersistentDisk error", func() {
+				err := vm.AttachDisk(disk)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("fake-agent-error"))
 			})
 		})
 
@@ -370,6 +461,13 @@ var _ = Describe("VM", func() {
 			disk = fakebidisk.NewFakeDisk("fake-disk-cid")
 		})
 
+		It("removes the disk from the vm", func() {
+			err := vm.DetachDisk(disk)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(fakeAgentClient.RemovePersistentDiskCallCount()).To(Equal(1))
+			Expect(fakeAgentClient.RemovePersistentDiskArgsForCall(0)).To(Equal(disk.CID()))
+		})
+
 		It("detaches disk from vm in the cloud", func() {
 			err := vm.DetachDisk(disk)
 			Expect(err).ToNot(HaveOccurred())
@@ -378,6 +476,29 @@ var _ = Describe("VM", func() {
 				DiskCID: "fake-disk-cid",
 			}))
 			Expect(fakeAgentClient.PingCallCount()).To(Equal(1))
+		})
+
+		Context("when RemovePersistentDisk returns 'unknown message remove_persistent_disk'", func() {
+			BeforeEach(func() {
+				fakeAgentClient.RemovePersistentDiskReturns(errors.New("Agent responded with error: unknown message remove_persistent_disk"))
+			})
+
+			It("recovers from unimplemented RemovePersistentDisk in the agent", func() {
+				err := vm.DetachDisk(disk)
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("when RemovePersistentDisk returns anything other than 'unknown message remove_persistent_disk'", func() {
+			BeforeEach(func() {
+				fakeAgentClient.RemovePersistentDiskReturns(errors.New("fake-agent-error"))
+			})
+
+			It("fails with the RemovePersistentDisk error", func() {
+				err := vm.DetachDisk(disk)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("fake-agent-error"))
+			})
 		})
 
 		Context("when detaching disk to cloud fails", func() {
@@ -557,10 +678,13 @@ var _ = Describe("VM", func() {
 })
 
 type FakeClock struct {
-	Times []time.Time
+	Times      []time.Time
+	SleepCalls []time.Duration
 }
 
-func (c *FakeClock) Sleep(_ time.Duration) {}
+func (c *FakeClock) Sleep(t time.Duration) {
+	c.SleepCalls = append(c.SleepCalls, t)
+}
 
 func (c *FakeClock) Now() time.Time {
 	t1 := c.Times[0]

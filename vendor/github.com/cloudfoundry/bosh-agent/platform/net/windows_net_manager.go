@@ -3,8 +3,6 @@ package net
 import (
 	"fmt"
 	gonet "net"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,28 +14,6 @@ import (
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
-
-type MACAddressDetector interface {
-	MACAddresses() (map[string]string, error)
-}
-
-func NewMACAddressDetector() MACAddressDetector {
-	return macAddressDetector{}
-}
-
-type macAddressDetector struct{}
-
-func (m macAddressDetector) MACAddresses() (map[string]string, error) {
-	ifs, err := gonet.Interfaces()
-	if err != nil {
-		return nil, bosherr.WrapError(err, "Detecting Mac Addresses")
-	}
-	macs := make(map[string]string, len(ifs))
-	for _, f := range ifs {
-		macs[f.HardwareAddr.String()] = f.Name
-	}
-	return macs, nil
-}
 
 type WindowsNetManager struct {
 	runner                        boshsys.CmdRunner
@@ -60,7 +36,7 @@ func NewWindowsNetManager(
 	dirProvider boshdirs.Provider,
 ) Manager {
 	return WindowsNetManager{
-		runner: runner,
+		runner:                        runner,
 		interfaceConfigurationCreator: interfaceConfigurationCreator,
 		macAddressDetector:            macAddressDetector,
 		logTag:                        "WindowsNetManager",
@@ -88,14 +64,9 @@ foreach($interface in $interfaces) {
 `
 
 	NicSettingsTemplate = `
-$connectionName=(get-wmiobject win32_networkadapter | where-object {$_.MacAddress -eq '%s'}).netconnectionid
-netsh interface ip set address $connectionName static %s %s %s
+netsh interface ip set address %q static %s %s %s
 `
 )
-
-func (net WindowsNetManager) configuredInterfacesFile() string {
-	return filepath.Join(net.dirProvider.BoshDir(), "configured_interfaces.txt")
-}
 
 // GetConfiguredNetworkInterfaces returns all of the network interfaces if a
 // previous call to SetupNetworking succeeded as indicated by the presence of
@@ -111,25 +82,22 @@ func (net WindowsNetManager) configuredInterfacesFile() string {
 // not have been configured.
 //
 func (net WindowsNetManager) GetConfiguredNetworkInterfaces() ([]string, error) {
-	// TODO (CEV): This function is only used by the ensureMinimalNetworkSetup
-	// of HTTPMetadataService to determine if networks have been configured by
-	// asserting the length of the returned slice is not zero.  On Linux, this
-	// might be okay, but since this function is not accurate on Windows there
-	// is a danger that another function will treat its output as a canonical
-	// list of configured interfaces.  A better solution might be to change
-	// the Platform.GetConfiguredNetworkInterfaces interface to something that
-	// simply reports whether the interfaces have been configured and let each
-	// OS handle determine that their own way.
-
 	net.logger.Info(net.logTag, "Getting Configured Network Interfaces...")
 
-	path := net.configuredInterfacesFile()
-	if _, err := net.fs.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			net.logger.Info(net.logTag, "No network interfaces file")
-			return []string{}, nil
+	if !LockFileExistsForConfiguredInterfaces(net.dirProvider) {
+		net.logger.Info(net.logTag, "No network interfaces file")
+		if err := writeLockFileForConfiguredInterfaces(net.logger, net.logTag, net.dirProvider, net.fs); err != nil {
+			return nil, bosherr.WrapError(err, "Writing configured network interfaces")
 		}
-		return nil, bosherr.WrapErrorf(err, "Statting dns configuration file: %s", path)
+
+		initialNetworks := boshsettings.Networks{
+			"eth0": {
+				Type: boshsettings.NetworkTypeDynamic,
+			},
+		}
+		if err := net.setupNetworkInterfaces(initialNetworks); err != nil {
+			return nil, bosherr.WrapError(err, "Setting up windows DHCP network")
+		}
 	}
 
 	net.logger.Info(net.logTag, "Found network interfaces file")
@@ -145,18 +113,44 @@ func (net WindowsNetManager) GetConfiguredNetworkInterfaces() ([]string, error) 
 	return names, nil
 }
 
-func (net WindowsNetManager) createConfiguredInterfacesFile() error {
-	net.logger.Info(net.logTag, "Creating Configured Network Interfaces file...")
-
-	path := net.configuredInterfacesFile()
-	if _, err := net.fs.Stat(path); os.IsNotExist(err) {
-		f, err := net.fs.OpenFile(path, os.O_CREATE, 0644)
-		if err != nil {
-			return bosherr.WrapErrorf(err, "Creating configured interfaces file: %s", err)
-		}
-		f.Close()
+func (net WindowsNetManager) setupNetworkInterfaces(networks boshsettings.Networks) error {
+	staticConfigs, _, _, err := net.ComputeNetworkConfig(networks)
+	if err != nil {
+		return bosherr.WrapError(err, "Computing network configuration")
 	}
+
+	if err := net.setupInterfaces(staticConfigs); err != nil {
+		return err
+	}
+
+	net.clock.Sleep(5 * time.Second)
 	return nil
+}
+
+func (net WindowsNetManager) SetupNetworking(networks boshsettings.Networks, errCh chan error) error {
+	if err := net.setupNetworkInterfaces(networks); err != nil {
+		return bosherr.WrapError(err, "setting up network interfaces")
+	}
+
+	if LockFileExistsForDNS(net.fs, net.dirProvider) {
+		return nil
+	}
+
+	if err := WriteLockFileForDNS(net.fs, net.dirProvider); err != nil {
+		return bosherr.WrapError(err, "writing dns lockfile")
+	}
+
+	_, _, dnsServers, err := net.ComputeNetworkConfig(networks)
+	if err != nil {
+		return bosherr.WrapError(err, "Computing network configuration for dns")
+	}
+
+	_, _, _, err = net.runner.RunCommand("powershell", "-Command", "Start-Service http")
+	if err != nil {
+		return bosherr.WrapError(err, "Starting HTTP service")
+	}
+
+	return net.setupDNS(dnsServers)
 }
 
 func (net WindowsNetManager) ComputeNetworkConfig(networks boshsettings.Networks) (
@@ -186,33 +180,6 @@ func (net WindowsNetManager) ComputeNetworkConfig(networks boshsettings.Networks
 
 func (net WindowsNetManager) SetupIPv6(_ boshsettings.IPv6, _ <-chan struct{}) error { return nil }
 
-func (net WindowsNetManager) SetupNetworking(networks boshsettings.Networks, errCh chan error) error {
-	nonVipNetworks := boshsettings.Networks{}
-	for networkName, networkSettings := range networks {
-		if networkSettings.IsVIP() {
-			continue
-		}
-		nonVipNetworks[networkName] = networkSettings
-	}
-	staticConfigs, _, dnsServers, err := net.ComputeNetworkConfig(networks)
-	if err != nil {
-		return bosherr.WrapError(err, "Computing network configuration")
-	}
-
-	if err := net.setupInterfaces(staticConfigs); err != nil {
-		return err
-	}
-
-	if err := net.setupDNS(dnsServers); err != nil {
-		return err
-	}
-	if err := net.createConfiguredInterfacesFile(); err != nil {
-		return bosherr.WrapError(err, "Writing configured network interfaces")
-	}
-	net.clock.Sleep(5 * time.Second)
-	return nil
-}
-
 func (net WindowsNetManager) setupInterfaces(staticConfigs []StaticInterfaceConfiguration) error {
 	for _, conf := range staticConfigs {
 		var gateway string
@@ -220,9 +187,9 @@ func (net WindowsNetManager) setupInterfaces(staticConfigs []StaticInterfaceConf
 			gateway = conf.Gateway
 		}
 
-		content := fmt.Sprintf(NicSettingsTemplate, conf.Mac, conf.Address, conf.Netmask, gateway)
+		content := fmt.Sprintf(NicSettingsTemplate, conf.Name, conf.Address, conf.Netmask, gateway)
 
-		_, _, _, err := net.runner.RunCommand("-Command", content)
+		_, _, _, err := net.runner.RunCommand("powershell", "-Command", content)
 		if err != nil {
 			return bosherr.WrapError(err, "Configuring interface")
 		}
@@ -236,7 +203,7 @@ func (net WindowsNetManager) buildInterfaces(networks boshsettings.Networks) (
 	error,
 ) {
 
-	interfacesByMacAddress, err := net.macAddressDetector.MACAddresses()
+	interfacesByMacAddress, err := net.macAddressDetector.DetectMacAddresses()
 	if err != nil {
 		return nil, nil, bosherr.WrapError(err, "Getting network interfaces")
 	}
@@ -262,7 +229,7 @@ func (net WindowsNetManager) setupDNS(dnsServers []string) error {
 		content = ResetDNSTemplate
 	}
 
-	_, _, _, err := net.runner.RunCommand("-Command", content)
+	_, _, _, err := net.runner.RunCommand("powershell", "-Command", content)
 	if err != nil {
 		return bosherr.WrapError(err, "Setting DNS servers")
 	}

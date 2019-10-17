@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 
 	// Should only be imported here to avoid leaking use of goflags through project
 	goflags "github.com/jessevdk/go-flags"
+
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 )
 
 type Factory struct {
@@ -79,6 +79,10 @@ func (f Factory) New(args []string) (Cmd, error) {
 			opts.Deployment = boshOpts.DeploymentOpt
 		}
 
+		if opts, ok := command.(*CancelTasksOpts); ok {
+			opts.Deployment = boshOpts.DeploymentOpt
+		}
+
 		if len(extraArgs) > 0 {
 			errMsg := "Command '%T' does not support extra arguments: %s"
 			return fmt.Errorf(errMsg, command, strings.Join(extraArgs, ", "))
@@ -93,24 +97,10 @@ func (f Factory) New(args []string) (Cmd, error) {
 	boshOpts.SCP.GatewayFlags.UUIDGen = f.deps.UUIDGen
 	boshOpts.Logs.GatewayFlags.UUIDGen = f.deps.UUIDGen
 
-	goflags.FactoryFunc = func(val interface{}) {
-		stype := reflect.Indirect(reflect.ValueOf(val))
-		if stype.Kind() == reflect.Struct {
-			field := stype.FieldByName("FS")
-			if field.IsValid() {
-				field.Set(reflect.ValueOf(f.deps.FS))
-			}
-		}
-	}
-
 	helpText := bytes.NewBufferString("")
 	parser.WriteHelp(helpText)
 
 	_, err := parser.ParseArgs(args)
-
-	if boshOpts.UsernameOpt != "" {
-		return Cmd{}, errors.New("BOSH_USER is deprecated use BOSH_CLIENT instead")
-	}
 
 	// --help and --version result in errors; turn them into successful output cmds
 	if typedErr, ok := err.(*goflags.Error); ok {

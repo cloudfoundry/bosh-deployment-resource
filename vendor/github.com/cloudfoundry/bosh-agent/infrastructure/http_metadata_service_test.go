@@ -1,22 +1,23 @@
 package infrastructure_test
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"time"
 
+	. "github.com/cloudfoundry/bosh-agent/infrastructure"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry/bosh-agent/platform/platformfakes"
+
 	fakeinf "github.com/cloudfoundry/bosh-agent/infrastructure/fakes"
-	fakeplat "github.com/cloudfoundry/bosh-agent/platform/fakes"
+
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-
-	"encoding/base64"
-	. "github.com/cloudfoundry/bosh-agent/infrastructure"
 )
 
 var _ = Describe("HTTPMetadataService", describeHTTPMetadataService)
@@ -25,7 +26,7 @@ func describeHTTPMetadataService() {
 	var (
 		metadataHeaders map[string]string
 		dnsResolver     *fakeinf.FakeDNSResolver
-		platform        *fakeplat.FakePlatform
+		platform        *platformfakes.FakePlatform
 		logger          boshlog.Logger
 		metadataService MetadataService
 	)
@@ -34,7 +35,7 @@ func describeHTTPMetadataService() {
 		metadataHeaders = make(map[string]string)
 		metadataHeaders["key"] = "value"
 		dnsResolver = &fakeinf.FakeDNSResolver{}
-		platform = fakeplat.NewFakePlatform()
+		platform = &platformfakes.FakePlatform{}
 		logger = boshlog.NewLogger(boshlog.LevelNone)
 		metadataService = NewHTTPMetadataService("fake-metadata-host", metadataHeaders, "/user-data", "/instanceid", "/ssh-keys", dnsResolver, platform, logger)
 	})
@@ -42,15 +43,16 @@ func describeHTTPMetadataService() {
 	ItEnsuresMinimalNetworkSetup := func(subject func() (string, error)) {
 		Context("when no networks are configured", func() {
 			BeforeEach(func() {
-				platform.GetConfiguredNetworkInterfacesInterfaces = []string{}
+				platform.GetConfiguredNetworkInterfacesReturns([]string{}, nil)
 			})
 
 			It("sets up DHCP network", func() {
 				_, err := subject()
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(platform.SetupNetworkingCalled).To(BeTrue())
-				Expect(platform.SetupNetworkingNetworks).To(Equal(boshsettings.Networks{
+				Expect(platform.SetupNetworkingCallCount()).To(Equal(1))
+				networks := platform.SetupNetworkingArgsForCall(0)
+				Expect(networks).To(Equal(boshsettings.Networks{
 					"eth0": boshsettings.Network{
 						Type: "dynamic",
 					},
@@ -59,7 +61,7 @@ func describeHTTPMetadataService() {
 
 			Context("when setting up DHCP fails", func() {
 				BeforeEach(func() {
-					platform.SetupNetworkingErr = errors.New("fake-network-error")
+					platform.SetupNetworkingReturns(errors.New("fake-network-error"))
 				})
 
 				It("returns an error", func() {
@@ -127,6 +129,45 @@ func describeHTTPMetadataService() {
 				publicKey, err := metadataService.GetPublicKey()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(publicKey).To(BeEmpty())
+			})
+		})
+	})
+
+	Describe("GetEmptyPublicKey", func() {
+		var (
+			ts          *httptest.Server
+			sshKeysPath string
+		)
+
+		BeforeEach(func() {
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				defer GinkgoRecover()
+
+				Expect(r.Method).To(Equal("GET"))
+				Expect(r.URL.Path).To(Equal("/ssh-keys"))
+				Expect(r.Header.Get("key")).To(Equal("value"))
+			})
+			ts = httptest.NewServer(handler)
+		})
+
+		AfterEach(func() {
+			ts.Close()
+		})
+
+		Context("when the ssh keys path is present but key value is empty", func() {
+			BeforeEach(func() {
+				sshKeysPath = "/ssh-keys"
+				metadataService = NewHTTPMetadataService(ts.URL, metadataHeaders, "/user-data", "/instanceid", sshKeysPath, dnsResolver, platform, logger)
+			})
+
+			It("returns empty public key", func() {
+				publicKey, err := metadataService.GetPublicKey()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(publicKey).To(BeEmpty())
+			})
+
+			ItEnsuresMinimalNetworkSetup(func() (string, error) {
+				return metadataService.GetPublicKey()
 			})
 		})
 	})
@@ -406,7 +447,6 @@ func describeHTTPMetadataService() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(endpoint).To(Equal("http://fake-registry.com"))
 			})
-
 		})
 
 		Context("when server returns an HTTP Response with status code !=2xx (as defined by the request retryable) more than 10 times", func() {
@@ -416,12 +456,9 @@ func describeHTTPMetadataService() {
 				metadataService = NewHTTPMetadataServiceWithCustomRetryDelay(ts.URL, metadataHeaders, "/user-data", "/instanceid", "/ssh-keys", dnsResolver, platform, logger, 0*time.Second)
 
 				_, err := metadataService.GetRegistryEndpoint()
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(Equal(fmt.Sprintf("Getting user data: Getting user data from url %s/user-data: Performing GET request: Request failed, response: Response{ StatusCode: 500, Status: '500 Internal Server Error' }", ts.URL)))
+				Expect(err).To(MatchError(fmt.Sprintf("Getting user data: invalid status from url %s/user-data: 500", ts.URL)))
 			})
-
 		})
-
 	})
 
 	Describe("GetServerName from url encoded user data", func() {

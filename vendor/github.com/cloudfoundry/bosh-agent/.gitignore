@@ -1,5 +1,4 @@
 out
-pkg
 gobin/*
 .idea
 .vagrant
@@ -23,3 +22,11 @@ test/micro_bosh
 *.box
 *metadata.json
 *.log
+bin/bosh-agent
+
+.starscope.db
+cscope.out
+tags
+
+# Ignore symlinks https://github.com/golang/dep/issues/1625 for more context
+vendor/github.com/bmatcuk/doublestar/test/*

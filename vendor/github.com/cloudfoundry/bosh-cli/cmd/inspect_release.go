@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	. "github.com/cloudfoundry/bosh-cli/cmd/opts"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshui "github.com/cloudfoundry/bosh-cli/ui"
 	boshtbl "github.com/cloudfoundry/bosh-cli/ui/table"
@@ -92,8 +93,8 @@ func (c InspectReleaseCmd) Run(opts InspectReleaseOpts) error {
 		pkgsTable.Sections = append(pkgsTable.Sections, section)
 	}
 
-	c.ui.PrintTable(jobsTable)
-	c.ui.PrintTable(pkgsTable)
+	c.ui.PrintTableFiltered(jobsTable, pkgsTable.Header)
+	c.ui.PrintTableFiltered(pkgsTable, jobsTable.Header)
 
 	return nil
 }

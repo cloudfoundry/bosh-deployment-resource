@@ -3,9 +3,8 @@ package packages
 import (
 	bc "github.com/cloudfoundry/bosh-agent/agent/applier/bundlecollection"
 	models "github.com/cloudfoundry/bosh-agent/agent/applier/models"
-	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
+	"github.com/cloudfoundry/bosh-agent/agent/httpblobprovider/blobstore_delegator"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	boshcmd "github.com/cloudfoundry/bosh-utils/fileutil"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
@@ -18,17 +17,15 @@ type compiledPackageApplier struct {
 	// KeepOnly will permanently uninstall packages when operating as owner
 	packagesBcOwner bool
 
-	blobstore  boshblob.DigestBlobstore
-	compressor boshcmd.Compressor
-	fs         boshsys.FileSystem
-	logger     boshlog.Logger
+	blobstore blobstore_delegator.BlobstoreDelegator
+	fs        boshsys.FileSystem
+	logger    boshlog.Logger
 }
 
 func NewCompiledPackageApplier(
 	packagesBc bc.BundleCollection,
 	packagesBcOwner bool,
-	blobstore boshblob.DigestBlobstore,
-	compressor boshcmd.Compressor,
+	blobstore blobstore_delegator.BlobstoreDelegator,
 	fs boshsys.FileSystem,
 	logger boshlog.Logger,
 ) Applier {
@@ -36,7 +33,6 @@ func NewCompiledPackageApplier(
 		packagesBc:      packagesBc,
 		packagesBcOwner: packagesBcOwner,
 		blobstore:       blobstore,
-		compressor:      compressor,
 		fs:              fs,
 		logger:          logger,
 	}
@@ -78,7 +74,7 @@ func (s compiledPackageApplier) Apply(pkg models.Package) error {
 		return bosherr.WrapError(err, "Getting package bundle")
 	}
 
-	_, _, err = pkgBundle.Enable()
+	_, err = pkgBundle.Enable()
 	if err != nil {
 		return bosherr.WrapError(err, "Enabling package")
 	}
@@ -87,36 +83,20 @@ func (s compiledPackageApplier) Apply(pkg models.Package) error {
 }
 
 func (s *compiledPackageApplier) downloadAndInstall(pkg models.Package, pkgBundle bc.Bundle) error {
-	tmpDir, err := s.fs.TempDir("bosh-agent-applier-packages-CompiledPackageApplier-Apply")
-	if err != nil {
-		return bosherr.WrapError(err, "Getting temp dir")
-	}
-
-	defer func() {
-		if err = s.fs.RemoveAll(tmpDir); err != nil {
-			s.logger.Warn(logTag, "Failed to clean up tmpDir: %s", err.Error())
-		}
-	}()
-
-	file, err := s.blobstore.Get(pkg.Source.BlobstoreID, pkg.Source.Sha1)
+	file, err := s.blobstore.Get(pkg.Source.Sha1, pkg.Source.SignedURL, pkg.Source.BlobstoreID)
 	if err != nil {
 		return bosherr.WrapError(err, "Fetching package blob")
 	}
 
 	defer func() {
-		if err = s.blobstore.CleanUp(file); err != nil {
+		if err = s.blobstore.CleanUp("", file); err != nil {
 			s.logger.Warn(logTag, "Failed to clean up blobstore blob: %s", err.Error())
 		}
 	}()
 
-	err = s.compressor.DecompressFileToDir(file, tmpDir, boshcmd.CompressorOptions{})
+	_, err = pkgBundle.Install(file, "")
 	if err != nil {
-		return bosherr.WrapError(err, "Decompressing package files")
-	}
-
-	_, _, err = pkgBundle.Install(tmpDir)
-	if err != nil {
-		return bosherr.WrapError(err, "Installling package directory")
+		return bosherr.WrapError(err, "Installing package directory")
 	}
 
 	return nil

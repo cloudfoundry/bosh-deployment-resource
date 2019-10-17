@@ -6,16 +6,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"time"
 
+	. "github.com/cloudfoundry/bosh-agent/infrastructure"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/cloudfoundry/bosh-agent/infrastructure"
+	"github.com/cloudfoundry/bosh-agent/platform/platformfakes"
+
 	fakeinf "github.com/cloudfoundry/bosh-agent/infrastructure/fakes"
-	fakeplat "github.com/cloudfoundry/bosh-agent/platform/fakes"
+
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	"time"
 )
 
 var _ = Describe("httpRegistry", describeHTTPRegistry)
@@ -26,12 +28,12 @@ func describeHTTPRegistry() {
 	var (
 		metadataService *fakeinf.FakeMetadataService
 		registry        Registry
-		platform        *fakeplat.FakePlatform
+		platform        *platformfakes.FakePlatform
 	)
 
 	BeforeEach(func() {
 		metadataService = &fakeinf.FakeMetadataService{}
-		platform = &fakeplat.FakePlatform{}
+		platform = &platformfakes.FakePlatform{}
 		registry = NewHTTPRegistry(metadataService, platform, false, logger)
 	})
 
@@ -78,8 +80,8 @@ func describeHTTPRegistry() {
 						_, err := registry.GetSettings()
 						Expect(err).ToNot(HaveOccurred())
 
-						Expect(platform.SetupNetworkingCalled).To(BeTrue())
-						Expect(platform.SetupNetworkingNetworks).To(Equal(networkSettings))
+						Expect(platform.SetupNetworkingCallCount()).To(Equal(1))
+						Expect(platform.SetupNetworkingArgsForCall(0)).To(Equal(networkSettings))
 					})
 				})
 
@@ -90,7 +92,7 @@ func describeHTTPRegistry() {
 						_, err := registry.GetSettings()
 						Expect(err).ToNot(HaveOccurred())
 
-						Expect(platform.SetupNetworkingCalled).To(BeFalse())
+						Expect(platform.SetupNetworkingCallCount()).To(Equal(0))
 					})
 				})
 
@@ -113,7 +115,7 @@ func describeHTTPRegistry() {
 							"net2": boshsettings.Network{IP: "2.3.4.5"},
 						}
 						metadataService.Networks = networkSettings
-						platform.SetupNetworkingErr = errors.New("fake-setup-networking-error")
+						platform.SetupNetworkingReturns(errors.New("fake-setup-networking-error"))
 
 						_, err := registry.GetSettings()
 						Expect(err).To(HaveOccurred())
@@ -268,7 +270,7 @@ func describeHTTPRegistry() {
 								},
 							},
 							Mbus: "https://vcap:b00tstrap@0.0.0.0:6868",
-							Ntp: []string{
+							NTP: []string{
 								"0.north-america.pool.ntp.org",
 								"1.north-america.pool.ntp.org",
 							},
@@ -394,7 +396,7 @@ func describeHTTPRegistry() {
 				It("returns settings fetched from http server", func() {
 					_, err := registry.GetSettings()
 					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("Response{ StatusCode: 500, Status: '500 Internal Server Error' }"))
+					Expect(err.Error()).To(ContainSubstring("invalid status: 500"))
 				})
 			})
 
