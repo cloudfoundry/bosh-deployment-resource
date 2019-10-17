@@ -825,6 +825,7 @@
   input-imports = [
     "github.com/cloudfoundry/bosh-cli/cmd",
     "github.com/cloudfoundry/bosh-cli/cmd/config",
+    "github.com/cloudfoundry/bosh-cli/cmd/opts",
     "github.com/cloudfoundry/bosh-cli/director",
     "github.com/cloudfoundry/bosh-cli/director/directorfakes",
     "github.com/cloudfoundry/bosh-cli/director/template",
