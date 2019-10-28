@@ -87,7 +87,11 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 	}
 
 	if outRequest.Params.BoshIOStemcellType != "" {
-		c.uploadBoshIOStemcells(manifest, outRequest.Params.BoshIOStemcellType == "light")
+		boshIOStemcellMeta, err := c.uploadBoshIOStemcells(manifest, outRequest.Params.BoshIOStemcellType == "light")
+		if err != nil {
+			return OutResponse{}, err
+		}
+		stemcellMetadata = append(stemcellMetadata, boshIOStemcellMeta...)
 	}
 
 	deployParams := bosh.DeployParams{

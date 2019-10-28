@@ -13,6 +13,7 @@ import (
 
 	"errors"
 
+	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
@@ -521,6 +522,50 @@ var _ = Describe("OutCommand", func() {
 					{
 						Name:  "stemcell",
 						Value: "small-stemcell v8675309",
+					},
+				}))
+			})
+		})
+
+		Context("when bosh_io_stemcell_type is provided", func() {
+			var (
+				interpolatedManifest []byte
+			)
+
+			BeforeEach(func() {
+				interpolatedManifest = properYaml(`
+					stemcells:
+					- alias: default
+					  os: ubuntu-xenial
+					  version: "456.40"
+				`)
+				outRequest.Params.BoshIOStemcellType = "regular"
+
+				director.InterpolateReturns(interpolatedManifest, nil)
+				director.InfoReturns(boshdir.Info{CPI: "google_cpi"}, nil)
+			})
+
+			It("uploads all of the stemcells", func() {
+				_, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(director.UploadRemoteStemcellCallCount()).To(Equal(1))
+
+				url, name, version, sha := director.UploadRemoteStemcellArgsForCall(0)
+				Expect(url).To(HaveSuffix("bosh-stemcell-456.40-google-kvm-ubuntu-xenial-go_agent.tgz"))
+				Expect(name).To(Equal("bosh-google-kvm-ubuntu-xenial-go_agent"))
+				Expect(version).To(Equal("456.40"))
+				Expect(sha).To(Equal("e3fe3b2fa7e5f0111bfc0b22f30eb5658eba89c5"))
+			})
+
+			It("includes the provided stemcells in the metadata", func() {
+				outResponse, err := outCommand.Run(outRequest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(outResponse.Metadata).To(Equal([]concourse.Metadata{
+					{
+						Name:  "stemcell",
+						Value: "bosh-google-kvm-ubuntu-xenial-go_agent v456.40",
 					},
 				}))
 			})
