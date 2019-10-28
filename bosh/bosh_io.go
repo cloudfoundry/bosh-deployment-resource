@@ -34,7 +34,25 @@ type BoshIOStemcell struct {
 	Sha1    string
 }
 
-func LookupBoshIOStemcell(cpi, os, version string, light bool) (BoshIOStemcell, error) {
+//go:generate counterfeiter . BoshIO
+type BoshIO interface {
+	Stemcells(name string) ([]byte, error)
+}
+
+type BoshIOClient struct {
+}
+
+func (c BoshIOClient) Stemcells(name string) ([]byte, error) {
+	resp, err := http.Get(fmt.Sprintf(boshIOAPIURL, name))
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
+}
+
+func LookupBoshIOStemcell(c BoshIO, cpi, os, version string, light bool) (BoshIOStemcell, error) {
 	if version == "latest" {
 		return BoshIOStemcell{},
 			errors.New("Auto upload of \"latest\" stemcell is not support, please use bosh-io-stemcell-resource")
@@ -43,18 +61,13 @@ func LookupBoshIOStemcell(cpi, os, version string, light bool) (BoshIOStemcell, 
 	if err != nil {
 		return BoshIOStemcell{}, err
 	}
-	resp, err := http.Get(fmt.Sprintf(boshIOAPIURL, name))
+
+	stemcells, err := c.Stemcells(name)
 	if err != nil {
 		return BoshIOStemcell{}, err
 	}
 
-	defer resp.Body.Close()
-	raw, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return BoshIOStemcell{}, err
-	}
-
-	return filterStemcells(raw, version, light)
+	return filterStemcells(stemcells, version, light)
 }
 
 func filterStemcells(raw []byte, version string, light bool) (BoshIOStemcell, error) {
@@ -73,7 +86,7 @@ func filterStemcells(raw []byte, version string, light bool) (BoshIOStemcell, er
 
 	err := json.Unmarshal(raw, &stemcells)
 	if err != nil {
-		return BoshIOStemcell{}, nil
+		return BoshIOStemcell{}, err
 	}
 
 	for _, s := range stemcells {

@@ -13,7 +13,7 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
 	"github.com/cloudfoundry/bosh-deployment-resource/storage"
-	"github.com/cloudfoundry/socks5-proxy"
+	proxy "github.com/cloudfoundry/socks5-proxy"
 )
 
 func main() {
@@ -61,7 +61,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	outCommand := out.NewOutCommand(director, storageClient, sourcesDir)
+	outCommand := out.NewOutCommand(director, bosh.BoshIOClient{}, storageClient, sourcesDir)
 	outResponse, err := outCommand.Run(outRequest)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)

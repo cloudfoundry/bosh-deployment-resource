@@ -25,12 +25,14 @@ var _ = Describe("OutCommand", func() {
 	var (
 		outCommand   out.OutCommand
 		director     *boshfakes.FakeDirector
+		boshIOClient *boshfakes.FakeBoshIO
 		resourcesDir string
 		manifestYaml []byte
 	)
 
 	BeforeEach(func() {
 		director = new(boshfakes.FakeDirector)
+		boshIOClient = new(boshfakes.FakeBoshIO)
 		resourcesDir, _ = ioutil.TempDir("", "resources-dir")
 		manifestYaml = properYaml(`
 			releases:
@@ -45,7 +47,7 @@ var _ = Describe("OutCommand", func() {
 		`)
 		Expect(ioutil.WriteFile(filepath.Join(resourcesDir, "manifest"), manifestYaml, 0600)).To(Succeed())
 		director.InterpolateReturns(manifestYaml, nil)
-		outCommand = out.NewOutCommand(director, nil, resourcesDir)
+		outCommand = out.NewOutCommand(director, boshIOClient, nil, resourcesDir)
 	})
 
 	AfterEach(func() {
@@ -539,10 +541,19 @@ var _ = Describe("OutCommand", func() {
 					  os: ubuntu-xenial
 					  version: "456.40"
 				`)
+
+				stemcells := []byte(`[{
+                                  "name":"bosh-google-kvm-ubuntu-xenial-go_agent",
+                                  "version":"456.40",
+                                  "regular":{
+                                    "url":"https://example.com/bosh-stemcell-456.40-google-kvm-ubuntu-xenial-go_agent.tgz",
+                                    "sha1":"e3fe3b2fa7e5f0111bfc0b22f30eb5658eba89c5"
+                                  }}]`)
 				outRequest.Params.BoshIOStemcellType = "regular"
 
 				director.InterpolateReturns(interpolatedManifest, nil)
 				director.InfoReturns(boshdir.Info{CPI: "google_cpi"}, nil)
+				boshIOClient.StemcellsReturns(stemcells, nil)
 			})
 
 			It("uploads all of the stemcells", func() {
@@ -579,7 +590,7 @@ var _ = Describe("OutCommand", func() {
 			It("downloads the vars store, uses it, and uploads it", func() {
 				director = new(boshfakes.FakeDirector)
 				fakeStorageClient = new(storagefakes.FakeStorageClient)
-				outCommand = out.NewOutCommand(director, fakeStorageClient, resourcesDir)
+				outCommand = out.NewOutCommand(director, boshIOClient, fakeStorageClient, resourcesDir)
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -599,7 +610,7 @@ var _ = Describe("OutCommand", func() {
 					fakeStorageClient = new(storagefakes.FakeStorageClient)
 					fakeStorageClient.DownloadReturns(errors.New("Failed to download"))
 
-					outCommand = out.NewOutCommand(director, fakeStorageClient, resourcesDir)
+					outCommand = out.NewOutCommand(director, boshIOClient, fakeStorageClient, resourcesDir)
 					_, err := outCommand.Run(outRequest)
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("Failed to download"))
@@ -612,7 +623,7 @@ var _ = Describe("OutCommand", func() {
 					fakeStorageClient = new(storagefakes.FakeStorageClient)
 					fakeStorageClient.UploadReturns(errors.New("Failed to upload"))
 
-					outCommand = out.NewOutCommand(director, fakeStorageClient, resourcesDir)
+					outCommand = out.NewOutCommand(director, boshIOClient, fakeStorageClient, resourcesDir)
 					_, err := outCommand.Run(outRequest)
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("Failed to upload"))

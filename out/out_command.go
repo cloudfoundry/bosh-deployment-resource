@@ -20,13 +20,16 @@ type OutResponse struct {
 
 type OutCommand struct {
 	director           bosh.Director
+	boshIOClient       bosh.BoshIO
 	storageClient      storage.StorageClient
 	resourcesDirectory string
 }
 
-func NewOutCommand(director bosh.Director, storageClient storage.StorageClient, resourcesDirectory string) OutCommand {
+func NewOutCommand(director bosh.Director, boshIOClient bosh.BoshIO,
+	storageClient storage.StorageClient, resourcesDirectory string) OutCommand {
 	return OutCommand{
 		director:           director,
+		boshIOClient:       boshIOClient,
 		storageClient:      storageClient,
 		resourcesDirectory: resourcesDirectory,
 	}
@@ -209,7 +212,7 @@ func (c OutCommand) uploadBoshIOStemcells(manifest bosh.DeploymentManifest, ligh
 	metadata := []concourse.Metadata{}
 
 	for _, stemcell := range stemcells {
-		s, err := bosh.LookupBoshIOStemcell(info.CPI, stemcell.OperatingSystem, stemcell.Version, light)
+		s, err := bosh.LookupBoshIOStemcell(c.boshIOClient, info.CPI, stemcell.OperatingSystem, stemcell.Version, light)
 		if err != nil {
 
 			return nil, err
