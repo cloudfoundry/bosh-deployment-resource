@@ -145,4 +145,24 @@ var _ = Describe("DeploymentManifest", func() {
 			})
 		})
 	})
+	Describe("Stemcells", func() {
+		It("returns version and os for defined stemcells", func() {
+			d, err := bosh.NewDeploymentManifest(properYaml(`
+				stemcells:
+				- name: bosh-best-iaas-light-stemcell
+				  os: ubuntu-xenial
+				  version: 1.2.3
+				- os: ubuntu-trusty
+				  version: latest
+			`))
+			Expect(err).ToNot(HaveOccurred())
+
+			stemcells, err := d.Stemcells()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(stemcells[0].Version).To(Equal("1.2.3"))
+			Expect(stemcells[0].OperatingSystem).To(Equal("ubuntu-xenial"))
+			Expect(stemcells[1].Version).To(Equal("latest"))
+			Expect(stemcells[1].OperatingSystem).To(Equal("ubuntu-trusty"))
+		})
+	})
 })

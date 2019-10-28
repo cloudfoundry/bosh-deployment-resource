@@ -86,6 +86,10 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 		return OutResponse{}, err
 	}
 
+	if outRequest.Params.BoshIOStemcellType != "" {
+		c.uploadBoshIOStemcells(manifest, outRequest.Params.BoshIOStemcellType == "light")
+	}
+
 	deployParams := bosh.DeployParams{
 		NoRedact:    outRequest.Params.NoRedact,
 		DryRun:      outRequest.Params.DryRun,
@@ -181,6 +185,39 @@ func (c OutCommand) consumeStemcells(manifest bosh.DeploymentManifest, stemcellG
 		metadata = append(metadata, concourse.Metadata{
 			Name:  "stemcell",
 			Value: fmt.Sprintf("%s v%s", stemcell.Name, stemcell.Version),
+		})
+	}
+
+	return metadata, nil
+}
+
+func (c OutCommand) uploadBoshIOStemcells(manifest bosh.DeploymentManifest, light bool) ([]concourse.Metadata, error) {
+	info, err := c.director.Info()
+	if err != nil {
+		return nil, err
+	}
+
+	stemcells, err := manifest.Stemcells()
+	if err != nil {
+		return nil, err
+	}
+
+	metadata := []concourse.Metadata{}
+
+	for _, stemcell := range stemcells {
+		s, err := bosh.LookupBoshIOStemcell(info.CPI, stemcell.OperatingSystem, stemcell.Version, light)
+		if err != nil {
+
+			return nil, err
+		}
+
+		if err := c.director.UploadRemoteStemcell(s.URL, s.Name, s.Version, s.Sha1); err != nil {
+			return nil, err
+		}
+
+		metadata = append(metadata, concourse.Metadata{
+			Name:  "stemcell",
+			Value: fmt.Sprintf("%s v%s", s.Name, s.Version),
 		})
 	}
 

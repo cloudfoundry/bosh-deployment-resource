@@ -119,6 +119,58 @@ var _ = Describe("NewOutRequest", func() {
 		})
 	})
 
+	Context("when bosh_io_stemcell_type is set", func() {
+		It("set BoshIOStemcellType in OutParams", func() {
+			config := []byte(`{
+				"params": {
+					"manifest": "path/to/manifest.yml",
+					"bosh_io_stemcell_type": "regular"
+				},
+				"source": {
+					"deployment": "mydeployment",
+					"target": "director.example.com",
+					"client": "foo",
+					"client_secret": "foobar"
+				}
+			}`)
+
+			source, err := concourse.NewOutRequest(config, "")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(source).To(Equal(concourse.OutRequest{
+				Source: concourse.Source{
+					Deployment:   "mydeployment",
+					Target:       "director.example.com",
+					Client:       "foo",
+					ClientSecret: "foobar",
+				},
+				Params: concourse.OutParams{
+					Manifest:           "path/to/manifest.yml",
+					BoshIOStemcellType: "regular",
+				},
+			}))
+		})
+
+		It("raises an error when invalid type is passed", func() {
+			config := []byte(`{
+				"params": {
+					"manifest": "path/to/manifest.yml",
+					"bosh_io_stemcell_type": "non-existing-type"
+				},
+				"source": {
+					"deployment": "mydeployment",
+					"target": "director.example.com",
+					"client": "foo",
+					"client_secret": "foobar"
+				}
+			}`)
+
+			_, err := concourse.NewOutRequest(config, "")
+			Expect(err).To(MatchError(
+				"bosh_io_stemcell_type only supports 'light' or 'regular' got: non-existing-type"))
+		})
+	})
+
 	Context("when source_file param is passed", func() {
 		It("overrides source with the values in the source_file", func() {
 			sourceFile, _ := ioutil.TempFile("", "")

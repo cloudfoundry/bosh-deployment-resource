@@ -77,3 +77,27 @@ func (d DeploymentManifest) Manifest() []byte {
 
 	return bytes
 }
+
+func (d DeploymentManifest) Stemcells() ([]Stemcell, error) {
+	stemcells, ok := d.manifest["stemcells"].([]interface{})
+	if !ok {
+		return nil, errors.New("No stemcells section in deployment manifest")
+	}
+
+	out := make([]Stemcell, 0)
+	for i := range stemcells {
+		stemcell := stemcells[i].(map[interface{}]interface{})
+		os, ok := stemcell["os"].(string)
+		if !ok {
+			return nil, errors.New("expected os key for stemcell")
+		}
+
+		version, ok := stemcell["version"].(string)
+		if !ok {
+			return nil, errors.New("expected version key for stemcell")
+		}
+
+		out = append(out, Stemcell{OperatingSystem: os, Version: version})
+	}
+	return out, nil
+}

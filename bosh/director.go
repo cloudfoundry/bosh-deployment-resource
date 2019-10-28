@@ -12,6 +12,7 @@ import (
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
 	boshcmdopts "github.com/cloudfoundry/bosh-cli/cmd/opts"
+	"github.com/cloudfoundry/bosh-cli/director"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -54,6 +55,8 @@ type Director interface {
 	ExportReleases(targetDirectory string, releases []ReleaseSpec) error
 	UploadRelease(releaseURL string) error
 	UploadStemcell(stemcellURL string) error
+	UploadRemoteStemcell(stemcellURL, name, version, sha string) error
+	Info() (director.Info, error)
 	WaitForDeployLock() error
 }
 
@@ -284,6 +287,32 @@ func (d BoshDirector) UploadStemcell(URL string) error {
 	}
 
 	return nil
+}
+
+func (d BoshDirector) UploadRemoteStemcell(URL, name, version, sha string) error {
+	var v boshcmdopts.VersionArg
+	err := (&v).UnmarshalFlag(version)
+	if err != nil {
+		return fmt.Errorf("Could parse stemcell version %s: %s\n", version, err)
+	}
+	err = d.commandRunner.Execute(&boshcmdopts.UploadStemcellOpts{
+		Name:    name,
+		Version: v,
+		SHA1:    sha,
+		Args: boshcmdopts.UploadStemcellArgs{
+			URL: boshcmdopts.URLArg(URL),
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("Could not upload stemcell %s: %s\n", URL, err)
+	}
+
+	return nil
+}
+
+func (d BoshDirector) Info() (director.Info, error) {
+	return d.cliDirector.Info()
 }
 
 func (d BoshDirector) deployment() (boshdir.Deployment, error) {
