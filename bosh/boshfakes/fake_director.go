@@ -4,14 +4,15 @@ package boshfakes
 import (
 	"sync"
 
+	"github.com/cloudfoundry/bosh-cli/director"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 )
 
 type FakeDirector struct {
-	DeleteStub        func(force bool) error
+	DeleteStub        func(bool) error
 	deleteMutex       sync.RWMutex
 	deleteArgsForCall []struct {
-		force bool
+		arg1 bool
 	}
 	deleteReturns struct {
 		result1 error
@@ -19,11 +20,11 @@ type FakeDirector struct {
 	deleteReturnsOnCall map[int]struct {
 		result1 error
 	}
-	DeployStub        func(manifestBytes []byte, deployParams bosh.DeployParams) error
+	DeployStub        func([]byte, bosh.DeployParams) error
 	deployMutex       sync.RWMutex
 	deployArgsForCall []struct {
-		manifestBytes []byte
-		deployParams  bosh.DeployParams
+		arg1 []byte
+		arg2 bosh.DeployParams
 	}
 	deployReturns struct {
 		result1 error
@@ -31,11 +32,47 @@ type FakeDirector struct {
 	deployReturnsOnCall map[int]struct {
 		result1 error
 	}
-	InterpolateStub        func(manifestBytes []byte, interpolateParams bosh.InterpolateParams) ([]byte, error)
+	DownloadManifestStub        func() ([]byte, error)
+	downloadManifestMutex       sync.RWMutex
+	downloadManifestArgsForCall []struct {
+	}
+	downloadManifestReturns struct {
+		result1 []byte
+		result2 error
+	}
+	downloadManifestReturnsOnCall map[int]struct {
+		result1 []byte
+		result2 error
+	}
+	ExportReleasesStub        func(string, []bosh.ReleaseSpec) error
+	exportReleasesMutex       sync.RWMutex
+	exportReleasesArgsForCall []struct {
+		arg1 string
+		arg2 []bosh.ReleaseSpec
+	}
+	exportReleasesReturns struct {
+		result1 error
+	}
+	exportReleasesReturnsOnCall map[int]struct {
+		result1 error
+	}
+	InfoStub        func() (director.Info, error)
+	infoMutex       sync.RWMutex
+	infoArgsForCall []struct {
+	}
+	infoReturns struct {
+		result1 director.Info
+		result2 error
+	}
+	infoReturnsOnCall map[int]struct {
+		result1 director.Info
+		result2 error
+	}
+	InterpolateStub        func([]byte, bosh.InterpolateParams) ([]byte, error)
 	interpolateMutex       sync.RWMutex
 	interpolateArgsForCall []struct {
-		manifestBytes     []byte
-		interpolateParams bosh.InterpolateParams
+		arg1 []byte
+		arg2 bosh.InterpolateParams
 	}
 	interpolateReturns struct {
 		result1 []byte
@@ -45,33 +82,10 @@ type FakeDirector struct {
 		result1 []byte
 		result2 error
 	}
-	DownloadManifestStub        func() ([]byte, error)
-	downloadManifestMutex       sync.RWMutex
-	downloadManifestArgsForCall []struct{}
-	downloadManifestReturns     struct {
-		result1 []byte
-		result2 error
-	}
-	downloadManifestReturnsOnCall map[int]struct {
-		result1 []byte
-		result2 error
-	}
-	ExportReleasesStub        func(targetDirectory string, releases []bosh.ReleaseSpec) error
-	exportReleasesMutex       sync.RWMutex
-	exportReleasesArgsForCall []struct {
-		targetDirectory string
-		releases        []bosh.ReleaseSpec
-	}
-	exportReleasesReturns struct {
-		result1 error
-	}
-	exportReleasesReturnsOnCall map[int]struct {
-		result1 error
-	}
-	UploadReleaseStub        func(releaseURL string) error
+	UploadReleaseStub        func(string) error
 	uploadReleaseMutex       sync.RWMutex
 	uploadReleaseArgsForCall []struct {
-		releaseURL string
+		arg1 string
 	}
 	uploadReleaseReturns struct {
 		result1 error
@@ -79,10 +93,24 @@ type FakeDirector struct {
 	uploadReleaseReturnsOnCall map[int]struct {
 		result1 error
 	}
-	UploadStemcellStub        func(stemcellURL string) error
+	UploadRemoteStemcellStub        func(string, string, string, string) error
+	uploadRemoteStemcellMutex       sync.RWMutex
+	uploadRemoteStemcellArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 string
+		arg4 string
+	}
+	uploadRemoteStemcellReturns struct {
+		result1 error
+	}
+	uploadRemoteStemcellReturnsOnCall map[int]struct {
+		result1 error
+	}
+	UploadStemcellStub        func(string) error
 	uploadStemcellMutex       sync.RWMutex
 	uploadStemcellArgsForCall []struct {
-		stemcellURL string
+		arg1 string
 	}
 	uploadStemcellReturns struct {
 		result1 error
@@ -92,8 +120,9 @@ type FakeDirector struct {
 	}
 	WaitForDeployLockStub        func() error
 	waitForDeployLockMutex       sync.RWMutex
-	waitForDeployLockArgsForCall []struct{}
-	waitForDeployLockReturns     struct {
+	waitForDeployLockArgsForCall []struct {
+	}
+	waitForDeployLockReturns struct {
 		result1 error
 	}
 	waitForDeployLockReturnsOnCall map[int]struct {
@@ -103,21 +132,22 @@ type FakeDirector struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeDirector) Delete(force bool) error {
+func (fake *FakeDirector) Delete(arg1 bool) error {
 	fake.deleteMutex.Lock()
 	ret, specificReturn := fake.deleteReturnsOnCall[len(fake.deleteArgsForCall)]
 	fake.deleteArgsForCall = append(fake.deleteArgsForCall, struct {
-		force bool
-	}{force})
-	fake.recordInvocation("Delete", []interface{}{force})
+		arg1 bool
+	}{arg1})
+	fake.recordInvocation("Delete", []interface{}{arg1})
 	fake.deleteMutex.Unlock()
 	if fake.DeleteStub != nil {
-		return fake.DeleteStub(force)
+		return fake.DeleteStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.deleteReturns.result1
+	fakeReturns := fake.deleteReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDirector) DeleteCallCount() int {
@@ -126,13 +156,22 @@ func (fake *FakeDirector) DeleteCallCount() int {
 	return len(fake.deleteArgsForCall)
 }
 
+func (fake *FakeDirector) DeleteCalls(stub func(bool) error) {
+	fake.deleteMutex.Lock()
+	defer fake.deleteMutex.Unlock()
+	fake.DeleteStub = stub
+}
+
 func (fake *FakeDirector) DeleteArgsForCall(i int) bool {
 	fake.deleteMutex.RLock()
 	defer fake.deleteMutex.RUnlock()
-	return fake.deleteArgsForCall[i].force
+	argsForCall := fake.deleteArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) DeleteReturns(result1 error) {
+	fake.deleteMutex.Lock()
+	defer fake.deleteMutex.Unlock()
 	fake.DeleteStub = nil
 	fake.deleteReturns = struct {
 		result1 error
@@ -140,6 +179,8 @@ func (fake *FakeDirector) DeleteReturns(result1 error) {
 }
 
 func (fake *FakeDirector) DeleteReturnsOnCall(i int, result1 error) {
+	fake.deleteMutex.Lock()
+	defer fake.deleteMutex.Unlock()
 	fake.DeleteStub = nil
 	if fake.deleteReturnsOnCall == nil {
 		fake.deleteReturnsOnCall = make(map[int]struct {
@@ -151,27 +192,28 @@ func (fake *FakeDirector) DeleteReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDirector) Deploy(manifestBytes []byte, deployParams bosh.DeployParams) error {
-	var manifestBytesCopy []byte
-	if manifestBytes != nil {
-		manifestBytesCopy = make([]byte, len(manifestBytes))
-		copy(manifestBytesCopy, manifestBytes)
+func (fake *FakeDirector) Deploy(arg1 []byte, arg2 bosh.DeployParams) error {
+	var arg1Copy []byte
+	if arg1 != nil {
+		arg1Copy = make([]byte, len(arg1))
+		copy(arg1Copy, arg1)
 	}
 	fake.deployMutex.Lock()
 	ret, specificReturn := fake.deployReturnsOnCall[len(fake.deployArgsForCall)]
 	fake.deployArgsForCall = append(fake.deployArgsForCall, struct {
-		manifestBytes []byte
-		deployParams  bosh.DeployParams
-	}{manifestBytesCopy, deployParams})
-	fake.recordInvocation("Deploy", []interface{}{manifestBytesCopy, deployParams})
+		arg1 []byte
+		arg2 bosh.DeployParams
+	}{arg1Copy, arg2})
+	fake.recordInvocation("Deploy", []interface{}{arg1Copy, arg2})
 	fake.deployMutex.Unlock()
 	if fake.DeployStub != nil {
-		return fake.DeployStub(manifestBytes, deployParams)
+		return fake.DeployStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.deployReturns.result1
+	fakeReturns := fake.deployReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDirector) DeployCallCount() int {
@@ -180,13 +222,22 @@ func (fake *FakeDirector) DeployCallCount() int {
 	return len(fake.deployArgsForCall)
 }
 
+func (fake *FakeDirector) DeployCalls(stub func([]byte, bosh.DeployParams) error) {
+	fake.deployMutex.Lock()
+	defer fake.deployMutex.Unlock()
+	fake.DeployStub = stub
+}
+
 func (fake *FakeDirector) DeployArgsForCall(i int) ([]byte, bosh.DeployParams) {
 	fake.deployMutex.RLock()
 	defer fake.deployMutex.RUnlock()
-	return fake.deployArgsForCall[i].manifestBytes, fake.deployArgsForCall[i].deployParams
+	argsForCall := fake.deployArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeDirector) DeployReturns(result1 error) {
+	fake.deployMutex.Lock()
+	defer fake.deployMutex.Unlock()
 	fake.DeployStub = nil
 	fake.deployReturns = struct {
 		result1 error
@@ -194,6 +245,8 @@ func (fake *FakeDirector) DeployReturns(result1 error) {
 }
 
 func (fake *FakeDirector) DeployReturnsOnCall(i int, result1 error) {
+	fake.deployMutex.Lock()
+	defer fake.deployMutex.Unlock()
 	fake.DeployStub = nil
 	if fake.deployReturnsOnCall == nil {
 		fake.deployReturnsOnCall = make(map[int]struct {
@@ -205,67 +258,11 @@ func (fake *FakeDirector) DeployReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDirector) Interpolate(manifestBytes []byte, interpolateParams bosh.InterpolateParams) ([]byte, error) {
-	var manifestBytesCopy []byte
-	if manifestBytes != nil {
-		manifestBytesCopy = make([]byte, len(manifestBytes))
-		copy(manifestBytesCopy, manifestBytes)
-	}
-	fake.interpolateMutex.Lock()
-	ret, specificReturn := fake.interpolateReturnsOnCall[len(fake.interpolateArgsForCall)]
-	fake.interpolateArgsForCall = append(fake.interpolateArgsForCall, struct {
-		manifestBytes     []byte
-		interpolateParams bosh.InterpolateParams
-	}{manifestBytesCopy, interpolateParams})
-	fake.recordInvocation("Interpolate", []interface{}{manifestBytesCopy, interpolateParams})
-	fake.interpolateMutex.Unlock()
-	if fake.InterpolateStub != nil {
-		return fake.InterpolateStub(manifestBytes, interpolateParams)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.interpolateReturns.result1, fake.interpolateReturns.result2
-}
-
-func (fake *FakeDirector) InterpolateCallCount() int {
-	fake.interpolateMutex.RLock()
-	defer fake.interpolateMutex.RUnlock()
-	return len(fake.interpolateArgsForCall)
-}
-
-func (fake *FakeDirector) InterpolateArgsForCall(i int) ([]byte, bosh.InterpolateParams) {
-	fake.interpolateMutex.RLock()
-	defer fake.interpolateMutex.RUnlock()
-	return fake.interpolateArgsForCall[i].manifestBytes, fake.interpolateArgsForCall[i].interpolateParams
-}
-
-func (fake *FakeDirector) InterpolateReturns(result1 []byte, result2 error) {
-	fake.InterpolateStub = nil
-	fake.interpolateReturns = struct {
-		result1 []byte
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeDirector) InterpolateReturnsOnCall(i int, result1 []byte, result2 error) {
-	fake.InterpolateStub = nil
-	if fake.interpolateReturnsOnCall == nil {
-		fake.interpolateReturnsOnCall = make(map[int]struct {
-			result1 []byte
-			result2 error
-		})
-	}
-	fake.interpolateReturnsOnCall[i] = struct {
-		result1 []byte
-		result2 error
-	}{result1, result2}
-}
-
 func (fake *FakeDirector) DownloadManifest() ([]byte, error) {
 	fake.downloadManifestMutex.Lock()
 	ret, specificReturn := fake.downloadManifestReturnsOnCall[len(fake.downloadManifestArgsForCall)]
-	fake.downloadManifestArgsForCall = append(fake.downloadManifestArgsForCall, struct{}{})
+	fake.downloadManifestArgsForCall = append(fake.downloadManifestArgsForCall, struct {
+	}{})
 	fake.recordInvocation("DownloadManifest", []interface{}{})
 	fake.downloadManifestMutex.Unlock()
 	if fake.DownloadManifestStub != nil {
@@ -274,7 +271,8 @@ func (fake *FakeDirector) DownloadManifest() ([]byte, error) {
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.downloadManifestReturns.result1, fake.downloadManifestReturns.result2
+	fakeReturns := fake.downloadManifestReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeDirector) DownloadManifestCallCount() int {
@@ -283,7 +281,15 @@ func (fake *FakeDirector) DownloadManifestCallCount() int {
 	return len(fake.downloadManifestArgsForCall)
 }
 
+func (fake *FakeDirector) DownloadManifestCalls(stub func() ([]byte, error)) {
+	fake.downloadManifestMutex.Lock()
+	defer fake.downloadManifestMutex.Unlock()
+	fake.DownloadManifestStub = stub
+}
+
 func (fake *FakeDirector) DownloadManifestReturns(result1 []byte, result2 error) {
+	fake.downloadManifestMutex.Lock()
+	defer fake.downloadManifestMutex.Unlock()
 	fake.DownloadManifestStub = nil
 	fake.downloadManifestReturns = struct {
 		result1 []byte
@@ -292,6 +298,8 @@ func (fake *FakeDirector) DownloadManifestReturns(result1 []byte, result2 error)
 }
 
 func (fake *FakeDirector) DownloadManifestReturnsOnCall(i int, result1 []byte, result2 error) {
+	fake.downloadManifestMutex.Lock()
+	defer fake.downloadManifestMutex.Unlock()
 	fake.DownloadManifestStub = nil
 	if fake.downloadManifestReturnsOnCall == nil {
 		fake.downloadManifestReturnsOnCall = make(map[int]struct {
@@ -305,27 +313,28 @@ func (fake *FakeDirector) DownloadManifestReturnsOnCall(i int, result1 []byte, r
 	}{result1, result2}
 }
 
-func (fake *FakeDirector) ExportReleases(targetDirectory string, releases []bosh.ReleaseSpec) error {
-	var releasesCopy []bosh.ReleaseSpec
-	if releases != nil {
-		releasesCopy = make([]bosh.ReleaseSpec, len(releases))
-		copy(releasesCopy, releases)
+func (fake *FakeDirector) ExportReleases(arg1 string, arg2 []bosh.ReleaseSpec) error {
+	var arg2Copy []bosh.ReleaseSpec
+	if arg2 != nil {
+		arg2Copy = make([]bosh.ReleaseSpec, len(arg2))
+		copy(arg2Copy, arg2)
 	}
 	fake.exportReleasesMutex.Lock()
 	ret, specificReturn := fake.exportReleasesReturnsOnCall[len(fake.exportReleasesArgsForCall)]
 	fake.exportReleasesArgsForCall = append(fake.exportReleasesArgsForCall, struct {
-		targetDirectory string
-		releases        []bosh.ReleaseSpec
-	}{targetDirectory, releasesCopy})
-	fake.recordInvocation("ExportReleases", []interface{}{targetDirectory, releasesCopy})
+		arg1 string
+		arg2 []bosh.ReleaseSpec
+	}{arg1, arg2Copy})
+	fake.recordInvocation("ExportReleases", []interface{}{arg1, arg2Copy})
 	fake.exportReleasesMutex.Unlock()
 	if fake.ExportReleasesStub != nil {
-		return fake.ExportReleasesStub(targetDirectory, releases)
+		return fake.ExportReleasesStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.exportReleasesReturns.result1
+	fakeReturns := fake.exportReleasesReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDirector) ExportReleasesCallCount() int {
@@ -334,13 +343,22 @@ func (fake *FakeDirector) ExportReleasesCallCount() int {
 	return len(fake.exportReleasesArgsForCall)
 }
 
+func (fake *FakeDirector) ExportReleasesCalls(stub func(string, []bosh.ReleaseSpec) error) {
+	fake.exportReleasesMutex.Lock()
+	defer fake.exportReleasesMutex.Unlock()
+	fake.ExportReleasesStub = stub
+}
+
 func (fake *FakeDirector) ExportReleasesArgsForCall(i int) (string, []bosh.ReleaseSpec) {
 	fake.exportReleasesMutex.RLock()
 	defer fake.exportReleasesMutex.RUnlock()
-	return fake.exportReleasesArgsForCall[i].targetDirectory, fake.exportReleasesArgsForCall[i].releases
+	argsForCall := fake.exportReleasesArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeDirector) ExportReleasesReturns(result1 error) {
+	fake.exportReleasesMutex.Lock()
+	defer fake.exportReleasesMutex.Unlock()
 	fake.ExportReleasesStub = nil
 	fake.exportReleasesReturns = struct {
 		result1 error
@@ -348,6 +366,8 @@ func (fake *FakeDirector) ExportReleasesReturns(result1 error) {
 }
 
 func (fake *FakeDirector) ExportReleasesReturnsOnCall(i int, result1 error) {
+	fake.exportReleasesMutex.Lock()
+	defer fake.exportReleasesMutex.Unlock()
 	fake.ExportReleasesStub = nil
 	if fake.exportReleasesReturnsOnCall == nil {
 		fake.exportReleasesReturnsOnCall = make(map[int]struct {
@@ -359,21 +379,146 @@ func (fake *FakeDirector) ExportReleasesReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDirector) UploadRelease(releaseURL string) error {
+func (fake *FakeDirector) Info() (director.Info, error) {
+	fake.infoMutex.Lock()
+	ret, specificReturn := fake.infoReturnsOnCall[len(fake.infoArgsForCall)]
+	fake.infoArgsForCall = append(fake.infoArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Info", []interface{}{})
+	fake.infoMutex.Unlock()
+	if fake.InfoStub != nil {
+		return fake.InfoStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.infoReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) InfoCallCount() int {
+	fake.infoMutex.RLock()
+	defer fake.infoMutex.RUnlock()
+	return len(fake.infoArgsForCall)
+}
+
+func (fake *FakeDirector) InfoCalls(stub func() (director.Info, error)) {
+	fake.infoMutex.Lock()
+	defer fake.infoMutex.Unlock()
+	fake.InfoStub = stub
+}
+
+func (fake *FakeDirector) InfoReturns(result1 director.Info, result2 error) {
+	fake.infoMutex.Lock()
+	defer fake.infoMutex.Unlock()
+	fake.InfoStub = nil
+	fake.infoReturns = struct {
+		result1 director.Info
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) InfoReturnsOnCall(i int, result1 director.Info, result2 error) {
+	fake.infoMutex.Lock()
+	defer fake.infoMutex.Unlock()
+	fake.InfoStub = nil
+	if fake.infoReturnsOnCall == nil {
+		fake.infoReturnsOnCall = make(map[int]struct {
+			result1 director.Info
+			result2 error
+		})
+	}
+	fake.infoReturnsOnCall[i] = struct {
+		result1 director.Info
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) Interpolate(arg1 []byte, arg2 bosh.InterpolateParams) ([]byte, error) {
+	var arg1Copy []byte
+	if arg1 != nil {
+		arg1Copy = make([]byte, len(arg1))
+		copy(arg1Copy, arg1)
+	}
+	fake.interpolateMutex.Lock()
+	ret, specificReturn := fake.interpolateReturnsOnCall[len(fake.interpolateArgsForCall)]
+	fake.interpolateArgsForCall = append(fake.interpolateArgsForCall, struct {
+		arg1 []byte
+		arg2 bosh.InterpolateParams
+	}{arg1Copy, arg2})
+	fake.recordInvocation("Interpolate", []interface{}{arg1Copy, arg2})
+	fake.interpolateMutex.Unlock()
+	if fake.InterpolateStub != nil {
+		return fake.InterpolateStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.interpolateReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeDirector) InterpolateCallCount() int {
+	fake.interpolateMutex.RLock()
+	defer fake.interpolateMutex.RUnlock()
+	return len(fake.interpolateArgsForCall)
+}
+
+func (fake *FakeDirector) InterpolateCalls(stub func([]byte, bosh.InterpolateParams) ([]byte, error)) {
+	fake.interpolateMutex.Lock()
+	defer fake.interpolateMutex.Unlock()
+	fake.InterpolateStub = stub
+}
+
+func (fake *FakeDirector) InterpolateArgsForCall(i int) ([]byte, bosh.InterpolateParams) {
+	fake.interpolateMutex.RLock()
+	defer fake.interpolateMutex.RUnlock()
+	argsForCall := fake.interpolateArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeDirector) InterpolateReturns(result1 []byte, result2 error) {
+	fake.interpolateMutex.Lock()
+	defer fake.interpolateMutex.Unlock()
+	fake.InterpolateStub = nil
+	fake.interpolateReturns = struct {
+		result1 []byte
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) InterpolateReturnsOnCall(i int, result1 []byte, result2 error) {
+	fake.interpolateMutex.Lock()
+	defer fake.interpolateMutex.Unlock()
+	fake.InterpolateStub = nil
+	if fake.interpolateReturnsOnCall == nil {
+		fake.interpolateReturnsOnCall = make(map[int]struct {
+			result1 []byte
+			result2 error
+		})
+	}
+	fake.interpolateReturnsOnCall[i] = struct {
+		result1 []byte
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeDirector) UploadRelease(arg1 string) error {
 	fake.uploadReleaseMutex.Lock()
 	ret, specificReturn := fake.uploadReleaseReturnsOnCall[len(fake.uploadReleaseArgsForCall)]
 	fake.uploadReleaseArgsForCall = append(fake.uploadReleaseArgsForCall, struct {
-		releaseURL string
-	}{releaseURL})
-	fake.recordInvocation("UploadRelease", []interface{}{releaseURL})
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("UploadRelease", []interface{}{arg1})
 	fake.uploadReleaseMutex.Unlock()
 	if fake.UploadReleaseStub != nil {
-		return fake.UploadReleaseStub(releaseURL)
+		return fake.UploadReleaseStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.uploadReleaseReturns.result1
+	fakeReturns := fake.uploadReleaseReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDirector) UploadReleaseCallCount() int {
@@ -382,13 +527,22 @@ func (fake *FakeDirector) UploadReleaseCallCount() int {
 	return len(fake.uploadReleaseArgsForCall)
 }
 
+func (fake *FakeDirector) UploadReleaseCalls(stub func(string) error) {
+	fake.uploadReleaseMutex.Lock()
+	defer fake.uploadReleaseMutex.Unlock()
+	fake.UploadReleaseStub = stub
+}
+
 func (fake *FakeDirector) UploadReleaseArgsForCall(i int) string {
 	fake.uploadReleaseMutex.RLock()
 	defer fake.uploadReleaseMutex.RUnlock()
-	return fake.uploadReleaseArgsForCall[i].releaseURL
+	argsForCall := fake.uploadReleaseArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) UploadReleaseReturns(result1 error) {
+	fake.uploadReleaseMutex.Lock()
+	defer fake.uploadReleaseMutex.Unlock()
 	fake.UploadReleaseStub = nil
 	fake.uploadReleaseReturns = struct {
 		result1 error
@@ -396,6 +550,8 @@ func (fake *FakeDirector) UploadReleaseReturns(result1 error) {
 }
 
 func (fake *FakeDirector) UploadReleaseReturnsOnCall(i int, result1 error) {
+	fake.uploadReleaseMutex.Lock()
+	defer fake.uploadReleaseMutex.Unlock()
 	fake.UploadReleaseStub = nil
 	if fake.uploadReleaseReturnsOnCall == nil {
 		fake.uploadReleaseReturnsOnCall = make(map[int]struct {
@@ -407,21 +563,85 @@ func (fake *FakeDirector) UploadReleaseReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDirector) UploadStemcell(stemcellURL string) error {
-	fake.uploadStemcellMutex.Lock()
-	ret, specificReturn := fake.uploadStemcellReturnsOnCall[len(fake.uploadStemcellArgsForCall)]
-	fake.uploadStemcellArgsForCall = append(fake.uploadStemcellArgsForCall, struct {
-		stemcellURL string
-	}{stemcellURL})
-	fake.recordInvocation("UploadStemcell", []interface{}{stemcellURL})
-	fake.uploadStemcellMutex.Unlock()
-	if fake.UploadStemcellStub != nil {
-		return fake.UploadStemcellStub(stemcellURL)
+func (fake *FakeDirector) UploadRemoteStemcell(arg1 string, arg2 string, arg3 string, arg4 string) error {
+	fake.uploadRemoteStemcellMutex.Lock()
+	ret, specificReturn := fake.uploadRemoteStemcellReturnsOnCall[len(fake.uploadRemoteStemcellArgsForCall)]
+	fake.uploadRemoteStemcellArgsForCall = append(fake.uploadRemoteStemcellArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 string
+		arg4 string
+	}{arg1, arg2, arg3, arg4})
+	fake.recordInvocation("UploadRemoteStemcell", []interface{}{arg1, arg2, arg3, arg4})
+	fake.uploadRemoteStemcellMutex.Unlock()
+	if fake.UploadRemoteStemcellStub != nil {
+		return fake.UploadRemoteStemcellStub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.uploadStemcellReturns.result1
+	fakeReturns := fake.uploadRemoteStemcellReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeDirector) UploadRemoteStemcellCallCount() int {
+	fake.uploadRemoteStemcellMutex.RLock()
+	defer fake.uploadRemoteStemcellMutex.RUnlock()
+	return len(fake.uploadRemoteStemcellArgsForCall)
+}
+
+func (fake *FakeDirector) UploadRemoteStemcellCalls(stub func(string, string, string, string) error) {
+	fake.uploadRemoteStemcellMutex.Lock()
+	defer fake.uploadRemoteStemcellMutex.Unlock()
+	fake.UploadRemoteStemcellStub = stub
+}
+
+func (fake *FakeDirector) UploadRemoteStemcellArgsForCall(i int) (string, string, string, string) {
+	fake.uploadRemoteStemcellMutex.RLock()
+	defer fake.uploadRemoteStemcellMutex.RUnlock()
+	argsForCall := fake.uploadRemoteStemcellArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
+}
+
+func (fake *FakeDirector) UploadRemoteStemcellReturns(result1 error) {
+	fake.uploadRemoteStemcellMutex.Lock()
+	defer fake.uploadRemoteStemcellMutex.Unlock()
+	fake.UploadRemoteStemcellStub = nil
+	fake.uploadRemoteStemcellReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UploadRemoteStemcellReturnsOnCall(i int, result1 error) {
+	fake.uploadRemoteStemcellMutex.Lock()
+	defer fake.uploadRemoteStemcellMutex.Unlock()
+	fake.UploadRemoteStemcellStub = nil
+	if fake.uploadRemoteStemcellReturnsOnCall == nil {
+		fake.uploadRemoteStemcellReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.uploadRemoteStemcellReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDirector) UploadStemcell(arg1 string) error {
+	fake.uploadStemcellMutex.Lock()
+	ret, specificReturn := fake.uploadStemcellReturnsOnCall[len(fake.uploadStemcellArgsForCall)]
+	fake.uploadStemcellArgsForCall = append(fake.uploadStemcellArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("UploadStemcell", []interface{}{arg1})
+	fake.uploadStemcellMutex.Unlock()
+	if fake.UploadStemcellStub != nil {
+		return fake.UploadStemcellStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.uploadStemcellReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDirector) UploadStemcellCallCount() int {
@@ -430,13 +650,22 @@ func (fake *FakeDirector) UploadStemcellCallCount() int {
 	return len(fake.uploadStemcellArgsForCall)
 }
 
+func (fake *FakeDirector) UploadStemcellCalls(stub func(string) error) {
+	fake.uploadStemcellMutex.Lock()
+	defer fake.uploadStemcellMutex.Unlock()
+	fake.UploadStemcellStub = stub
+}
+
 func (fake *FakeDirector) UploadStemcellArgsForCall(i int) string {
 	fake.uploadStemcellMutex.RLock()
 	defer fake.uploadStemcellMutex.RUnlock()
-	return fake.uploadStemcellArgsForCall[i].stemcellURL
+	argsForCall := fake.uploadStemcellArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeDirector) UploadStemcellReturns(result1 error) {
+	fake.uploadStemcellMutex.Lock()
+	defer fake.uploadStemcellMutex.Unlock()
 	fake.UploadStemcellStub = nil
 	fake.uploadStemcellReturns = struct {
 		result1 error
@@ -444,6 +673,8 @@ func (fake *FakeDirector) UploadStemcellReturns(result1 error) {
 }
 
 func (fake *FakeDirector) UploadStemcellReturnsOnCall(i int, result1 error) {
+	fake.uploadStemcellMutex.Lock()
+	defer fake.uploadStemcellMutex.Unlock()
 	fake.UploadStemcellStub = nil
 	if fake.uploadStemcellReturnsOnCall == nil {
 		fake.uploadStemcellReturnsOnCall = make(map[int]struct {
@@ -458,7 +689,8 @@ func (fake *FakeDirector) UploadStemcellReturnsOnCall(i int, result1 error) {
 func (fake *FakeDirector) WaitForDeployLock() error {
 	fake.waitForDeployLockMutex.Lock()
 	ret, specificReturn := fake.waitForDeployLockReturnsOnCall[len(fake.waitForDeployLockArgsForCall)]
-	fake.waitForDeployLockArgsForCall = append(fake.waitForDeployLockArgsForCall, struct{}{})
+	fake.waitForDeployLockArgsForCall = append(fake.waitForDeployLockArgsForCall, struct {
+	}{})
 	fake.recordInvocation("WaitForDeployLock", []interface{}{})
 	fake.waitForDeployLockMutex.Unlock()
 	if fake.WaitForDeployLockStub != nil {
@@ -467,7 +699,8 @@ func (fake *FakeDirector) WaitForDeployLock() error {
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.waitForDeployLockReturns.result1
+	fakeReturns := fake.waitForDeployLockReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeDirector) WaitForDeployLockCallCount() int {
@@ -476,7 +709,15 @@ func (fake *FakeDirector) WaitForDeployLockCallCount() int {
 	return len(fake.waitForDeployLockArgsForCall)
 }
 
+func (fake *FakeDirector) WaitForDeployLockCalls(stub func() error) {
+	fake.waitForDeployLockMutex.Lock()
+	defer fake.waitForDeployLockMutex.Unlock()
+	fake.WaitForDeployLockStub = stub
+}
+
 func (fake *FakeDirector) WaitForDeployLockReturns(result1 error) {
+	fake.waitForDeployLockMutex.Lock()
+	defer fake.waitForDeployLockMutex.Unlock()
 	fake.WaitForDeployLockStub = nil
 	fake.waitForDeployLockReturns = struct {
 		result1 error
@@ -484,6 +725,8 @@ func (fake *FakeDirector) WaitForDeployLockReturns(result1 error) {
 }
 
 func (fake *FakeDirector) WaitForDeployLockReturnsOnCall(i int, result1 error) {
+	fake.waitForDeployLockMutex.Lock()
+	defer fake.waitForDeployLockMutex.Unlock()
 	fake.WaitForDeployLockStub = nil
 	if fake.waitForDeployLockReturnsOnCall == nil {
 		fake.waitForDeployLockReturnsOnCall = make(map[int]struct {
@@ -502,14 +745,18 @@ func (fake *FakeDirector) Invocations() map[string][][]interface{} {
 	defer fake.deleteMutex.RUnlock()
 	fake.deployMutex.RLock()
 	defer fake.deployMutex.RUnlock()
-	fake.interpolateMutex.RLock()
-	defer fake.interpolateMutex.RUnlock()
 	fake.downloadManifestMutex.RLock()
 	defer fake.downloadManifestMutex.RUnlock()
 	fake.exportReleasesMutex.RLock()
 	defer fake.exportReleasesMutex.RUnlock()
+	fake.infoMutex.RLock()
+	defer fake.infoMutex.RUnlock()
+	fake.interpolateMutex.RLock()
+	defer fake.interpolateMutex.RUnlock()
 	fake.uploadReleaseMutex.RLock()
 	defer fake.uploadReleaseMutex.RUnlock()
+	fake.uploadRemoteStemcellMutex.RLock()
+	defer fake.uploadRemoteStemcellMutex.RUnlock()
 	fake.uploadStemcellMutex.RLock()
 	defer fake.uploadStemcellMutex.RUnlock()
 	fake.waitForDeployLockMutex.RLock()

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -30,6 +31,10 @@ func NewOutRequest(request []byte, sourcesDir string) (OutRequest, error) {
 		return OutRequest{}, err
 	}
 
+	if err := checkAllowedStemcellType(outRequest.Params.BoshIOStemcellType); err != nil {
+		return OutRequest{}, err
+	}
+
 	return outRequest, nil
 }
 
@@ -49,5 +54,16 @@ func checkRequiredOutParameters(params OutParams) error {
 		return errors.New(errorMessage)
 	}
 
+	return nil
+}
+
+func checkAllowedStemcellType(val string) error {
+	if val == "" {
+		return nil
+	}
+	ok, err := regexp.MatchString(`light|regular`, val)
+	if err != nil || !ok {
+		return fmt.Errorf("bosh_io_stemcell_type only supports 'light' or 'regular' got: %s", val)
+	}
 	return nil
 }

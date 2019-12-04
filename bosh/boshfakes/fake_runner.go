@@ -9,22 +9,10 @@ import (
 )
 
 type FakeRunner struct {
-	ExecuteWithWriterStub        func(commandOpts interface{}, writer io.Writer) error
-	executeWithWriterMutex       sync.RWMutex
-	executeWithWriterArgsForCall []struct {
-		commandOpts interface{}
-		writer      io.Writer
-	}
-	executeWithWriterReturns struct {
-		result1 error
-	}
-	executeWithWriterReturnsOnCall map[int]struct {
-		result1 error
-	}
-	ExecuteStub        func(commandOpts interface{}) error
+	ExecuteStub        func(interface{}) error
 	executeMutex       sync.RWMutex
 	executeArgsForCall []struct {
-		commandOpts interface{}
+		arg1 interface{}
 	}
 	executeReturns struct {
 		result1 error
@@ -32,12 +20,12 @@ type FakeRunner struct {
 	executeReturnsOnCall map[int]struct {
 		result1 error
 	}
-	ExecuteWithDefaultOverrideStub        func(commandOpts interface{}, override func(interface{}) (interface{}, error), writer io.Writer) error
+	ExecuteWithDefaultOverrideStub        func(interface{}, func(interface{}) (interface{}, error), io.Writer) error
 	executeWithDefaultOverrideMutex       sync.RWMutex
 	executeWithDefaultOverrideArgsForCall []struct {
-		commandOpts interface{}
-		override    func(interface{}) (interface{}, error)
-		writer      io.Writer
+		arg1 interface{}
+		arg2 func(interface{}) (interface{}, error)
+		arg3 io.Writer
 	}
 	executeWithDefaultOverrideReturns struct {
 		result1 error
@@ -45,74 +33,38 @@ type FakeRunner struct {
 	executeWithDefaultOverrideReturnsOnCall map[int]struct {
 		result1 error
 	}
+	ExecuteWithWriterStub        func(interface{}, io.Writer) error
+	executeWithWriterMutex       sync.RWMutex
+	executeWithWriterArgsForCall []struct {
+		arg1 interface{}
+		arg2 io.Writer
+	}
+	executeWithWriterReturns struct {
+		result1 error
+	}
+	executeWithWriterReturnsOnCall map[int]struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRunner) ExecuteWithWriter(commandOpts interface{}, writer io.Writer) error {
-	fake.executeWithWriterMutex.Lock()
-	ret, specificReturn := fake.executeWithWriterReturnsOnCall[len(fake.executeWithWriterArgsForCall)]
-	fake.executeWithWriterArgsForCall = append(fake.executeWithWriterArgsForCall, struct {
-		commandOpts interface{}
-		writer      io.Writer
-	}{commandOpts, writer})
-	fake.recordInvocation("ExecuteWithWriter", []interface{}{commandOpts, writer})
-	fake.executeWithWriterMutex.Unlock()
-	if fake.ExecuteWithWriterStub != nil {
-		return fake.ExecuteWithWriterStub(commandOpts, writer)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.executeWithWriterReturns.result1
-}
-
-func (fake *FakeRunner) ExecuteWithWriterCallCount() int {
-	fake.executeWithWriterMutex.RLock()
-	defer fake.executeWithWriterMutex.RUnlock()
-	return len(fake.executeWithWriterArgsForCall)
-}
-
-func (fake *FakeRunner) ExecuteWithWriterArgsForCall(i int) (interface{}, io.Writer) {
-	fake.executeWithWriterMutex.RLock()
-	defer fake.executeWithWriterMutex.RUnlock()
-	return fake.executeWithWriterArgsForCall[i].commandOpts, fake.executeWithWriterArgsForCall[i].writer
-}
-
-func (fake *FakeRunner) ExecuteWithWriterReturns(result1 error) {
-	fake.ExecuteWithWriterStub = nil
-	fake.executeWithWriterReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeRunner) ExecuteWithWriterReturnsOnCall(i int, result1 error) {
-	fake.ExecuteWithWriterStub = nil
-	if fake.executeWithWriterReturnsOnCall == nil {
-		fake.executeWithWriterReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.executeWithWriterReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeRunner) Execute(commandOpts interface{}) error {
+func (fake *FakeRunner) Execute(arg1 interface{}) error {
 	fake.executeMutex.Lock()
 	ret, specificReturn := fake.executeReturnsOnCall[len(fake.executeArgsForCall)]
 	fake.executeArgsForCall = append(fake.executeArgsForCall, struct {
-		commandOpts interface{}
-	}{commandOpts})
-	fake.recordInvocation("Execute", []interface{}{commandOpts})
+		arg1 interface{}
+	}{arg1})
+	fake.recordInvocation("Execute", []interface{}{arg1})
 	fake.executeMutex.Unlock()
 	if fake.ExecuteStub != nil {
-		return fake.ExecuteStub(commandOpts)
+		return fake.ExecuteStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.executeReturns.result1
+	fakeReturns := fake.executeReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeRunner) ExecuteCallCount() int {
@@ -121,13 +73,22 @@ func (fake *FakeRunner) ExecuteCallCount() int {
 	return len(fake.executeArgsForCall)
 }
 
+func (fake *FakeRunner) ExecuteCalls(stub func(interface{}) error) {
+	fake.executeMutex.Lock()
+	defer fake.executeMutex.Unlock()
+	fake.ExecuteStub = stub
+}
+
 func (fake *FakeRunner) ExecuteArgsForCall(i int) interface{} {
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
-	return fake.executeArgsForCall[i].commandOpts
+	argsForCall := fake.executeArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeRunner) ExecuteReturns(result1 error) {
+	fake.executeMutex.Lock()
+	defer fake.executeMutex.Unlock()
 	fake.ExecuteStub = nil
 	fake.executeReturns = struct {
 		result1 error
@@ -135,6 +96,8 @@ func (fake *FakeRunner) ExecuteReturns(result1 error) {
 }
 
 func (fake *FakeRunner) ExecuteReturnsOnCall(i int, result1 error) {
+	fake.executeMutex.Lock()
+	defer fake.executeMutex.Unlock()
 	fake.ExecuteStub = nil
 	if fake.executeReturnsOnCall == nil {
 		fake.executeReturnsOnCall = make(map[int]struct {
@@ -146,23 +109,24 @@ func (fake *FakeRunner) ExecuteReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeRunner) ExecuteWithDefaultOverride(commandOpts interface{}, override func(interface{}) (interface{}, error), writer io.Writer) error {
+func (fake *FakeRunner) ExecuteWithDefaultOverride(arg1 interface{}, arg2 func(interface{}) (interface{}, error), arg3 io.Writer) error {
 	fake.executeWithDefaultOverrideMutex.Lock()
 	ret, specificReturn := fake.executeWithDefaultOverrideReturnsOnCall[len(fake.executeWithDefaultOverrideArgsForCall)]
 	fake.executeWithDefaultOverrideArgsForCall = append(fake.executeWithDefaultOverrideArgsForCall, struct {
-		commandOpts interface{}
-		override    func(interface{}) (interface{}, error)
-		writer      io.Writer
-	}{commandOpts, override, writer})
-	fake.recordInvocation("ExecuteWithDefaultOverride", []interface{}{commandOpts, override, writer})
+		arg1 interface{}
+		arg2 func(interface{}) (interface{}, error)
+		arg3 io.Writer
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("ExecuteWithDefaultOverride", []interface{}{arg1, arg2, arg3})
 	fake.executeWithDefaultOverrideMutex.Unlock()
 	if fake.ExecuteWithDefaultOverrideStub != nil {
-		return fake.ExecuteWithDefaultOverrideStub(commandOpts, override, writer)
+		return fake.ExecuteWithDefaultOverrideStub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.executeWithDefaultOverrideReturns.result1
+	fakeReturns := fake.executeWithDefaultOverrideReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeRunner) ExecuteWithDefaultOverrideCallCount() int {
@@ -171,13 +135,22 @@ func (fake *FakeRunner) ExecuteWithDefaultOverrideCallCount() int {
 	return len(fake.executeWithDefaultOverrideArgsForCall)
 }
 
+func (fake *FakeRunner) ExecuteWithDefaultOverrideCalls(stub func(interface{}, func(interface{}) (interface{}, error), io.Writer) error) {
+	fake.executeWithDefaultOverrideMutex.Lock()
+	defer fake.executeWithDefaultOverrideMutex.Unlock()
+	fake.ExecuteWithDefaultOverrideStub = stub
+}
+
 func (fake *FakeRunner) ExecuteWithDefaultOverrideArgsForCall(i int) (interface{}, func(interface{}) (interface{}, error), io.Writer) {
 	fake.executeWithDefaultOverrideMutex.RLock()
 	defer fake.executeWithDefaultOverrideMutex.RUnlock()
-	return fake.executeWithDefaultOverrideArgsForCall[i].commandOpts, fake.executeWithDefaultOverrideArgsForCall[i].override, fake.executeWithDefaultOverrideArgsForCall[i].writer
+	argsForCall := fake.executeWithDefaultOverrideArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *FakeRunner) ExecuteWithDefaultOverrideReturns(result1 error) {
+	fake.executeWithDefaultOverrideMutex.Lock()
+	defer fake.executeWithDefaultOverrideMutex.Unlock()
 	fake.ExecuteWithDefaultOverrideStub = nil
 	fake.executeWithDefaultOverrideReturns = struct {
 		result1 error
@@ -185,6 +158,8 @@ func (fake *FakeRunner) ExecuteWithDefaultOverrideReturns(result1 error) {
 }
 
 func (fake *FakeRunner) ExecuteWithDefaultOverrideReturnsOnCall(i int, result1 error) {
+	fake.executeWithDefaultOverrideMutex.Lock()
+	defer fake.executeWithDefaultOverrideMutex.Unlock()
 	fake.ExecuteWithDefaultOverrideStub = nil
 	if fake.executeWithDefaultOverrideReturnsOnCall == nil {
 		fake.executeWithDefaultOverrideReturnsOnCall = make(map[int]struct {
@@ -196,15 +171,76 @@ func (fake *FakeRunner) ExecuteWithDefaultOverrideReturnsOnCall(i int, result1 e
 	}{result1}
 }
 
+func (fake *FakeRunner) ExecuteWithWriter(arg1 interface{}, arg2 io.Writer) error {
+	fake.executeWithWriterMutex.Lock()
+	ret, specificReturn := fake.executeWithWriterReturnsOnCall[len(fake.executeWithWriterArgsForCall)]
+	fake.executeWithWriterArgsForCall = append(fake.executeWithWriterArgsForCall, struct {
+		arg1 interface{}
+		arg2 io.Writer
+	}{arg1, arg2})
+	fake.recordInvocation("ExecuteWithWriter", []interface{}{arg1, arg2})
+	fake.executeWithWriterMutex.Unlock()
+	if fake.ExecuteWithWriterStub != nil {
+		return fake.ExecuteWithWriterStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.executeWithWriterReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeRunner) ExecuteWithWriterCallCount() int {
+	fake.executeWithWriterMutex.RLock()
+	defer fake.executeWithWriterMutex.RUnlock()
+	return len(fake.executeWithWriterArgsForCall)
+}
+
+func (fake *FakeRunner) ExecuteWithWriterCalls(stub func(interface{}, io.Writer) error) {
+	fake.executeWithWriterMutex.Lock()
+	defer fake.executeWithWriterMutex.Unlock()
+	fake.ExecuteWithWriterStub = stub
+}
+
+func (fake *FakeRunner) ExecuteWithWriterArgsForCall(i int) (interface{}, io.Writer) {
+	fake.executeWithWriterMutex.RLock()
+	defer fake.executeWithWriterMutex.RUnlock()
+	argsForCall := fake.executeWithWriterArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeRunner) ExecuteWithWriterReturns(result1 error) {
+	fake.executeWithWriterMutex.Lock()
+	defer fake.executeWithWriterMutex.Unlock()
+	fake.ExecuteWithWriterStub = nil
+	fake.executeWithWriterReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeRunner) ExecuteWithWriterReturnsOnCall(i int, result1 error) {
+	fake.executeWithWriterMutex.Lock()
+	defer fake.executeWithWriterMutex.Unlock()
+	fake.ExecuteWithWriterStub = nil
+	if fake.executeWithWriterReturnsOnCall == nil {
+		fake.executeWithWriterReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.executeWithWriterReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeRunner) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.executeWithWriterMutex.RLock()
-	defer fake.executeWithWriterMutex.RUnlock()
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
 	fake.executeWithDefaultOverrideMutex.RLock()
 	defer fake.executeWithDefaultOverrideMutex.RUnlock()
+	fake.executeWithWriterMutex.RLock()
+	defer fake.executeWithWriterMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

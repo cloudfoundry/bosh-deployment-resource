@@ -8,6 +8,18 @@ import (
 )
 
 type FakeProxy struct {
+	AddrStub        func() (string, error)
+	addrMutex       sync.RWMutex
+	addrArgsForCall []struct {
+	}
+	addrReturns struct {
+		result1 string
+		result2 error
+	}
+	addrReturnsOnCall map[int]struct {
+		result1 string
+		result2 error
+	}
 	StartStub        func(string, string, string) error
 	startMutex       sync.RWMutex
 	startArgsForCall []struct {
@@ -21,19 +33,63 @@ type FakeProxy struct {
 	startReturnsOnCall map[int]struct {
 		result1 error
 	}
-	AddrStub        func() (string, error)
-	addrMutex       sync.RWMutex
-	addrArgsForCall []struct{}
-	addrReturns     struct {
-		result1 string
-		result2 error
-	}
-	addrReturnsOnCall map[int]struct {
-		result1 string
-		result2 error
-	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeProxy) Addr() (string, error) {
+	fake.addrMutex.Lock()
+	ret, specificReturn := fake.addrReturnsOnCall[len(fake.addrArgsForCall)]
+	fake.addrArgsForCall = append(fake.addrArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Addr", []interface{}{})
+	fake.addrMutex.Unlock()
+	if fake.AddrStub != nil {
+		return fake.AddrStub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.addrReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeProxy) AddrCallCount() int {
+	fake.addrMutex.RLock()
+	defer fake.addrMutex.RUnlock()
+	return len(fake.addrArgsForCall)
+}
+
+func (fake *FakeProxy) AddrCalls(stub func() (string, error)) {
+	fake.addrMutex.Lock()
+	defer fake.addrMutex.Unlock()
+	fake.AddrStub = stub
+}
+
+func (fake *FakeProxy) AddrReturns(result1 string, result2 error) {
+	fake.addrMutex.Lock()
+	defer fake.addrMutex.Unlock()
+	fake.AddrStub = nil
+	fake.addrReturns = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeProxy) AddrReturnsOnCall(i int, result1 string, result2 error) {
+	fake.addrMutex.Lock()
+	defer fake.addrMutex.Unlock()
+	fake.AddrStub = nil
+	if fake.addrReturnsOnCall == nil {
+		fake.addrReturnsOnCall = make(map[int]struct {
+			result1 string
+			result2 error
+		})
+	}
+	fake.addrReturnsOnCall[i] = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeProxy) Start(arg1 string, arg2 string, arg3 string) error {
@@ -52,7 +108,8 @@ func (fake *FakeProxy) Start(arg1 string, arg2 string, arg3 string) error {
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.startReturns.result1
+	fakeReturns := fake.startReturns
+	return fakeReturns.result1
 }
 
 func (fake *FakeProxy) StartCallCount() int {
@@ -61,13 +118,22 @@ func (fake *FakeProxy) StartCallCount() int {
 	return len(fake.startArgsForCall)
 }
 
+func (fake *FakeProxy) StartCalls(stub func(string, string, string) error) {
+	fake.startMutex.Lock()
+	defer fake.startMutex.Unlock()
+	fake.StartStub = stub
+}
+
 func (fake *FakeProxy) StartArgsForCall(i int) (string, string, string) {
 	fake.startMutex.RLock()
 	defer fake.startMutex.RUnlock()
-	return fake.startArgsForCall[i].arg1, fake.startArgsForCall[i].arg2, fake.startArgsForCall[i].arg3
+	argsForCall := fake.startArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *FakeProxy) StartReturns(result1 error) {
+	fake.startMutex.Lock()
+	defer fake.startMutex.Unlock()
 	fake.StartStub = nil
 	fake.startReturns = struct {
 		result1 error
@@ -75,6 +141,8 @@ func (fake *FakeProxy) StartReturns(result1 error) {
 }
 
 func (fake *FakeProxy) StartReturnsOnCall(i int, result1 error) {
+	fake.startMutex.Lock()
+	defer fake.startMutex.Unlock()
 	fake.StartStub = nil
 	if fake.startReturnsOnCall == nil {
 		fake.startReturnsOnCall = make(map[int]struct {
@@ -86,56 +154,13 @@ func (fake *FakeProxy) StartReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeProxy) Addr() (string, error) {
-	fake.addrMutex.Lock()
-	ret, specificReturn := fake.addrReturnsOnCall[len(fake.addrArgsForCall)]
-	fake.addrArgsForCall = append(fake.addrArgsForCall, struct{}{})
-	fake.recordInvocation("Addr", []interface{}{})
-	fake.addrMutex.Unlock()
-	if fake.AddrStub != nil {
-		return fake.AddrStub()
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.addrReturns.result1, fake.addrReturns.result2
-}
-
-func (fake *FakeProxy) AddrCallCount() int {
-	fake.addrMutex.RLock()
-	defer fake.addrMutex.RUnlock()
-	return len(fake.addrArgsForCall)
-}
-
-func (fake *FakeProxy) AddrReturns(result1 string, result2 error) {
-	fake.AddrStub = nil
-	fake.addrReturns = struct {
-		result1 string
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeProxy) AddrReturnsOnCall(i int, result1 string, result2 error) {
-	fake.AddrStub = nil
-	if fake.addrReturnsOnCall == nil {
-		fake.addrReturnsOnCall = make(map[int]struct {
-			result1 string
-			result2 error
-		})
-	}
-	fake.addrReturnsOnCall[i] = struct {
-		result1 string
-		result2 error
-	}{result1, result2}
-}
-
 func (fake *FakeProxy) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.startMutex.RLock()
-	defer fake.startMutex.RUnlock()
 	fake.addrMutex.RLock()
 	defer fake.addrMutex.RUnlock()
+	fake.startMutex.RLock()
+	defer fake.startMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

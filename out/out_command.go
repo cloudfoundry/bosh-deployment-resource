@@ -20,13 +20,16 @@ type OutResponse struct {
 
 type OutCommand struct {
 	director           bosh.Director
+	boshIOClient       bosh.BoshIO
 	storageClient      storage.StorageClient
 	resourcesDirectory string
 }
 
-func NewOutCommand(director bosh.Director, storageClient storage.StorageClient, resourcesDirectory string) OutCommand {
+func NewOutCommand(director bosh.Director, boshIOClient bosh.BoshIO,
+	storageClient storage.StorageClient, resourcesDirectory string) OutCommand {
 	return OutCommand{
 		director:           director,
+		boshIOClient:       boshIOClient,
 		storageClient:      storageClient,
 		resourcesDirectory: resourcesDirectory,
 	}
@@ -84,6 +87,14 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 	stemcellMetadata, err := c.consumeStemcells(manifest, outRequest.Params.Stemcells)
 	if err != nil {
 		return OutResponse{}, err
+	}
+
+	if outRequest.Params.BoshIOStemcellType != "" {
+		boshIOStemcellMeta, err := c.uploadBoshIOStemcells(manifest, outRequest.Params.BoshIOStemcellType == "light")
+		if err != nil {
+			return OutResponse{}, err
+		}
+		stemcellMetadata = append(stemcellMetadata, boshIOStemcellMeta...)
 	}
 
 	deployParams := bosh.DeployParams{
@@ -181,6 +192,39 @@ func (c OutCommand) consumeStemcells(manifest bosh.DeploymentManifest, stemcellG
 		metadata = append(metadata, concourse.Metadata{
 			Name:  "stemcell",
 			Value: fmt.Sprintf("%s v%s", stemcell.Name, stemcell.Version),
+		})
+	}
+
+	return metadata, nil
+}
+
+func (c OutCommand) uploadBoshIOStemcells(manifest bosh.DeploymentManifest, light bool) ([]concourse.Metadata, error) {
+	info, err := c.director.Info()
+	if err != nil {
+		return nil, err
+	}
+
+	stemcells, err := manifest.Stemcells()
+	if err != nil {
+		return nil, err
+	}
+
+	metadata := []concourse.Metadata{}
+
+	for _, stemcell := range stemcells {
+		s, err := bosh.LookupBoshIOStemcell(c.boshIOClient, info.CPI, stemcell.OperatingSystem, stemcell.Version, light)
+		if err != nil {
+
+			return nil, err
+		}
+
+		if err := c.director.UploadRemoteStemcell(s.URL, s.Name, s.Version, s.Sha1); err != nil {
+			return nil, err
+		}
+
+		metadata = append(metadata, concourse.Metadata{
+			Name:  "stemcell",
+			Value: fmt.Sprintf("%s v%s", s.Name, s.Version),
 		})
 	}
 

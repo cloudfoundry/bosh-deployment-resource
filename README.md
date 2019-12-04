@@ -141,6 +141,11 @@ deployment manifest and then deploy.
   manifest with version 'latest' will be updated to the actual provided
   stemcell versions.
 
+* `bosh_io_stemcell_type`: *Optional.* Allowed values: `regular` or `light`.
+  When specified will download stemcells from bosh.io based on:
+  the director CPI, the `os` and `version` from the `stemcells`
+  section in the deployment manifest.
+
 * `releases`: *Optional.* An array of globs that should point to where the
   releases used in the deployment can be found. Release entries in the
   manifest with version 'latest' will be updated to the actual provided
