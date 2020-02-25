@@ -22,6 +22,7 @@
   },
   "id": "recommender:v1beta1",
   "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://recommender.mtls.googleapis.com/",
   "name": "recommender",
   "ownerDomain": "google.com",
   "ownerName": "Google",
@@ -122,7 +123,7 @@
                       ],
                       "parameters": {
                         "name": {
-                          "description": "Name of the recommendation.",
+                          "description": "Required. Name of the recommendation.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/recommenders/[^/]+/recommendations/[^/]+$",
                           "required": true,
@@ -152,13 +153,13 @@
                           "type": "string"
                         },
                         "pageSize": {
-                          "description": "Optional. The maximum number of results to return from this request.\nNon-positive values are ignored. If not specified, the server will\ndetermine the number of results to return.",
+                          "description": "Optional. The maximum number of results to return from this request.  Non-positive\nvalues are ignored. If not specified, the server will determine the number\nof results to return.",
                           "format": "int32",
                           "location": "query",
                           "type": "integer"
                         },
                         "pageToken": {
-                          "description": "Optional. If present, retrieves the next batch of results from the\npreceding call to this method. `page_token` must be the value of\n`next_page_token` from the previous response. The values of other method\nparameters must be identical to those in the previous call.",
+                          "description": "Optional. If present, retrieves the next batch of results from the preceding call to\nthis method. `page_token` must be the value of `next_page_token` from the\nprevious response. The values of other method parameters must be identical\nto those in the previous call.",
                           "location": "query",
                           "type": "string"
                         },
@@ -179,7 +180,7 @@
                       ]
                     },
                     "markClaimed": {
-                      "description": "Mark the Recommendation State as Claimed. Users can use this method to\nindicate to the Recommender API that they are starting to apply the\nrecommendation themselves. This stops the recommendation content from being\nupdated.\n\nMarkRecommendationClaimed can be applied to recommendations in CLAIMED,\nSUCCEEDED, FAILED, or ACTIVE state.\n\nRequires the recommender.*.update IAM permission for the specified\nrecommender.",
+                      "description": "Marks the Recommendation State as Claimed. Users can use this method to\nindicate to the Recommender API that they are starting to apply the\nrecommendation themselves. This stops the recommendation content from being\nupdated. Associated insights are frozen and placed in the ACCEPTED state.\n\nMarkRecommendationClaimed can be applied to recommendations in CLAIMED or\nACTIVE state.\n\nRequires the recommender.*.update IAM permission for the specified\nrecommender.",
                       "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/recommenders/{recommendersId}/recommendations/{recommendationsId}:markClaimed",
                       "httpMethod": "POST",
                       "id": "recommender.projects.locations.recommenders.recommendations.markClaimed",
@@ -188,7 +189,7 @@
                       ],
                       "parameters": {
                         "name": {
-                          "description": "Name of the recommendation.",
+                          "description": "Required. Name of the recommendation.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/recommenders/[^/]+/recommendations/[^/]+$",
                           "required": true,
@@ -207,7 +208,7 @@
                       ]
                     },
                     "markFailed": {
-                      "description": "Mark the Recommendation State as Failed. Users can use this method to\nindicate to the Recommender API that they have applied the recommendation\nthemselves, and the operation failed. This stops the recommendation content\nfrom being updated.\n\nMarkRecommendationFailed can be applied to recommendations in ACTIVE,\nCLAIMED, SUCCEEDED, or FAILED state.\n\nRequires the recommender.*.update IAM permission for the specified\nrecommender.",
+                      "description": "Marks the Recommendation State as Failed. Users can use this method to\nindicate to the Recommender API that they have applied the recommendation\nthemselves, and the operation failed. This stops the recommendation content\nfrom being updated. Associated insights are frozen and placed in the\nACCEPTED state.\n\nMarkRecommendationFailed can be applied to recommendations in ACTIVE,\nCLAIMED, SUCCEEDED, or FAILED state.\n\nRequires the recommender.*.update IAM permission for the specified\nrecommender.",
                       "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/recommenders/{recommendersId}/recommendations/{recommendationsId}:markFailed",
                       "httpMethod": "POST",
                       "id": "recommender.projects.locations.recommenders.recommendations.markFailed",
@@ -216,7 +217,7 @@
                       ],
                       "parameters": {
                         "name": {
-                          "description": "Name of the recommendation.",
+                          "description": "Required. Name of the recommendation.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/recommenders/[^/]+/recommendations/[^/]+$",
                           "required": true,
@@ -235,7 +236,7 @@
                       ]
                     },
                     "markSucceeded": {
-                      "description": "Mark the Recommendation State as Succeeded. Users can use this method to\nindicate to the Recommender API that they have applied the recommendation\nthemselves, and the operation was successful. This stops the recommendation\ncontent from being updated.\n\nMarkRecommendationSucceeded can be applied to recommendations in ACTIVE,\nCLAIMED, SUCCEEDED, or FAILED state.\n\nRequires the recommender.*.update IAM permission for the specified\nrecommender.",
+                      "description": "Marks the Recommendation State as Succeeded. Users can use this method to\nindicate to the Recommender API that they have applied the recommendation\nthemselves, and the operation was successful. This stops the recommendation\ncontent from being updated. Associated insights are frozen and placed in\nthe ACCEPTED state.\n\nMarkRecommendationSucceeded can be applied to recommendations in ACTIVE,\nCLAIMED, SUCCEEDED, or FAILED state.\n\nRequires the recommender.*.update IAM permission for the specified\nrecommender.",
                       "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/recommenders/{recommendersId}/recommendations/{recommendationsId}:markSucceeded",
                       "httpMethod": "POST",
                       "id": "recommender.projects.locations.recommenders.recommendations.markSucceeded",
@@ -244,7 +245,7 @@
                       ],
                       "parameters": {
                         "name": {
-                          "description": "Name of the recommendation.",
+                          "description": "Required. Name of the recommendation.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/recommenders/[^/]+/recommendations/[^/]+$",
                           "required": true,
@@ -271,7 +272,7 @@
       }
     }
   },
-  "revision": "20190927",
+  "revision": "20200210",
   "rootUrl": "https://recommender.googleapis.com/",
   "schemas": {
     "GoogleCloudRecommenderV1beta1CostProjection": {
@@ -300,13 +301,15 @@
             "CATEGORY_UNSPECIFIED",
             "COST",
             "SECURITY",
-            "PERFORMANCE"
+            "PERFORMANCE",
+            "MANAGEABILITY"
           ],
           "enumDescriptions": [
             "Default unspecified category. Don't use directly.",
             "Indicates a potential increase or decrease in cost.",
             "Indicates a potential increase or decrease in security.",
-            "Indicates a potential increase or decrease in performance."
+            "Indicates a potential increase or decrease in performance.",
+            "Indicates a potential increase or decrease in manageability."
           ],
           "type": "string"
         },
@@ -340,14 +343,14 @@
       "id": "GoogleCloudRecommenderV1beta1MarkRecommendationClaimedRequest",
       "properties": {
         "etag": {
-          "description": "Fingerprint of the Recommendation. Provides optimistic locking.",
+          "description": "Required. Fingerprint of the Recommendation. Provides optimistic locking.",
           "type": "string"
         },
         "stateMetadata": {
           "additionalProperties": {
             "type": "string"
           },
-          "description": "State properties to include with this state. Overwrites any existing\n`state_metadata`.",
+          "description": "State properties to include with this state. Overwrites any existing\n`state_metadata`.\nKeys must match the regex /^a-z0-9{0,62}$/.\nValues must match the regex /^[a-zA-Z0-9_./-]{0,255}$/.",
           "type": "object"
         }
       },
@@ -365,7 +368,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "State properties to include with this state. Overwrites any existing\n`state_metadata`.",
+          "description": "State properties to include with this state. Overwrites any existing\n`state_metadata`.\nKeys must match the regex /^a-z0-9{0,62}$/.\nValues must match the regex /^[a-zA-Z0-9_./-]{0,255}$/.",
           "type": "object"
         }
       },
@@ -376,14 +379,14 @@
       "id": "GoogleCloudRecommenderV1beta1MarkRecommendationSucceededRequest",
       "properties": {
         "etag": {
-          "description": "Fingerprint of the Recommendation. Provides optimistic locking.",
+          "description": "Required. Fingerprint of the Recommendation. Provides optimistic locking.",
           "type": "string"
         },
         "stateMetadata": {
           "additionalProperties": {
             "type": "string"
           },
-          "description": "State properties to include with this state. Overwrites any existing\n`state_metadata`.",
+          "description": "State properties to include with this state. Overwrites any existing\n`state_metadata`.\nKeys must match the regex /^a-z0-9{0,62}$/.\nValues must match the regex /^[a-zA-Z0-9_./-]{0,255}$/.",
           "type": "object"
         }
       },
@@ -394,7 +397,7 @@
       "id": "GoogleCloudRecommenderV1beta1Operation",
       "properties": {
         "action": {
-          "description": "Type of this operation. Contains one of 'and', 'remove', 'replace', 'move',\n'copy', 'test' and custom operations. This field is case-insensitive and\nalways populated.",
+          "description": "Type of this operation. Contains one of 'and', 'remove', 'replace', 'move',\n'copy', 'test' and 'custom' operations. This field is case-insensitive and\nalways populated.",
           "type": "string"
         },
         "path": {
@@ -405,7 +408,7 @@
           "additionalProperties": {
             "type": "any"
           },
-          "description": "Set of filters to apply if `path` refers to array elements or nested array\nelements in order to narrow down to a single unique element that is being\ntested/modified.\nThis is intended to be an exact match per filter. To perform advanced\nmatching, use path_value_matchers.\n\n* Example: {\n  \"/versions/*/name\" : \"it-123\"\n  \"/versions/*/targetSize/percent\": 20\n }\n* Example: {\n  \"/bindings/*/role\": \"roles/admin\"\n  \"/bindings/*/condition\" : null\n }\n* Example: {\n  \"/bindings/*/role\": \"roles/admin\"\n  \"/bindings/*/members/*\" : [\"x@google.com\", \"y@google.com\"]\n }\nWhen both path_filters and path_value_matchers are set, an implicit AND\nmust be performed.",
+          "description": "Set of filters to apply if `path` refers to array elements or nested array\nelements in order to narrow down to a single unique element that is being\ntested/modified.\nThis is intended to be an exact match per filter. To perform advanced\nmatching, use path_value_matchers.\n\n* Example: {\n  \"/versions/*/name\" : \"it-123\"\n  \"/versions/*/targetSize/percent\": 20\n  }\n* Example: {\n  \"/bindings/*/role\": \"roles/admin\"\n  \"/bindings/*/condition\" : null\n  }\n* Example: {\n  \"/bindings/*/role\": \"roles/admin\"\n  \"/bindings/*/members/*\" : [\"x@google.com\", \"y@google.com\"]\n  }\nWhen both path_filters and path_value_matchers are set, an implicit AND\nmust be performed.",
           "type": "object"
         },
         "pathValueMatchers": {
@@ -485,7 +488,7 @@
           "type": "string"
         },
         "name": {
-          "description": "Name of recommendation.\n\nA project recommendation is represented as\n  projects/[PROJECT_NUMBER]/locations/[LOCATION]/recommenders/[RECOMMENDER_ID]/recommendations/[RECOMMENDATION_ID]",
+          "description": "Name of recommendation.",
           "type": "string"
         },
         "primaryImpact": {

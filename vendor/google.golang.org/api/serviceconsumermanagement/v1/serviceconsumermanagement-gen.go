@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "serviceconsumermanagement:v1"
 const apiName = "serviceconsumermanagement"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*APIService, 
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -673,16 +676,48 @@ func (s *Backend) MarshalJSON() ([]byte, error) {
 // API element.
 type BackendRule struct {
 	// Address: The address of the API backend.
+	//
+	// The scheme is used to determine the backend protocol and
+	// security.
+	// The following schemes are accepted:
+	//
+	//    SCHEME        PROTOCOL    SECURITY
+	//    http://       HTTP        None
+	//    https://      HTTP        TLS
+	//    grpc://       gRPC        None
+	//    grpcs://      gRPC        TLS
+	//
+	// It is recommended to explicitly include a scheme. Leaving out the
+	// scheme
+	// may cause constrasting behaviors across platforms.
+	//
+	// If the port is unspecified, the default is:
+	// - 80 for schemes without TLS
+	// - 443 for schemes with TLS
+	//
+	// For HTTP backends, use protocol
+	// to specify the protocol version.
 	Address string `json:"address,omitempty"`
 
 	// Deadline: The number of seconds to wait for a response from a
-	// request.  The default
-	// deadline for gRPC is infinite (no deadline) and HTTP requests is 5
-	// seconds.
+	// request. The default
+	// varies based on the request protocol and deployment environment.
 	Deadline float64 `json:"deadline,omitempty"`
 
-	// JwtAudience: The JWT audience is used when generating a JWT id token
+	// DisableAuth: When disable_auth is true, a JWT ID token won't be
+	// generated and the
+	// original "Authorization" HTTP header will be preserved. If the header
+	// is
+	// used to carry the original token and is expected by the backend,
+	// this
+	// field must be set to true to preserve the header.
+	DisableAuth bool `json:"disableAuth,omitempty"`
+
+	// JwtAudience: The JWT audience is used when generating a JWT ID token
 	// for the backend.
+	// This ID token will be added in the HTTP "authorization" header, and
+	// sent
+	// to the backend.
 	JwtAudience string `json:"jwtAudience,omitempty"`
 
 	// MinDeadline: Minimum deadline in seconds needed for this method.
@@ -752,6 +787,33 @@ type BackendRule struct {
 	//
 	// https://example.appspot.com/api/company/widgetworks/user/johndoe?timezone=EST
 	PathTranslation string `json:"pathTranslation,omitempty"`
+
+	// Protocol: The protocol used for sending a request to the backend.
+	// The supported values are "http/1.1" and "h2".
+	//
+	// The default value is inferred from the scheme in the
+	// address field:
+	//
+	//    SCHEME        PROTOCOL
+	//    http://       http/1.1
+	//    https://      http/1.1
+	//    grpc://       h2
+	//    grpcs://      h2
+	//
+	// For secure HTTP backends (https://) that support HTTP/2, set this
+	// field
+	// to "h2" for improved performance.
+	//
+	// Configuring this field to non-default values is only supported for
+	// secure
+	// HTTP backends. This field will be ignored for all other
+	// backends.
+	//
+	// See
+	// https://www.iana.org/assignments/tls-extensiontype-valu
+	// es/tls-extensiontype-values.xhtml#alpn-protocol-ids
+	// for more details on the supported values.
+	Protocol string `json:"protocol,omitempty"`
 
 	// Selector: Selects the methods to which this rule applies.
 	//
@@ -2144,6 +2206,11 @@ type HttpRule struct {
 	// the nesting may only be one level deep).
 	AdditionalBindings []*HttpRule `json:"additionalBindings,omitempty"`
 
+	// AllowHalfDuplex: When this flag is set to true, HTTP requests will be
+	// allowed to invoke a
+	// half-duplex streaming method.
+	AllowHalfDuplex bool `json:"allowHalfDuplex,omitempty"`
+
 	// Body: The name of the request field whose value is mapped to the HTTP
 	// request
 	// body, or `*` for mapping all request fields not captured by the
@@ -2683,11 +2750,39 @@ type MetricDescriptor struct {
 	//     "appengine.googleapis.com/http/server/response_latencies"
 	Type string `json:"type,omitempty"`
 
-	// Unit: The unit in which the metric value is reported. It is only
+	// Unit: The units in which the metric value is reported. It is only
 	// applicable
-	// if the `value_type` is `INT64`, `DOUBLE`, or `DISTRIBUTION`.
-	// The
-	// supported units are a subset of [The Unified Code for Units
+	// if the `value_type` is `INT64`, `DOUBLE`, or `DISTRIBUTION`. The
+	// `unit`
+	// defines the representation of the stored metric values.
+	//
+	// Different systems may scale the values to be more easily displayed
+	// (so a
+	// value of `0.02KBy` _might_ be displayed as `20By`, and a value
+	// of
+	// `3523KBy` _might_ be displayed as `3.5MBy`). However, if the `unit`
+	// is
+	// `KBy`, then the value of the metric is always in thousands of bytes,
+	// no
+	// matter how it may be displayed..
+	//
+	// If you want a custom metric to record the exact number of CPU-seconds
+	// used
+	// by a job, you can create an `INT64 CUMULATIVE` metric whose `unit`
+	// is
+	// `s{CPU}` (or equivalently `1s{CPU}` or just `s`). If the job uses
+	// 12,005
+	// CPU-seconds, then the value is written as `12005`.
+	//
+	// Alternatively, if you want a custom metric to record data in a
+	// more
+	// granular way, you can create a `DOUBLE CUMULATIVE` metric whose
+	// `unit` is
+	// `ks{CPU}`, and then write the value `12.005` (which is
+	// `12005/1000`),
+	// or use `Kis{CPU}` and write `11.723` (which is `12005/1024`).
+	//
+	// The supported units are a subset of [The Unified Code for Units
 	// of
 	// Measure](http://unitsofmeasure.org/ucum.html) standard:
 	//
@@ -2702,33 +2797,42 @@ type MetricDescriptor struct {
 	//
 	// **Prefixes (PREFIX)**
 	//
-	// * `k`     kilo    (10**3)
-	// * `M`     mega    (10**6)
-	// * `G`     giga    (10**9)
-	// * `T`     tera    (10**12)
-	// * `P`     peta    (10**15)
-	// * `E`     exa     (10**18)
-	// * `Z`     zetta   (10**21)
-	// * `Y`     yotta   (10**24)
-	// * `m`     milli   (10**-3)
-	// * `u`     micro   (10**-6)
-	// * `n`     nano    (10**-9)
-	// * `p`     pico    (10**-12)
-	// * `f`     femto   (10**-15)
-	// * `a`     atto    (10**-18)
-	// * `z`     zepto   (10**-21)
-	// * `y`     yocto   (10**-24)
-	// * `Ki`    kibi    (2**10)
-	// * `Mi`    mebi    (2**20)
-	// * `Gi`    gibi    (2**30)
-	// * `Ti`    tebi    (2**40)
+	// * `k`     kilo    (10^3)
+	// * `M`     mega    (10^6)
+	// * `G`     giga    (10^9)
+	// * `T`     tera    (10^12)
+	// * `P`     peta    (10^15)
+	// * `E`     exa     (10^18)
+	// * `Z`     zetta   (10^21)
+	// * `Y`     yotta   (10^24)
+	//
+	// * `m`     milli   (10^-3)
+	// * `u`     micro   (10^-6)
+	// * `n`     nano    (10^-9)
+	// * `p`     pico    (10^-12)
+	// * `f`     femto   (10^-15)
+	// * `a`     atto    (10^-18)
+	// * `z`     zepto   (10^-21)
+	// * `y`     yocto   (10^-24)
+	//
+	// * `Ki`    kibi    (2^10)
+	// * `Mi`    mebi    (2^20)
+	// * `Gi`    gibi    (2^30)
+	// * `Ti`    tebi    (2^40)
+	// * `Pi`    pebi    (2^50)
 	//
 	// **Grammar**
 	//
 	// The grammar also includes these connectors:
 	//
-	// * `/`    division (as an infix operator, e.g. `1/s`).
-	// * `.`    multiplication (as an infix operator, e.g. `GBy.d`)
+	// * `/`    division or ratio (as an infix operator). For examples,
+	//          `kBy/{email}` or `MiBy/10ms` (although you should almost
+	// never
+	//          have `/s` in a metric `unit`; rates should always be
+	// computed at
+	//          query time from the underlying cumulative or delta value).
+	// * `.`    multiplication or composition (as an infix operator). For
+	//          examples, `GBy.d` or `k{watt}.h`.
 	//
 	// The grammar for a unit is as follows:
 	//
@@ -2743,15 +2847,35 @@ type MetricDescriptor struct {
 	//
 	// Notes:
 	//
-	// * `Annotation` is just a comment if it follows a `UNIT` and is
-	//    equivalent to `1` if it is used alone. For examples,
-	//    `{requests}/s == 1/s`, `By{transmitted}/s == By/s`.
+	// * `Annotation` is just a comment if it follows a `UNIT`. If the
+	// annotation
+	//    is used alone, then the unit is equivalent to `1`. For examples,
+	//    `{request}/s == 1/s`, `By{transmitted}/s == By/s`.
 	// * `NAME` is a sequence of non-blank printable ASCII characters not
-	//    containing '{' or '}'.
-	// * `1` represents dimensionless value 1, such as in `1/s`.
-	// * `%` represents dimensionless value 1/100, and annotates values
+	//    containing `{` or `}`.
+	// * `1` represents a unitary [dimensionless
+	//    unit](https://en.wikipedia.org/wiki/Dimensionless_quantity) of 1,
+	// such
+	//    as in `1/s`. It is typically used when none of the basic units
+	// are
+	//    appropriate. For example, "new users per day" can be represented
+	// as
+	//    `1/d` or `{new-users}/d` (and a metric value `5` would mean "5
+	// new
+	//    users). Alternatively, "thousands of page views per day" would be
+	//    represented as `1000/d` or `k1/d` or `k{page_views}/d` (and a
+	// metric
+	//    value of `5.3` would mean "5300 page views per day").
+	// * `%` represents dimensionless value of 1/100, and annotates values
 	// giving
-	//    a percentage.
+	//    a percentage (so the metric values are typically in the range of
+	// 0..100,
+	//    and a metric value `3` means "3 percent").
+	// * `10^2.%` indicates a metric contains a ratio, typically in the
+	// range
+	//    0..1, that will be multiplied by 100 and displayed as a
+	// percentage
+	//    (so a metric value `0.03` means "3 percent").
 	Unit string `json:"unit,omitempty"`
 
 	// ValueType: Whether the measurement is an integer, a floating-point
@@ -3974,9 +4098,11 @@ type Service struct {
 
 	// Id: A unique ID for a specific instance of this message, typically
 	// assigned
-	// by the client for tracking purpose. If empty, the server may choose
-	// to
-	// generate one instead. Must be no longer than 60 characters.
+	// by the client for tracking purpose. Must be no longer than 63
+	// characters
+	// and only lower case letters, digits, '.', '_' and '-' are allowed.
+	// If
+	// empty, the server may choose to generate one instead.
 	Id string `json:"id,omitempty"`
 
 	// Logging: Logging configuration.
@@ -4108,6 +4234,61 @@ type ServiceAccountConfig struct {
 
 func (s *ServiceAccountConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod ServiceAccountConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ServiceIdentity: The per-product per-project service identity for a
+// service.
+//
+//
+// Use this field to configure per-product per-project service
+// identity.
+// Example of a service identity configuration.
+//
+//     usage:
+//       service_identity:
+//       - service_account_parent: "projects/123456789"
+//         display_name: "Cloud XXX Service Agent"
+//         description: "Used as the identity of Cloud XXX to access
+// resources"
+type ServiceIdentity struct {
+	// Description: Optional. A user-specified opaque description of the
+	// service account.
+	// Must be less than or equal to 256 UTF-8 bytes.
+	Description string `json:"description,omitempty"`
+
+	// DisplayName: Optional. A user-specified name for the service
+	// account.
+	// Must be less than or equal to 100 UTF-8 bytes.
+	DisplayName string `json:"displayName,omitempty"`
+
+	// ServiceAccountParent: A service account project that hosts the
+	// service accounts.
+	//
+	// An example name would be:
+	// `projects/123456789`
+	ServiceAccountParent string `json:"serviceAccountParent,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Description") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Description") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ServiceIdentity) MarshalJSON() ([]byte, error) {
+	type NoMethod ServiceIdentity
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -4691,6 +4872,10 @@ type Usage struct {
 	// order.
 	Rules []*UsageRule `json:"rules,omitempty"`
 
+	// ServiceIdentity: The configuration of a per-product per-project
+	// service identity.
+	ServiceIdentity *ServiceIdentity `json:"serviceIdentity,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g.
 	// "ProducerNotificationChannel") to unconditionally include in API
 	// requests. By default, fields with empty values are omitted from API
@@ -4872,6 +5057,39 @@ type V1Beta1DisableConsumerResponse struct {
 type V1Beta1EnableConsumerResponse struct {
 }
 
+// V1Beta1GenerateServiceIdentityResponse: Response message for the
+// `GenerateServiceIdentity` method.
+//
+// This response message is assigned to the `response` field of the
+// returned
+// Operation when that operation is done.
+type V1Beta1GenerateServiceIdentityResponse struct {
+	// Identity: ServiceIdentity that was created or retrieved.
+	Identity *V1Beta1ServiceIdentity `json:"identity,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Identity") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Identity") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *V1Beta1GenerateServiceIdentityResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod V1Beta1GenerateServiceIdentityResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // V1Beta1ImportProducerOverridesResponse: Response message for
 // ImportProducerOverrides
 type V1Beta1ImportProducerOverridesResponse struct {
@@ -4903,8 +5121,9 @@ func (s *V1Beta1ImportProducerOverridesResponse) MarshalJSON() ([]byte, error) {
 
 // V1Beta1QuotaOverride: A quota override
 type V1Beta1QuotaOverride struct {
-	// Dimensions: If this map is nonempty, then this override applies only
-	// to specific values
+	// Dimensions:
+	// If this map is nonempty, then this override applies only to specific
+	// values
 	// for dimensions defined in the limit unit.
 	//
 	// For example, an override on a limit with the unit
@@ -4990,6 +5209,93 @@ func (s *V1Beta1QuotaOverride) MarshalJSON() ([]byte, error) {
 type V1Beta1RefreshConsumerResponse struct {
 }
 
+// V1Beta1ServiceIdentity: A service identity in the Identity and Access
+// Management API.
+type V1Beta1ServiceIdentity struct {
+	// Email: The email address of the service identity.
+	Email string `json:"email,omitempty"`
+
+	// Name: P4 service identity resource name.
+	//
+	// An example name would
+	// be:
+	// `services/serviceconsumermanagement.googleapis.com/projects/123/se
+	// rviceIdentities/default`
+	Name string `json:"name,omitempty"`
+
+	// Tag: The P4 service identity configuration tag. This must be defined
+	// in
+	// activation_grants. If not specified when creating the account, the
+	// tag is
+	// set to "default".
+	Tag string `json:"tag,omitempty"`
+
+	// UniqueId: The unique and stable id of the service identity.
+	UniqueId string `json:"uniqueId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Email") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Email") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *V1Beta1ServiceIdentity) MarshalJSON() ([]byte, error) {
+	type NoMethod V1Beta1ServiceIdentity
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// V1DefaultIdentity: A default identity in the Identity and Access
+// Management API.
+type V1DefaultIdentity struct {
+	// Email: The email address of the default identity.
+	Email string `json:"email,omitempty"`
+
+	// Name: Default identity resource name.
+	//
+	// An example name would
+	// be:
+	// `services/serviceconsumermanagement.googleapis.com/projects/123/de
+	// faultIdentity`
+	Name string `json:"name,omitempty"`
+
+	// UniqueId: The unique and stable id of the default identity.
+	UniqueId string `json:"uniqueId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Email") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Email") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *V1DefaultIdentity) MarshalJSON() ([]byte, error) {
+	type NoMethod V1DefaultIdentity
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // V1DisableConsumerResponse: Response message for the `DisableConsumer`
 // method.
 // This response message is assigned to the `response` field of the
@@ -5004,6 +5310,69 @@ type V1DisableConsumerResponse struct {
 // returned
 // Operation when that operation is done.
 type V1EnableConsumerResponse struct {
+}
+
+// V1GenerateDefaultIdentityResponse: Response message for the
+// `GenerateDefaultIdentity` method.
+//
+// This response message is assigned to the `response` field of the
+// returned
+// Operation when that operation is done.
+type V1GenerateDefaultIdentityResponse struct {
+	// AttachStatus: Status of the role attachment. Under development
+	// (go/si-attach-role),
+	// currently always return ATTACH_STATUS_UNSPECIFIED)
+	//
+	// Possible values:
+	//   "ATTACH_STATUS_UNSPECIFIED" - Indicates that the AttachStatus was
+	// not set.
+	//   "ATTACHED" - The default identity was attached to a role
+	// successfully in this request.
+	//   "ATTACH_SKIPPED" - The request specified that no attempt should be
+	// made to attach the role.
+	//   "PREVIOUSLY_ATTACHED" - Role was attached to the consumer project
+	// at some point in time. Tenant
+	// manager doesn't make assertion about the current state of the
+	// identity
+	// with respect to the consumer.
+	//
+	// Role attachment should happen only once after activation and cannot
+	// be
+	// reattached after customer removes it. (go/si-attach-role)
+	//   "ATTACH_DENIED_BY_ORG_POLICY" - Role attachment was denied in this
+	// request by customer set org policy.
+	// (go/si-attach-role)
+	AttachStatus string `json:"attachStatus,omitempty"`
+
+	// Identity: DefaultIdentity that was created or retrieved.
+	Identity *V1DefaultIdentity `json:"identity,omitempty"`
+
+	// Role: Role attached to consumer project. Empty if not attached in
+	// this
+	// request. (Under development, currently always return empty.)
+	Role string `json:"role,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AttachStatus") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AttachStatus") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *V1GenerateDefaultIdentityResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod V1GenerateDefaultIdentityResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // V1GenerateServiceAccountResponse: Response message for the
@@ -5192,7 +5561,7 @@ func (c *OperationsCancelCall) Header() http.Header {
 
 func (c *OperationsCancelCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5267,7 +5636,7 @@ func (c *OperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, error) 
 	//     "name": {
 	//       "description": "The name of the operation resource to be cancelled.",
 	//       "location": "path",
-	//       "pattern": "^operations/.+$",
+	//       "pattern": "^operations/.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
@@ -5336,7 +5705,7 @@ func (c *OperationsDeleteCall) Header() http.Header {
 
 func (c *OperationsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5406,7 +5775,7 @@ func (c *OperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) 
 	//     "name": {
 	//       "description": "The name of the operation resource to be deleted.",
 	//       "location": "path",
-	//       "pattern": "^operations/.+$",
+	//       "pattern": "^operations/.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
@@ -5481,7 +5850,7 @@ func (c *OperationsGetCall) Header() http.Header {
 
 func (c *OperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5662,7 +6031,7 @@ func (c *OperationsListCall) Header() http.Header {
 
 func (c *OperationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5893,7 +6262,7 @@ func (c *ServicesSearchCall) Header() http.Header {
 
 func (c *ServicesSearchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6073,7 +6442,7 @@ func (c *ServicesTenancyUnitsAddProjectCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsAddProjectCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6239,7 +6608,7 @@ func (c *ServicesTenancyUnitsApplyProjectConfigCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsApplyProjectConfigCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6396,7 +6765,7 @@ func (c *ServicesTenancyUnitsAttachProjectCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsAttachProjectCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6542,7 +6911,7 @@ func (c *ServicesTenancyUnitsCreateCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6684,7 +7053,7 @@ func (c *ServicesTenancyUnitsDeleteCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6831,7 +7200,7 @@ func (c *ServicesTenancyUnitsDeleteProjectCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsDeleteProjectCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7012,7 +7381,7 @@ func (c *ServicesTenancyUnitsListCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7197,7 +7566,7 @@ func (c *ServicesTenancyUnitsRemoveProjectCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsRemoveProjectCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7346,7 +7715,7 @@ func (c *ServicesTenancyUnitsUndeleteProjectCall) Header() http.Header {
 
 func (c *ServicesTenancyUnitsUndeleteProjectCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

@@ -1,6 +1,7 @@
 package httpclient_test
 
 import (
+	"crypto/tls"
 	"net/http"
 
 	. "github.com/onsi/ginkgo"
@@ -16,21 +17,6 @@ var _ = Describe("Default HTTP clients", func() {
 			Expect(client).ToNot(BeNil())
 			Expect(client).To(Equal(DefaultClient))
 		})
-
-		It("disables HTTP Transport keep-alive (disables HTTP/1.[01] connection reuse)", func() {
-			var client *http.Client
-			client = DefaultClient
-
-			Expect(client.Transport.(*http.Transport).DisableKeepAlives).To(Equal(true))
-		})
-
-		It("disables HTTP/2", func() {
-			var client *http.Client
-			client = DefaultClient
-
-			Expect(client.Transport.(*http.Transport).TLSNextProto).ToNot(BeNil())
-			Expect(client.Transport.(*http.Transport).TLSNextProto).To(BeEmpty())
-		})
 	})
 
 	Describe("CreateDefaultClient", func() {
@@ -39,9 +25,9 @@ var _ = Describe("Default HTTP clients", func() {
 			Expect(client.Transport.(*http.Transport).TLSClientConfig.InsecureSkipVerify).To(Equal(false))
 		})
 
-		It("disables HTTP Transport keep-alive (disables HTTP/1.[01] connection reuse)", func() {
+		It("sets a TLS Session Cache", func() {
 			client := CreateDefaultClient(nil)
-			Expect(client.Transport.(*http.Transport).DisableKeepAlives).To(Equal(true))
+			Expect(client.Transport.(*http.Transport).TLSClientConfig.ClientSessionCache).To(Equal(tls.NewLRUClientSessionCache(0)))
 		})
 	})
 
@@ -49,11 +35,6 @@ var _ = Describe("Default HTTP clients", func() {
 		It("skips ssl verification", func() {
 			client := CreateDefaultClientInsecureSkipVerify()
 			Expect(client.Transport.(*http.Transport).TLSClientConfig.InsecureSkipVerify).To(Equal(true))
-		})
-
-		It("disables HTTP Transport keep-alive (disables HTTP/1.[01] connection reuse)", func() {
-			client := CreateDefaultClientInsecureSkipVerify()
-			Expect(client.Transport.(*http.Transport).DisableKeepAlives).To(Equal(true))
 		})
 	})
 })

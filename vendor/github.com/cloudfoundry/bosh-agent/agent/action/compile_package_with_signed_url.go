@@ -10,17 +10,14 @@ import (
 )
 
 type CompilePackageWithSignedURLRequest struct {
-	PackageGetSignedURL string `json:"package_get_signed_url"`
-	UploadSignedURL     string `json:"upload_signed_url"`
+	PackageGetSignedURL string            `json:"package_get_signed_url"`
+	UploadSignedURL     string            `json:"upload_signed_url"`
+	BlobstoreHeaders    map[string]string `json:"blobstore_headers"`
 
 	Digest  boshcrypto.MultipleDigest `json:"digest"`
 	Name    string                    `json:"name"`
 	Version string                    `json:"version"`
 	Deps    boshcomp.Dependencies     `json:"deps"`
-}
-
-type CompilePackageWithSignedURLResponse struct {
-	SHA1Digest string `json:"sha1_digest"`
 }
 
 type CompilePackageWithSignedURL struct {
@@ -33,13 +30,14 @@ func NewCompilePackageWithSignedURL(compiler boshcomp.Compiler) (compilePackage 
 	}
 }
 
-func (a CompilePackageWithSignedURL) Run(request CompilePackageWithSignedURLRequest) (CompilePackageWithSignedURLResponse, error) {
+func (a CompilePackageWithSignedURL) Run(request CompilePackageWithSignedURLRequest) (map[string]interface{}, error) {
 	pkg := boshcomp.Package{
 		Name:                request.Name,
 		Sha1:                request.Digest,
 		Version:             request.Version,
 		PackageGetSignedURL: request.PackageGetSignedURL,
 		UploadSignedURL:     request.UploadSignedURL,
+		BlobstoreHeaders:    request.BlobstoreHeaders,
 	}
 
 	modelsDeps := []boshmodels.Package{}
@@ -49,20 +47,25 @@ func (a CompilePackageWithSignedURL) Run(request CompilePackageWithSignedURLRequ
 			Name:    dep.Name,
 			Version: dep.Version,
 			Source: boshmodels.Source{
-				Sha1:        dep.Sha1,
-				BlobstoreID: dep.BlobstoreID,
-				SignedURL:   dep.PackageGetSignedURL,
+				Sha1:             dep.Sha1,
+				BlobstoreID:      dep.BlobstoreID,
+				SignedURL:        dep.PackageGetSignedURL,
+				BlobstoreHeaders: dep.BlobstoreHeaders,
 			},
 		})
 	}
 
 	_, uploadedDigest, err := a.compiler.Compile(pkg, modelsDeps)
 	if err != nil {
-		return CompilePackageWithSignedURLResponse{}, bosherr.WrapErrorf(err, "Compiling package %s", pkg.Name)
+		return map[string]interface{}{}, bosherr.WrapErrorf(err, "Compiling package %s", pkg.Name)
 	}
 
-	return CompilePackageWithSignedURLResponse{
-		SHA1Digest: uploadedDigest.String(),
+	result := map[string]string{
+		"sha1": uploadedDigest.String(),
+	}
+
+	return map[string]interface{}{
+		"result": result,
 	}, nil
 }
 

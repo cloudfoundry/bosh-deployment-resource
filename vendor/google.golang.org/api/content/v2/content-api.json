@@ -15,7 +15,7 @@
   "description": "Manages product items, inventory, and Merchant Center accounts for Google Shopping.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/shopping-content",
-  "etag": "\"LYADMvHWYH2ul9D6m9UT9gT77YM/0ZXI0F-rKIgpC1lqQi1oyLuZu2Q\"",
+  "etag": "\"LYADMvHWYH2ul9D6m9UT9gT77YM/MOD2emMoRZyg-9pb89hsJxmViI4\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -1433,146 +1433,6 @@
         }
       }
     },
-    "orderpayments": {
-      "methods": {
-        "notifyauthapproved": {
-          "description": "Notify about successfully authorizing user's payment method for a given amount.",
-          "httpMethod": "POST",
-          "id": "content.orderpayments.notifyauthapproved",
-          "parameterOrder": [
-            "merchantId",
-            "orderId"
-          ],
-          "parameters": {
-            "merchantId": {
-              "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
-              "format": "uint64",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            },
-            "orderId": {
-              "description": "The ID of the order for for which payment authorization is happening.",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "path": "{merchantId}/orderpayments/{orderId}/notifyAuthApproved",
-          "request": {
-            "$ref": "OrderpaymentsNotifyAuthApprovedRequest"
-          },
-          "response": {
-            "$ref": "OrderpaymentsNotifyAuthApprovedResponse"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/content"
-          ]
-        },
-        "notifyauthdeclined": {
-          "description": "Notify about failure to authorize user's payment method.",
-          "httpMethod": "POST",
-          "id": "content.orderpayments.notifyauthdeclined",
-          "parameterOrder": [
-            "merchantId",
-            "orderId"
-          ],
-          "parameters": {
-            "merchantId": {
-              "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
-              "format": "uint64",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            },
-            "orderId": {
-              "description": "The ID of the order for which payment authorization was declined.",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "path": "{merchantId}/orderpayments/{orderId}/notifyAuthDeclined",
-          "request": {
-            "$ref": "OrderpaymentsNotifyAuthDeclinedRequest"
-          },
-          "response": {
-            "$ref": "OrderpaymentsNotifyAuthDeclinedResponse"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/content"
-          ]
-        },
-        "notifycharge": {
-          "description": "Notify about charge on user's selected payments method.",
-          "httpMethod": "POST",
-          "id": "content.orderpayments.notifycharge",
-          "parameterOrder": [
-            "merchantId",
-            "orderId"
-          ],
-          "parameters": {
-            "merchantId": {
-              "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
-              "format": "uint64",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            },
-            "orderId": {
-              "description": "The ID of the order for which charge is happening.",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "path": "{merchantId}/orderpayments/{orderId}/notifyCharge",
-          "request": {
-            "$ref": "OrderpaymentsNotifyChargeRequest"
-          },
-          "response": {
-            "$ref": "OrderpaymentsNotifyChargeResponse"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/content"
-          ]
-        },
-        "notifyrefund": {
-          "description": "Notify about refund on user's selected payments method.",
-          "httpMethod": "POST",
-          "id": "content.orderpayments.notifyrefund",
-          "parameterOrder": [
-            "merchantId",
-            "orderId"
-          ],
-          "parameters": {
-            "merchantId": {
-              "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
-              "format": "uint64",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            },
-            "orderId": {
-              "description": "The ID of the order for which charge is happening.",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "path": "{merchantId}/orderpayments/{orderId}/notifyRefund",
-          "request": {
-            "$ref": "OrderpaymentsNotifyRefundRequest"
-          },
-          "response": {
-            "$ref": "OrderpaymentsNotifyRefundResponse"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/content"
-          ]
-        }
-      }
-    },
     "orderreports": {
       "methods": {
         "listdisbursements": {
@@ -2105,9 +1965,11 @@
                 "template1",
                 "template1a",
                 "template1b",
-                "template2"
+                "template2",
+                "template3"
               ],
               "enumDescriptions": [
+                "",
                 "",
                 "",
                 "",
@@ -3198,6 +3060,30 @@
             "https://www.googleapis.com/auth/content"
           ]
         },
+        "getsupportedpickupservices": {
+          "description": "Retrieves supported pickup services for an account.",
+          "httpMethod": "GET",
+          "id": "content.shippingsettings.getsupportedpickupservices",
+          "parameterOrder": [
+            "merchantId"
+          ],
+          "parameters": {
+            "merchantId": {
+              "description": "The ID of the account for which to retrieve the supported pickup services.",
+              "format": "uint64",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{merchantId}/supportedPickupServices",
+          "response": {
+            "$ref": "ShippingsettingsGetSupportedPickupServicesResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/content"
+          ]
+        },
         "list": {
           "description": "Lists the shipping settings of the sub-accounts in your Merchant Center account.",
           "httpMethod": "GET",
@@ -3276,11 +3162,11 @@
       }
     }
   },
-  "revision": "20190930",
+  "revision": "20200110",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Account": {
-      "description": "Account data. After the creation of a new account it may take a few minutes before it is fully operational. The methods delete, insert, patch, and update require the admin role.",
+      "description": "Account data. After the creation of a new account it may take a few minutes before it is fully operational. The methods delete, insert, and update require the admin role.",
       "id": "Account",
       "properties": {
         "adultContent": {
@@ -4625,7 +4511,7 @@
           "type": "array"
         },
         "includedDestinations": {
-          "description": "The list of destinations to include for this target (corresponds to checked check boxes in Merchant Center). Default destinations are always included unless provided in excludedDestinations.",
+          "description": "The list of destinations to include for this target (corresponds to checked check boxes in Merchant Center). Default destinations are always included unless provided in excludedDestinations.\n\nList of supported destinations (if available to the account):  \n- DisplayAds \n- Shopping \n- ShoppingActions \n- SurfacesAcrossGoogle",
           "items": {
             "type": "string"
           },
@@ -5843,7 +5729,7 @@
       "type": "object"
     },
     "Order": {
-      "description": "Order. All methods require the order manager role.",
+      "description": "Order. Production access (all methods) requires the order manager role. Sandbox access does not.",
       "id": "Order",
       "properties": {
         "acknowledged": {
@@ -6011,7 +5897,7 @@
           "type": "integer"
         },
         "reason": {
-          "description": "The reason for the cancellation. Orders that are cancelled with a noInventory reason will lead to the removal of the product from Shopping Actions until you make an update to that product. This will not affect your Shopping ads.",
+          "description": "The reason for the cancellation. Orders that are canceled with a noInventory reason will lead to the removal of the product from Shopping Actions until you make an update to that product. This will not affect your Shopping ads.",
           "type": "string"
         },
         "reasonText": {
@@ -6037,7 +5923,7 @@
           "type": "string"
         },
         "invoiceReceivingEmail": {
-          "description": "Email address for receiving merchant issued value-added tax or invoice documentation of this order.",
+          "description": "Email address for the merchant to send value-added tax or invoice documentation of the order. This documentation is made available to the customer.",
           "type": "string"
         },
         "marketingRightsInfo": {
@@ -6657,7 +6543,7 @@
       "id": "OrderShipment",
       "properties": {
         "carrier": {
-          "description": "The carrier handling the shipment.\n\nAcceptable values for US are:  \n- \"gsx\" \n- \"ups\" \n- \"usps\" \n- \"fedex\" \n- \"dhl\" \n- \"ecourier\" \n- \"cxt\" \n- \"google\" \n- \"ontrac\" \n- \"emsy\" \n- \"ont\" \n- \"deliv\" \n- \"dynamex\" \n- \"lasership\" \n- \"mpx\" \n- \"uds\" \n- \"efw\"  \n\nAcceptable values for FR are:  \n- \"colissimo\" \n- \"chronopost\" \n- \"gls\" \n- \"dpd\" \n- \"bpost\" \n- \"colis prive\" \n- \"boxtal\" \n- \"geodis\"",
+          "description": "The carrier handling the shipment.\n\nFor supported carriers, Google includes the carrier name and tracking URL in emails to customers. For select supported carriers, Google also automatically updates the shipment status based on the provided shipment ID. Note: You can also use unsupported carriers, but emails to customers will not include the carrier name or tracking URL, and there will be no automatic order status updates. \nSupported carriers for US are:  \n- \"ups\" (United Parcel Service) automatic status updates \n- \"usps\" (United States Postal Service) automatic status updates \n- \"fedex\" (FedEx) automatic status updates  \n- \"dhl\" (DHL eCommerce) automatic status updates (US only) \n- \"ontrac\" (OnTrac) automatic status updates  \n- \"dhl express\" (DHL Express)\n- \"deliv\" (Deliv) \n- \"dynamex\" (TForce) \n- \"lasership\" (LaserShip) \n- \"mpx\" (Military Parcel Xpress) \n- \"uds\" (United Delivery Service) \n- \"efw\" (Estes Forwarding Worldwide) \n- \"jd logistics\" (JD Logistics) \n- \"yunexpress\" (YunExpress) \n- \"china post\" (China Post) \n- \"china ems\" (China Post Express Mail Service) \n- \"singapore post\" (Singapore Post) \n- \"pos malaysia\" (Pos Malaysia) \n- \"postnl\" (PostNL) \n- \"ptt\" (PTT Turkish Post) \n- \"eub\" (ePacket) \n- \"chukou1\" (Chukou1 Logistics)  \nSupported carriers for FR are:  \n- \"la poste\" (La Poste) automatic status updates  \n- \"colissimo\" (Colissimo by La Poste) automatic status updates \n- \"ups\" (United Parcel Service) automatic status updates  \n- \"chronopost\" (Chronopost by La Poste) \n- \"gls\" (General Logistics Systems France) \n- \"dpd\" (DPD Group by GeoPost) \n- \"bpost\" (Belgian Post Group) \n- \"colis prive\" (Colis Privé) \n- \"boxtal\" (Boxtal) \n- \"geodis\" (GEODIS) \n- \"tnt\" (TNT) \n- \"db schenker\" (DB Schenker)",
           "type": "string"
         },
         "creationDate": {
@@ -6694,7 +6580,7 @@
       "id": "OrderShipmentLineItemShipment",
       "properties": {
         "lineItemId": {
-          "description": "The ID of the line item that is shipped. Either lineItemId or productId is required.",
+          "description": "The ID of the line item that is shipped. This value is assigned by Google when an order is created. Either lineItemId or productId is required.",
           "type": "string"
         },
         "productId": {
@@ -6820,132 +6706,6 @@
         },
         "reason": {
           "description": "[required] Reason for the return.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "OrderpaymentsNotifyAuthApprovedRequest": {
-      "id": "OrderpaymentsNotifyAuthApprovedRequest",
-      "properties": {
-        "authAmountPretax": {
-          "$ref": "Price",
-          "description": "Authorized amount for pre-tax charge on user's credit card."
-        },
-        "authAmountTax": {
-          "$ref": "Price",
-          "description": "Authorized amount for tax charge on user's credit card."
-        }
-      },
-      "type": "object"
-    },
-    "OrderpaymentsNotifyAuthApprovedResponse": {
-      "id": "OrderpaymentsNotifyAuthApprovedResponse",
-      "properties": {
-        "executionStatus": {
-          "description": "The status of the execution.",
-          "type": "string"
-        },
-        "kind": {
-          "default": "content#orderpaymentsNotifyAuthApprovedResponse",
-          "description": "Identifies what kind of resource this is. Value: the fixed string \"content#orderpaymentsNotifyAuthApprovedResponse\".",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "OrderpaymentsNotifyAuthDeclinedRequest": {
-      "id": "OrderpaymentsNotifyAuthDeclinedRequest",
-      "properties": {
-        "declineReason": {
-          "description": "Reason why payment authorization was declined.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "OrderpaymentsNotifyAuthDeclinedResponse": {
-      "id": "OrderpaymentsNotifyAuthDeclinedResponse",
-      "properties": {
-        "executionStatus": {
-          "description": "The status of the execution.",
-          "type": "string"
-        },
-        "kind": {
-          "default": "content#orderpaymentsNotifyAuthDeclinedResponse",
-          "description": "Identifies what kind of resource this is. Value: the fixed string \"content#orderpaymentsNotifyAuthDeclinedResponse\".",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "OrderpaymentsNotifyChargeRequest": {
-      "id": "OrderpaymentsNotifyChargeRequest",
-      "properties": {
-        "chargeState": {
-          "description": "Whether charge was successful.",
-          "type": "string"
-        },
-        "invoiceId": {
-          "description": "Deprecated. Please use invoiceIds instead.",
-          "type": "string"
-        },
-        "invoiceIds": {
-          "description": "Invoice IDs from the orderinvoices service that correspond to the charge.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "OrderpaymentsNotifyChargeResponse": {
-      "id": "OrderpaymentsNotifyChargeResponse",
-      "properties": {
-        "executionStatus": {
-          "description": "The status of the execution.",
-          "type": "string"
-        },
-        "kind": {
-          "default": "content#orderpaymentsNotifyChargeResponse",
-          "description": "Identifies what kind of resource this is. Value: the fixed string \"content#orderpaymentsNotifyChargeResponse\".",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "OrderpaymentsNotifyRefundRequest": {
-      "id": "OrderpaymentsNotifyRefundRequest",
-      "properties": {
-        "invoiceId": {
-          "description": "Deprecated. Please use invoiceIds instead.",
-          "type": "string"
-        },
-        "invoiceIds": {
-          "description": "Invoice IDs from the orderinvoices service that correspond to the refund.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "refundState": {
-          "description": "Whether refund was successful.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "OrderpaymentsNotifyRefundResponse": {
-      "id": "OrderpaymentsNotifyRefundResponse",
-      "properties": {
-        "executionStatus": {
-          "description": "The status of the execution.",
-          "type": "string"
-        },
-        "kind": {
-          "default": "content#orderpaymentsNotifyRefundResponse",
-          "description": "Identifies what kind of resource this is. Value: the fixed string \"content#orderpaymentsNotifyRefundResponse\".",
           "type": "string"
         }
       },
@@ -8210,6 +7970,38 @@
       },
       "type": "object"
     },
+    "PickupCarrierService": {
+      "id": "PickupCarrierService",
+      "properties": {
+        "carrierName": {
+          "description": "The name of the pickup carrier (e.g., \"UPS\"). Required.",
+          "type": "string"
+        },
+        "serviceName": {
+          "description": "The name of the pickup service (e.g., \"Access point\"). Required.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "PickupServicesPickupService": {
+      "id": "PickupServicesPickupService",
+      "properties": {
+        "carrierName": {
+          "description": "The name of the carrier (e.g., \"UPS\"). Always present.",
+          "type": "string"
+        },
+        "country": {
+          "description": "The CLDR country code of the carrier (e.g., \"US\"). Always present.",
+          "type": "string"
+        },
+        "serviceName": {
+          "description": "The name of the pickup service (e.g., \"Access point\"). Always present.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "PosCustomBatchRequest": {
       "id": "PosCustomBatchRequest",
       "properties": {
@@ -9014,7 +8806,7 @@
           "description": "Cost of goods sold. Used for gross profit reporting."
         },
         "customAttributes": {
-          "description": "A list of custom (merchant-provided) attributes. It can also be used for submitting any attribute of the feed specification in its generic form (e.g., { \"name\": \"size type\", \"value\": \"regular\" }). This is useful for submitting attributes not explicitly exposed by the API.",
+          "description": "A list of custom (merchant-provided) attributes. It can also be used for submitting any attribute of the feed specification in its generic form (e.g., { \"name\": \"size type\", \"value\": \"regular\" }). This is useful for submitting attributes not explicitly exposed by the API, such as additional attributes used for Shopping Actions.",
           "items": {
             "$ref": "CustomAttribute"
           },
@@ -9255,7 +9047,7 @@
           "type": "string"
         },
         "sizes": {
-          "description": "Size of the item.",
+          "description": "Size of the item. Only one value is allowed. For variants with different sizes, insert a separate product for each size with the same itemGroupId value (see size definition).",
           "items": {
             "type": "string"
           },
@@ -9996,12 +9788,20 @@
           "description": "Free-form name of the service. Must be unique within target account. Required.",
           "type": "string"
         },
+        "pickupService": {
+          "$ref": "PickupCarrierService",
+          "description": "The carrier-service pair delivering items to collection points. The list of supported pickup services can be retrieved via the getSupportedPickupServices method. Required if and only if the service delivery type is pickup."
+        },
         "rateGroups": {
           "description": "Shipping rate group definitions. Only the last one is allowed to have an empty applicableShippingLabels, which means \"everything else\". The other applicableShippingLabels must not overlap.",
           "items": {
             "$ref": "RateGroup"
           },
           "type": "array"
+        },
+        "shipmentType": {
+          "description": "Type of locations this service ships orders to.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -10207,6 +10007,24 @@
           "default": "content#shippingsettingsGetSupportedHolidaysResponse",
           "description": "Identifies what kind of resource this is. Value: the fixed string \"content#shippingsettingsGetSupportedHolidaysResponse\".",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ShippingsettingsGetSupportedPickupServicesResponse": {
+      "id": "ShippingsettingsGetSupportedPickupServicesResponse",
+      "properties": {
+        "kind": {
+          "default": "content#shippingsettingsGetSupportedPickupServicesResponse",
+          "description": "Identifies what kind of resource this is. Value: the fixed string \"content#shippingsettingsGetSupportedPickupServicesResponse\".",
+          "type": "string"
+        },
+        "pickupServices": {
+          "description": "A list of supported pickup services. May be empty.",
+          "items": {
+            "$ref": "PickupServicesPickupService"
+          },
+          "type": "array"
         }
       },
       "type": "object"

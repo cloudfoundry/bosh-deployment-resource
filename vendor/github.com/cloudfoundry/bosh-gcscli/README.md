@@ -34,12 +34,14 @@ bosh-gcscli -c config.json delete <remote-blob>
 ```
 ### Check if an object exists
 ```bash
-bosh-gcscli -c config.json exists <remote-blob>```
+bosh-gcscli -c config.json exists <remote-blob>
 ```
 
 ### Generate a signed url for an object
+If there is an encryption key present in the config, then an additional header is sent
+
 ```bash
-bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>```
+bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>
 ```
 Where:
  - `<http action>` is GET, PUT, or DELETE

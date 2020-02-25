@@ -228,7 +228,7 @@
       }
     }
   },
-  "revision": "20190724",
+  "revision": "20200218",
   "rootUrl": "https://cloudshell.googleapis.com/",
   "schemas": {
     "CancelOperationRequest": {
@@ -252,7 +252,7 @@
           "type": "string"
         },
         "id": {
-          "description": "Output only. The environment's identifier, which is always \"default\".",
+          "description": "Output only. The environment's identifier, unique among the user's\nenvironments.",
           "type": "string"
         },
         "name": {
@@ -265,6 +265,20 @@
             "$ref": "PublicKey"
           },
           "type": "array"
+        },
+        "size": {
+          "description": "Indicates the size of the backing VM running the environment.  If set to\nsomething other than DEFAULT, it will be reverted to the default VM size\nafter vm_size_expire_time.",
+          "enum": [
+            "VM_SIZE_UNSPECIFIED",
+            "DEFAULT",
+            "BOOSTED"
+          ],
+          "enumDescriptions": [
+            "The VM size is unknown.",
+            "The default VM size.",
+            "The boosted VM size."
+          ],
+          "type": "string"
         },
         "sshHost": {
           "description": "Output only. Host to which clients can connect to initiate SSH sessions\nwith the environment.",
@@ -295,9 +309,22 @@
           ],
           "type": "string"
         },
+        "vmSizeExpireTime": {
+          "description": "Output only. The time when the Environment will expire back to the default\nVM size.",
+          "format": "google-datetime",
+          "type": "string"
+        },
         "webHost": {
           "description": "Output only. Host to which clients can connect to initiate HTTPS or WSS\nconnections with the environment.",
           "type": "string"
+        },
+        "webPorts": {
+          "description": "Output only. Ports to which clients can connect to initiate HTTPS or WSS\nconnections with the environment.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -401,12 +428,14 @@
             "STATE_UNSPECIFIED",
             "STARTING",
             "UNARCHIVING_DISK",
+            "AWAITING_VM",
             "FINISHED"
           ],
           "enumDescriptions": [
             "The environment's start state is unknown.",
             "The environment is in the process of being started, but no additional\ndetails are available.",
             "Startup is waiting for the user's disk to be unarchived. This can happen\nwhen the user returns to Cloud Shell after not having used it for a\nwhile, and suggests that startup will take longer than normal.",
+            "Startup is waiting for a VM to be assigned to the environment. This\nshould normally happen very quickly, but an environment might stay in\nthis state for an extended period of time if the system is experiencing\nheavy load.",
             "Startup is complete and the user should be able to establish an SSH\nconnection to their environment."
           ],
           "type": "string"

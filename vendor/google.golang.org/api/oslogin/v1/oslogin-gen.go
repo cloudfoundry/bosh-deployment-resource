@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -58,6 +58,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -74,6 +75,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "oslogin:v1"
 const apiName = "oslogin"
@@ -97,6 +99,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -228,7 +231,7 @@ func (s *ImportSshPublicKeyResponse) MarshalJSON() ([]byte, error) {
 // virtual machine on
 // Google Compute Engine.
 type LoginProfile struct {
-	// Name: A unique user ID.
+	// Name: Required. A unique user ID.
 	Name string `json:"name,omitempty"`
 
 	// PosixAccounts: The list of POSIX accounts associated with the user.
@@ -452,7 +455,7 @@ func (c *UsersGetLoginProfileCall) Header() http.Header {
 
 func (c *UsersGetLoginProfileCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -523,7 +526,7 @@ func (c *UsersGetLoginProfileCall) Do(opts ...googleapi.CallOption) (*LoginProfi
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The unique ID for the user in format `users/{user}`.",
+	//       "description": "Required. The unique ID for the user in format `users/{user}`.",
 	//       "location": "path",
 	//       "pattern": "^users/[^/]+$",
 	//       "required": true,
@@ -609,7 +612,7 @@ func (c *UsersImportSshPublicKeyCall) Header() http.Header {
 
 func (c *UsersImportSshPublicKeyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -682,7 +685,7 @@ func (c *UsersImportSshPublicKeyCall) Do(opts ...googleapi.CallOption) (*ImportS
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The unique ID for the user in format `users/{user}`.",
+	//       "description": "Required. The unique ID for the user in format `users/{user}`.",
 	//       "location": "path",
 	//       "pattern": "^users/[^/]+$",
 	//       "required": true,
@@ -753,7 +756,7 @@ func (c *UsersProjectsDeleteCall) Header() http.Header {
 
 func (c *UsersProjectsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -821,7 +824,7 @@ func (c *UsersProjectsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, erro
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "A reference to the POSIX account to update. POSIX accounts are identified\nby the project ID they are associated with. A reference to the POSIX\naccount is in format `users/{user}/projects/{project}`.",
+	//       "description": "Required. A reference to the POSIX account to update. POSIX accounts are identified\nby the project ID they are associated with. A reference to the POSIX\naccount is in format `users/{user}/projects/{project}`.",
 	//       "location": "path",
 	//       "pattern": "^users/[^/]+/projects/[^/]+$",
 	//       "required": true,
@@ -884,7 +887,7 @@ func (c *UsersSshPublicKeysDeleteCall) Header() http.Header {
 
 func (c *UsersSshPublicKeysDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -952,7 +955,7 @@ func (c *UsersSshPublicKeysDeleteCall) Do(opts ...googleapi.CallOption) (*Empty,
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The fingerprint of the public key to update. Public keys are identified by\ntheir SHA-256 fingerprint. The fingerprint of the public key is in format\n`users/{user}/sshPublicKeys/{fingerprint}`.",
+	//       "description": "Required. The fingerprint of the public key to update. Public keys are identified by\ntheir SHA-256 fingerprint. The fingerprint of the public key is in format\n`users/{user}/sshPublicKeys/{fingerprint}`.",
 	//       "location": "path",
 	//       "pattern": "^users/[^/]+/sshPublicKeys/[^/]+$",
 	//       "required": true,
@@ -1026,7 +1029,7 @@ func (c *UsersSshPublicKeysGetCall) Header() http.Header {
 
 func (c *UsersSshPublicKeysGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1097,7 +1100,7 @@ func (c *UsersSshPublicKeysGetCall) Do(opts ...googleapi.CallOption) (*SshPublic
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The fingerprint of the public key to retrieve. Public keys are identified\nby their SHA-256 fingerprint. The fingerprint of the public key is in\nformat `users/{user}/sshPublicKeys/{fingerprint}`.",
+	//       "description": "Required. The fingerprint of the public key to retrieve. Public keys are identified\nby their SHA-256 fingerprint. The fingerprint of the public key is in\nformat `users/{user}/sshPublicKeys/{fingerprint}`.",
 	//       "location": "path",
 	//       "pattern": "^users/[^/]+/sshPublicKeys/[^/]+$",
 	//       "required": true,
@@ -1171,7 +1174,7 @@ func (c *UsersSshPublicKeysPatchCall) Header() http.Header {
 
 func (c *UsersSshPublicKeysPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1244,7 +1247,7 @@ func (c *UsersSshPublicKeysPatchCall) Do(opts ...googleapi.CallOption) (*SshPubl
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The fingerprint of the public key to update. Public keys are identified by\ntheir SHA-256 fingerprint. The fingerprint of the public key is in format\n`users/{user}/sshPublicKeys/{fingerprint}`.",
+	//       "description": "Required. The fingerprint of the public key to update. Public keys are identified by\ntheir SHA-256 fingerprint. The fingerprint of the public key is in format\n`users/{user}/sshPublicKeys/{fingerprint}`.",
 	//       "location": "path",
 	//       "pattern": "^users/[^/]+/sshPublicKeys/[^/]+$",
 	//       "required": true,

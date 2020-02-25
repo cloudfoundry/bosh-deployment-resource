@@ -353,6 +353,14 @@ var commands = []struct {
 		Required: cbtconfig.ProjectAndInstanceRequired,
 	},
 	{
+		Name: "deleteallrows",
+		Desc: "Delete all rows",
+		do:   doDeleteAllRows,
+		Usage: "cbt deleteallrows <table-id>\n\n" +
+			"    Example: cbt deleteallrows  mobile-time-series",
+		Required: cbtconfig.ProjectAndInstanceRequired,
+	},
+	{
 		Name: "deletetable",
 		Desc: "Delete a table",
 		do:   doDeleteTable,
@@ -395,10 +403,12 @@ var commands = []struct {
 		do:   doLookup,
 		Usage: "cbt lookup <table-id> <row-key> [columns=<family>:<qualifier>,...] [cells-per-column=<n>] " +
 			" [app-profile=<app profile id>]\n" +
+			"  row-key                             String or raw bytes. Raw bytes must be enclosed in single quotes and have a dollar-sign prefix\n" +
 			"  columns=<family>:<qualifier>,...    Read only these columns, comma-separated\n" +
 			"  cells-per-column=<n>                Read only this number of cells per column\n" +
 			"  app-profile=<app-profile-id>        The app profile ID to use for the request\n\n" +
-			" Example: cbt lookup mobile-time-series phone#4c410523#20190501 columns=stats_summary:os_build,os_name cells-per-column=1",
+			" Example: cbt lookup mobile-time-series phone#4c410523#20190501 columns=stats_summary:os_build,os_name cells-per-column=1\n" +
+			" Example: cbt lookup mobile-time-series $'\\x41\\x42'",
 		Required: cbtconfig.ProjectAndInstanceRequired,
 	},
 	{
@@ -465,7 +475,7 @@ var commands = []struct {
 			"  Put garbage collection policies in quotes when they include shell operators && and ||.\n\n" +
 			"    Examples:\n" +
 			"      cbt setgcpolicy mobile-time-series stats_detail maxage=10d\n" +
-			"      cbt setgcpolicy mobile-time-series stats_summary maxage=10d or maxversion=1\n",
+			"      cbt setgcpolicy mobile-time-series stats_summary maxage=10d or maxversions=1\n",
 		Required: cbtconfig.ProjectAndInstanceRequired,
 	},
 	{
@@ -788,6 +798,16 @@ func doDeleteRow(ctx context.Context, args ...string) {
 	mut.DeleteRow()
 	if err := tbl.Apply(ctx, args[1], mut); err != nil {
 		log.Fatalf("Deleting row: %v", err)
+	}
+}
+
+func doDeleteAllRows(ctx context.Context, args ...string) {
+	if len(args) != 1 {
+		log.Fatalf("Can't do `cbt deleteallrows %s`", args)
+	}
+	err := getAdminClient().DropAllRows(ctx, args[0])
+	if err != nil {
+		log.Fatalf("Deleting all rows: %v", err)
 	}
 }
 

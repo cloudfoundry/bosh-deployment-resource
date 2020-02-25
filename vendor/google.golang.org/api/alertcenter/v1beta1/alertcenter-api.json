@@ -22,6 +22,7 @@
   },
   "id": "alertcenter:v1beta1",
   "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://alertcenter.mtls.googleapis.com/",
   "name": "alertcenter",
   "ownerDomain": "google.com",
   "ownerName": "Google",
@@ -422,7 +423,7 @@
       }
     }
   },
-  "revision": "20190910",
+  "revision": "20200215",
   "rootUrl": "https://alertcenter.googleapis.com/",
   "schemas": {
     "AccountWarning": {
@@ -891,6 +892,17 @@
       },
       "type": "object"
     },
+    "DlpRuleViolation": {
+      "description": "Alerts that get triggered on violations of Data Loss Prevention (DLP) rules.",
+      "id": "DlpRuleViolation",
+      "properties": {
+        "ruleViolationInfo": {
+          "$ref": "RuleViolationInfo",
+          "description": "Details about the violated DLP rule.\n\nAdmins can use the predefined detectors provided by Google Cloud DLP\nhttps://cloud.google.com/dlp/ when setting up a DLP rule. Matched Cloud DLP\ndetectors in this violation if any will be captured in the\nMatchInfo.predefined_detector."
+        }
+      },
+      "type": "object"
+    },
     "DomainId": {
       "description": "Domain ID of Gmail phishing alerts.",
       "id": "DomainId",
@@ -913,6 +925,56 @@
         "takeoutRequestId": {
           "description": "The takeout request ID.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DriveFile": {
+      "description": "A Drive file",
+      "id": "DriveFile",
+      "properties": {
+        "abuseType": {
+          "description": "Abuse type of the file.",
+          "enum": [
+            "DRIVE_ABUSE_TYPE_UNSPECIFIED",
+            "SUSPECTED_MALWARE"
+          ],
+          "enumDescriptions": [
+            "Not specified abuse type.",
+            "The content is detected as suspected malware."
+          ],
+          "type": "string"
+        },
+        "id": {
+          "description": "The ID of the file.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the file.",
+          "type": "string"
+        },
+        "numRecentDownload": {
+          "description": "The number of recent downloads of the file. This is available for the\nfollowing alert types:\n\n*Drive malware sharing detected",
+          "format": "int64",
+          "type": "string"
+        },
+        "owner": {
+          "description": "The email address of the file owner.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DriveFileWarning": {
+      "description": "Alerts for suspicious Drive files or activities.",
+      "id": "DriveFileWarning",
+      "properties": {
+        "files": {
+          "description": "List of files in the alert.",
+          "items": {
+            "$ref": "DriveFile"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -1041,7 +1103,7 @@
       "type": "object"
     },
     "MailPhishing": {
-      "description": "Proto for all phishing alerts with common payload.\nSupported types are any of the following:\n\n* User reported phishing\n* User reported spam spike\n* Suspicious message reported\n* Phishing reclassification\n* Malware reclassification",
+      "description": "Proto for all phishing alerts with common payload.\nSupported types are any of the following:\n\n* User reported phishing\n* User reported spam spike\n* Suspicious message reported\n* Phishing reclassification\n* Malware reclassification\n* Gmail potential employee spoofing",
       "id": "MailPhishing",
       "properties": {
         "domainId": {
@@ -1062,6 +1124,20 @@
             "$ref": "GmailMessageInfo"
           },
           "type": "array"
+        },
+        "systemActionType": {
+          "description": "System actions on the messages.",
+          "enum": [
+            "SYSTEM_ACTION_TYPE_UNSPECIFIED",
+            "NO_OPERATION",
+            "REMOVED_FROM_INBOX"
+          ],
+          "enumDescriptions": [
+            "System action is unspecified.",
+            "No operation.",
+            "Messages were removed from the inbox."
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -1074,9 +1150,28 @@
           "description": "The header from display name.",
           "type": "string"
         },
+        "entity": {
+          "$ref": "User",
+          "description": "The actor who triggered a gmail phishing alert."
+        },
         "fromHeader": {
           "description": "The sender email address.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MatchInfo": {
+      "description": "Proto that contains match information from the condition part of the rule.",
+      "id": "MatchInfo",
+      "properties": {
+        "predefinedDetector": {
+          "$ref": "PredefinedDetectorInfo",
+          "description": "For matched detector predefined by Google."
+        },
+        "userDefinedDetector": {
+          "$ref": "UserDefinedDetectorInfo",
+          "description": "For matched detector defined by administrators."
         }
       },
       "type": "object"
@@ -1118,6 +1213,17 @@
       },
       "type": "object"
     },
+    "PredefinedDetectorInfo": {
+      "description": "Detector provided by Google.",
+      "id": "PredefinedDetectorInfo",
+      "properties": {
+        "detectorName": {
+          "description": "Name that uniquely identifies the detector.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "RequestInfo": {
       "description": "Requests for one application that needs default SQL setup.",
       "id": "RequestInfo",
@@ -1136,6 +1242,131 @@
         "numberOfRequests": {
           "description": "Required. Number of requests sent for this application to set up default\nSQL instance.",
           "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ResourceInfo": {
+      "description": "Proto that contains resource information.",
+      "id": "ResourceInfo",
+      "properties": {
+        "documentId": {
+          "description": "Drive file ID.",
+          "type": "string"
+        },
+        "resourceTitle": {
+          "description": "Title of the resource, e.g. email subject, or document title.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "RuleInfo": {
+      "description": "Proto that contains rule information.",
+      "id": "RuleInfo",
+      "properties": {
+        "displayName": {
+          "description": "User provided name of the rule.",
+          "type": "string"
+        },
+        "resourceName": {
+          "description": "Resource name that uniquely identifies the rule.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "RuleViolationInfo": {
+      "description": "Common alert information about violated rules that are configured by G Suite\nadministrators.",
+      "id": "RuleViolationInfo",
+      "properties": {
+        "dataSource": {
+          "description": "Source of the data.",
+          "enum": [
+            "DATA_SOURCE_UNSPECIFIED",
+            "DRIVE"
+          ],
+          "enumDescriptions": [
+            "Data source is unspecified.",
+            "Drive data source."
+          ],
+          "type": "string"
+        },
+        "matchInfo": {
+          "description": "List of matches that were found in the resource content.",
+          "items": {
+            "$ref": "MatchInfo"
+          },
+          "type": "array"
+        },
+        "recipients": {
+          "description": "Resource recipients.\n\nFor Drive, they are grantees that the Drive file was shared with at the\ntime of rule triggering. Valid values include user emails, group emails,\ndomains, or 'anyone' if the file was publicly accessible. If the file was\nprivate the recipients list will be empty.\n\nFor Gmail, they are emails of the users or groups that the Gmail message\nwas sent to.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "resourceInfo": {
+          "$ref": "ResourceInfo",
+          "description": "Details of the resource which violated the rule."
+        },
+        "ruleInfo": {
+          "$ref": "RuleInfo",
+          "description": "Details of the violated rule."
+        },
+        "suppressedActionTypes": {
+          "description": "Actions suppressed due to other actions with higher priority.",
+          "enumDescriptions": [
+            "Action type is unspecified.",
+            "Block sharing a file externally.",
+            "Show a warning message when sharing a file externally.",
+            "Send alert."
+          ],
+          "items": {
+            "enum": [
+              "ACTION_TYPE_UNSPECIFIED",
+              "DRIVE_BLOCK_EXTERNAL_SHARING",
+              "DRIVE_WARN_ON_EXTERNAL_SHARING",
+              "ALERT"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "trigger": {
+          "description": "Trigger of the rule.",
+          "enum": [
+            "TRIGGER_UNSPECIFIED",
+            "DRIVE_SHARE"
+          ],
+          "enumDescriptions": [
+            "Trigger is unspecified.",
+            "A Drive file is shared."
+          ],
+          "type": "string"
+        },
+        "triggeredActionTypes": {
+          "description": "Actions applied as a consequence of the rule being triggered.",
+          "enumDescriptions": [
+            "Action type is unspecified.",
+            "Block sharing a file externally.",
+            "Show a warning message when sharing a file externally.",
+            "Send alert."
+          ],
+          "items": {
+            "enum": [
+              "ACTION_TYPE_UNSPECIFIED",
+              "DRIVE_BLOCK_EXTERNAL_SHARING",
+              "DRIVE_WARN_ON_EXTERNAL_SHARING",
+              "ALERT"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "triggeringUserEmail": {
+          "description": "Email of the user who caused the violation. Value could be empty if not\napplicable, for example, a violation found by drive continuous scan.",
           "type": "string"
         }
       },
@@ -1260,6 +1491,36 @@
       "properties": {
         "customerId": {
           "description": "Optional. The unique identifier of the G Suite organization account of the\ncustomer the alert is associated with.\nInferred from the caller identity if not provided.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "User": {
+      "description": "A user.",
+      "id": "User",
+      "properties": {
+        "displayName": {
+          "description": "Display name of the user.",
+          "type": "string"
+        },
+        "emailAddress": {
+          "description": "Email address of the user.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "UserDefinedDetectorInfo": {
+      "description": "Detector defined by administrators.",
+      "id": "UserDefinedDetectorInfo",
+      "properties": {
+        "displayName": {
+          "description": "Display name of the detector.",
+          "type": "string"
+        },
+        "resourceName": {
+          "description": "Resource name that uniquely identifies the detector.",
           "type": "string"
         }
       },

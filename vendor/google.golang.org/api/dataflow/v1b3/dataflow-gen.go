@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -56,6 +56,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -72,6 +73,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "dataflow:v1b3"
 const apiName = "dataflow"
@@ -103,6 +105,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -211,6 +214,7 @@ type ProjectsJobsWorkItemsService struct {
 
 func NewProjectsLocationsService(s *Service) *ProjectsLocationsService {
 	rs := &ProjectsLocationsService{s: s}
+	rs.FlexTemplates = NewProjectsLocationsFlexTemplatesService(s)
 	rs.Jobs = NewProjectsLocationsJobsService(s)
 	rs.Sql = NewProjectsLocationsSqlService(s)
 	rs.Templates = NewProjectsLocationsTemplatesService(s)
@@ -220,11 +224,22 @@ func NewProjectsLocationsService(s *Service) *ProjectsLocationsService {
 type ProjectsLocationsService struct {
 	s *Service
 
+	FlexTemplates *ProjectsLocationsFlexTemplatesService
+
 	Jobs *ProjectsLocationsJobsService
 
 	Sql *ProjectsLocationsSqlService
 
 	Templates *ProjectsLocationsTemplatesService
+}
+
+func NewProjectsLocationsFlexTemplatesService(s *Service) *ProjectsLocationsFlexTemplatesService {
+	rs := &ProjectsLocationsFlexTemplatesService{s: s}
+	return rs
+}
+
+type ProjectsLocationsFlexTemplatesService struct {
+	s *Service
 }
 
 func NewProjectsLocationsJobsService(s *Service) *ProjectsLocationsJobsService {
@@ -899,6 +914,42 @@ type ConcatPosition struct {
 
 func (s *ConcatPosition) MarshalJSON() ([]byte, error) {
 	type NoMethod ConcatPosition
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ContainerSpec: Container Spec.
+type ContainerSpec struct {
+	// Image: Name of the docker container image. E.g.,
+	// gcr.io/project/some-image
+	Image string `json:"image,omitempty"`
+
+	// Metadata: Metadata describing a template including description and
+	// validation rules.
+	Metadata *TemplateMetadata `json:"metadata,omitempty"`
+
+	// SdkInfo: Required. SDK info of the Flex Template.
+	SdkInfo *SDKInfo `json:"sdkInfo,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Image") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Image") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ContainerSpec) MarshalJSON() ([]byte, error) {
+	type NoMethod ContainerSpec
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2181,10 +2232,22 @@ type GetTemplateResponse struct {
 	// parameters, etc.
 	Metadata *TemplateMetadata `json:"metadata,omitempty"`
 
+	// RuntimeMetadata: Describes the runtime metadata with SDKInfo and
+	// available parameters.
+	RuntimeMetadata *RuntimeMetadata `json:"runtimeMetadata,omitempty"`
+
 	// Status: The status of the get template request. Any problems with
 	// the
 	// request will be indicated in the error_details.
 	Status *Status `json:"status,omitempty"`
+
+	// TemplateType: Template Type.
+	//
+	// Possible values:
+	//   "UNKNOWN" - Unknown Template Type.
+	//   "LEGACY" - Legacy Template.
+	//   "FLEX" - Flex Template.
+	TemplateType string `json:"templateType,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -3186,6 +3249,116 @@ func (s *KeyRangeLocation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// LaunchFlexTemplateParameter: Launch FlexTemplate Parameter.
+type LaunchFlexTemplateParameter struct {
+	// ContainerSpec: Spec about the container image to launch.
+	ContainerSpec *ContainerSpec `json:"containerSpec,omitempty"`
+
+	// ContainerSpecGcsPath: Gcs path to a file with json serialized
+	// ContainerSpec as content.
+	ContainerSpecGcsPath string `json:"containerSpecGcsPath,omitempty"`
+
+	// JobName: Required. The job name to use for the created job.
+	JobName string `json:"jobName,omitempty"`
+
+	// Parameters: The parameters for FlexTemplate.
+	// Ex. {"num_workers":"5"}
+	Parameters map[string]string `json:"parameters,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ContainerSpec") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ContainerSpec") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *LaunchFlexTemplateParameter) MarshalJSON() ([]byte, error) {
+	type NoMethod LaunchFlexTemplateParameter
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// LaunchFlexTemplateRequest: A request to launch a Cloud Dataflow job
+// from a FlexTemplate.
+type LaunchFlexTemplateRequest struct {
+	// LaunchParameter: Required. Parameter to launch a job form Flex
+	// Template.
+	LaunchParameter *LaunchFlexTemplateParameter `json:"launchParameter,omitempty"`
+
+	// ValidateOnly: If true, the request is validated but not actually
+	// executed.
+	// Defaults to false.
+	ValidateOnly bool `json:"validateOnly,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "LaunchParameter") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LaunchParameter") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *LaunchFlexTemplateRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod LaunchFlexTemplateRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// LaunchFlexTemplateResponse: Response to the request to launch a job
+// from Flex Template.
+type LaunchFlexTemplateResponse struct {
+	// Job: The job that was launched, if the request was not a dry run
+	// and
+	// the job was successfully launched.
+	Job *Job `json:"job,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Job") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Job") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *LaunchFlexTemplateResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod LaunchFlexTemplateResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // LaunchTemplateParameters: Parameters to provide to the template being
 // launched.
 type LaunchTemplateParameters struct {
@@ -3400,9 +3573,14 @@ func (s *ListJobMessagesResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ListJobsResponse: Response to a request to list Cloud Dataflow jobs.
-// This may be a partial
-// response, depending on the page size in the ListJobsRequest.
+// ListJobsResponse: Response to a request to list Cloud Dataflow jobs
+// in a project. This might
+// be a partial response, depending on the page size in the
+// ListJobsRequest.
+// However, if the project does not have any jobs, an instance
+// of
+// ListJobsResponse is not returned and the requests's response
+// body is empty {}.
 type ListJobsResponse struct {
 	// FailedLocation: Zero or more messages describing the [regional
 	// endpoints]
@@ -3984,6 +4162,29 @@ type ParameterMetadata struct {
 	// Name: Required. The name of the parameter.
 	Name string `json:"name,omitempty"`
 
+	// ParamType: Optional. The type of the parameter.
+	// Used for selecting input picker.
+	//
+	// Possible values:
+	//   "DEFAULT" - Default input type.
+	//   "TEXT" - The parameter specifies generic text input.
+	//   "GCS_READ_BUCKET" - The parameter specifies a GCS Bucket to read
+	// from.
+	//   "GCS_WRITE_BUCKET" - The parameter specifies a GCS Bucket to write
+	// to.
+	//   "GCS_READ_FILE" - The parameter specifies a GCS file path to read
+	// from.
+	//   "GCS_WRITE_FILE" - The parameter specifies a GCS file path to write
+	// to.
+	//   "GCS_READ_FOLDER" - The parameter specifies a GCS folder path to
+	// read from.
+	//   "GCS_WRITE_FOLDER" - The parameter specifies a GCS folder to write
+	// to.
+	//   "PUBSUB_TOPIC" - The parameter specifies a Pub/Sub Topic.
+	//   "PUBSUB_SUBSCRIPTION" - The parameter specifies a Pub/Sub
+	// Subscription.
+	ParamType string `json:"paramType,omitempty"`
+
 	// Regexes: Optional. Regexes that the parameter must match.
 	Regexes []string `json:"regexes,omitempty"`
 
@@ -4485,6 +4686,15 @@ type RuntimeEnvironment struct {
 	// Use with caution.
 	BypassTempDirValidation bool `json:"bypassTempDirValidation,omitempty"`
 
+	// IpConfiguration: Configuration for VM IPs.
+	//
+	// Possible values:
+	//   "WORKER_IP_UNSPECIFIED" - The configuration is unknown, or
+	// unspecified.
+	//   "WORKER_IP_PUBLIC" - Workers should have public IP addresses.
+	//   "WORKER_IP_PRIVATE" - Workers should have private IP addresses.
+	IpConfiguration string `json:"ipConfiguration,omitempty"`
+
 	// KmsKeyName: Optional. Name for the Cloud KMS key for the job.
 	// Key format
 	// is:
@@ -4523,11 +4733,6 @@ type RuntimeEnvironment struct {
 	// TempLocation: The Cloud Storage path to use for temporary files.
 	// Must be a valid Cloud Storage URL, beginning with `gs://`.
 	TempLocation string `json:"tempLocation,omitempty"`
-
-	// UsePrivateIps: Optional. Specifies whether worker pools should be
-	// started with private IP addresses.
-	// False by default.
-	UsePrivateIps bool `json:"usePrivateIps,omitempty"`
 
 	// WorkerRegion: The Compute Engine
 	// region
@@ -4583,6 +4788,115 @@ type RuntimeEnvironment struct {
 
 func (s *RuntimeEnvironment) MarshalJSON() ([]byte, error) {
 	type NoMethod RuntimeEnvironment
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RuntimeMetadata: RuntimeMetadata describing a runtime environment.
+type RuntimeMetadata struct {
+	// Parameters: The parameters for the template.
+	Parameters []*ParameterMetadata `json:"parameters,omitempty"`
+
+	// SdkInfo: SDK Info for the template.
+	SdkInfo *SDKInfo `json:"sdkInfo,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Parameters") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Parameters") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RuntimeMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod RuntimeMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// SDKInfo: SDK Information.
+type SDKInfo struct {
+	// Language: Required. The SDK Language.
+	//
+	// Possible values:
+	//   "UNKNOWN" - UNKNOWN Language.
+	//   "JAVA" - Java.
+	//   "PYTHON" - Python.
+	Language string `json:"language,omitempty"`
+
+	// Version: Optional. The SDK version.
+	Version string `json:"version,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Language") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Language") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SDKInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod SDKInfo
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// SdkHarnessContainerImage: Defines a SDK harness container for
+// executing Dataflow pipelines.
+type SdkHarnessContainerImage struct {
+	// ContainerImage: A docker container image that resides in Google
+	// Container Registry.
+	ContainerImage string `json:"containerImage,omitempty"`
+
+	// UseSingleCorePerContainer: If true, recommends the Dataflow service
+	// to use only one core per SDK
+	// container instance with this image. If false (or unset) recommends
+	// using
+	// more than one core per SDK container instance with this image
+	// for
+	// efficiency. Note that Dataflow service may choose to override this
+	// property
+	// if needed.
+	UseSingleCorePerContainer bool `json:"useSingleCorePerContainer,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ContainerImage") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ContainerImage") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SdkHarnessContainerImage) MarshalJSON() ([]byte, error) {
+	type NoMethod SdkHarnessContainerImage
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -7165,6 +7479,15 @@ type WorkerPool struct {
 	// PoolArgs: Extra arguments for this worker pool.
 	PoolArgs googleapi.RawMessage `json:"poolArgs,omitempty"`
 
+	// SdkHarnessContainerImages: Set of SDK harness containers needed to
+	// execute this pipeline. This will
+	// only be set in the Fn API path. For non-cross-language pipelines
+	// this
+	// should have only one entry. Cross-language pipelines will have two or
+	// more
+	// entries.
+	SdkHarnessContainerImages []*SdkHarnessContainerImage `json:"sdkHarnessContainerImages,omitempty"`
+
 	// Subnetwork: Subnetwork to which VMs will be assigned, if desired.
 	// Expected to be of
 	// the form "regions/REGION/subnetworks/SUBNETWORK".
@@ -7216,6 +7539,9 @@ type WorkerPool struct {
 	// WorkerHarnessContainerImage: Required. Docker container image that
 	// executes the Cloud Dataflow worker
 	// harness, residing in Google Container Registry.
+	//
+	// Deprecated for the Fn API path. Use sdk_harness_container_images
+	// instead.
 	WorkerHarnessContainerImage string `json:"workerHarnessContainerImage,omitempty"`
 
 	// Zone: Zone to run the worker pools in.  If empty or unspecified, the
@@ -7434,7 +7760,7 @@ func (c *ProjectsWorkerMessagesCall) Header() http.Header {
 
 func (c *ProjectsWorkerMessagesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7639,7 +7965,7 @@ func (c *ProjectsJobsAggregatedCall) Header() http.Header {
 
 func (c *ProjectsJobsAggregatedCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7875,7 +8201,7 @@ func (c *ProjectsJobsCreateCall) Header() http.Header {
 
 func (c *ProjectsJobsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8082,7 +8408,7 @@ func (c *ProjectsJobsGetCall) Header() http.Header {
 
 func (c *ProjectsJobsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8282,7 +8608,7 @@ func (c *ProjectsJobsGetMetricsCall) Header() http.Header {
 
 func (c *ProjectsJobsGetMetricsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8513,7 +8839,7 @@ func (c *ProjectsJobsListCall) Header() http.Header {
 
 func (c *ProjectsJobsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8731,7 +9057,7 @@ func (c *ProjectsJobsUpdateCall) Header() http.Header {
 
 func (c *ProjectsJobsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8889,7 +9215,7 @@ func (c *ProjectsJobsDebugGetConfigCall) Header() http.Header {
 
 func (c *ProjectsJobsDebugGetConfigCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9041,7 +9367,7 @@ func (c *ProjectsJobsDebugSendCaptureCall) Header() http.Header {
 
 func (c *ProjectsJobsDebugSendCaptureCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9272,7 +9598,7 @@ func (c *ProjectsJobsMessagesListCall) Header() http.Header {
 
 func (c *ProjectsJobsMessagesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9481,7 +9807,7 @@ func (c *ProjectsJobsWorkItemsLeaseCall) Header() http.Header {
 
 func (c *ProjectsJobsWorkItemsLeaseCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9634,7 +9960,7 @@ func (c *ProjectsJobsWorkItemsReportStatusCall) Header() http.Header {
 
 func (c *ProjectsJobsWorkItemsReportStatusCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9786,7 +10112,7 @@ func (c *ProjectsLocationsWorkerMessagesCall) Header() http.Header {
 
 func (c *ProjectsLocationsWorkerMessagesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9890,6 +10216,158 @@ func (c *ProjectsLocationsWorkerMessagesCall) Do(opts ...googleapi.CallOption) (
 
 }
 
+// method id "dataflow.projects.locations.flexTemplates.launch":
+
+type ProjectsLocationsFlexTemplatesLaunchCall struct {
+	s                         *Service
+	projectId                 string
+	location                  string
+	launchflextemplaterequest *LaunchFlexTemplateRequest
+	urlParams_                gensupport.URLParams
+	ctx_                      context.Context
+	header_                   http.Header
+}
+
+// Launch: Launch a job with a FlexTemplate.
+func (r *ProjectsLocationsFlexTemplatesService) Launch(projectId string, location string, launchflextemplaterequest *LaunchFlexTemplateRequest) *ProjectsLocationsFlexTemplatesLaunchCall {
+	c := &ProjectsLocationsFlexTemplatesLaunchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.projectId = projectId
+	c.location = location
+	c.launchflextemplaterequest = launchflextemplaterequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsFlexTemplatesLaunchCall) Fields(s ...googleapi.Field) *ProjectsLocationsFlexTemplatesLaunchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsFlexTemplatesLaunchCall) Context(ctx context.Context) *ProjectsLocationsFlexTemplatesLaunchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsFlexTemplatesLaunchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsFlexTemplatesLaunchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.launchflextemplaterequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1b3/projects/{projectId}/locations/{location}/flexTemplates:launch")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"projectId": c.projectId,
+		"location":  c.location,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "dataflow.projects.locations.flexTemplates.launch" call.
+// Exactly one of *LaunchFlexTemplateResponse or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *LaunchFlexTemplateResponse.ServerResponse.Header or (if a response
+// was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsLocationsFlexTemplatesLaunchCall) Do(opts ...googleapi.CallOption) (*LaunchFlexTemplateResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &LaunchFlexTemplateResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Launch a job with a FlexTemplate.",
+	//   "flatPath": "v1b3/projects/{projectId}/locations/{location}/flexTemplates:launch",
+	//   "httpMethod": "POST",
+	//   "id": "dataflow.projects.locations.flexTemplates.launch",
+	//   "parameterOrder": [
+	//     "projectId",
+	//     "location"
+	//   ],
+	//   "parameters": {
+	//     "location": {
+	//       "description": "Required. The [regional endpoint]\n(https://cloud.google.com/dataflow/docs/concepts/regional-endpoints) to\nwhich to direct the request. E.g., us-central1, us-west1.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "projectId": {
+	//       "description": "Required. The ID of the Cloud Platform project that the job belongs to.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1b3/projects/{projectId}/locations/{location}/flexTemplates:launch",
+	//   "request": {
+	//     "$ref": "LaunchFlexTemplateRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "LaunchFlexTemplateResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly",
+	//     "https://www.googleapis.com/auth/userinfo.email"
+	//   ]
+	// }
+
+}
+
 // method id "dataflow.projects.locations.jobs.create":
 
 type ProjectsLocationsJobsCreateCall struct {
@@ -9968,7 +10446,7 @@ func (c *ProjectsLocationsJobsCreateCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10170,7 +10648,7 @@ func (c *ProjectsLocationsJobsGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10365,7 +10843,7 @@ func (c *ProjectsLocationsJobsGetMetricsCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsGetMetricsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10591,7 +11069,7 @@ func (c *ProjectsLocationsJobsListCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10804,7 +11282,7 @@ func (c *ProjectsLocationsJobsUpdateCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10967,7 +11445,7 @@ func (c *ProjectsLocationsJobsDebugGetConfigCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsDebugGetConfigCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11129,7 +11607,7 @@ func (c *ProjectsLocationsJobsDebugSendCaptureCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsDebugSendCaptureCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11360,7 +11838,7 @@ func (c *ProjectsLocationsJobsMessagesListCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsMessagesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11574,7 +12052,7 @@ func (c *ProjectsLocationsJobsWorkItemsLeaseCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsWorkItemsLeaseCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11737,7 +12215,7 @@ func (c *ProjectsLocationsJobsWorkItemsReportStatusCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsWorkItemsReportStatusCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11918,7 +12396,7 @@ func (c *ProjectsLocationsSqlValidateCall) Header() http.Header {
 
 func (c *ProjectsLocationsSqlValidateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12068,7 +12546,7 @@ func (c *ProjectsLocationsTemplatesCreateCall) Header() http.Header {
 
 func (c *ProjectsLocationsTemplatesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12248,7 +12726,7 @@ func (c *ProjectsLocationsTemplatesGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsTemplatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12443,7 +12921,7 @@ func (c *ProjectsLocationsTemplatesLaunchCall) Header() http.Header {
 
 func (c *ProjectsLocationsTemplatesLaunchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12613,7 +13091,7 @@ func (c *ProjectsTemplatesCreateCall) Header() http.Header {
 
 func (c *ProjectsTemplatesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12793,7 +13271,7 @@ func (c *ProjectsTemplatesGetCall) Header() http.Header {
 
 func (c *ProjectsTemplatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12993,7 +13471,7 @@ func (c *ProjectsTemplatesLaunchCall) Header() http.Header {
 
 func (c *ProjectsTemplatesLaunchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

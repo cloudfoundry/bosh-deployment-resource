@@ -212,7 +212,7 @@
                   ]
                 },
                 "deidentify": {
-                  "description": "Creates a new dataset containing de-identified data from the source\ndataset. The metadata field type\nis OperationMetadata.\nIf the request is successful, the\nresponse field type is\nDeidentifySummary.\nIf errors occur,\ndetails field type is\nDeidentifyErrorDetails.\nErrors are also logged to Stackdriver Logging. For more information,\nsee [Viewing logs](/healthcare/docs/how-tos/stackdriver-logging).",
+                  "description": "Creates a new dataset containing de-identified data from the source\ndataset. The metadata field type\nis OperationMetadata.\nIf the request is successful, the\nresponse field type is\nDeidentifySummary.\nIf errors occur,\nerror\ndetails field type is\nDeidentifyErrorDetails.\nErrors are also logged to Stackdriver Logging. For more information,\nsee [Viewing logs](/healthcare/docs/how-tos/stackdriver-logging).",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}:deidentify",
                   "httpMethod": "POST",
                   "id": "healthcare.projects.locations.datasets.deidentify",
@@ -391,7 +391,7 @@
                   ]
                 },
                 "setIamPolicy": {
-                  "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.",
+                  "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.\n\nCan return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}:setIamPolicy",
                   "httpMethod": "POST",
                   "id": "healthcare.projects.locations.datasets.setIamPolicy",
@@ -448,6 +448,97 @@
                 }
               },
               "resources": {
+                "annotationStores": {
+                  "methods": {
+                    "getIamPolicy": {
+                      "description": "Gets the access control policy for a resource.\nReturns an empty policy if the resource exists and does not have a policy\nset.",
+                      "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/annotationStores/{annotationStoresId}:getIamPolicy",
+                      "httpMethod": "GET",
+                      "id": "healthcare.projects.locations.datasets.annotationStores.getIamPolicy",
+                      "parameterOrder": [
+                        "resource"
+                      ],
+                      "parameters": {
+                        "options.requestedPolicyVersion": {
+                          "description": "Optional. The policy format version to be returned.\n\nValid values are 0, 1, and 3. Requests specifying an invalid value will be\nrejected.\n\nRequests for policies with any conditional bindings must specify version 3.\nPolicies without any conditional bindings may specify any valid value or\nleave the field unset.",
+                          "format": "int32",
+                          "location": "query",
+                          "type": "integer"
+                        },
+                        "resource": {
+                          "description": "REQUIRED: The resource for which the policy is being requested.\nSee the operation documentation for the appropriate value for this field.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/annotationStores/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1beta1/{+resource}:getIamPolicy",
+                      "response": {
+                        "$ref": "Policy"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "setIamPolicy": {
+                      "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.\n\nCan return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED",
+                      "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/annotationStores/{annotationStoresId}:setIamPolicy",
+                      "httpMethod": "POST",
+                      "id": "healthcare.projects.locations.datasets.annotationStores.setIamPolicy",
+                      "parameterOrder": [
+                        "resource"
+                      ],
+                      "parameters": {
+                        "resource": {
+                          "description": "REQUIRED: The resource for which the policy is being specified.\nSee the operation documentation for the appropriate value for this field.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/annotationStores/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1beta1/{+resource}:setIamPolicy",
+                      "request": {
+                        "$ref": "SetIamPolicyRequest"
+                      },
+                      "response": {
+                        "$ref": "Policy"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "testIamPermissions": {
+                      "description": "Returns permissions that a caller has on the specified resource.\nIf the resource does not exist, this will return an empty set of\npermissions, not a NOT_FOUND error.\n\nNote: This operation is designed to be used for building permission-aware\nUIs and command-line tools, not for authorization checking. This operation\nmay \"fail open\" without warning.",
+                      "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/annotationStores/{annotationStoresId}:testIamPermissions",
+                      "httpMethod": "POST",
+                      "id": "healthcare.projects.locations.datasets.annotationStores.testIamPermissions",
+                      "parameterOrder": [
+                        "resource"
+                      ],
+                      "parameters": {
+                        "resource": {
+                          "description": "REQUIRED: The resource for which the policy detail is being requested.\nSee the operation documentation for the appropriate value for this field.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/annotationStores/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1beta1/{+resource}:testIamPermissions",
+                      "request": {
+                        "$ref": "TestIamPermissionsRequest"
+                      },
+                      "response": {
+                        "$ref": "TestIamPermissionsResponse"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    }
+                  }
+                },
                 "dicomStores": {
                   "methods": {
                     "create": {
@@ -478,6 +569,34 @@
                       },
                       "response": {
                         "$ref": "DicomStore"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "deidentify": {
+                      "description": "De-identifies data from the source store and writes it to the destination\nstore. The metadata field type\nis OperationMetadata.\nIf the request is successful, the\nresponse field type is\nDeidentifyDicomStoreSummary. If errors occur,\nerror\ndetails field type is\nDeidentifyErrorDetails.\nErrors are also logged to Stackdriver\n(see [Viewing logs](/healthcare/docs/how-tos/stackdriver-logging)).",
+                      "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/dicomStores/{dicomStoresId}:deidentify",
+                      "httpMethod": "POST",
+                      "id": "healthcare.projects.locations.datasets.dicomStores.deidentify",
+                      "parameterOrder": [
+                        "sourceStore"
+                      ],
+                      "parameters": {
+                        "sourceStore": {
+                          "description": "Source DICOM store resource name. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1beta1/{+sourceStore}:deidentify",
+                      "request": {
+                        "$ref": "DeidentifyDicomStoreRequest"
+                      },
+                      "response": {
+                        "$ref": "Operation"
                       },
                       "scopes": [
                         "https://www.googleapis.com/auth/cloud-platform"
@@ -706,14 +825,14 @@
                       ],
                       "parameters": {
                         "dicomWebPath": {
-                          "description": "The path of the SearchForInstancesRequest DICOMweb request (for example,\n`instances` or `series/{series_uid}/instances` or\n`studies/{study_uid}/instances`).",
+                          "description": "The path of the SearchForInstancesRequest DICOMweb request. For example,\n`instances`, `series/{series_uid}/instances`, or\n`studies/{study_uid}/instances`.",
                           "location": "path",
                           "pattern": "^instances$",
                           "required": true,
                           "type": "string"
                         },
                         "parent": {
-                          "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                          "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                           "required": true,
@@ -739,14 +858,14 @@
                       ],
                       "parameters": {
                         "dicomWebPath": {
-                          "description": "The path of the SearchForSeries DICOMweb request(for example, `series` or\n`studies/{study_uid}/series`).",
+                          "description": "The path of the SearchForSeries DICOMweb request. For example, `series` or\n`studies/{study_uid}/series`.",
                           "location": "path",
                           "pattern": "^series$",
                           "required": true,
                           "type": "string"
                         },
                         "parent": {
-                          "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                          "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                           "required": true,
@@ -772,14 +891,14 @@
                       ],
                       "parameters": {
                         "dicomWebPath": {
-                          "description": "The path of the SearchForStudies DICOMweb request (for example, `studies`).",
+                          "description": "The path of the SearchForStudies DICOMweb request. For example, `studies`.",
                           "location": "path",
                           "pattern": "^studies$",
                           "required": true,
                           "type": "string"
                         },
                         "parent": {
-                          "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                          "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                           "required": true,
@@ -795,7 +914,7 @@
                       ]
                     },
                     "setIamPolicy": {
-                      "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.",
+                      "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.\n\nCan return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED",
                       "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/dicomStores/{dicomStoresId}:setIamPolicy",
                       "httpMethod": "POST",
                       "id": "healthcare.projects.locations.datasets.dicomStores.setIamPolicy",
@@ -833,14 +952,14 @@
                       ],
                       "parameters": {
                         "dicomWebPath": {
-                          "description": "The path of the StoreInstances DICOMweb request (for example,\n`studies/[{study_uid}]`). Note that the `study_uid` is optional.",
+                          "description": "The path of the StoreInstances DICOMweb request. For example,\n`studies/[{study_uid}]`. Note that the `study_uid` is optional.",
                           "location": "path",
                           "pattern": "^studies$",
                           "required": true,
                           "type": "string"
                         },
                         "parent": {
-                          "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                          "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                           "required": true,
@@ -891,7 +1010,7 @@
                     "studies": {
                       "methods": {
                         "delete": {
-                          "description": "DeleteStudy deletes all instances within the given study. Delete requests\nare equivalent to the GET requests specified in the WADO-RS standard.",
+                          "description": "DeleteStudy deletes all instances within the given study. Delete requests\nare equivalent to the GET requests specified in the Retrieve transaction.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/dicomStores/{dicomStoresId}/dicomWeb/studies/{studiesId}",
                           "httpMethod": "DELETE",
                           "id": "healthcare.projects.locations.datasets.dicomStores.studies.delete",
@@ -901,14 +1020,13 @@
                           ],
                           "parameters": {
                             "dicomWebPath": {
-                              "description": "The path of the DeleteStudy request (for example, `studies/{study_uid}`).",
+                              "description": "The path of the DeleteStudy request. For example, `studies/{study_uid}`.",
                               "location": "path",
                               "pattern": "^studies/[^/]+$",
                               "required": true,
                               "type": "string"
                             },
                             "parent": {
-                              "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                               "required": true,
@@ -934,14 +1052,14 @@
                           ],
                           "parameters": {
                             "dicomWebPath": {
-                              "description": "The path of the RetrieveStudyMetadata DICOMweb request (for example,\n`studies/{study_uid}/metadata`).",
+                              "description": "The path of the RetrieveStudyMetadata DICOMweb request. For example,\n`studies/{study_uid}/metadata`.",
                               "location": "path",
                               "pattern": "^studies/[^/]+/metadata$",
                               "required": true,
                               "type": "string"
                             },
                             "parent": {
-                              "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                              "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                               "required": true,
@@ -967,14 +1085,14 @@
                           ],
                           "parameters": {
                             "dicomWebPath": {
-                              "description": "The path of the RetrieveStudy DICOMweb request (for example,\n`studies/{study_uid}`).",
+                              "description": "The path of the RetrieveStudy DICOMweb request. For example,\n`studies/{study_uid}`.",
                               "location": "path",
                               "pattern": "^studies/[^/]+$",
                               "required": true,
                               "type": "string"
                             },
                             "parent": {
-                              "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                              "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                               "required": true,
@@ -1000,14 +1118,14 @@
                           ],
                           "parameters": {
                             "dicomWebPath": {
-                              "description": "The path of the SearchForInstancesRequest DICOMweb request (for example,\n`instances` or `series/{series_uid}/instances` or\n`studies/{study_uid}/instances`).",
+                              "description": "The path of the SearchForInstancesRequest DICOMweb request. For example,\n`instances`, `series/{series_uid}/instances`, or\n`studies/{study_uid}/instances`.",
                               "location": "path",
                               "pattern": "^studies/[^/]+/instances$",
                               "required": true,
                               "type": "string"
                             },
                             "parent": {
-                              "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                              "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                               "required": true,
@@ -1033,14 +1151,14 @@
                           ],
                           "parameters": {
                             "dicomWebPath": {
-                              "description": "The path of the SearchForSeries DICOMweb request(for example, `series` or\n`studies/{study_uid}/series`).",
+                              "description": "The path of the SearchForSeries DICOMweb request. For example, `series` or\n`studies/{study_uid}/series`.",
                               "location": "path",
                               "pattern": "^studies/[^/]+/series$",
                               "required": true,
                               "type": "string"
                             },
                             "parent": {
-                              "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                              "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                               "required": true,
@@ -1066,14 +1184,14 @@
                           ],
                           "parameters": {
                             "dicomWebPath": {
-                              "description": "The path of the StoreInstances DICOMweb request (for example,\n`studies/[{study_uid}]`). Note that the `study_uid` is optional.",
+                              "description": "The path of the StoreInstances DICOMweb request. For example,\n`studies/[{study_uid}]`. Note that the `study_uid` is optional.",
                               "location": "path",
                               "pattern": "^studies/[^/]+$",
                               "required": true,
                               "type": "string"
                             },
                             "parent": {
-                              "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                              "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                               "required": true,
@@ -1096,7 +1214,7 @@
                         "series": {
                           "methods": {
                             "delete": {
-                              "description": "DeleteSeries deletes all instances within the given study and series.\nDelete requests are equivalent to the GET requests specified in the WADO-RS\nstandard.",
+                              "description": "DeleteSeries deletes all instances within the given study and series.\nDelete requests are equivalent to the GET requests specified in the\nRetrieve transaction.",
                               "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/dicomStores/{dicomStoresId}/dicomWeb/studies/{studiesId}/series/{seriesId}",
                               "httpMethod": "DELETE",
                               "id": "healthcare.projects.locations.datasets.dicomStores.studies.series.delete",
@@ -1106,14 +1224,14 @@
                               ],
                               "parameters": {
                                 "dicomWebPath": {
-                                  "description": "The path of the DeleteSeries request (for example,\n`studies/{study_uid}/series/{series_uid}`).",
+                                  "description": "The path of the DeleteSeries request. For example,\n`studies/{study_uid}/series/{series_uid}`.",
                                   "location": "path",
                                   "pattern": "^studies/[^/]+/series/[^/]+$",
                                   "required": true,
                                   "type": "string"
                                 },
                                 "parent": {
-                                  "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                  "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                   "location": "path",
                                   "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                   "required": true,
@@ -1139,14 +1257,14 @@
                               ],
                               "parameters": {
                                 "dicomWebPath": {
-                                  "description": "The path of the RetrieveSeriesMetadata DICOMweb request (for example,\n`studies/{study_uid}/series/{series_uid}/metadata`).",
+                                  "description": "The path of the RetrieveSeriesMetadata DICOMweb request. For example,\n`studies/{study_uid}/series/{series_uid}/metadata`.",
                                   "location": "path",
                                   "pattern": "^studies/[^/]+/series/[^/]+/metadata$",
                                   "required": true,
                                   "type": "string"
                                 },
                                 "parent": {
-                                  "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                  "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                   "location": "path",
                                   "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                   "required": true,
@@ -1172,14 +1290,14 @@
                               ],
                               "parameters": {
                                 "dicomWebPath": {
-                                  "description": "The path of the RetrieveSeries DICOMweb request (for example,\n`studies/{study_uid}/series/{series_uid}`).",
+                                  "description": "The path of the RetrieveSeries DICOMweb request. For example,\n`studies/{study_uid}/series/{series_uid}`.",
                                   "location": "path",
                                   "pattern": "^studies/[^/]+/series/[^/]+$",
                                   "required": true,
                                   "type": "string"
                                 },
                                 "parent": {
-                                  "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                  "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                   "location": "path",
                                   "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                   "required": true,
@@ -1205,14 +1323,14 @@
                               ],
                               "parameters": {
                                 "dicomWebPath": {
-                                  "description": "The path of the SearchForInstancesRequest DICOMweb request (for example,\n`instances` or `series/{series_uid}/instances` or\n`studies/{study_uid}/instances`).",
+                                  "description": "The path of the SearchForInstancesRequest DICOMweb request. For example,\n`instances`, `series/{series_uid}/instances`, or\n`studies/{study_uid}/instances`.",
                                   "location": "path",
                                   "pattern": "^studies/[^/]+/series/[^/]+/instances$",
                                   "required": true,
                                   "type": "string"
                                 },
                                 "parent": {
-                                  "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                  "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                   "location": "path",
                                   "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                   "required": true,
@@ -1232,7 +1350,7 @@
                             "instances": {
                               "methods": {
                                 "delete": {
-                                  "description": "DeleteInstance deletes an instance associated with the given study, series,\nand SOP Instance UID. Delete requests are equivalent to the GET requests\nspecified in the WADO-RS standard.",
+                                  "description": "DeleteInstance deletes an instance associated with the given study, series,\nand SOP Instance UID. Delete requests are equivalent to the GET requests\nspecified in the Retrieve transaction.",
                                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/dicomStores/{dicomStoresId}/dicomWeb/studies/{studiesId}/series/{seriesId}/instances/{instancesId}",
                                   "httpMethod": "DELETE",
                                   "id": "healthcare.projects.locations.datasets.dicomStores.studies.series.instances.delete",
@@ -1242,14 +1360,14 @@
                                   ],
                                   "parameters": {
                                     "dicomWebPath": {
-                                      "description": "The path of the DeleteInstance request (for example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`).",
+                                      "description": "The path of the DeleteInstance request. For example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.",
                                       "location": "path",
                                       "pattern": "^studies/[^/]+/series/[^/]+/instances/[^/]+$",
                                       "required": true,
                                       "type": "string"
                                     },
                                     "parent": {
-                                      "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                      "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                       "location": "path",
                                       "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                       "required": true,
@@ -1275,14 +1393,14 @@
                                   ],
                                   "parameters": {
                                     "dicomWebPath": {
-                                      "description": "The path of the RetrieveInstance DICOMweb request (for example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`).",
+                                      "description": "The path of the RetrieveInstance DICOMweb request. For example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.",
                                       "location": "path",
                                       "pattern": "^studies/[^/]+/series/[^/]+/instances/[^/]+$",
                                       "required": true,
                                       "type": "string"
                                     },
                                     "parent": {
-                                      "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                      "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                       "location": "path",
                                       "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                       "required": true,
@@ -1308,14 +1426,14 @@
                                   ],
                                   "parameters": {
                                     "dicomWebPath": {
-                                      "description": "The path of the RetrieveInstanceMetadata DICOMweb request (for example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/metadata`).",
+                                      "description": "The path of the RetrieveInstanceMetadata DICOMweb request. For example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/metadata`.",
                                       "location": "path",
                                       "pattern": "^studies/[^/]+/series/[^/]+/instances/[^/]+/metadata$",
                                       "required": true,
                                       "type": "string"
                                     },
                                     "parent": {
-                                      "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                      "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                       "location": "path",
                                       "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                       "required": true,
@@ -1341,14 +1459,14 @@
                                   ],
                                   "parameters": {
                                     "dicomWebPath": {
-                                      "description": "The path of the RetrieveRenderedInstance DICOMweb request (for example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/rendered`).",
+                                      "description": "The path of the RetrieveRenderedInstance DICOMweb request. For example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/rendered`.",
                                       "location": "path",
                                       "pattern": "^studies/[^/]+/series/[^/]+/instances/[^/]+/rendered$",
                                       "required": true,
                                       "type": "string"
                                     },
                                     "parent": {
-                                      "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                      "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                       "location": "path",
                                       "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                       "required": true,
@@ -1378,14 +1496,14 @@
                                       ],
                                       "parameters": {
                                         "dicomWebPath": {
-                                          "description": "The path of the RetrieveFrames DICOMweb request (for example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}`).",
+                                          "description": "The path of the RetrieveFrames DICOMweb request. For example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}`.",
                                           "location": "path",
                                           "pattern": "^studies/[^/]+/series/[^/]+/instances/[^/]+/frames/[^/]+$",
                                           "required": true,
                                           "type": "string"
                                         },
                                         "parent": {
-                                          "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                          "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                           "location": "path",
                                           "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                           "required": true,
@@ -1411,14 +1529,14 @@
                                       ],
                                       "parameters": {
                                         "dicomWebPath": {
-                                          "description": "The path of the RetrieveRenderedFrames DICOMweb request (for example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}/rendered`).",
+                                          "description": "The path of the RetrieveRenderedFrames DICOMweb request. For example,\n`studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}/rendered`.",
                                           "location": "path",
                                           "pattern": "^studies/[^/]+/series/[^/]+/instances/[^/]+/frames/[^/]+/rendered$",
                                           "required": true,
                                           "type": "string"
                                         },
                                         "parent": {
-                                          "description": "The name of the DICOM store that is being accessed (for example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`).",
+                                          "description": "The name of the DICOM store that is being accessed. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.",
                                           "location": "path",
                                           "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/dicomStores/[^/]+$",
                                           "required": true,
@@ -1473,6 +1591,34 @@
                       },
                       "response": {
                         "$ref": "FhirStore"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "deidentify": {
+                      "description": "De-identifies data from the source store and writes it to the destination\nstore. The metadata field type\nis OperationMetadata.\nIf the request is successful, the\nresponse field type is\nDeidentifyFhirStoreSummary. If errors occur,\nerror\ndetails field type is\nDeidentifyErrorDetails.\nErrors are also logged to Stackdriver\n(see [Viewing logs](/healthcare/docs/how-tos/stackdriver-logging)).",
+                      "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}:deidentify",
+                      "httpMethod": "POST",
+                      "id": "healthcare.projects.locations.datasets.fhirStores.deidentify",
+                      "parameterOrder": [
+                        "sourceStore"
+                      ],
+                      "parameters": {
+                        "sourceStore": {
+                          "description": "Source FHIR store resource name. For example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/fhirStores/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1beta1/{+sourceStore}:deidentify",
+                      "request": {
+                        "$ref": "DeidentifyFhirStoreRequest"
+                      },
+                      "response": {
+                        "$ref": "Operation"
                       },
                       "scopes": [
                         "https://www.googleapis.com/auth/cloud-platform"
@@ -1691,7 +1837,7 @@
                       ]
                     },
                     "setIamPolicy": {
-                      "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.",
+                      "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.\n\nCan return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED",
                       "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}:setIamPolicy",
                       "httpMethod": "POST",
                       "id": "healthcare.projects.locations.datasets.fhirStores.setIamPolicy",
@@ -1751,7 +1897,7 @@
                     "fhir": {
                       "methods": {
                         "Observation-lastn": {
-                          "description": "Retrieves the N most recent `Observation` resources for a subject matching\nsearch criteria specified as query parameters, grouped by\n`Observation.code`, sorted from most recent to oldest.\n\nImplements the FHIR extended operation\n[Observation-lastn](http://hl7.org/implement/standards/fhir/STU3/observation-operations.html#lastn).\n\nSearch terms are provided as query parameters following the same pattern as\nthe search method. This operation accepts an additional\nquery parameter `max`, which specifies N, the maximum number of\nObservations to return from each group, with a default of 1.\n\nOn success, the response body will contain a JSON-encoded representation\nof a `Bundle` resource of type `searchset`, containing the results of the\noperation.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "Retrieves the N most recent `Observation` resources for a subject matching\nsearch criteria specified as query parameters, grouped by\n`Observation.code`, sorted from most recent to oldest.\n\nImplements the FHIR extended operation Observation-lastn\n([STU3](http://hl7.org/implement/standards/fhir/STU3/observation-operations.html#lastn),\n[R4](http://hl7.org/implement/standards/fhir/R4/observation-operations.html#lastn)).\n\nDSTU2 doesn't define the Observation-lastn method, but the server supports\nit the same way it supports STU3.\n\nSearch terms are provided as query parameters following the same pattern as\nthe search method. The following search parameters must\nbe provided:\n\n    - `subject` or `patient` to specify a subject for the Observation.\n    - `code`, `category` or any of the composite parameters that include\n      `code`.\n\nAny other valid Observation search parameters can also be provided. This\noperation accepts an additional query parameter `max`, which specifies N,\nthe maximum number of Observations to return from each group, with a\ndefault of 1.\n\nSearches with over 1000 results are rejected. Results are counted before\ngrouping and limiting the results with `max`. To stay within the limit,\nconstrain these searches using Observation search parameters such as\n`_lastUpdated` or `date`.\n\nOn success, the response body will contain a JSON-encoded representation\nof a `Bundle` resource of type `searchset`, containing the results of the\noperation.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/Observation/$lastn",
                           "httpMethod": "GET",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.Observation-lastn",
@@ -1776,7 +1922,7 @@
                           ]
                         },
                         "Patient-everything": {
-                          "description": "Retrieves all the resources directly referenced by a patient, as well as\nall of the resources in the patient compartment.\n\nImplements the FHIR extended operation\n[Patient-everything](http://hl7.org/implement/standards/fhir/STU3/patient-operations.html#everything).\n\nOn success, the response body will contain a JSON-encoded representation\nof a `Bundle` resource of type `searchset`, containing the results of the\noperation.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "On success, the response body will contain a JSON-encoded representation\nof a `Bundle` resource of type `searchset`, containing the results of the\noperation.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/Patient/{PatientId}/$everything",
                           "httpMethod": "GET",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.Patient-everything",
@@ -1790,6 +1936,11 @@
                               "location": "query",
                               "type": "integer"
                             },
+                            "_page_token": {
+                              "description": "Used to retrieve the next or previous page of results\nwhen using pagination. Value should be set to the value of page_token set\nin next or previous page links' urls. Next and previous page are returned\nin the response bundle's links field, where `link.relation` is \"previous\"\nor \"next\".\n\nOmit `page_token` if no previous request has been made.",
+                              "location": "query",
+                              "type": "string"
+                            },
                             "end": {
                               "description": "The response includes records prior to the end date. If no end date is\nprovided, all records subsequent to the start date are in scope.",
                               "location": "query",
@@ -1800,11 +1951,6 @@
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/fhirStores/[^/]+/fhir/Patient/[^/]+$",
                               "required": true,
-                              "type": "string"
-                            },
-                            "pageToken": {
-                              "description": "Used to retrieve the next or previous page of results\nwhen using pagination. Value should be set to the value of page_token set\nin next or previous page links' urls. Next and previous page are returned\nin the response bundle's links field, where `link.relation` is \"previous\"\nor \"next\".\n\nOmit `page_token` if no previous request has been made.",
-                              "location": "query",
                               "type": "string"
                             },
                             "start": {
@@ -1847,7 +1993,7 @@
                           ]
                         },
                         "capabilities": {
-                          "description": "Gets the FHIR [capability\nstatement](http://hl7.org/implement/standards/fhir/STU3/capabilitystatement.html)\nfor the store, which contains a description of functionality supported by\nthe server.\n\nImplements the FHIR standard [capabilities\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#capabilities).\n\nOn success, the response body will contain a JSON-encoded representation\nof a `CapabilityStatement` resource.",
+                          "description": "Gets the FHIR capability statement\n([STU3](http://hl7.org/implement/standards/fhir/STU3/capabilitystatement.html),\n[R4](http://hl7.org/implement/standards/fhir/R4/capabilitystatement.html)),\nor the [conformance\nstatement](http://hl7.org/implement/standards/fhir/DSTU2/conformance.html)\nin the DSTU2 case for the store, which contains a description of\nfunctionality supported by the server.\n\nImplements the FHIR standard capabilities interaction\n([STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#capabilities),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#capabilities)),\nor the [conformance\ninteraction](http://hl7.org/implement/standards/fhir/DSTU2/http.html#conformance)\nin the DSTU2 case.\n\nOn success, the response body will contain a JSON-encoded representation\nof a `CapabilityStatement` resource.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/metadata",
                           "httpMethod": "GET",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.capabilities",
@@ -1872,7 +2018,7 @@
                           ]
                         },
                         "conditionalDelete": {
-                          "description": "Deletes FHIR resources that match a search query.\n\nImplements the FHIR standard [conditional delete\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#2.21.0.13.1).\nIf multiple resources match, all of them will be deleted.\n\nSearch terms are provided as query parameters following the same pattern as\nthe search method.\n\nNote: Unless resource versioning is disabled by setting the\ndisable_resource_versioning flag\non the FHIR store, the deleted resources will be moved to a history\nrepository that can still be retrieved through vread\nand related methods, unless they are removed by the\npurge method.",
+                          "description": "Deletes FHIR resources that match a search query.\n\nImplements the FHIR standard conditional delete interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#2.1.0.12.1),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#2.21.0.13.1),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#3.1.0.7.1)).\nIf multiple resources match, all of them will be deleted.\n\nSearch terms are provided as query parameters following the same pattern as\nthe search method.\n\nNote: Unless resource versioning is disabled by setting the\ndisable_resource_versioning flag\non the FHIR store, the deleted resources will be moved to a history\nrepository that can still be retrieved through vread\nand related methods, unless they are removed by the\npurge method.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}",
                           "httpMethod": "DELETE",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.conditionalDelete",
@@ -1889,7 +2035,7 @@
                               "type": "string"
                             },
                             "type": {
-                              "description": "The FHIR resource type to delete, such as Patient or Observation. For a\ncomplete list, see the [FHIR Resource\nIndex](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html).",
+                              "description": "The FHIR resource type to delete, such as Patient or Observation. For a\ncomplete list, see the FHIR Resource Index\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html),\n[R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).",
                               "location": "path",
                               "pattern": "^[^/]+$",
                               "required": true,
@@ -1905,7 +2051,7 @@
                           ]
                         },
                         "conditionalPatch": {
-                          "description": "If a resource is found based on the search criteria specified in the query\nparameters, updates part of that resource by applying the operations\nspecified in a [JSON Patch](http://jsonpatch.com/) document.\n\nImplements the FHIR standard [conditional patch\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#patch).\n\nSearch terms are provided as query parameters following the same pattern as\nthe search method.\n\nIf the search criteria identify more than one match, the request will\nreturn a `412 Precondition Failed` error.\n\nThe request body must contain a JSON Patch document, and the request\nheaders must contain `Content-Type: application/json-patch+json`.\n\nOn success, the response body will contain a JSON-encoded representation\nof the updated resource, including the server-assigned version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "If a resource is found based on the search criteria specified in the query\nparameters, updates part of that resource by applying the operations\nspecified in a [JSON Patch](http://jsonpatch.com/) document.\n\nImplements the FHIR standard conditional patch interaction\n([STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#patch),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#patch)).\n\nDSTU2 doesn't define a conditional patch method, but the server supports it\nin the same way it supports STU3.\n\nSearch terms are provided as query parameters following the same pattern as\nthe search method.\n\nIf the search criteria identify more than one match, the request will\nreturn a `412 Precondition Failed` error.\n\nThe request body must contain a JSON Patch document, and the request\nheaders must contain `Content-Type: application/json-patch+json`.\n\nOn success, the response body will contain a JSON-encoded representation\nof the updated resource, including the server-assigned version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}",
                           "httpMethod": "PATCH",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.conditionalPatch",
@@ -1922,7 +2068,7 @@
                               "type": "string"
                             },
                             "type": {
-                              "description": "The FHIR resource type to update, such as Patient or Observation. For a\ncomplete list, see the [FHIR Resource\nIndex](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html).",
+                              "description": "The FHIR resource type to update, such as Patient or Observation. For a\ncomplete list, see the FHIR Resource Index\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html),\n[R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).",
                               "location": "path",
                               "pattern": "^[^/]+$",
                               "required": true,
@@ -1941,7 +2087,7 @@
                           ]
                         },
                         "conditionalUpdate": {
-                          "description": "If a resource is found based on the search criteria specified in the query\nparameters, updates the entire contents of that resource.\n\nImplements the FHIR standard [conditional update\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#cond-update).\n\nSearch terms are provided as query parameters following the same pattern as\nthe search method.\n\nIf the search criteria identify more than one match, the request will\nreturn a `412 Precondition Failed` error.\nIf the search criteria identify zero matches, and the supplied resource\nbody contains an `id`, and the FHIR store has\nenable_update_create set, creates the\nresource with the client-specified ID. If the search criteria identify zero\nmatches, and the supplied resource body does not contain an `id`, the\nresource will be created with a server-assigned ID as per the\ncreate method.\n\nThe request body must contain a JSON-encoded FHIR resource, and the request\nheaders must contain `Content-Type: application/fhir+json`.\n\nOn success, the response body will contain a JSON-encoded representation\nof the updated resource, including the server-assigned version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "If a resource is found based on the search criteria specified in the query\nparameters, updates the entire contents of that resource.\n\nImplements the FHIR standard conditional update interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#2.1.0.10.2),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#cond-update),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#cond-update)).\n\nSearch terms are provided as query parameters following the same pattern as\nthe search method.\n\nIf the search criteria identify more than one match, the request will\nreturn a `412 Precondition Failed` error.\nIf the search criteria identify zero matches, and the supplied resource\nbody contains an `id`, and the FHIR store has\nenable_update_create set, creates the\nresource with the client-specified ID. If the search criteria identify zero\nmatches, and the supplied resource body does not contain an `id`, the\nresource will be created with a server-assigned ID as per the\ncreate method.\n\nThe request body must contain a JSON-encoded FHIR resource, and the request\nheaders must contain `Content-Type: application/fhir+json`.\n\nOn success, the response body will contain a JSON-encoded representation\nof the updated resource, including the server-assigned version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}",
                           "httpMethod": "PUT",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.conditionalUpdate",
@@ -1958,7 +2104,7 @@
                               "type": "string"
                             },
                             "type": {
-                              "description": "The FHIR resource type to update, such as Patient or Observation. For a\ncomplete list, see the [FHIR Resource\nIndex](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html).\nMust match the resource type in the provided content.",
+                              "description": "The FHIR resource type to update, such as Patient or Observation. For a\ncomplete list, see the FHIR Resource Index\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html),\n[R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).\nMust match the resource type in the provided content.",
                               "location": "path",
                               "pattern": "^[^/]+$",
                               "required": true,
@@ -1977,7 +2123,7 @@
                           ]
                         },
                         "create": {
-                          "description": "Creates a FHIR resource.\n\nImplements the FHIR standard [create\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#create),\nwhich creates a new resource with a server-assigned resource ID.\n\nAlso supports the FHIR standard [conditional create\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#ccreate),\nspecified by supplying an `If-None-Exist` header containing a FHIR search\nquery. If no resources match this search query, the server processes the\ncreate operation as normal.\n\nThe request body must contain a JSON-encoded FHIR resource, and the request\nheaders must contain `Content-Type: application/fhir+json`.\n\nOn success, the response body will contain a JSON-encoded representation\nof the resource as it was created on the server, including the\nserver-assigned resource ID and version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "Creates a FHIR resource.\n\nImplements the FHIR standard create interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#create),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#create),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#create)),\nwhich creates a new resource with a server-assigned resource ID.\n\nAlso supports the FHIR standard conditional create interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#ccreate),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#ccreate),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#ccreate)),\nspecified by supplying an `If-None-Exist` header containing a FHIR search\nquery. If no resources match this search query, the server processes the\ncreate operation as normal.\n\nThe request body must contain a JSON-encoded FHIR resource, and the request\nheaders must contain `Content-Type: application/fhir+json`.\n\nOn success, the response body will contain a JSON-encoded representation\nof the resource as it was created on the server, including the\nserver-assigned resource ID and version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}",
                           "httpMethod": "POST",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.create",
@@ -1994,7 +2140,7 @@
                               "type": "string"
                             },
                             "type": {
-                              "description": "The FHIR resource type to create, such as Patient or Observation. For a\ncomplete list, see the [FHIR Resource\nIndex](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html).\nMust match the resource type in the provided content.",
+                              "description": "The FHIR resource type to create, such as Patient or Observation. For a\ncomplete list, see the FHIR Resource Index\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html),\n[R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).\nMust match the resource type in the provided content.",
                               "location": "path",
                               "pattern": "^[^/]+$",
                               "required": true,
@@ -2013,7 +2159,7 @@
                           ]
                         },
                         "delete": {
-                          "description": "Deletes a FHIR resource.\n\nImplements the FHIR standard [delete\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#delete).\n\nNote: Unless resource versioning is disabled by setting the\ndisable_resource_versioning flag\non the FHIR store, the deleted resources will be moved to a history\nrepository that can still be retrieved through vread\nand related methods, unless they are removed by the\npurge method.",
+                          "description": "Deletes a FHIR resource.\n\nImplements the FHIR standard delete interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#delete),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#delete),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#delete)).\n\nNote: Unless resource versioning is disabled by setting the\ndisable_resource_versioning flag\non the FHIR store, the deleted resources will be moved to a history\nrepository that can still be retrieved through vread\nand related methods, unless they are removed by the\npurge method.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}/{fhirId1}",
                           "httpMethod": "DELETE",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.delete",
@@ -2038,7 +2184,7 @@
                           ]
                         },
                         "executeBundle": {
-                          "description": "Executes all the requests in the given Bundle.\n\nImplements the FHIR standard [batch/transaction\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#transaction).\n\nSupports all interactions within a bundle, except search. This method\naccepts Bundles of type `batch` and `transaction`, processing them\naccording to the [batch processing\nrules](http://hl7.org/implement/standards/fhir/STU3/http.html#2.21.0.17.1)\nand [transaction processing\nrules](http://hl7.org/implement/standards/fhir/STU3/http.html#2.21.0.17.2).\n\nThe request body must contain a JSON-encoded FHIR `Bundle` resource, and\nthe request headers must contain `Content-Type: application/fhir+json`.\n\nFor a batch bundle or a successful transaction the response body will\ncontain a JSON-encoded representation of a `Bundle` resource of type\n`batch-response` or `transaction-response` containing one entry for each\nentry in the request, with the outcome of processing the entry. In the\ncase of an error for a transaction bundle, the response body will contain\na JSON-encoded `OperationOutcome` resource describing the reason for the\nerror. If the request cannot be mapped to a valid API method on a FHIR\nstore, a generic GCP error might be returned instead.",
+                          "description": "Executes all the requests in the given Bundle.\n\nImplements the FHIR standard batch/transaction interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#transaction),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#transaction),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#transaction)).\n\nSupports all interactions within a bundle, except search. This method\naccepts Bundles of type `batch` and `transaction`, processing them\naccording to the batch processing rules\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#2.1.0.16.1),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#2.21.0.17.1),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#brules))\nand transaction processing rules\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#2.1.0.16.2),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#2.21.0.17.2),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#trules)).\n\nThe request body must contain a JSON-encoded FHIR `Bundle` resource, and\nthe request headers must contain `Content-Type: application/fhir+json`.\n\nFor a batch bundle or a successful transaction the response body will\ncontain a JSON-encoded representation of a `Bundle` resource of type\n`batch-response` or `transaction-response` containing one entry for each\nentry in the request, with the outcome of processing the entry. In the\ncase of an error for a transaction bundle, the response body will contain\na JSON-encoded `OperationOutcome` resource describing the reason for the\nerror. If the request cannot be mapped to a valid API method on a FHIR\nstore, a generic GCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir",
                           "httpMethod": "POST",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.executeBundle",
@@ -2066,7 +2212,7 @@
                           ]
                         },
                         "history": {
-                          "description": "Lists all the versions of a resource (including the current version and\ndeleted versions) from the FHIR store.\n\nImplements the per-resource form of the FHIR standard [history\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#history).\n\nOn success, the response body will contain a JSON-encoded representation\nof a `Bundle` resource of type `history`, containing the version history\nsorted from most recent to oldest versions.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "Lists all the versions of a resource (including the current version and\ndeleted versions) from the FHIR store.\n\nImplements the per-resource form of the FHIR standard history interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#history),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#history),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#history)).\n\nOn success, the response body will contain a JSON-encoded representation\nof a `Bundle` resource of type `history`, containing the version history\nsorted from most recent to oldest versions.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}/{fhirId1}/_history",
                           "httpMethod": "GET",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.history",
@@ -2074,37 +2220,32 @@
                             "name"
                           ],
                           "parameters": {
-                            "_page_token": {
-                              "description": "Same as `page`. Please use either `page` or `_page_token`.",
-                              "location": "query",
-                              "type": "string"
-                            },
-                            "at": {
+                            "_at": {
                               "description": "Only include resource versions that were current at some point during the\ntime period specified in the date time value. The date parameter format is\nyyyy-mm-ddThh:mm:ss[Z|(+|-)hh:mm]\n\nClients may specify any of the following:\n\n*  An entire year: `_at=2019`\n*  An entire month: `_at=2019-01`\n*  A specific day: `_at=2019-01-20`\n*  A specific second: `_at=2018-12-31T23:59:58Z`",
                               "location": "query",
                               "type": "string"
                             },
-                            "count": {
+                            "_count": {
                               "description": "The maximum number of search results on a page. Defaults to 1000.",
                               "format": "int32",
                               "location": "query",
                               "type": "integer"
+                            },
+                            "_page_token": {
+                              "description": "Used to retrieve the first, previous, next, or last page of resource\nversions when using pagination. Value should be set to the value of\n`_page_token` set in next or previous page links' URLs. Next and previous\npage are returned in the response bundle's links field, where\n`link.relation` is \"previous\" or \"next\".\n\nOmit `_page_token` if no previous request has been made.",
+                              "location": "query",
+                              "type": "string"
+                            },
+                            "_since": {
+                              "description": "Only include resource versions that were created at or after the given\ninstant in time. The instant in time uses the format\nYYYY-MM-DDThh:mm:ss.sss+zz:zz (for example 2015-02-07T13:28:17.239+02:00 or\n2017-01-01T00:00:00Z). The time must be specified to the second and\ninclude a time zone.",
+                              "location": "query",
+                              "type": "string"
                             },
                             "name": {
                               "description": "The name of the resource to retrieve.",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/fhirStores/[^/]+/fhir/[^/]+/[^/]+$",
                               "required": true,
-                              "type": "string"
-                            },
-                            "page": {
-                              "description": "Used to retrieve the first, previous, next, or last page of resource\nversions when using pagination. Value should be set to the value of\n`page` set in next or previous page links' URLs. Next and previous\npage are returned in the response bundle's links field, where\n`link.relation` is \"previous\" or \"next\".\n\nOmit `page` if no previous request has been made.",
-                              "location": "query",
-                              "type": "string"
-                            },
-                            "since": {
-                              "description": "Only include resource versions that were created at or after the given\ninstant in time. The instant in time uses the format\nYYYY-MM-DDThh:mm:ss.sss+zz:zz (for example 2015-02-07T13:28:17.239+02:00 or\n2017-01-01T00:00:00Z). The time must be specified to the second and\ninclude a time zone.",
-                              "location": "query",
                               "type": "string"
                             }
                           },
@@ -2117,7 +2258,7 @@
                           ]
                         },
                         "patch": {
-                          "description": "Updates part of an existing resource by applying the operations specified\nin a [JSON Patch](http://jsonpatch.com/) document.\n\nImplements the FHIR standard [patch\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#patch).\n\nThe request body must contain a JSON Patch document, and the request\nheaders must contain `Content-Type: application/json-patch+json`.\n\nOn success, the response body will contain a JSON-encoded representation\nof the updated resource, including the server-assigned version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "Updates part of an existing resource by applying the operations specified\nin a [JSON Patch](http://jsonpatch.com/) document.\n\nImplements the FHIR standard patch interaction\n([STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#patch),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#patch)]).\n\nDSTU2 doesn't define a patch method, but the server supports it in the same\nway it supports STU3.\n\nThe request body must contain a JSON Patch document, and the request\nheaders must contain `Content-Type: application/json-patch+json`.\n\nOn success, the response body will contain a JSON-encoded representation\nof the updated resource, including the server-assigned version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}/{fhirId1}",
                           "httpMethod": "PATCH",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.patch",
@@ -2145,7 +2286,7 @@
                           ]
                         },
                         "read": {
-                          "description": "Gets the contents of a FHIR resource.\n\nImplements the FHIR standard [read\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#read).\n\nAlso supports the FHIR standard [conditional read\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#cread)\nspecified by supplying an `If-Modified-Since` header with a date/time value\nor an `If-None-Match` header with an ETag value.\n\nOn success, the response body will contain a JSON-encoded representation\nof the resource.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "Gets the contents of a FHIR resource.\n\nImplements the FHIR standard read interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#read),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#read),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#read)).\n\nAlso supports the FHIR standard conditional read interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#cread),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#cread),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#cread))\nspecified by supplying an `If-Modified-Since` header with a date/time value\nor an `If-None-Match` header with an ETag value.\n\nOn success, the response body will contain a JSON-encoded representation\nof the resource.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}/{fhirId1}",
                           "httpMethod": "GET",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.read",
@@ -2170,7 +2311,7 @@
                           ]
                         },
                         "search": {
-                          "description": "Searches for resources in the given FHIR store according to criteria\nspecified as query parameters.\n\nImplements the FHIR standard [search\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#search)\nusing the search semantics described in the [FHIR Search\nspecification](http://hl7.org/implement/standards/fhir/STU3/search.html).\n\nSupports three methods of search defined by the specification:\n\n*  `GET [base]?[parameters]` to search across all resources.\n*  `GET [base]/[type]?[parameters]` to search resources of a specified\ntype.\n*  `POST [base]/[type]/_search?[parameters]` as an alternate form having\nthe same semantics as the `GET` method.\n\nThe `GET` methods do not support compartment searches. The `POST` method\ndoes not support `application/x-www-form-urlencoded` search parameters.\n\nOn success, the response body will contain a JSON-encoded representation\nof a `Bundle` resource of type `searchset`, containing the results of the\nsearch.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.\n\nThe server's capability statement, retrieved through\ncapabilities, indicates what search parameters\nare supported on each FHIR resource. A list of all search parameters\ndefined by the specification can be found in the [FHIR Search Parameter\nRegistry](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html).\n\nSupported search modifiers: `:missing`, `:exact`, `:contains`, `:text`,\n`:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `:recurse`.\n\nSupported search result parameters: `_sort`, `_count`, `_include`,\n`_revinclude`, `_summary=text`, `_summary=data`, and `_elements`.\n\nThe maximum number of search results returned defaults to 100, which can\nbe overridden by the `_count` parameter up to a maximum limit of 1000. If\nthere are additional results, the returned `Bundle` will contain\npagination links.\n\nResources with a total size larger than 5MB or a field count larger than\n50,000 might not be fully searchable as the server might trim its generated\nsearch index in those cases.\n\nNote: FHIR resources are indexed asynchronously, so there might be a slight\ndelay between the time a resource is created or changes and when the change\nis reflected in search results.",
+                          "description": "Searches for resources in the given FHIR store according to criteria\nspecified as query parameters.\n\nImplements the FHIR standard search interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#search))\nusing the search semantics described in the FHIR Search specification\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/search.html),\n[R4](http://hl7.org/implement/standards/fhir/R4/search.html)).\n\nSupports three methods of search defined by the specification:\n\n*  `GET [base]?[parameters]` to search across all resources.\n*  `GET [base]/[type]?[parameters]` to search resources of a specified\ntype.\n*  `POST [base]/[type]/_search?[parameters]` as an alternate form having\nthe same semantics as the `GET` method.\n\nThe `GET` methods do not support compartment searches. The `POST` method\ndoes not support `application/x-www-form-urlencoded` search parameters.\n\nOn success, the response body will contain a JSON-encoded representation\nof a `Bundle` resource of type `searchset`, containing the results of the\nsearch.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.\n\nThe server's capability statement, retrieved through\ncapabilities, indicates what search parameters\nare supported on each FHIR resource. A list of all search parameters\ndefined by the specification can be found in the FHIR Search Parameter\nRegistry\n([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html),\n[R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)).\nFHIR search parameters for DSTU2 can be found on each resource's definition\npage.\n\nSupported search modifiers: `:missing`, `:exact`, `:contains`, `:text`,\n`:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `:recurse`.\n\nSupported search result parameters: `_sort`, `_count`, `_include`,\n`_revinclude`, `_summary=text`, `_summary=data`, and `_elements`.\n\nThe maximum number of search results returned defaults to 100, which can\nbe overridden by the `_count` parameter up to a maximum limit of 1000. If\nthere are additional results, the returned `Bundle` will contain\npagination links.\n\nResources with a total size larger than 5MB or a field count larger than\n50,000 might not be fully searchable as the server might trim its generated\nsearch index in those cases.\n\nNote: FHIR resources are indexed asynchronously, so there might be a slight\ndelay between the time a resource is created or changes and when the change\nis reflected in search results.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/_search",
                           "httpMethod": "POST",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.search",
@@ -2198,7 +2339,7 @@
                           ]
                         },
                         "update": {
-                          "description": "Updates the entire contents of a resource.\n\nImplements the FHIR standard [update\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#update).\n\nIf the specified resource does\nnot exist and the FHIR store has\nenable_update_create set, creates the\nresource with the client-specified ID.\n\nThe request body must contain a JSON-encoded FHIR resource, and the request\nheaders must contain `Content-Type: application/fhir+json`. The resource\nmust contain an `id` element having an identical value to the ID in the\nREST path of the request.\n\nOn success, the response body will contain a JSON-encoded representation\nof the updated resource, including the server-assigned version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "Updates the entire contents of a resource.\n\nImplements the FHIR standard update interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#update),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#update),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#update)).\n\nIf the specified resource does\nnot exist and the FHIR store has\nenable_update_create set, creates the\nresource with the client-specified ID.\n\nThe request body must contain a JSON-encoded FHIR resource, and the request\nheaders must contain `Content-Type: application/fhir+json`. The resource\nmust contain an `id` element having an identical value to the ID in the\nREST path of the request.\n\nOn success, the response body will contain a JSON-encoded representation\nof the updated resource, including the server-assigned version ID.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}/{fhirId1}",
                           "httpMethod": "PUT",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.update",
@@ -2226,7 +2367,7 @@
                           ]
                         },
                         "vread": {
-                          "description": "Gets the contents of a version (current or historical) of a FHIR resource\nby version ID.\n\nImplements the FHIR standard [vread\ninteraction](http://hl7.org/implement/standards/fhir/STU3/http.html#vread).\n\nOn success, the response body will contain a JSON-encoded representation\nof the resource.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
+                          "description": "Gets the contents of a version (current or historical) of a FHIR resource\nby version ID.\n\nImplements the FHIR standard vread interaction\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#vread),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#vread),\n[R4](http://hl7.org/implement/standards/fhir/R4/http.html#vread)).\n\nOn success, the response body will contain a JSON-encoded representation\nof the resource.\nErrors generated by the FHIR store will contain a JSON-encoded\n`OperationOutcome` resource describing the reason for the error. If the\nrequest cannot be mapped to a valid API method on a FHIR store, a generic\nGCP error might be returned instead.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}/{fhirId1}/_history/{_historyId}",
                           "httpMethod": "GET",
                           "id": "healthcare.projects.locations.datasets.fhirStores.fhir.vread",
@@ -2446,7 +2587,7 @@
                       ]
                     },
                     "setIamPolicy": {
-                      "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.",
+                      "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.\n\nCan return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED",
                       "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/hl7V2Stores/{hl7V2StoresId}:setIamPolicy",
                       "httpMethod": "POST",
                       "id": "healthcare.projects.locations.datasets.hl7V2Stores.setIamPolicy",
@@ -2575,12 +2716,13 @@
                               "type": "string"
                             },
                             "view": {
-                              "description": "Specifies which parts of the Message resource to return in the response.",
+                              "description": "Specifies which parts of the Message resource to return in the response.\nWhen unspecified, equivalent to FULL.",
                               "enum": [
                                 "MESSAGE_VIEW_UNSPECIFIED",
                                 "RAW_ONLY",
                                 "PARSED_ONLY",
-                                "FULL"
+                                "FULL",
+                                "BASIC"
                               ],
                               "location": "query",
                               "type": "string"
@@ -2595,7 +2737,7 @@
                           ]
                         },
                         "ingest": {
-                          "description": "Ingests a new HL7v2 message from the hospital and sends a notification to\nthe Cloud Pub/Sub topic. Return is an HL7v2 ACK message if the message was\nsuccessfully stored. Otherwise an error is returned.  If an identical\nHL7v2 message is created twice only one resource is created on the server\nand no error is reported.",
+                          "description": "Ingests a new HL7v2 message from the hospital and sends a notification to\nthe Cloud Pub/Sub topic. Return is an HL7v2 ACK message if the message was\nsuccessfully stored. Otherwise an error is returned.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/hl7V2Stores/{hl7V2StoresId}/messages:ingest",
                           "httpMethod": "POST",
                           "id": "healthcare.projects.locations.datasets.hl7V2Stores.messages.ingest",
@@ -2632,7 +2774,7 @@
                           ],
                           "parameters": {
                             "filter": {
-                              "description": "Restricts messages returned to those matching a filter. Syntax:\nhttps://cloud.google.com/appengine/docs/standard/python/search/query_strings\n\nFields/functions available for filtering are:\n\n*  `message_type`, from the MSH-9 segment. For example,\n`NOT message_type = \"ADT\"`.\n*  `send_date` or `sendDate`, the YYYY-MM-DD date the message was sent in\nthe dataset's time_zone, from the MSH-7 segment. For example,\n`send_date \u003c \"2017-01-02\"`.\n*  `send_time`, the timestamp when the message was sent, using the\nRFC3339 time format for comparisons, from the MSH-7 segment. For example,\n`send_time \u003c \"2017-01-02T00:00:00-05:00\"`.\n*  `send_facility`, the care center that the message came from, from the\nMSH-4 segment. For example, `send_facility = \"ABC\"`.\n*  `HL7RegExp(expr)`, which does regular expression matching of `expr`\nagainst the message payload using RE2 syntax\n(https://github.com/google/re2/wiki/Syntax). For example,\n`HL7RegExp(\"^.*\\|.*\\|EMERG\")`.\n*  `PatientId(value, type)`, which matches if the message lists a patient\nhaving an ID of the given value and type in the PID-2, PID-3, or PID-4\nsegments. For example, `PatientId(\"123456\", \"MRN\")`.\n*  `labels.x`, a string value of the label with key `x` as set using the\nMessage.labels\nmap. For example, `labels.\"priority\"=\"high\"`. The operator `:*` can be used\nto assert the existence of a label. For example, `labels.\"priority\":*`.\n\nLimitations on conjunctions:\n\n*  Negation on the patient ID function or the labels field is not\nsupported. For example, these queries are invalid:\n`NOT PatientId(\"123456\", \"MRN\")`, `NOT labels.\"tag1\":*`,\n`NOT labels.\"tag2\"=\"val2\"`.\n*  Conjunction of multiple patient ID functions is not supported, for\nexample this query is invalid:\n`PatientId(\"123456\", \"MRN\") AND PatientId(\"456789\", \"MRN\")`.\n*  Conjunction of multiple labels fields is also not supported, for\nexample this query is invalid: `labels.\"tag1\":* AND labels.\"tag2\"=\"val2\"`.\n*  Conjunction of one patient ID function, one labels field and conditions\non other fields is supported. For example, this query is valid:\n`PatientId(\"123456\", \"MRN\") AND labels.\"tag1\":* AND message_type = \"ADT\"`.",
+                              "description": "Restricts messages returned to those matching a filter. Syntax:\nhttps://cloud.google.com/appengine/docs/standard/python/search/query_strings\n\nFields/functions available for filtering are:\n\n*  `message_type`, from the MSH-9 segment. For example,\n`NOT message_type = \"ADT\"`.\n*  `send_date` or `sendDate`, the YYYY-MM-DD date the message was sent in\nthe dataset's time_zone, from the MSH-7 segment. For example,\n`send_date \u003c \"2017-01-02\"`.\n*  `send_time`, the timestamp when the message was sent, using the\nRFC3339 time format for comparisons, from the MSH-7 segment. For example,\n`send_time \u003c \"2017-01-02T00:00:00-05:00\"`.\n*  `send_facility`, the care center that the message came from, from the\nMSH-4 segment. For example, `send_facility = \"ABC\"`.\n*  `PatientId(value, type)`, which matches if the message lists a patient\nhaving an ID of the given value and type in the PID-2, PID-3, or PID-4\nsegments. For example, `PatientId(\"123456\", \"MRN\")`.\n*  `labels.x`, a string value of the label with key `x` as set using the\nMessage.labels\nmap. For example, `labels.\"priority\"=\"high\"`. The operator `:*` can be used\nto assert the existence of a label. For example, `labels.\"priority\":*`.\n\nLimitations on conjunctions:\n\n*  Negation on the patient ID function or the labels field is not\nsupported. For example, these queries are invalid:\n`NOT PatientId(\"123456\", \"MRN\")`, `NOT labels.\"tag1\":*`,\n`NOT labels.\"tag2\"=\"val2\"`.\n*  Conjunction of multiple patient ID functions is not supported, for\nexample this query is invalid:\n`PatientId(\"123456\", \"MRN\") AND PatientId(\"456789\", \"MRN\")`.\n*  Conjunction of multiple labels fields is also not supported, for\nexample this query is invalid: `labels.\"tag1\":* AND labels.\"tag2\"=\"val2\"`.\n*  Conjunction of one patient ID function, one labels field and conditions\non other fields is supported. For example, this query is valid:\n`PatientId(\"123456\", \"MRN\") AND labels.\"tag1\":* AND message_type = \"ADT\"`.",
                               "location": "query",
                               "type": "string"
                             },
@@ -2658,6 +2800,18 @@
                               "pattern": "^projects/[^/]+/locations/[^/]+/datasets/[^/]+/hl7V2Stores/[^/]+$",
                               "required": true,
                               "type": "string"
+                            },
+                            "view": {
+                              "description": "Specifies the parts of the Message to return in the response.\nWhen unspecified, equivalent to BASIC.",
+                              "enum": [
+                                "MESSAGE_VIEW_UNSPECIFIED",
+                                "RAW_ONLY",
+                                "PARSED_ONLY",
+                                "FULL",
+                                "BASIC"
+                              ],
+                              "location": "query",
+                              "type": "string"
                             }
                           },
                           "path": "v1beta1/{+parent}/messages",
@@ -2669,7 +2823,7 @@
                           ]
                         },
                         "patch": {
-                          "description": "Update the message.",
+                          "description": "Update the message.\n\nThe contents of the message in Message.data and data extracted from\nthe contents such as Message.create_time cannot be altered. Only the\nMessage.labels field is allowed to be updated. The labels in the\nrequest are merged with the existing set of labels. Existing labels with\nthe same keys are updated.",
                           "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/datasets/{datasetsId}/hl7V2Stores/{hl7V2StoresId}/messages/{messagesId}",
                           "httpMethod": "PATCH",
                           "id": "healthcare.projects.locations.datasets.hl7V2Stores.messages.patch",
@@ -2685,7 +2839,7 @@
                               "type": "string"
                             },
                             "updateMask": {
-                              "description": "The update mask applies to the resource. For the `FieldMask` definition,\nsee\nhttps://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask\nOnly the `labels` field is allowed to be updated.\nThe labels in the request are merged with the existing set of labels.\nExisting labels with the same keys are updated.",
+                              "description": "The update mask applies to the resource. For the `FieldMask` definition,\nsee\nhttps://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask",
                               "format": "google-fieldmask",
                               "location": "query",
                               "type": "string"
@@ -2783,7 +2937,7 @@
       }
     }
   },
-  "revision": "20190924",
+  "revision": "20200212",
   "rootUrl": "https://healthcare.googleapis.com/",
   "schemas": {
     "AuditConfig": {
@@ -2843,7 +2997,7 @@
           "description": "The condition that is associated with this binding.\nNOTE: An unsatisfied condition will not allow user access via current\nbinding. Different bindings, including their conditions, are examined\nindependently."
         },
         "members": {
-          "description": "Specifies the identities requesting access for a Cloud Platform resource.\n`members` can have the following values:\n\n* `allUsers`: A special identifier that represents anyone who is\n   on the internet; with or without a Google account.\n\n* `allAuthenticatedUsers`: A special identifier that represents anyone\n   who is authenticated with a Google account or a service account.\n\n* `user:{emailid}`: An email address that represents a specific Google\n   account. For example, `alice@example.com` .\n\n\n* `serviceAccount:{emailid}`: An email address that represents a service\n   account. For example, `my-other-app@appspot.gserviceaccount.com`.\n\n* `group:{emailid}`: An email address that represents a Google group.\n   For example, `admins@example.com`.\n\n\n* `domain:{domain}`: The G Suite domain (primary) that represents all the\n   users of that domain. For example, `google.com` or `example.com`.\n\n",
+          "description": "Specifies the identities requesting access for a Cloud Platform resource.\n`members` can have the following values:\n\n* `allUsers`: A special identifier that represents anyone who is\n   on the internet; with or without a Google account.\n\n* `allAuthenticatedUsers`: A special identifier that represents anyone\n   who is authenticated with a Google account or a service account.\n\n* `user:{emailid}`: An email address that represents a specific Google\n   account. For example, `alice@example.com` .\n\n\n* `serviceAccount:{emailid}`: An email address that represents a service\n   account. For example, `my-other-app@appspot.gserviceaccount.com`.\n\n* `group:{emailid}`: An email address that represents a Google group.\n   For example, `admins@example.com`.\n\n* `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique\n   identifier) representing a user that has been recently deleted. For\n   example, `alice@example.com?uid=123456789012345678901`. If the user is\n   recovered, this value reverts to `user:{emailid}` and the recovered user\n   retains the role in the binding.\n\n* `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus\n   unique identifier) representing a service account that has been recently\n   deleted. For example,\n   `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`.\n   If the service account is undeleted, this value reverts to\n   `serviceAccount:{emailid}` and the undeleted service account retains the\n   role in the binding.\n\n* `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique\n   identifier) representing a Google group that has been recently\n   deleted. For example, `admins@example.com?uid=123456789012345678901`. If\n   the group is recovered, this value reverts to `group:{emailid}` and the\n   recovered group retains the role in the binding.\n\n\n* `domain:{domain}`: The G Suite domain (primary) that represents all the\n   users of that domain. For example, `google.com` or `example.com`.\n\n",
           "items": {
             "type": "string"
           },
@@ -2949,8 +3103,27 @@
           "description": "Deidentify configuration."
         },
         "destinationDataset": {
-          "description": "The name of the dataset resource to create and write the redacted data to.\n\n * The destination dataset must not exist.\n * The destination dataset must be in the same project as the source\n   dataset. De-identifying data across multiple projects is not supported.",
+          "description": "The name of the dataset resource to create and write the redacted data to.\n\n * The destination dataset must not exist.\n * The destination dataset must be in the same project and location as the\n source dataset. De-identifying data across multiple projects or locations\n is not supported.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DeidentifyDicomStoreRequest": {
+      "description": "Creates a new DICOM store with sensitive information de-identified.",
+      "id": "DeidentifyDicomStoreRequest",
+      "properties": {
+        "config": {
+          "$ref": "DeidentifyConfig",
+          "description": "De-identify configuration."
+        },
+        "destinationStore": {
+          "description": "The name of the DICOM store to create and write the redacted data to.\nFor example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.\n\n * The destination dataset must exist.\n * The source dataset and destination dataset must both reside in the same\n   project. De-identifying data across multiple projects is not supported.\n * The destination DICOM store must not exist.\n * The caller must have the necessary permissions to create the destination\n   DICOM store.",
+          "type": "string"
+        },
+        "filterConfig": {
+          "$ref": "DicomFilterConfig",
+          "description": "Filter configuration."
         }
       },
       "type": "object"
@@ -2982,12 +3155,31 @@
       },
       "type": "object"
     },
+    "DeidentifyFhirStoreRequest": {
+      "description": "Creates a new FHIR store with sensitive information de-identified.",
+      "id": "DeidentifyFhirStoreRequest",
+      "properties": {
+        "config": {
+          "$ref": "DeidentifyConfig",
+          "description": "Deidentify configuration."
+        },
+        "destinationStore": {
+          "description": "The name of the FHIR store to create and write the redacted data to.\nFor example,\n`projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.\n\n * The destination dataset must exist.\n * The source dataset and destination dataset must both reside in the same\n   project. De-identifying data across multiple projects is not supported.\n * The destination FHIR store must exist.\n * The caller must have the healthcare.fhirResources.update permission to\n   write to the destination FHIR store.",
+          "type": "string"
+        },
+        "resourceFilter": {
+          "$ref": "FhirFilter",
+          "description": "A filter specifying the resources to include in the output. If not\nspecified, all resources are included in the output."
+        }
+      },
+      "type": "object"
+    },
     "DeidentifySummary": {
       "description": "Contains a detailed summary of the Deidentify operation.",
       "id": "DeidentifySummary",
       "properties": {
         "failureResourceCount": {
-          "description": "Number of resources that failed to process.\nThe failures might be caused by:\n  * Invalid user input data\n  * Transient errors that could be skipped",
+          "description": "Number of resources that failed to process.\nThe failures might be caused by:\n\n  * Invalid user input data\n  * Transient errors that could be skipped",
           "format": "int64",
           "type": "string"
         },
@@ -3037,6 +3229,17 @@
         "skipIdRedaction": {
           "description": "If true, skip replacing StudyInstanceUID, SeriesInstanceUID,\nSOPInstanceUID, and MediaStorageSOPInstanceUID and leave them untouched.\nThe Cloud Healthcare API regenerates these UIDs by default based on the\nDICOM Standard's reasoning: \"Whilst these UIDs cannot be mapped directly\nto an individual out of context, given access to the original images, or\nto a database of the original images containing the UIDs, it would be\npossible to recover the individual's identity.\"\nhttp://dicom.nema.org/medical/dicom/current/output/chtml/part15/sect_E.3.9.html",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "DicomFilterConfig": {
+      "description": "Specifies the filter configuration for DICOM resources.",
+      "id": "DicomFilterConfig",
+      "properties": {
+        "resourcePathsGcsUri": {
+          "description": "The Cloud Storage location of the filter configuration file.\nThe `gcs_uri` must be in the format `gs://bucket/path/to/object`.\nThe filter configuration file must contain a list of resource paths\nseparated by newline characters (\\n or \\r\\n). Each resource path\nmust be in the format\n\"/studies/{studyUID}[/series/{seriesUID}[/instances/{instanceUID}]]\"\n\nThe Cloud Healthcare API service account must have the\n`roles/storage.objectViewer` Cloud IAM role for this Cloud Storage\nlocation.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -3115,23 +3318,23 @@
       "type": "object"
     },
     "Expr": {
-      "description": "Represents an expression text. Example:\n\n    title: \"User account presence\"\n    description: \"Determines whether the request has a user account\"\n    expression: \"size(request.user) \u003e 0\"",
+      "description": "Represents a textual expression in the Common Expression Language (CEL)\nsyntax. CEL is a C-like expression language. The syntax and semantics of CEL\nare documented at https://github.com/google/cel-spec.\n\nExample (Comparison):\n\n    title: \"Summary size limit\"\n    description: \"Determines if a summary is less than 100 chars\"\n    expression: \"document.summary.size() \u003c 100\"\n\nExample (Equality):\n\n    title: \"Requestor is owner\"\n    description: \"Determines if requestor is the document owner\"\n    expression: \"document.owner == request.auth.claims.email\"\n\nExample (Logic):\n\n    title: \"Public documents\"\n    description: \"Determine whether the document should be publicly visible\"\n    expression: \"document.type != 'private' \u0026\u0026 document.type != 'internal'\"\n\nExample (Data Manipulation):\n\n    title: \"Notification string\"\n    description: \"Create a notification string with a timestamp.\"\n    expression: \"'New message received at ' + string(document.create_time)\"\n\nThe exact variables and functions that may be referenced within an expression\nare determined by the service that evaluates it. See the service\ndocumentation for additional information.",
       "id": "Expr",
       "properties": {
         "description": {
-          "description": "An optional description of the expression. This is a longer text which\ndescribes the expression, e.g. when hovered over it in a UI.",
+          "description": "Optional. Description of the expression. This is a longer text which\ndescribes the expression, e.g. when hovered over it in a UI.",
           "type": "string"
         },
         "expression": {
-          "description": "Textual representation of an expression in\nCommon Expression Language syntax.\n\nThe application context of the containing message determines which\nwell-known feature set of CEL is supported.",
+          "description": "Textual representation of an expression in Common Expression Language\nsyntax.",
           "type": "string"
         },
         "location": {
-          "description": "An optional string indicating the location of the expression for error\nreporting, e.g. a file name and a position in the file.",
+          "description": "Optional. String indicating the location of the expression for error\nreporting, e.g. a file name and a position in the file.",
           "type": "string"
         },
         "title": {
-          "description": "An optional title for the expression, i.e. a short string describing\nits purpose. This can be used e.g. in UIs which allow to enter the\nexpression.",
+          "description": "Optional. Title for the expression, i.e. a short string describing\nits purpose. This can be used e.g. in UIs which allow to enter the\nexpression.",
           "type": "string"
         }
       },
@@ -3142,11 +3345,22 @@
       "id": "FhirConfig",
       "properties": {
         "fieldMetadataList": {
-          "description": "Specifies FHIR paths to match and how to transform them. Any field that\nis not matched by a FieldMetadata is passed through to the output\ndataset unmodified. All extensions are removed in the output.",
+          "description": "Specifies FHIR paths to match and how to transform them. Any field that\nis not matched by a FieldMetadata is passed through to the output\ndataset unmodified. All extensions are removed in the output.\nIf a field can be matched by more than one FieldMetadata, the first\nFieldMetadata.Action is applied.",
           "items": {
             "$ref": "FieldMetadata"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "FhirFilter": {
+      "description": "Filter configuration.",
+      "id": "FhirFilter",
+      "properties": {
+        "resources": {
+          "$ref": "Resources",
+          "description": "List of resources to include in the output. If this list is empty or\nnot specified, all resources are included in the output."
         }
       },
       "type": "object"
@@ -3181,6 +3395,22 @@
         "notificationConfig": {
           "$ref": "NotificationConfig",
           "description": "If non-empty, publish all resource modifications of this FHIR store to\nthis destination. The Cloud Pub/Sub message attributes contain a map\nwith a string describing the action that has triggered the notification.\nFor example, \"action\":\"CreateResource\"."
+        },
+        "version": {
+          "description": "The FHIR specification version that this FHIR store supports natively. This\nfield is immutable after store creation. Requests are rejected if they\ncontain FHIR resources of a different version.\nAn empty value is treated as STU3.",
+          "enum": [
+            "VERSION_UNSPECIFIED",
+            "DSTU2",
+            "STU3",
+            "R4"
+          ],
+          "enumDescriptions": [
+            "VERSION_UNSPECIFIED is treated as STU3 to accommodate the existing FHIR\nstores.",
+            "Draft Standard for Trial Use, [Release 2](https://www.hl7.org/fhir/DSTU2)",
+            "Standard for Trial Use, [Release 3](https://www.hl7.org/fhir/STU3)",
+            "[Release 4](https://www.hl7.org/fhir/R4)"
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -3199,18 +3429,47 @@
           ],
           "enumDescriptions": [
             "No action specified.",
-            "Transform the entire field.",
+            "Transform the entire field based on transformations specified in\nTextConfig. When the specified transformation cannot be applied to a\nfield (for example, a Crypto Hash transformation cannot be applied\nto a FHIR Date field), RedactConfig is used.",
             "Inspect and transform any found PHI.",
             "Do not transform."
           ],
           "type": "string"
         },
         "paths": {
-          "description": "List of paths to FHIR fields to be redacted. Each path is a\nperiod-separated list where each component is either a field name or\nFHIR type name, for example: Patient, HumanName.\nFor \"choice\" types (those defined in the FHIR spec with the form:\nfield[x]) we use two separate components. For example,\n\"deceasedAge.unit\" is matched by \"Deceased.Age.unit\".\nSupported types are: AdministrativeGenderCode, Code, Date, DateTime,\nDecimal, HumanName, Id, LanguageCode, Markdown, MimeTypeCode, Oid,\nString, Uri, Uuid, Xhtml.",
+          "description": "List of paths to FHIR fields to redact. Each path is a\nperiod-separated list where each component is either a field name or\nFHIR type name. All types begin with an upper case letter. For example,\nthe resource field \"Patient.Address.city\", which uses a string type,\ncan be matched by \"Patient.Address.String\". Path also supports partial\nmatching. For example, \"Patient.Address.city\" can be matched by\n\"Address.city\" (Patient omitted). Partial matching and type matching\ncan be combined, for example \"Patient.Address.city\" can be matched by\n\"Address.String\". For \"choice\" types (those defined in the FHIR spec\nwith the form: field[x]), use two separate components. For example,\n\"deceasedAge.unit\" is matched by \"Deceased.Age.unit\". Supported types\nare: AdministrativeGenderCode, Code, Date, DateTime, Decimal,\nHumanName, Id, LanguageCode, Markdown, Oid, String, Uri, Uuid, Xhtml.\nThe sub-type for HumanName(for example HumanName.given,\nHumanName.family) can be omitted.",
           "items": {
             "type": "string"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudHealthcareV1beta1DeidentifyDeidentifyDicomStoreSummary": {
+      "description": "Contains a summary of the DeidentifyDicomStore operation.",
+      "id": "GoogleCloudHealthcareV1beta1DeidentifyDeidentifyDicomStoreSummary",
+      "properties": {
+        "failureResourceCount": {
+          "description": "Number of objects that processing failed for.",
+          "format": "int64",
+          "type": "string"
+        },
+        "successResourceCount": {
+          "description": "Number of objects successfully processed.",
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudHealthcareV1beta1DeidentifyDeidentifyFhirStoreSummary": {
+      "description": "Contains a summary of the DeidentifyFhirStore operation.",
+      "id": "GoogleCloudHealthcareV1beta1DeidentifyDeidentifyFhirStoreSummary",
+      "properties": {
+        "successResourceCount": {
+          "description": "Number of resources successfully processed.",
+          "format": "int64",
+          "type": "string"
         }
       },
       "type": "object"
@@ -3235,7 +3494,7 @@
       "id": "GoogleCloudHealthcareV1beta1DicomGcsDestination",
       "properties": {
         "mimeType": {
-          "description": "MIME types supported by DICOM spec.\nEach file is written in the following format:\n`.../{study_id}/{series_id}/{instance_id}[/{frame_number}].{extension}`\nThe frame_number component exists only for multi-frame instances.\n\nRefer to the DICOM conformance statement for permissible MIME types:\nhttps://cloud.google.com/healthcare/docs/dicom#wado-rs\n\nThe following extensions are used for output files:\n  application/dicom -\u003e .dcm\n  image/jpeg -\u003e .jpg\n  image/png -\u003e .png\n\nIf unspecified, the instances are exported in their original\nDICOM format.",
+          "description": "MIME types supported by DICOM spec.\nEach file is written in the following format:\n`.../{study_id}/{series_id}/{instance_id}[/{frame_number}].{extension}`\nThe frame_number component exists only for multi-frame instances.\n\nRefer to the DICOM conformance statement for permissible MIME types:\nhttps://cloud.google.com/healthcare/docs/dicom#retrieve_transaction\n\nThe following extensions are used for output files:\n  application/dicom -\u003e .dcm\n  image/jpeg -\u003e .jpg\n  image/png -\u003e .png\n\nIf unspecified, the instances are exported in their original\nDICOM format.",
           "type": "string"
         },
         "uriPrefix": {
@@ -3276,7 +3535,7 @@
       "type": "object"
     },
     "GoogleCloudHealthcareV1beta1FhirRestExportResourcesErrorDetails": {
-      "description": "Response when errors occur while exporting resources.\nThis structure is included in the\nerror details to describe the\ndetailed outcome. It is only included when the operation finishes with\nerrors.",
+      "description": "Response when errors occur while exporting resources.\nThis structure is included in the\nerror\ndetails to describe the detailed outcome. It is\nonly included when the operation finishes with errors.",
       "id": "GoogleCloudHealthcareV1beta1FhirRestExportResourcesErrorDetails",
       "properties": {
         "errorCount": {
@@ -3340,7 +3599,7 @@
       "type": "object"
     },
     "GoogleCloudHealthcareV1beta1FhirRestImportResourcesErrorDetails": {
-      "description": "Error response of importing resources.\nThis structure will be included in the\nerror details to describe the\ndetailed error. It will only be included when the operation finishes with\nsome failure.",
+      "description": "Error response of importing resources.\nThis structure will be included in the\nerror\ndetails to describe the detailed error. It will\nonly be included when the operation finishes with some failure.",
       "id": "GoogleCloudHealthcareV1beta1FhirRestImportResourcesErrorDetails",
       "properties": {
         "errorCount": {
@@ -3403,6 +3662,10 @@
         "parserConfig": {
           "$ref": "ParserConfig",
           "description": "The configuration for the parser. It determines how the server parses the\nmessages."
+        },
+        "rejectDuplicateMessage": {
+          "description": "Determines whether duplicate messages should be rejected. A duplicate\nmessage is a message with the same raw bytes as a message that has already\nbeen ingested/created in this HL7v2 store.\nThe default value is false, meaning that the store accepts the duplicate\nmessages and it also returns the same ACK message in the\nIngestMessageResponse as has been returned previously. Note that only\none resource is created in the store.\nWhen this field is set to true,\nCreateMessage/IngestMessage\nrequests with a duplicate message will be rejected by the store, and\nIngestMessageErrorDetail returns a NACK message upon rejection.",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -3528,7 +3791,7 @@
           "description": "Config for date shift."
         },
         "infoTypes": {
-          "description": "InfoTypes to apply this transformation to. If this is not specified, the\ntransformation applies to any info_type.",
+          "description": "InfoTypes to apply this transformation to. If this is not specified, this\ntransformation becomes the default transformation, and is used for any\ninfo_type that is not specified in another transformation.",
           "items": {
             "type": "string"
           },
@@ -3666,8 +3929,15 @@
       "description": "Lists the messages in the specified HL7v2 store.",
       "id": "ListMessagesResponse",
       "properties": {
+        "hl7V2Messages": {
+          "description": "The returned Messages. Won't be more Messages than the value of\npage_size in the request. See\nview for\npopulated fields.",
+          "items": {
+            "$ref": "Message"
+          },
+          "type": "array"
+        },
         "messages": {
-          "description": "The returned message names. Won't be more values than the value of\npage_size in the request.",
+          "description": "Deprecated. Use `hl7_v2_messages` instead.\nThe returned message names. Won't be more values than the value of\npage_size in the request.",
           "items": {
             "type": "string"
           },
@@ -3899,7 +4169,7 @@
       "type": "object"
     },
     "Policy": {
-      "description": "Defines an Identity and Access Management (IAM) policy. It is used to\nspecify access control policies for Cloud Platform resources.\n\n\nA `Policy` is a collection of `bindings`. A `binding` binds one or more\n`members` to a single `role`. Members can be user accounts, service accounts,\nGoogle groups, and domains (such as G Suite). A `role` is a named list of\npermissions (defined by IAM or configured by users). A `binding` can\noptionally specify a `condition`, which is a logic expression that further\nconstrains the role binding based on attributes about the request and/or\ntarget resource.\n\n**JSON Example**\n\n    {\n      \"bindings\": [\n        {\n          \"role\": \"role/resourcemanager.organizationAdmin\",\n          \"members\": [\n            \"user:mike@example.com\",\n            \"group:admins@example.com\",\n            \"domain:google.com\",\n            \"serviceAccount:my-project-id@appspot.gserviceaccount.com\"\n          ]\n        },\n        {\n          \"role\": \"roles/resourcemanager.organizationViewer\",\n          \"members\": [\"user:eve@example.com\"],\n          \"condition\": {\n            \"title\": \"expirable access\",\n            \"description\": \"Does not grant access after Sep 2020\",\n            \"expression\": \"request.time \u003c\n            timestamp('2020-10-01T00:00:00.000Z')\",\n          }\n        }\n      ]\n    }\n\n**YAML Example**\n\n    bindings:\n    - members:\n      - user:mike@example.com\n      - group:admins@example.com\n      - domain:google.com\n      - serviceAccount:my-project-id@appspot.gserviceaccount.com\n      role: roles/resourcemanager.organizationAdmin\n    - members:\n      - user:eve@example.com\n      role: roles/resourcemanager.organizationViewer\n      condition:\n        title: expirable access\n        description: Does not grant access after Sep 2020\n        expression: request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\n\nFor a description of IAM and its features, see the\n[IAM developer's guide](https://cloud.google.com/iam/docs).",
+      "description": "An Identity and Access Management (IAM) policy, which specifies access\ncontrols for Google Cloud resources.\n\n\nA `Policy` is a collection of `bindings`. A `binding` binds one or more\n`members` to a single `role`. Members can be user accounts, service accounts,\nGoogle groups, and domains (such as G Suite). A `role` is a named list of\npermissions; each `role` can be an IAM predefined role or a user-created\ncustom role.\n\nOptionally, a `binding` can specify a `condition`, which is a logical\nexpression that allows access to a resource only if the expression evaluates\nto `true`. A condition can add constraints based on attributes of the\nrequest, the resource, or both.\n\n**JSON example:**\n\n    {\n      \"bindings\": [\n        {\n          \"role\": \"roles/resourcemanager.organizationAdmin\",\n          \"members\": [\n            \"user:mike@example.com\",\n            \"group:admins@example.com\",\n            \"domain:google.com\",\n            \"serviceAccount:my-project-id@appspot.gserviceaccount.com\"\n          ]\n        },\n        {\n          \"role\": \"roles/resourcemanager.organizationViewer\",\n          \"members\": [\"user:eve@example.com\"],\n          \"condition\": {\n            \"title\": \"expirable access\",\n            \"description\": \"Does not grant access after Sep 2020\",\n            \"expression\": \"request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\",\n          }\n        }\n      ],\n      \"etag\": \"BwWWja0YfJA=\",\n      \"version\": 3\n    }\n\n**YAML example:**\n\n    bindings:\n    - members:\n      - user:mike@example.com\n      - group:admins@example.com\n      - domain:google.com\n      - serviceAccount:my-project-id@appspot.gserviceaccount.com\n      role: roles/resourcemanager.organizationAdmin\n    - members:\n      - user:eve@example.com\n      role: roles/resourcemanager.organizationViewer\n      condition:\n        title: expirable access\n        description: Does not grant access after Sep 2020\n        expression: request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\n    - etag: BwWWja0YfJA=\n    - version: 3\n\nFor a description of IAM and its features, see the\n[IAM documentation](https://cloud.google.com/iam/docs/).",
       "id": "Policy",
       "properties": {
         "auditConfigs": {
@@ -3910,19 +4180,19 @@
           "type": "array"
         },
         "bindings": {
-          "description": "Associates a list of `members` to a `role`. Optionally may specify a\n`condition` that determines when binding is in effect.\n`bindings` with no members will result in an error.",
+          "description": "Associates a list of `members` to a `role`. Optionally, may specify a\n`condition` that determines how and when the `bindings` are applied. Each\nof the `bindings` must contain at least one member.",
           "items": {
             "$ref": "Binding"
           },
           "type": "array"
         },
         "etag": {
-          "description": "`etag` is used for optimistic concurrency control as a way to help\nprevent simultaneous updates of a policy from overwriting each other.\nIt is strongly suggested that systems make use of the `etag` in the\nread-modify-write cycle to perform policy updates in order to avoid race\nconditions: An `etag` is returned in the response to `getIamPolicy`, and\nsystems are expected to put that etag in the request to `setIamPolicy` to\nensure that their change will be applied to the same version of the policy.\n\nIf no `etag` is provided in the call to `setIamPolicy`, then the existing\npolicy is overwritten. Due to blind-set semantics of an etag-less policy,\n'setIamPolicy' will not fail even if either of incoming or stored policy\ndoes not meet the version requirements.",
+          "description": "`etag` is used for optimistic concurrency control as a way to help\nprevent simultaneous updates of a policy from overwriting each other.\nIt is strongly suggested that systems make use of the `etag` in the\nread-modify-write cycle to perform policy updates in order to avoid race\nconditions: An `etag` is returned in the response to `getIamPolicy`, and\nsystems are expected to put that etag in the request to `setIamPolicy` to\nensure that their change will be applied to the same version of the policy.\n\n**Important:** If you use IAM Conditions, you must include the `etag` field\nwhenever you call `setIamPolicy`. If you omit this field, then IAM allows\nyou to overwrite a version `3` policy with a version `1` policy, and all of\nthe conditions in the version `3` policy are lost.",
           "format": "byte",
           "type": "string"
         },
         "version": {
-          "description": "Specifies the format of the policy.\n\nValid values are 0, 1, and 3. Requests specifying an invalid value will be\nrejected.\n\nOperations affecting conditional bindings must specify version 3. This can\nbe either setting a conditional policy, modifying a conditional binding,\nor removing a conditional binding from the stored conditional policy.\nOperations on non-conditional policies may specify any valid value or\nleave the field unset.\n\nIf no etag is provided in the call to `setIamPolicy`, any version\ncompliance checks on the incoming and/or stored policy is skipped.",
+          "description": "Specifies the format of the policy.\n\nValid values are `0`, `1`, and `3`. Requests that specify an invalid value\nare rejected.\n\nAny operation that affects conditional role bindings must specify version\n`3`. This requirement applies to the following operations:\n\n* Getting a policy that includes a conditional role binding\n* Adding a conditional role binding to a policy\n* Changing a conditional role binding in a policy\n* Removing any role binding, with or without a condition, from a policy\n  that includes conditions\n\n**Important:** If you use IAM Conditions, you must include the `etag` field\nwhenever you call `setIamPolicy`. If you omit this field, then IAM allows\nyou to overwrite a version `3` policy with a version `1` policy, and all of\nthe conditions in the version `3` policy are lost.\n\nIf a policy does not include any conditions, operations on that policy may\nspecify any valid version or leave the field unset.",
           "format": "int32",
           "type": "integer"
         }
@@ -3958,9 +4228,23 @@
       "type": "object"
     },
     "ReplaceWithInfoTypeConfig": {
-      "description": "When using the INSPECT_AND_TRANSFORM action, each match is replaced with\nthe name of the info_type. For example, \"My name is Jake\" becomes \"My name is\n[PERSON_NAME].\" The TRANSFORM action is equivalent to redacting.",
+      "description": "When using the\nINSPECT_AND_TRANSFORM\naction, each match is replaced with the name of the info_type. For example,\n\"My name is Jake\" becomes \"My name is [PERSON_NAME].\" The\nTRANSFORM\naction is equivalent to redacting.",
       "id": "ReplaceWithInfoTypeConfig",
       "properties": {},
+      "type": "object"
+    },
+    "Resources": {
+      "description": "A list of FHIR resources.",
+      "id": "Resources",
+      "properties": {
+        "resources": {
+          "description": "List of resources IDs. For example, \"Patient/1234\".",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
       "type": "object"
     },
     "SchemaConfig": {
@@ -3968,7 +4252,7 @@
       "id": "SchemaConfig",
       "properties": {
         "recursiveStructureDepth": {
-          "description": "The depth for all recursive structures in the output analytics\nschema. For example, `concept` in the CodeSystem resource is a recursive\nstructure; when the depth is 2, the CodeSystem table will have a column\ncalled `concept.concept` but not `concept.concept.concept`. If not\nspecified or set to 0, the server will use the default value 2.",
+          "description": "The depth for all recursive structures in the output analytics\nschema. For example, `concept` in the CodeSystem resource is a recursive\nstructure; when the depth is 2, the CodeSystem table will have a column\ncalled `concept.concept` but not `concept.concept.concept`. If not\nspecified or set to 0, the server will use the default value 2. The\nmaximum depth allowed is 5.",
           "format": "int64",
           "type": "string"
         },
@@ -3994,7 +4278,7 @@
       "id": "SearchResourcesRequest",
       "properties": {
         "resourceType": {
-          "description": "The FHIR resource type to search, such as Patient or Observation. For a\ncomplete list, see the [FHIR Resource\nIndex](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html).",
+          "description": "The FHIR resource type to search, such as Patient or Observation. For a\ncomplete list, see the FHIR Resource Index\n([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html),\n[STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html),\n[R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).",
           "type": "string"
         }
       },

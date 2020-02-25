@@ -353,7 +353,7 @@ func serveHTTP(handler *Handler, done chan struct{}, wait chan time.Time, status
 		// Simulate a slow-responding server.
 		sleepUntil := <-wait
 		for time.Now().Before(sleepUntil) {
-			time.Sleep(sleepUntil.Sub(time.Now()))
+			time.Sleep(time.Until(sleepUntil))
 		}
 
 		io.WriteString(w, "expected-response")
@@ -677,6 +677,10 @@ func TestStatusUnitTest(t *testing.T) {
 		{403, trace.Status{Code: trace.StatusCodePermissionDenied, Message: `PERMISSION_DENIED`}},
 		{301, trace.Status{Code: trace.StatusCodeOK, Message: `OK`}},
 		{501, trace.Status{Code: trace.StatusCodeUnimplemented, Message: `UNIMPLEMENTED`}},
+		{409, trace.Status{Code: trace.StatusCodeAlreadyExists, Message: `ALREADY_EXISTS`}},
+		{429, trace.Status{Code: trace.StatusCodeResourceExhausted, Message: `RESOURCE_EXHAUSTED`}},
+		{503, trace.Status{Code: trace.StatusCodeUnavailable, Message: `UNAVAILABLE`}},
+		{504, trace.Status{Code: trace.StatusCodeDeadlineExceeded, Message: `DEADLINE_EXCEEDED`}},
 	}
 
 	for _, tt := range tests {

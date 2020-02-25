@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "containeranalysis:v1beta1"
 const apiName = "containeranalysis"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -401,7 +404,7 @@ func (s *Basis) MarshalJSON() ([]byte, error) {
 
 // BatchCreateNotesRequest: Request to create notes in batch.
 type BatchCreateNotesRequest struct {
-	// Notes: The notes to create. Max allowed length is 1000.
+	// Notes: Required. The notes to create. Max allowed length is 1000.
 	Notes map[string]Note `json:"notes,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Notes") to
@@ -462,7 +465,8 @@ func (s *BatchCreateNotesResponse) MarshalJSON() ([]byte, error) {
 // BatchCreateOccurrencesRequest: Request to create occurrences in
 // batch.
 type BatchCreateOccurrencesRequest struct {
-	// Occurrences: The occurrences to create. Max allowed length is 1000.
+	// Occurrences: Required. The occurrences to create. Max allowed length
+	// is 1000.
 	Occurrences []*Occurrence `json:"occurrences,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Occurrences") to
@@ -556,6 +560,38 @@ type Binding struct {
 	// * `group:{emailid}`: An email address that represents a Google
 	// group.
 	//    For example, `admins@example.com`.
+	//
+	// * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus
+	// unique
+	//    identifier) representing a user that has been recently deleted.
+	// For
+	//    example, `alice@example.com?uid=123456789012345678901`. If the
+	// user is
+	//    recovered, this value reverts to `user:{emailid}` and the
+	// recovered user
+	//    retains the role in the binding.
+	//
+	// * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address
+	// (plus
+	//    unique identifier) representing a service account that has been
+	// recently
+	//    deleted. For example,
+	//
+	// `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`.
+	//
+	//    If the service account is undeleted, this value reverts to
+	//    `serviceAccount:{emailid}` and the undeleted service account
+	// retains the
+	//    role in the binding.
+	//
+	// * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus
+	// unique
+	//    identifier) representing a Google group that has been recently
+	//    deleted. For example,
+	// `admins@example.com?uid=123456789012345678901`. If
+	//    the group is recovered, this value reverts to `group:{emailid}`
+	// and the
+	//    recovered group retains the role in the binding.
 	//
 	//
 	// * `domain:{domain}`: The G Suite domain (primary) that represents all
@@ -1393,31 +1429,62 @@ type Empty struct {
 	googleapi.ServerResponse `json:"-"`
 }
 
-// Expr: Represents an expression text. Example:
+// Expr: Represents a textual expression in the Common Expression
+// Language (CEL)
+// syntax. CEL is a C-like expression language. The syntax and semantics
+// of CEL
+// are documented at https://github.com/google/cel-spec.
 //
-//     title: "User account presence"
-//     description: "Determines whether the request has a user account"
-//     expression: "size(request.user) > 0"
+// Example (Comparison):
+//
+//     title: "Summary size limit"
+//     description: "Determines if a summary is less than 100 chars"
+//     expression: "document.summary.size() < 100"
+//
+// Example (Equality):
+//
+//     title: "Requestor is owner"
+//     description: "Determines if requestor is the document owner"
+//     expression: "document.owner ==
+// request.auth.claims.email"
+//
+// Example (Logic):
+//
+//     title: "Public documents"
+//     description: "Determine whether the document should be publicly
+// visible"
+//     expression: "document.type != 'private' && document.type !=
+// 'internal'"
+//
+// Example (Data Manipulation):
+//
+//     title: "Notification string"
+//     description: "Create a notification string with a timestamp."
+//     expression: "'New message received at ' +
+// string(document.create_time)"
+//
+// The exact variables and functions that may be referenced within an
+// expression
+// are determined by the service that evaluates it. See the
+// service
+// documentation for additional information.
 type Expr struct {
-	// Description: An optional description of the expression. This is a
+	// Description: Optional. Description of the expression. This is a
 	// longer text which
 	// describes the expression, e.g. when hovered over it in a UI.
 	Description string `json:"description,omitempty"`
 
-	// Expression: Textual representation of an expression in
-	// Common Expression Language syntax.
-	//
-	// The application context of the containing message determines
-	// which
-	// well-known feature set of CEL is supported.
+	// Expression: Textual representation of an expression in Common
+	// Expression Language
+	// syntax.
 	Expression string `json:"expression,omitempty"`
 
-	// Location: An optional string indicating the location of the
-	// expression for error
+	// Location: Optional. String indicating the location of the expression
+	// for error
 	// reporting, e.g. a file name and a position in the file.
 	Location string `json:"location,omitempty"`
 
-	// Title: An optional title for the expression, i.e. a short string
+	// Title: Optional. Title for the expression, i.e. a short string
 	// describing
 	// its purpose. This can be used e.g. in UIs which allow to enter
 	// the
@@ -2831,9 +2898,9 @@ func (s *PgpSignedAttestation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Policy: Defines an Identity and Access Management (IAM) policy. It is
-// used to
-// specify access control policies for Cloud Platform resources.
+// Policy: An Identity and Access Management (IAM) policy, which
+// specifies access
+// controls for Google Cloud resources.
 //
 //
 // A `Policy` is a collection of `bindings`. A `binding` binds one or
@@ -2842,15 +2909,19 @@ func (s *PgpSignedAttestation) MarshalJSON() ([]byte, error) {
 // accounts,
 // Google groups, and domains (such as G Suite). A `role` is a named
 // list of
-// permissions (defined by IAM or configured by users). A `binding`
-// can
-// optionally specify a `condition`, which is a logic expression that
-// further
-// constrains the role binding based on attributes about the request
-// and/or
-// target resource.
+// permissions; each `role` can be an IAM predefined role or a
+// user-created
+// custom role.
 //
-// **JSON Example**
+// Optionally, a `binding` can specify a `condition`, which is a
+// logical
+// expression that allows access to a resource only if the expression
+// evaluates
+// to `true`. A condition can add constraints based on attributes of
+// the
+// request, the resource, or both.
+//
+// **JSON example:**
 //
 //     {
 //       "bindings": [
@@ -2871,13 +2942,15 @@ func (s *PgpSignedAttestation) MarshalJSON() ([]byte, error) {
 //             "title": "expirable access",
 //             "description": "Does not grant access after Sep 2020",
 //             "expression": "request.time <
-//             timestamp('2020-10-01T00:00:00.000Z')",
+// timestamp('2020-10-01T00:00:00.000Z')",
 //           }
 //         }
-//       ]
+//       ],
+//       "etag": "BwWWja0YfJA=",
+//       "version": 3
 //     }
 //
-// **YAML Example**
+// **YAML example:**
 //
 //     bindings:
 //     - members:
@@ -2894,14 +2967,17 @@ func (s *PgpSignedAttestation) MarshalJSON() ([]byte, error) {
 //         description: Does not grant access after Sep 2020
 //         expression: request.time <
 // timestamp('2020-10-01T00:00:00.000Z')
+//     - etag: BwWWja0YfJA=
+//     - version: 3
 //
 // For a description of IAM and its features, see the
-// [IAM developer's guide](https://cloud.google.com/iam/docs).
+// [IAM documentation](https://cloud.google.com/iam/docs/).
 type Policy struct {
-	// Bindings: Associates a list of `members` to a `role`. Optionally may
+	// Bindings: Associates a list of `members` to a `role`. Optionally, may
 	// specify a
-	// `condition` that determines when binding is in effect.
-	// `bindings` with no members will result in an error.
+	// `condition` that determines how and when the `bindings` are applied.
+	// Each
+	// of the `bindings` must contain at least one member.
 	Bindings []*Binding `json:"bindings,omitempty"`
 
 	// Etag: `etag` is used for optimistic concurrency control as a way to
@@ -2919,34 +2995,43 @@ type Policy struct {
 	// ensure that their change will be applied to the same version of the
 	// policy.
 	//
-	// If no `etag` is provided in the call to `setIamPolicy`, then the
-	// existing
-	// policy is overwritten. Due to blind-set semantics of an etag-less
-	// policy,
-	// 'setIamPolicy' will not fail even if either of incoming or stored
-	// policy
-	// does not meet the version requirements.
+	// **Important:** If you use IAM Conditions, you must include the `etag`
+	// field
+	// whenever you call `setIamPolicy`. If you omit this field, then IAM
+	// allows
+	// you to overwrite a version `3` policy with a version `1` policy, and
+	// all of
+	// the conditions in the version `3` policy are lost.
 	Etag string `json:"etag,omitempty"`
 
 	// Version: Specifies the format of the policy.
 	//
-	// Valid values are 0, 1, and 3. Requests specifying an invalid value
-	// will be
-	// rejected.
+	// Valid values are `0`, `1`, and `3`. Requests that specify an invalid
+	// value
+	// are rejected.
 	//
-	// Operations affecting conditional bindings must specify version 3.
-	// This can
-	// be either setting a conditional policy, modifying a conditional
-	// binding,
-	// or removing a conditional binding from the stored conditional
-	// policy.
-	// Operations on non-conditional policies may specify any valid value
-	// or
-	// leave the field unset.
-	//
-	// If no etag is provided in the call to `setIamPolicy`, any
+	// Any operation that affects conditional role bindings must specify
 	// version
-	// compliance checks on the incoming and/or stored policy is skipped.
+	// `3`. This requirement applies to the following operations:
+	//
+	// * Getting a policy that includes a conditional role binding
+	// * Adding a conditional role binding to a policy
+	// * Changing a conditional role binding in a policy
+	// * Removing any role binding, with or without a condition, from a
+	// policy
+	//   that includes conditions
+	//
+	// **Important:** If you use IAM Conditions, you must include the `etag`
+	// field
+	// whenever you call `setIamPolicy`. If you omit this field, then IAM
+	// allows
+	// you to overwrite a version `3` policy with a version `1` policy, and
+	// all of
+	// the conditions in the version `3` policy are lost.
+	//
+	// If a policy does not include any conditions, operations on that
+	// policy may
+	// specify any valid version or leave the field unset.
 	Version int64 `json:"version,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -3811,7 +3896,7 @@ func (c *ProjectsNotesBatchCreateCall) Header() http.Header {
 
 func (c *ProjectsNotesBatchCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3884,7 +3969,7 @@ func (c *ProjectsNotesBatchCreateCall) Do(opts ...googleapi.CallOption) (*BatchC
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The name of the project in the form of `projects/[PROJECT_ID]`, under which\nthe notes are to be created.",
+	//       "description": "Required. The name of the project in the form of `projects/[PROJECT_ID]`, under which\nthe notes are to be created.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -3924,8 +4009,8 @@ func (r *ProjectsNotesService) Create(parent string, note *Note) *ProjectsNotesC
 	return c
 }
 
-// NoteId sets the optional parameter "noteId": The ID to use for this
-// note.
+// NoteId sets the optional parameter "noteId": Required. The ID to use
+// for this note.
 func (c *ProjectsNotesCreateCall) NoteId(noteId string) *ProjectsNotesCreateCall {
 	c.urlParams_.Set("noteId", noteId)
 	return c
@@ -3958,7 +4043,7 @@ func (c *ProjectsNotesCreateCall) Header() http.Header {
 
 func (c *ProjectsNotesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4031,12 +4116,12 @@ func (c *ProjectsNotesCreateCall) Do(opts ...googleapi.CallOption) (*Note, error
 	//   ],
 	//   "parameters": {
 	//     "noteId": {
-	//       "description": "The ID to use for this note.",
+	//       "description": "Required. The ID to use for this note.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The name of the project in the form of `projects/[PROJECT_ID]`, under which\nthe note is to be created.",
+	//       "description": "Required. The name of the project in the form of `projects/[PROJECT_ID]`, under which\nthe note is to be created.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -4101,7 +4186,7 @@ func (c *ProjectsNotesDeleteCall) Header() http.Header {
 
 func (c *ProjectsNotesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4169,7 +4254,7 @@ func (c *ProjectsNotesDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, erro
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the note in the form of\n`projects/[PROVIDER_ID]/notes/[NOTE_ID]`.",
+	//       "description": "Required. The name of the note in the form of\n`projects/[PROVIDER_ID]/notes/[NOTE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/notes/[^/]+$",
 	//       "required": true,
@@ -4242,7 +4327,7 @@ func (c *ProjectsNotesGetCall) Header() http.Header {
 
 func (c *ProjectsNotesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4313,7 +4398,7 @@ func (c *ProjectsNotesGetCall) Do(opts ...googleapi.CallOption) (*Note, error) {
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the note in the form of\n`projects/[PROVIDER_ID]/notes/[NOTE_ID]`.",
+	//       "description": "Required. The name of the note in the form of\n`projects/[PROVIDER_ID]/notes/[NOTE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/notes/[^/]+$",
 	//       "required": true,
@@ -4389,7 +4474,7 @@ func (c *ProjectsNotesGetIamPolicyCall) Header() http.Header {
 
 func (c *ProjectsNotesGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4559,7 +4644,7 @@ func (c *ProjectsNotesListCall) Header() http.Header {
 
 func (c *ProjectsNotesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4646,7 +4731,7 @@ func (c *ProjectsNotesListCall) Do(opts ...googleapi.CallOption) (*ListNotesResp
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The name of the project to list notes for in the form of\n`projects/[PROJECT_ID]`.",
+	//       "description": "Required. The name of the project to list notes for in the form of\n`projects/[PROJECT_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -4738,7 +4823,7 @@ func (c *ProjectsNotesPatchCall) Header() http.Header {
 
 func (c *ProjectsNotesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4811,7 +4896,7 @@ func (c *ProjectsNotesPatchCall) Do(opts ...googleapi.CallOption) (*Note, error)
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the note in the form of\n`projects/[PROVIDER_ID]/notes/[NOTE_ID]`.",
+	//       "description": "Required. The name of the note in the form of\n`projects/[PROVIDER_ID]/notes/[NOTE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/notes/[^/]+$",
 	//       "required": true,
@@ -4896,7 +4981,7 @@ func (c *ProjectsNotesSetIamPolicyCall) Header() http.Header {
 
 func (c *ProjectsNotesSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5046,7 +5131,7 @@ func (c *ProjectsNotesTestIamPermissionsCall) Header() http.Header {
 
 func (c *ProjectsNotesTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5219,7 +5304,7 @@ func (c *ProjectsNotesOccurrencesListCall) Header() http.Header {
 
 func (c *ProjectsNotesOccurrencesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5295,7 +5380,7 @@ func (c *ProjectsNotesOccurrencesListCall) Do(opts ...googleapi.CallOption) (*Li
 	//       "type": "string"
 	//     },
 	//     "name": {
-	//       "description": "The name of the note to list occurrences for in the form of\n`projects/[PROVIDER_ID]/notes/[NOTE_ID]`.",
+	//       "description": "Required. The name of the note to list occurrences for in the form of\n`projects/[PROVIDER_ID]/notes/[NOTE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/notes/[^/]+$",
 	//       "required": true,
@@ -5391,7 +5476,7 @@ func (c *ProjectsOccurrencesBatchCreateCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesBatchCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5464,7 +5549,7 @@ func (c *ProjectsOccurrencesBatchCreateCall) Do(opts ...googleapi.CallOption) (*
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The name of the project in the form of `projects/[PROJECT_ID]`, under which\nthe occurrences are to be created.",
+	//       "description": "Required. The name of the project in the form of `projects/[PROJECT_ID]`, under which\nthe occurrences are to be created.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -5531,7 +5616,7 @@ func (c *ProjectsOccurrencesCreateCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5604,7 +5689,7 @@ func (c *ProjectsOccurrencesCreateCall) Do(opts ...googleapi.CallOption) (*Occur
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The name of the project in the form of `projects/[PROJECT_ID]`, under which\nthe occurrence is to be created.",
+	//       "description": "Required. The name of the project in the form of `projects/[PROJECT_ID]`, under which\nthe occurrence is to be created.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -5673,7 +5758,7 @@ func (c *ProjectsOccurrencesDeleteCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5741,7 +5826,7 @@ func (c *ProjectsOccurrencesDeleteCall) Do(opts ...googleapi.CallOption) (*Empty
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the occurrence in the form of\n`projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.",
+	//       "description": "Required. The name of the occurrence in the form of\n`projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/occurrences/[^/]+$",
 	//       "required": true,
@@ -5814,7 +5899,7 @@ func (c *ProjectsOccurrencesGetCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5885,7 +5970,7 @@ func (c *ProjectsOccurrencesGetCall) Do(opts ...googleapi.CallOption) (*Occurren
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the occurrence in the form of\n`projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.",
+	//       "description": "Required. The name of the occurrence in the form of\n`projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/occurrences/[^/]+$",
 	//       "required": true,
@@ -5961,7 +6046,7 @@ func (c *ProjectsOccurrencesGetIamPolicyCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6112,7 +6197,7 @@ func (c *ProjectsOccurrencesGetNotesCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesGetNotesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6183,7 +6268,7 @@ func (c *ProjectsOccurrencesGetNotesCall) Do(opts ...googleapi.CallOption) (*Not
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the occurrence in the form of\n`projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.",
+	//       "description": "Required. The name of the occurrence in the form of\n`projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/occurrences/[^/]+$",
 	//       "required": true,
@@ -6263,7 +6348,7 @@ func (c *ProjectsOccurrencesGetVulnerabilitySummaryCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesGetVulnerabilitySummaryCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6339,7 +6424,7 @@ func (c *ProjectsOccurrencesGetVulnerabilitySummaryCall) Do(opts ...googleapi.Ca
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The name of the project to get a vulnerability summary for in the form of\n`projects/[PROJECT_ID]`.",
+	//       "description": "Required. The name of the project to get a vulnerability summary for in the form of\n`projects/[PROJECT_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -6433,7 +6518,7 @@ func (c *ProjectsOccurrencesListCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6520,7 +6605,7 @@ func (c *ProjectsOccurrencesListCall) Do(opts ...googleapi.CallOption) (*ListOcc
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The name of the project to list occurrences for in the form of\n`projects/[PROJECT_ID]`.",
+	//       "description": "Required. The name of the project to list occurrences for in the form of\n`projects/[PROJECT_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -6612,7 +6697,7 @@ func (c *ProjectsOccurrencesPatchCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6685,7 +6770,7 @@ func (c *ProjectsOccurrencesPatchCall) Do(opts ...googleapi.CallOption) (*Occurr
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the occurrence in the form of\n`projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.",
+	//       "description": "Required. The name of the occurrence in the form of\n`projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/occurrences/[^/]+$",
 	//       "required": true,
@@ -6770,7 +6855,7 @@ func (c *ProjectsOccurrencesSetIamPolicyCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6920,7 +7005,7 @@ func (c *ProjectsOccurrencesTestIamPermissionsCall) Header() http.Header {
 
 func (c *ProjectsOccurrencesTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7069,7 +7154,7 @@ func (c *ProjectsScanConfigsGetCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7140,7 +7225,7 @@ func (c *ProjectsScanConfigsGetCall) Do(opts ...googleapi.CallOption) (*ScanConf
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the scan configuration in the form of\n`projects/[PROJECT_ID]/scanConfigs/[SCAN_CONFIG_ID]`.",
+	//       "description": "Required. The name of the scan configuration in the form of\n`projects/[PROJECT_ID]/scanConfigs/[SCAN_CONFIG_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/scanConfigs/[^/]+$",
 	//       "required": true,
@@ -7176,7 +7261,8 @@ func (r *ProjectsScanConfigsService) List(parent string) *ProjectsScanConfigsLis
 	return c
 }
 
-// Filter sets the optional parameter "filter": The filter expression.
+// Filter sets the optional parameter "filter": Required. The filter
+// expression.
 func (c *ProjectsScanConfigsListCall) Filter(filter string) *ProjectsScanConfigsListCall {
 	c.urlParams_.Set("filter", filter)
 	return c
@@ -7233,7 +7319,7 @@ func (c *ProjectsScanConfigsListCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7304,7 +7390,7 @@ func (c *ProjectsScanConfigsListCall) Do(opts ...googleapi.CallOption) (*ListSca
 	//   ],
 	//   "parameters": {
 	//     "filter": {
-	//       "description": "The filter expression.",
+	//       "description": "Required. The filter expression.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -7320,7 +7406,7 @@ func (c *ProjectsScanConfigsListCall) Do(opts ...googleapi.CallOption) (*ListSca
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The name of the project to list scan configurations for in the form of\n`projects/[PROJECT_ID]`.",
+	//       "description": "Required. The name of the project to list scan configurations for in the form of\n`projects/[PROJECT_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -7405,7 +7491,7 @@ func (c *ProjectsScanConfigsUpdateCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7478,7 +7564,7 @@ func (c *ProjectsScanConfigsUpdateCall) Do(opts ...googleapi.CallOption) (*ScanC
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the scan configuration in the form of\n`projects/[PROJECT_ID]/scanConfigs/[SCAN_CONFIG_ID]`.",
+	//       "description": "Required. The name of the scan configuration in the form of\n`projects/[PROJECT_ID]/scanConfigs/[SCAN_CONFIG_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/scanConfigs/[^/]+$",
 	//       "required": true,

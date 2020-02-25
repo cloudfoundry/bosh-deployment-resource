@@ -95,19 +95,6 @@ func getPublicConfig() *config.GCSCli {
 	}
 }
 
-func getInvalidStorageClassConfigs() []TableEntry {
-	regional := getRegionalConfig()
-	multiRegion := getMultiRegionConfig()
-
-	multiRegion.StorageClass = "REGIONAL"
-	regional.StorageClass = "MULTI_REGIONAL"
-
-	return []TableEntry{
-		Entry("Multi-Region bucket, regional StorageClass", regional),
-		Entry("Regional bucket, Multi-Region StorageClass", multiRegion),
-	}
-}
-
 // newSDK builds the GCS SDK Client from a valid config.GCSCli
 // TODO: Simplify and remove this. Tests should expect a single config and use it.
 func newSDK(ctx context.Context, c config.GCSCli) (*storage.Client, error) {

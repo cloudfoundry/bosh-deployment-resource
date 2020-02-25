@@ -19,10 +19,6 @@ import (
 
 // This test loads the metadata for the standard library,
 func TestStdlibMetadata(t *testing.T) {
-	if v := runtime.Version(); strings.Contains(v, "devel") && race {
-		t.Skip("golang.org/issue/31749: This test is broken on tip in race mode. Skip until it's fixed.")
-	}
-
 	// TODO(adonovan): see if we can get away without this hack.
 	// if runtime.GOOS == "android" {
 	// 	t.Skipf("incomplete std lib on %s", runtime.GOOS)
@@ -100,10 +96,10 @@ func TestCgoOption(t *testing.T) {
 	// The test also loads the actual file to verify that the
 	// object is indeed defined at that location.
 	for _, test := range []struct {
-		pkg, name, genericFile string
+		pkg, declKeyword, name, genericFile string
 	}{
-		{"net", "cgoLookupHost", "cgo_stub.go"},
-		{"os/user", "current", "lookup_stubs.go"},
+		{"net", "type", "addrinfoErrno", "cgo_stub.go"},
+		{"os/user", "func", "current", "lookup_stubs.go"},
 	} {
 		cfg := &packages.Config{Mode: packages.LoadSyntax}
 		pkgs, err := packages.Load(cfg, test.pkg)
@@ -138,7 +134,7 @@ func TestCgoOption(t *testing.T) {
 		}
 		line := string(bytes.Split(b, []byte("\n"))[posn.Line-1])
 		// Don't assume posn.Column is accurate.
-		if !strings.Contains(line, "func "+test.name) {
+		if !strings.Contains(line, test.declKeyword+" "+test.name) {
 			t.Errorf("%s: %s not declared here (looking at %q)", posn, obj, line)
 		}
 	}

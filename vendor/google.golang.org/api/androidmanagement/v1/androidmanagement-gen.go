@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "androidmanagement:v1"
 const apiName = "androidmanagement"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -233,6 +236,50 @@ func NewSignupUrlsService(s *Service) *SignupUrlsService {
 
 type SignupUrlsService struct {
 	s *Service
+}
+
+// AdvancedSecurityOverrides: Security policies set to the most secure
+// values by default. To maintain the security posture of a device, we
+// don't recommend overriding any of the default values.
+type AdvancedSecurityOverrides struct {
+	// UntrustedAppsPolicy: The policy for untrusted apps (apps from unknown
+	// sources) enforced on the device. Replaces
+	// install_unknown_sources_allowed (deprecated).
+	//
+	// Possible values:
+	//   "UNTRUSTED_APPS_POLICY_UNSPECIFIED" - Unspecified. Defaults to
+	// DISALLOW_INSTALL.
+	//   "DISALLOW_INSTALL" - Default. Disallow untrusted app installs on
+	// entire device.
+	//   "ALLOW_INSTALL_IN_PERSONAL_PROFILE_ONLY" - For devices with work
+	// profiles, allow untrusted app installs in the device's personal
+	// profile only.
+	//   "ALLOW_INSTALL_DEVICE_WIDE" - Allow untrusted app installs on
+	// entire device.
+	UntrustedAppsPolicy string `json:"untrustedAppsPolicy,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "UntrustedAppsPolicy")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "UntrustedAppsPolicy") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AdvancedSecurityOverrides) MarshalJSON() ([]byte, error) {
+	type NoMethod AdvancedSecurityOverrides
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // AlwaysOnVpnPackage: Configuration for an always-on VPN connection.
@@ -639,8 +686,9 @@ type ApplicationReport struct {
 	// State: Application state.
 	//
 	// Possible values:
-	//   "INSTALLED" - App is installed on the device
+	//   "APPLICATION_STATE_UNSPECIFIED" - App state is unspecified
 	//   "REMOVED" - App was removed from the device
+	//   "INSTALLED" - App is installed on the device
 	State string `json:"state,omitempty"`
 
 	// VersionCode: The app version code, which can be used to determine
@@ -910,6 +958,53 @@ type ComplianceRule struct {
 
 func (s *ComplianceRule) MarshalJSON() ([]byte, error) {
 	type NoMethod ComplianceRule
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Date: Represents a whole or partial calendar date, e.g. a birthday.
+// The time of day and time zone are either specified elsewhere or are
+// not significant. The date is relative to the Proleptic Gregorian
+// Calendar. This can represent:
+// A full date, with non-zero year, month and day values
+// A month and day value, with a zero year, e.g. an anniversary
+// A year on its own, with zero month and day values
+// A year and month value, with a zero day, e.g. a credit card
+// expiration dateRelated types are google.type.TimeOfDay and
+// google.protobuf.Timestamp.
+type Date struct {
+	// Day: Day of month. Must be from 1 to 31 and valid for the year and
+	// month, or 0 if specifying a year by itself or a year and month where
+	// the day is not significant.
+	Day int64 `json:"day,omitempty"`
+
+	// Month: Month of year. Must be from 1 to 12, or 0 if specifying a year
+	// without a month and day.
+	Month int64 `json:"month,omitempty"`
+
+	// Year: Year of date. Must be from 1 to 9999, or 0 if specifying a date
+	// without a year.
+	Year int64 `json:"year,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Day") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Day") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Date) MarshalJSON() ([]byte, error) {
+	type NoMethod Date
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1371,8 +1466,7 @@ type Enterprise struct {
 	// required if Pub/Sub notifications are enabled.
 	PubsubTopic string `json:"pubsubTopic,omitempty"`
 
-	// SigninDetails: Sign-in details of the enterprise. Maximum of 1
-	// SigninDetail is supported.
+	// SigninDetails: Sign-in details of the enterprise.
 	SigninDetails []*SigninDetail `json:"signinDetails,omitempty"`
 
 	// TermsAndConditions: Terms and conditions that must be accepted when
@@ -1443,6 +1537,52 @@ type ExternalData struct {
 
 func (s *ExternalData) MarshalJSON() ([]byte, error) {
 	type NoMethod ExternalData
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// FreezePeriod: A system freeze period. When a device’s clock is
+// within the freeze period, all incoming system updates (including
+// security patches) are blocked and won’t be installed. When a device
+// is outside the freeze period, normal update behavior applies. Leap
+// years are ignored in freeze period calculations, in particular: * If
+// Feb. 29th is set as the start or end date of a freeze period, the
+// freeze period will start or end on Feb. 28th instead. * When a
+// device’s system clock reads Feb. 29th, it’s treated as Feb. 28th.
+// * When calculating the number of days in a freeze period or the time
+// between two freeze periods, Feb. 29th is ignored and not counted as a
+// day.
+type FreezePeriod struct {
+	// EndDate: The end date (inclusive) of the freeze period. Must be no
+	// later than 90 days from the start date. If the end date is earlier
+	// than the start date, the freeze period is considered wrapping
+	// year-end. Note: year must not be set. For example, {"month":
+	// 1,"date": 30}.
+	EndDate *Date `json:"endDate,omitempty"`
+
+	// StartDate: The start date (inclusive) of the freeze period. Note:
+	// year must not be set. For example, {"month": 1,"date": 30}.
+	StartDate *Date `json:"startDate,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "EndDate") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EndDate") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FreezePeriod) MarshalJSON() ([]byte, error) {
+	type NoMethod FreezePeriod
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1637,6 +1777,102 @@ type KeyedAppState struct {
 
 func (s *KeyedAppState) MarshalJSON() ([]byte, error) {
 	type NoMethod KeyedAppState
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// KioskCustomization: Settings controlling the behavior of a device in
+// kiosk mode. To enable kiosk mode, set kioskCustomLauncherEnabled to
+// true or specify an app in the policy with installType KIOSK.
+type KioskCustomization struct {
+	// DeviceSettings: Specifies whether the Settings app is allowed in
+	// kiosk mode.
+	//
+	// Possible values:
+	//   "DEVICE_SETTINGS_UNSPECIFIED" - Unspecified, defaults to
+	// SETTINGS_ACCESS_BLOCKED.
+	//   "SETTINGS_ACCESS_ALLOWED" - Access to the Settings app is allowed
+	// in kiosk mode.
+	//   "SETTINGS_ACCESS_BLOCKED" - Access to the Settings app is not
+	// allowed in kiosk mode.
+	DeviceSettings string `json:"deviceSettings,omitempty"`
+
+	// PowerButtonActions: Sets the behavior of a device in kiosk mode when
+	// a user presses and holds (long-presses) the Power button.
+	//
+	// Possible values:
+	//   "POWER_BUTTON_ACTIONS_UNSPECIFIED" - Unspecified, defaults to
+	// POWER_BUTTON_AVAILABLE.
+	//   "POWER_BUTTON_AVAILABLE" - The power menu (e.g. Power off, Restart)
+	// is shown when a user long-presses the Power button of a device in
+	// kiosk mode.
+	//   "POWER_BUTTON_BLOCKED" - The power menu (e.g. Power off, Restart)
+	// is not shown when a user long-presses the Power button of a device in
+	// kiosk mode. Note: this may prevent users from turning off the device.
+	PowerButtonActions string `json:"powerButtonActions,omitempty"`
+
+	// StatusBar: Specifies whether system info and notifications are
+	// disabled in kiosk mode.
+	//
+	// Possible values:
+	//   "STATUS_BAR_UNSPECIFIED" - Unspecified, defaults to
+	// INFO_AND_NOTIFICATIONS_DISABLED.
+	//   "NOTIFICATIONS_AND_SYSTEM_INFO_ENABLED" - System info and
+	// notifications are shown on the status bar in kiosk mode.Note: For
+	// this policy to take effect, the device's home button must be enabled
+	// using kioskCustomization.systemNavigation.
+	//   "NOTIFICATIONS_AND_SYSTEM_INFO_DISABLED" - System info and
+	// notifications are disabled in kiosk mode.
+	//   "SYSTEM_INFO_ONLY" - Only system info is shown on the status bar.
+	StatusBar string `json:"statusBar,omitempty"`
+
+	// SystemErrorWarnings: Specifies whether system error dialogs for
+	// crashed or unresponsive apps are blocked in kiosk mode. When blocked,
+	// the system will force-stop the app as if the user chooses the "close
+	// app" option on the UI.
+	//
+	// Possible values:
+	//   "SYSTEM_ERROR_WARNINGS_UNSPECIFIED" - Unspecified, defaults to
+	// ERROR_AND_WARNINGS_MUTED.
+	//   "ERROR_AND_WARNINGS_ENABLED" - All system error dialogs such as
+	// crash and app not responding (ANR) are displayed.
+	//   "ERROR_AND_WARNINGS_MUTED" - All system error dialogs, such as
+	// crash and app not responding (ANR) are blocked. When blocked, the
+	// system force-stops the app as if the user closes the app from the UI.
+	SystemErrorWarnings string `json:"systemErrorWarnings,omitempty"`
+
+	// SystemNavigation: Specifies which navigation features are enabled
+	// (e.g. Home, Overview buttons) in kiosk mode.
+	//
+	// Possible values:
+	//   "SYSTEM_NAVIGATION_UNSPECIFIED" - Unspecified, defaults to
+	// NAVIGATION_DISABLED.
+	//   "NAVIGATION_ENABLED" - Home and overview buttons are enabled.
+	//   "NAVIGATION_DISABLED" - The home and Overview buttons are not
+	// accessible.
+	//   "HOME_BUTTON_ONLY" - Only the home button is enabled.
+	SystemNavigation string `json:"systemNavigation,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DeviceSettings") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DeviceSettings") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *KioskCustomization) MarshalJSON() ([]byte, error) {
+	type NoMethod KioskCustomization
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2417,6 +2653,21 @@ type PasswordRequirements struct {
 	// work profile.
 	PasswordScope string `json:"passwordScope,omitempty"`
 
+	// RequirePasswordUnlock: The length of time after a device or work
+	// profile is unlocked using a strong form of authentication (password,
+	// PIN, pattern) that it can be unlocked using any other authentication
+	// method (e.g. fingerprint, trust agents, face). After the specified
+	// time period elapses, only strong forms of authentication can be used
+	// to unlock the device or work profile.
+	//
+	// Possible values:
+	//   "REQUIRE_PASSWORD_UNLOCK_UNSPECIFIED" - Unspecified. Defaults to
+	// USE_DEFAULT_DEVICE_TIMEOUT.
+	//   "USE_DEFAULT_DEVICE_TIMEOUT" - The timeout period is set to the
+	// device’s default.
+	//   "REQUIRE_EVERY_DAY" - The timeout period is set to 24 hours.
+	RequirePasswordUnlock string `json:"requirePasswordUnlock,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g.
 	// "MaximumFailedPasswordsForWipe") to unconditionally include in API
 	// requests. By default, fields with empty values are omitted from API
@@ -2544,6 +2795,11 @@ type Policy struct {
 	// AdjustVolumeDisabled: Whether adjusting the master volume is
 	// disabled.
 	AdjustVolumeDisabled bool `json:"adjustVolumeDisabled,omitempty"`
+
+	// AdvancedSecurityOverrides: Security policies set to the most secure
+	// values by default. To maintain the security posture of a device, we
+	// don't recommend overriding any of the default values.
+	AdvancedSecurityOverrides *AdvancedSecurityOverrides `json:"advancedSecurityOverrides,omitempty"`
 
 	// AlwaysOnVpnPackage: Configuration for an always-on VPN connection.
 	// Use with vpn_config_disabled to prevent modification of this setting.
@@ -2718,9 +2974,14 @@ type Policy struct {
 	// KioskCustomLauncherEnabled: Whether the kiosk custom launcher is
 	// enabled. This replaces the home screen with a launcher that locks
 	// down the device to the apps installed via the applications setting.
-	// Apps appear on a single page in alphabetical order. The status bar is
-	// disabled when this is set.
+	// Apps appear on a single page in alphabetical order. Use
+	// kioskCustomization to further configure the kiosk device behavior.
 	KioskCustomLauncherEnabled bool `json:"kioskCustomLauncherEnabled,omitempty"`
+
+	// KioskCustomization: Settings controlling the behavior of a device in
+	// kiosk mode. To enable kiosk mode, set kioskCustomLauncherEnabled to
+	// true or specify an app in the policy with installType KIOSK.
+	KioskCustomization *KioskCustomization `json:"kioskCustomization,omitempty"`
 
 	// LocationMode: The degree of location detection enabled. The user may
 	// change the value unless the user is otherwise blocked from accessing
@@ -2793,8 +3054,9 @@ type Policy struct {
 	// password_scope field in the policy.
 	PasswordPolicies []*PasswordRequirements `json:"passwordPolicies,omitempty"`
 
-	// PasswordRequirements: Password requirements. DEPRECATED - Use
-	// password_policies
+	// PasswordRequirements: Password requirements. The field
+	// password_requirements.require_password_unlock must not be set.
+	// DEPRECATED - Use password_policies.
 	PasswordRequirements *PasswordRequirements `json:"passwordRequirements,omitempty"`
 
 	// PermissionGrants: Explicit permission or group grants or denials for
@@ -2872,7 +3134,8 @@ type Policy struct {
 	ShareLocationDisabled bool `json:"shareLocationDisabled,omitempty"`
 
 	// ShortSupportMessage: A message displayed to the user in the settings
-	// screen wherever functionality has been disabled by the admin.
+	// screen wherever functionality has been disabled by the admin. If the
+	// message is longer than 200 characters it may be truncated.
 	ShortSupportMessage *UserFacingMessage `json:"shortSupportMessage,omitempty"`
 
 	// SkipFirstUseHintsEnabled: Flag to skip hints on the first use.
@@ -3438,10 +3701,14 @@ type StatusReportingSettings struct {
 	// DeviceSettingsEnabled: Whether device settings reporting is enabled.
 	DeviceSettingsEnabled bool `json:"deviceSettingsEnabled,omitempty"`
 
-	// DisplayInfoEnabled: Whether displays reporting is enabled.
+	// DisplayInfoEnabled: Whether displays reporting is enabled. Report
+	// data is not available for personally owned devices with work
+	// profiles.
 	DisplayInfoEnabled bool `json:"displayInfoEnabled,omitempty"`
 
 	// HardwareStatusEnabled: Whether hardware status reporting is enabled.
+	// Report data is not available for personally owned devices with work
+	// profiles.
 	HardwareStatusEnabled bool `json:"hardwareStatusEnabled,omitempty"`
 
 	// MemoryInfoEnabled: Whether memory reporting is enabled.
@@ -3451,7 +3718,8 @@ type StatusReportingSettings struct {
 	NetworkInfoEnabled bool `json:"networkInfoEnabled,omitempty"`
 
 	// PowerManagementEventsEnabled: Whether power management event
-	// reporting is enabled.
+	// reporting is enabled. Report data is not available for personally
+	// owned devices with work profiles.
 	PowerManagementEventsEnabled bool `json:"powerManagementEventsEnabled,omitempty"`
 
 	// SoftwareInfoEnabled: Whether software info reporting is enabled.
@@ -3496,6 +3764,13 @@ type SystemUpdate struct {
 	// minutes, the actual window is extended to 30 minutes beyond the start
 	// time.
 	EndMinutes int64 `json:"endMinutes,omitempty"`
+
+	// FreezePeriods: An annually repeating time period in which
+	// over-the-air (OTA) system updates are postponed to freeze the OS
+	// version running on a device. To prevent freezing the device
+	// indefinitely, each freeze period must be separated by at least 60
+	// days.
+	FreezePeriods []*FreezePeriod `json:"freezePeriods,omitempty"`
 
 	// StartMinutes: If the type is WINDOWED, the start of the maintenance
 	// window, measured as the number of minutes after midnight in the
@@ -3924,7 +4199,7 @@ func (c *EnterprisesCreateCall) Header() http.Header {
 
 func (c *EnterprisesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4076,7 +4351,7 @@ func (c *EnterprisesGetCall) Header() http.Header {
 
 func (c *EnterprisesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4219,7 +4494,7 @@ func (c *EnterprisesPatchCall) Header() http.Header {
 
 func (c *EnterprisesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4383,7 +4658,7 @@ func (c *EnterprisesApplicationsGetCall) Header() http.Header {
 
 func (c *EnterprisesApplicationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4506,6 +4781,15 @@ func (c *EnterprisesDevicesDeleteCall) WipeDataFlags(wipeDataFlags ...string) *E
 	return c
 }
 
+// WipeReasonMessage sets the optional parameter "wipeReasonMessage":
+// Optional short message displayed to the user before wiping the work
+// profile on personal devices. This has no effect on company owned
+// devices. The maximum message length is 200 characters.
+func (c *EnterprisesDevicesDeleteCall) WipeReasonMessage(wipeReasonMessage string) *EnterprisesDevicesDeleteCall {
+	c.urlParams_.Set("wipeReasonMessage", wipeReasonMessage)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -4533,7 +4817,7 @@ func (c *EnterprisesDevicesDeleteCall) Header() http.Header {
 
 func (c *EnterprisesDevicesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4617,6 +4901,11 @@ func (c *EnterprisesDevicesDeleteCall) Do(opts ...googleapi.CallOption) (*Empty,
 	//       "location": "query",
 	//       "repeated": true,
 	//       "type": "string"
+	//     },
+	//     "wipeReasonMessage": {
+	//       "description": "Optional short message displayed to the user before wiping the work profile on personal devices. This has no effect on company owned devices. The maximum message length is 200 characters.",
+	//       "location": "query",
+	//       "type": "string"
 	//     }
 	//   },
 	//   "path": "v1/{+name}",
@@ -4685,7 +4974,7 @@ func (c *EnterprisesDevicesGetCall) Header() http.Header {
 
 func (c *EnterprisesDevicesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4822,7 +5111,7 @@ func (c *EnterprisesDevicesIssueCommandCall) Header() http.Header {
 
 func (c *EnterprisesDevicesIssueCommandCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4985,7 +5274,7 @@ func (c *EnterprisesDevicesListCall) Header() http.Header {
 
 func (c *EnterprisesDevicesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5160,7 +5449,7 @@ func (c *EnterprisesDevicesPatchCall) Header() http.Header {
 
 func (c *EnterprisesDevicesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5313,7 +5602,7 @@ func (c *EnterprisesDevicesOperationsCancelCall) Header() http.Header {
 
 func (c *EnterprisesDevicesOperationsCancelCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5446,7 +5735,7 @@ func (c *EnterprisesDevicesOperationsDeleteCall) Header() http.Header {
 
 func (c *EnterprisesDevicesOperationsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5589,7 +5878,7 @@ func (c *EnterprisesDevicesOperationsGetCall) Header() http.Header {
 
 func (c *EnterprisesDevicesOperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5763,7 +6052,7 @@ func (c *EnterprisesDevicesOperationsListCall) Header() http.Header {
 
 func (c *EnterprisesDevicesOperationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5935,7 +6224,7 @@ func (c *EnterprisesEnrollmentTokensCreateCall) Header() http.Header {
 
 func (c *EnterprisesEnrollmentTokensCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6074,7 +6363,7 @@ func (c *EnterprisesEnrollmentTokensDeleteCall) Header() http.Header {
 
 func (c *EnterprisesEnrollmentTokensDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6205,7 +6494,7 @@ func (c *EnterprisesPoliciesDeleteCall) Header() http.Header {
 
 func (c *EnterprisesPoliciesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6346,7 +6635,7 @@ func (c *EnterprisesPoliciesGetCall) Header() http.Header {
 
 func (c *EnterprisesPoliciesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6504,7 +6793,7 @@ func (c *EnterprisesPoliciesListCall) Header() http.Header {
 
 func (c *EnterprisesPoliciesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6679,7 +6968,7 @@ func (c *EnterprisesPoliciesPatchCall) Header() http.Header {
 
 func (c *EnterprisesPoliciesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6825,7 +7114,7 @@ func (c *EnterprisesWebAppsCreateCall) Header() http.Header {
 
 func (c *EnterprisesWebAppsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6963,7 +7252,7 @@ func (c *EnterprisesWebAppsDeleteCall) Header() http.Header {
 
 func (c *EnterprisesWebAppsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7104,7 +7393,7 @@ func (c *EnterprisesWebAppsGetCall) Header() http.Header {
 
 func (c *EnterprisesWebAppsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7262,7 +7551,7 @@ func (c *EnterprisesWebAppsListCall) Header() http.Header {
 
 func (c *EnterprisesWebAppsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7437,7 +7726,7 @@ func (c *EnterprisesWebAppsPatchCall) Header() http.Header {
 
 func (c *EnterprisesWebAppsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7584,7 +7873,7 @@ func (c *EnterprisesWebTokensCreateCall) Header() http.Header {
 
 func (c *EnterprisesWebTokensCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7739,7 +8028,7 @@ func (c *SignupUrlsCreateCall) Header() http.Header {
 
 func (c *SignupUrlsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

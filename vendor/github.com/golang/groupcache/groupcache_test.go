@@ -19,6 +19,7 @@ limitations under the License.
 package groupcache
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"hash/crc32"
@@ -41,7 +42,7 @@ var (
 
 	stringc = make(chan string)
 
-	dummyCtx Context
+	dummyCtx = context.TODO()
 
 	// cacheFills is the number of times stringGroup or
 	// protoGroup's Getter have been called. Read using the
@@ -58,7 +59,7 @@ const (
 )
 
 func testSetup() {
-	stringGroup = NewGroup(stringGroupName, cacheSize, GetterFunc(func(_ Context, key string, dest Sink) error {
+	stringGroup = NewGroup(stringGroupName, cacheSize, GetterFunc(func(_ context.Context, key string, dest Sink) error {
 		if key == fromChan {
 			key = <-stringc
 		}
@@ -66,7 +67,7 @@ func testSetup() {
 		return dest.SetString("ECHO:" + key)
 	}))
 
-	protoGroup = NewGroup(protoGroupName, cacheSize, GetterFunc(func(_ Context, key string, dest Sink) error {
+	protoGroup = NewGroup(protoGroupName, cacheSize, GetterFunc(func(_ context.Context, key string, dest Sink) error {
 		if key == fromChan {
 			key = <-stringc
 		}
@@ -78,7 +79,7 @@ func testSetup() {
 	}))
 }
 
-// tests that a Getter's Get method is only called once with two
+// TestGetDupSuppressString tests that a Getter's Get method is only called once with two
 // outstanding callers.  This is the string variant.
 func TestGetDupSuppressString(t *testing.T) {
 	once.Do(testSetup)
@@ -120,7 +121,7 @@ func TestGetDupSuppressString(t *testing.T) {
 	}
 }
 
-// tests that a Getter's Get method is only called once with two
+// TestGetDupSuppressProto tests that a Getter's Get method is only called once with two
 // outstanding callers.  This is the proto variant.
 func TestGetDupSuppressProto(t *testing.T) {
 	once.Do(testSetup)
@@ -230,7 +231,7 @@ type fakePeer struct {
 	fail bool
 }
 
-func (p *fakePeer) Get(_ Context, in *pb.GetRequest, out *pb.GetResponse) error {
+func (p *fakePeer) Get(_ context.Context, in *pb.GetRequest, out *pb.GetResponse) error {
 	p.hits++
 	if p.fail {
 		return errors.New("simulated error from peer")
@@ -249,7 +250,7 @@ func (p fakePeers) PickPeer(key string) (peer ProtoGetter, ok bool) {
 	return p[n], p[n] != nil
 }
 
-// tests that peers (virtual, in-process) are hit, and how much.
+// TestPeers tests that peers (virtual, in-process) are hit, and how much.
 func TestPeers(t *testing.T) {
 	once.Do(testSetup)
 	rand.Seed(123)
@@ -259,7 +260,7 @@ func TestPeers(t *testing.T) {
 	peerList := fakePeers([]ProtoGetter{peer0, peer1, peer2, nil})
 	const cacheSize = 0 // disabled
 	localHits := 0
-	getter := func(_ Context, key string, dest Sink) error {
+	getter := func(_ context.Context, key string, dest Sink) error {
 		localHits++
 		return dest.SetString("got:" + key)
 	}
@@ -387,7 +388,7 @@ func (g *orderedFlightGroup) Do(key string, fn func() (interface{}, error)) (int
 func TestNoDedup(t *testing.T) {
 	const testkey = "testkey"
 	const testval = "testval"
-	g := newGroup("testgroup", 1024, GetterFunc(func(_ Context, key string, dest Sink) error {
+	g := newGroup("testgroup", 1024, GetterFunc(func(_ context.Context, key string, dest Sink) error {
 		return dest.SetString(testval)
 	}), nil)
 

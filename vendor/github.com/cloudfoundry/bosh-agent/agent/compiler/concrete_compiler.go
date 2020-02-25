@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 
+	"code.cloudfoundry.org/clock"
+
 	boshbc "github.com/cloudfoundry/bosh-agent/agent/applier/bundlecollection"
 	boshmodels "github.com/cloudfoundry/bosh-agent/agent/applier/models"
 	"github.com/cloudfoundry/bosh-agent/agent/applier/packages"
@@ -30,6 +32,7 @@ type concreteCompiler struct {
 	compileDirProvider CompileDirProvider
 	packageApplier     packages.Applier
 	packagesBc         boshbc.BundleCollection
+	timeProvider       clock.Clock
 }
 
 func NewConcreteCompiler(
@@ -40,6 +43,7 @@ func NewConcreteCompiler(
 	compileDirProvider CompileDirProvider,
 	packageApplier packages.Applier,
 	packagesBc boshbc.BundleCollection,
+	timeProvider clock.Clock,
 ) Compiler {
 	return concreteCompiler{
 		compressor:         compressor,
@@ -49,6 +53,7 @@ func NewConcreteCompiler(
 		compileDirProvider: compileDirProvider,
 		packageApplier:     packageApplier,
 		packagesBc:         packagesBc,
+		timeProvider:       timeProvider,
 	}
 }
 
@@ -116,7 +121,7 @@ func (c concreteCompiler) Compile(pkg Package, deps []boshmodels.Package) (blobI
 		_ = c.compressor.CleanUp(tmpPackageTar)
 	}()
 
-	uploadedBlobID, digest, err := c.blobstore.Write(pkg.UploadSignedURL, tmpPackageTar)
+	uploadedBlobID, digest, err := c.blobstore.Write(pkg.UploadSignedURL, tmpPackageTar, pkg.BlobstoreHeaders)
 	if err != nil {
 		return "", nil, bosherr.WrapError(err, "Uploading compiled package")
 	}
@@ -144,7 +149,7 @@ func (c concreteCompiler) fetchAndUncompress(pkg Package, targetDir string) erro
 		return bosherr.Error(fmt.Sprintf("No blobstore reference for package '%s'", pkg.Name))
 	}
 
-	depFilePath, err := c.blobstore.Get(pkg.Sha1, pkg.PackageGetSignedURL, pkg.BlobstoreID)
+	depFilePath, err := c.blobstore.Get(pkg.Sha1, pkg.PackageGetSignedURL, pkg.BlobstoreID, pkg.BlobstoreHeaders)
 	if err != nil {
 		return bosherr.WrapErrorf(err, "Fetching package blob %s", pkg.BlobstoreID)
 	}
@@ -189,10 +194,5 @@ func (c concreteCompiler) atomicDecompress(archivePath string, finalDir string) 
 		return bosherr.WrapErrorf(err, "Decompressing files from %s to %s", archivePath, tmpInstallPath)
 	}
 
-	err = c.fs.Rename(tmpInstallPath, finalDir)
-	if err != nil {
-		return bosherr.WrapErrorf(err, "Moving temporary directory %s to final destination %s", tmpInstallPath, finalDir)
-	}
-
-	return nil
+	return c.moveTmpDir(tmpInstallPath, finalDir)
 }

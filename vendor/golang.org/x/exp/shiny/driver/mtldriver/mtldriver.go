@@ -17,7 +17,7 @@ import (
 	"unsafe"
 
 	"dmitri.shuralyov.com/gpu/mtl"
-	"github.com/go-gl/glfw/v3.2/glfw"
+	"github.com/go-gl/glfw/v3.3/glfw"
 	"golang.org/x/exp/shiny/driver/internal/errscreen"
 	"golang.org/x/exp/shiny/driver/mtldriver/internal/appkit"
 	"golang.org/x/exp/shiny/driver/mtldriver/internal/coreanim"
@@ -55,6 +55,12 @@ func main(f func(screen.Screen)) error {
 	}
 	defer glfw.Terminate()
 	glfw.WindowHint(glfw.ClientAPI, glfw.NoAPI)
+	{
+		// TODO(dmitshur): Delete this when https://github.com/go-gl/glfw/issues/272 is resolved.
+		// Post an empty event from the main thread before it can happen in a non-main thread,
+		// to work around https://github.com/glfw/glfw/issues/1649.
+		glfw.PostEmptyEvent()
+	}
 	var (
 		done            = make(chan struct{})
 		newWindowCh     = make(chan newWindowReq, 1)

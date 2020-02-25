@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "cloudbuild:v1alpha1"
 const apiName = "cloudbuild"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -602,10 +605,10 @@ type BuildOptions struct {
 	// it is indicative of a build request with an incorrect configuration.
 	Volumes []*Volume `json:"volumes,omitempty"`
 
-	// WorkerPool: Option to specify a `WorkerPool` for the build. User
-	// specifies the pool
-	// with the format "[WORKERPOOL_PROJECT_ID]/[WORKERPOOL_NAME]".
-	// This is an experimental field.
+	// WorkerPool: Option to specify a `WorkerPool` for the build.
+	// Format: projects/{project}/workerPools/{workerPool}
+	//
+	// This field is experimental.
 	WorkerPool string `json:"workerPool,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DiskSizeGb") to
@@ -1022,10 +1025,12 @@ type RepoSource struct {
 	// project ID requesting the build is assumed.
 	ProjectId string `json:"projectId,omitempty"`
 
-	// RepoName: Name of the Cloud Source Repository. If omitted, the name
-	// "default" is
-	// assumed.
+	// RepoName: Required. Name of the Cloud Source Repository.
 	RepoName string `json:"repoName,omitempty"`
+
+	// Substitutions: Substitutions to use in a triggered build.
+	// Should only be used with RunBuildTrigger
+	Substitutions map[string]string `json:"substitutions,omitempty"`
 
 	// TagName: Regex matching tags to build.
 	//
@@ -1493,7 +1498,7 @@ type WorkerPool struct {
 	//   "STATUS_UNSPECIFIED" - Status of the `WorkerPool` is unknown.
 	//   "CREATING" - `WorkerPool` is being created.
 	//   "RUNNING" - `WorkerPool` is running.
-	//   "DELETING" - `WorkerPool` is being deleting: cancelling builds and
+	//   "DELETING" - `WorkerPool` is being deleted: cancelling builds and
 	// draining workers.
 	//   "DELETED" - `WorkerPool` is deleted.
 	Status string `json:"status,omitempty"`
@@ -1587,7 +1592,7 @@ func (c *ProjectsWorkerPoolsCreateCall) Header() http.Header {
 
 func (c *ProjectsWorkerPoolsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1728,7 +1733,7 @@ func (c *ProjectsWorkerPoolsDeleteCall) Header() http.Header {
 
 func (c *ProjectsWorkerPoolsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1871,7 +1876,7 @@ func (c *ProjectsWorkerPoolsGetCall) Header() http.Header {
 
 func (c *ProjectsWorkerPoolsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2017,7 +2022,7 @@ func (c *ProjectsWorkerPoolsListCall) Header() http.Header {
 
 func (c *ProjectsWorkerPoolsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2154,7 +2159,7 @@ func (c *ProjectsWorkerPoolsPatchCall) Header() http.Header {
 
 func (c *ProjectsWorkerPoolsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

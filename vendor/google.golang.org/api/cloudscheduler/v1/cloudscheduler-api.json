@@ -22,6 +22,7 @@
   },
   "id": "cloudscheduler:v1",
   "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://cloudscheduler.mtls.googleapis.com/",
   "name": "cloudscheduler",
   "ownerDomain": "google.com",
   "ownerName": "Google",
@@ -417,7 +418,7 @@
       }
     }
   },
-  "revision": "20190815",
+  "revision": "20200210",
   "rootUrl": "https://cloudscheduler.googleapis.com/",
   "schemas": {
     "AppEngineHttpTarget": {
@@ -750,7 +751,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional attributes for this message.",
+          "description": "Attributes for this message. If this field is empty, the message must\ncontain non-empty data.",
           "type": "object"
         },
         "data": {

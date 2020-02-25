@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -56,6 +56,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -72,6 +73,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "fitness:v1"
 const apiName = "fitness"
@@ -86,16 +88,20 @@ const (
 	// See and add to your Google Fit physical activity data
 	FitnessActivityWriteScope = "https://www.googleapis.com/auth/fitness.activity.write"
 
-	// See info about your blood glucose in Google Fit
+	// See info about your blood glucose in Google Fit. I consent to Google
+	// sharing my blood glucose information with this app.
 	FitnessBloodGlucoseReadScope = "https://www.googleapis.com/auth/fitness.blood_glucose.read"
 
-	// See and add info about your blood glucose to Google Fit
+	// See and add info about your blood glucose to Google Fit. I consent to
+	// Google sharing my blood glucose information with this app.
 	FitnessBloodGlucoseWriteScope = "https://www.googleapis.com/auth/fitness.blood_glucose.write"
 
-	// See info about your blood pressure in Google Fit
+	// See info about your blood pressure in Google Fit. I consent to Google
+	// sharing my blood pressure information with this app.
 	FitnessBloodPressureReadScope = "https://www.googleapis.com/auth/fitness.blood_pressure.read"
 
-	// See and add info about your blood pressure in Google Fit
+	// See and add info about your blood pressure in Google Fit. I consent
+	// to Google sharing my blood pressure information with this app.
 	FitnessBloodPressureWriteScope = "https://www.googleapis.com/auth/fitness.blood_pressure.write"
 
 	// See info about your body measurements and heart rate in Google Fit
@@ -105,10 +111,13 @@ const (
 	// Google Fit
 	FitnessBodyWriteScope = "https://www.googleapis.com/auth/fitness.body.write"
 
-	// See info about your body temperature in Google Fit
+	// See info about your body temperature in Google Fit. I consent to
+	// Google sharing my body temperature information with this app.
 	FitnessBodyTemperatureReadScope = "https://www.googleapis.com/auth/fitness.body_temperature.read"
 
-	// See and add to info about your body temperature in Google Fit
+	// See and add to info about your body temperature in Google Fit. I
+	// consent to Google sharing my body temperature information with this
+	// app.
 	FitnessBodyTemperatureWriteScope = "https://www.googleapis.com/auth/fitness.body_temperature.write"
 
 	// See your Google Fit speed and distance data
@@ -123,16 +132,22 @@ const (
 	// See and add to info about your nutrition in Google Fit
 	FitnessNutritionWriteScope = "https://www.googleapis.com/auth/fitness.nutrition.write"
 
-	// See info about your oxygen saturation in Google Fit
+	// See info about your oxygen saturation in Google Fit. I consent to
+	// Google sharing my oxygen saturation information with this app.
 	FitnessOxygenSaturationReadScope = "https://www.googleapis.com/auth/fitness.oxygen_saturation.read"
 
-	// See and add info about your oxygen saturation in Google Fit
+	// See and add info about your oxygen saturation in Google Fit. I
+	// consent to Google sharing my oxygen saturation information with this
+	// app.
 	FitnessOxygenSaturationWriteScope = "https://www.googleapis.com/auth/fitness.oxygen_saturation.write"
 
-	// See info about your reproductive health in Google Fit
+	// See info about your reproductive health in Google Fit. I consent to
+	// Google sharing my reporductive health information with this app.
 	FitnessReproductiveHealthReadScope = "https://www.googleapis.com/auth/fitness.reproductive_health.read"
 
-	// See and add info about your reproductive health in Google Fit
+	// See and add info about your reproductive health in Google Fit. I
+	// consent to Google sharing my reporductive health information with
+	// this app.
 	FitnessReproductiveHealthWriteScope = "https://www.googleapis.com/auth/fitness.reproductive_health.write"
 )
 
@@ -160,6 +175,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -327,17 +343,23 @@ func (s *AggregateBucket) MarshalJSON() ([]byte, error) {
 
 // AggregateBy: The specification of which data to aggregate.
 type AggregateBy struct {
-	// DataSourceId: A data source ID to aggregate. Mutually exclusive of
-	// dataTypeName. Only data from the specified data source ID will be
-	// included in the aggregation. The dataset in the response will have
-	// the same data source ID.
+	// DataSourceId: A data source ID to aggregate. Only data from the
+	// specified data source ID will be included in the aggregation. If
+	// specified, this data source must exist; the OAuth scopes in the
+	// supplied credentials must grant read access to this data type. The
+	// dataset in the response will have the same data source ID. Note: Data
+	// can be aggregated by either the dataTypeName or the dataSourceId, not
+	// both.
 	DataSourceId string `json:"dataSourceId,omitempty"`
 
 	// DataTypeName: The data type to aggregate. All data sources providing
 	// this data type will contribute data to the aggregation. The response
 	// will contain a single dataset for this data type name. The dataset
 	// will have a data source ID of
-	// derived:com.google.:com.google.android.gms:aggregated
+	// derived::com.google.android.gms:aggregated. If the user has no data
+	// for this data type, an empty data set will be returned. Note: Data
+	// can be aggregated by either the dataTypeName or the dataSourceId, not
+	// both.
 	DataTypeName string `json:"dataTypeName,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DataSourceId") to
@@ -807,10 +829,12 @@ type DataSource struct {
 	// viable data stream ID would be: type:dataType.name:developer project
 	// number
 	//
-	// Finally, the developer project number is obfuscated when read by any
-	// REST or Android client that did not create the data source. Only the
-	// data source creator will see the developer project number in clear
-	// and normal form.
+	// Finally, the developer project number and device UID are obfuscated
+	// when read by any REST or Android client that did not create the data
+	// source. Only the data source creator will see the developer project
+	// number in clear and normal form. This means a client will see a
+	// different set of data_stream_ids than another client with different
+	// credentials.
 	DataStreamId string `json:"dataStreamId,omitempty"`
 
 	// DataStreamName: The stream name uniquely identifies this particular
@@ -1047,6 +1071,9 @@ type Device struct {
 	// field is obfuscated when read by any REST or Android client that did
 	// not create the data source. Only the data source creator will see the
 	// uid field in clear and normal form.
+	//
+	// The obfuscation preserves equality; that is, given two IDs, if id1 ==
+	// id2, obfuscated(id1) == obfuscated(id2).
 	Uid string `json:"uid,omitempty"`
 
 	// Version: Version string for the device hardware/software.
@@ -1311,7 +1338,7 @@ func (s *Session) MarshalJSON() ([]byte, error) {
 // point.
 //
 // A field value has a particular format and is only ever set to one of
-// an integer or a floating point value. LINT.IfChange
+// an integer or a floating point value.
 type Value struct {
 	// FpVal: Floating point value. When this is set, other values must not
 	// be set.
@@ -1409,15 +1436,35 @@ type UsersDataSourcesCreateCall struct {
 	header_    http.Header
 }
 
-// Create: Creates a new data source that is unique across all data
-// sources belonging to this user. The data stream ID field can be
-// omitted and will be generated by the server with the correct format.
-// The data stream ID is an ordered combination of some fields from the
-// data source. In addition to the data source fields reflected into the
-// data source ID, the developer project number that is authenticated
-// when creating the data source is included. This developer project
-// number is obfuscated when read by any other developer reading public
-// data types.
+// Create: A data source is a unique source of sensor data. Data sources
+// can expose raw data coming from hardware sensors on local or
+// companion devices. They can also expose derived data, created by
+// transforming or merging other data sources. Multiple data sources can
+// exist for the same data type. Every data point in every dataset
+// inserted into or read from the Fitness API has an associated data
+// source.
+//
+// Each data source produces a unique stream of dataset updates, with a
+// unique data source identifier. Not all changes to data source affect
+// the data stream ID, so that data collected by updated versions of the
+// same application/device can still be considered to belong to the same
+// data source.
+//
+// Data sources are addressed using a string generated by the server,
+// based on the contents of the source being created.
+//
+// Creates a new data source that is unique across all data sources
+// belonging to this user. The dataStreamId field should be excluded.
+// This will be automatically generated by the server with the correct
+// format. If a dataStreamId is included, it must match the format that
+// the server would generate. This format is a combination of some
+// fields from the data source, and has a specific order. If it doesn't
+// match, the request will fail with an error.
+//
+// In addition to the data source fields included in the data source ID,
+// the developer project number that is authenticated when creating the
+// data source is included. This developer project number is obfuscated
+// when read by any other developer reading public data types.
 func (r *UsersDataSourcesService) Create(userId string, datasource *DataSource) *UsersDataSourcesCreateCall {
 	c := &UsersDataSourcesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.userId = userId
@@ -1452,7 +1499,7 @@ func (c *UsersDataSourcesCreateCall) Header() http.Header {
 
 func (c *UsersDataSourcesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1516,7 +1563,7 @@ func (c *UsersDataSourcesCreateCall) Do(opts ...googleapi.CallOption) (*DataSour
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a new data source that is unique across all data sources belonging to this user. The data stream ID field can be omitted and will be generated by the server with the correct format. The data stream ID is an ordered combination of some fields from the data source. In addition to the data source fields reflected into the data source ID, the developer project number that is authenticated when creating the data source is included. This developer project number is obfuscated when read by any other developer reading public data types.",
+	//   "description": "A data source is a unique source of sensor data. Data sources can expose raw data coming from hardware sensors on local or companion devices. They can also expose derived data, created by transforming or merging other data sources. Multiple data sources can exist for the same data type. Every data point in every dataset inserted into or read from the Fitness API has an associated data source.\n\nEach data source produces a unique stream of dataset updates, with a unique data source identifier. Not all changes to data source affect the data stream ID, so that data collected by updated versions of the same application/device can still be considered to belong to the same data source.\n\nData sources are addressed using a string generated by the server, based on the contents of the source being created.\n\nCreates a new data source that is unique across all data sources belonging to this user. The dataStreamId field should be excluded. This will be automatically generated by the server with the correct format. If a dataStreamId is included, it must match the format that the server would generate. This format is a combination of some fields from the data source, and has a specific order. If it doesn't match, the request will fail with an error.\n\nIn addition to the data source fields included in the data source ID, the developer project number that is authenticated when creating the data source is included. This developer project number is obfuscated when read by any other developer reading public data types.",
 	//   "httpMethod": "POST",
 	//   "id": "fitness.users.dataSources.create",
 	//   "parameterOrder": [
@@ -1599,7 +1646,7 @@ func (c *UsersDataSourcesDeleteCall) Header() http.Header {
 
 func (c *UsersDataSourcesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1756,7 +1803,7 @@ func (c *UsersDataSourcesGetCall) Header() http.Header {
 
 func (c *UsersDataSourcesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1934,7 +1981,7 @@ func (c *UsersDataSourcesListCall) Header() http.Header {
 
 func (c *UsersDataSourcesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2096,7 +2143,7 @@ func (c *UsersDataSourcesUpdateCall) Header() http.Header {
 
 func (c *UsersDataSourcesUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2278,7 +2325,7 @@ func (c *UsersDataSourcesDataPointChangesListCall) Header() http.Header {
 
 func (c *UsersDataSourcesDataPointChangesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2490,7 +2537,7 @@ func (c *UsersDataSourcesDatasetsDeleteCall) Header() http.Header {
 
 func (c *UsersDataSourcesDatasetsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2665,7 +2712,7 @@ func (c *UsersDataSourcesDatasetsGetCall) Header() http.Header {
 
 func (c *UsersDataSourcesDatasetsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2880,7 +2927,7 @@ func (c *UsersDataSourcesDatasetsPatchCall) Header() http.Header {
 
 func (c *UsersDataSourcesDatasetsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3036,7 +3083,7 @@ type UsersDatasetAggregateCall struct {
 
 // Aggregate: Aggregates data of a certain type or stream into buckets
 // divided by a given type of boundary. Multiple data sets of multiple
-// types and from multiple sources can be aggreated into exactly one
+// types and from multiple sources can be aggregated into exactly one
 // bucket type per request.
 func (r *UsersDatasetService) Aggregate(userId string, aggregaterequest *AggregateRequest) *UsersDatasetAggregateCall {
 	c := &UsersDatasetAggregateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -3072,7 +3119,7 @@ func (c *UsersDatasetAggregateCall) Header() http.Header {
 
 func (c *UsersDatasetAggregateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3136,7 +3183,7 @@ func (c *UsersDatasetAggregateCall) Do(opts ...googleapi.CallOption) (*Aggregate
 	}
 	return ret, nil
 	// {
-	//   "description": "Aggregates data of a certain type or stream into buckets divided by a given type of boundary. Multiple data sets of multiple types and from multiple sources can be aggreated into exactly one bucket type per request.",
+	//   "description": "Aggregates data of a certain type or stream into buckets divided by a given type of boundary. Multiple data sets of multiple types and from multiple sources can be aggregated into exactly one bucket type per request.",
 	//   "httpMethod": "POST",
 	//   "id": "fitness.users.dataset.aggregate",
 	//   "parameterOrder": [
@@ -3234,7 +3281,7 @@ func (c *UsersSessionsDeleteCall) Header() http.Header {
 
 func (c *UsersSessionsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3322,6 +3369,18 @@ func (r *UsersSessionsService) List(userId string) *UsersSessionsListCall {
 	return c
 }
 
+// ActivityType sets the optional parameter "activityType": If
+// non-empty, only sessions with these activity types should be
+// returned.
+func (c *UsersSessionsListCall) ActivityType(activityType ...int64) *UsersSessionsListCall {
+	var activityType_ []string
+	for _, v := range activityType {
+		activityType_ = append(activityType_, fmt.Sprint(v))
+	}
+	c.urlParams_.SetMulti("activityType", activityType_)
+	return c
+}
+
 // EndTime sets the optional parameter "endTime": An RFC3339 timestamp.
 // Only sessions ending between the start and end times will be included
 // in the response.
@@ -3397,7 +3456,7 @@ func (c *UsersSessionsListCall) Header() http.Header {
 
 func (c *UsersSessionsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3466,6 +3525,13 @@ func (c *UsersSessionsListCall) Do(opts ...googleapi.CallOption) (*ListSessionsR
 	//     "userId"
 	//   ],
 	//   "parameters": {
+	//     "activityType": {
+	//       "description": "If non-empty, only sessions with these activity types should be returned.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "repeated": true,
+	//       "type": "integer"
+	//     },
 	//     "endTime": {
 	//       "description": "An RFC3339 timestamp. Only sessions ending between the start and end times will be included in the response.",
 	//       "location": "query",
@@ -3597,7 +3663,7 @@ func (c *UsersSessionsUpdateCall) Header() http.Header {
 
 func (c *UsersSessionsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

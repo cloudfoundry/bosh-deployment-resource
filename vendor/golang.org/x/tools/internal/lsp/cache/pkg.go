@@ -8,34 +8,29 @@ import (
 	"context"
 	"go/ast"
 	"go/types"
-	"sync"
 
-	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/internal/lsp/protocol"
 	"golang.org/x/tools/internal/lsp/source"
+	"golang.org/x/tools/internal/packagesinternal"
 	"golang.org/x/tools/internal/span"
 	errors "golang.org/x/xerrors"
 )
 
 // pkg contains the type information needed by the source package.
 type pkg struct {
-	view *view
-
 	// ID and package path have their own types to avoid being used interchangeably.
-	id      packageID
-	pkgPath packagePath
-	mode    source.ParseMode
-
-	files      []source.ParseGoHandle
-	errors     []packages.Error
-	imports    map[packagePath]*pkg
-	types      *types.Package
-	typesInfo  *types.Info
-	typesSizes types.Sizes
-
-	diagMu      sync.Mutex
-	diagnostics map[*analysis.Analyzer][]source.Diagnostic
+	id              packageID
+	pkgPath         packagePath
+	mode            source.ParseMode
+	forTest         packagePath
+	goFiles         []source.ParseGoHandle
+	compiledGoFiles []source.ParseGoHandle
+	errors          []*source.Error
+	imports         map[packagePath]*pkg
+	module          *packagesinternal.Module
+	types           *types.Package
+	typesInfo       *types.Info
+	typesSizes      types.Sizes
 }
 
 // Declare explicit types for package paths and IDs to ensure that we never use
@@ -43,6 +38,11 @@ type pkg struct {
 // result in confusing errors because package IDs often look like package paths.
 type packageID string
 type packagePath string
+
+// Declare explicit types for files and directories to distinguish between the two.
+type fileURI span.URI
+type directoryURI span.URI
+type viewLoadScope span.URI
 
 func (p *pkg) ID() string {
 	return string(p.id)
@@ -52,12 +52,17 @@ func (p *pkg) PkgPath() string {
 	return string(p.pkgPath)
 }
 
-func (p *pkg) Files() []source.ParseGoHandle {
-	return p.files
+func (p *pkg) CompiledGoFiles() []source.ParseGoHandle {
+	return p.compiledGoFiles
 }
 
 func (p *pkg) File(uri span.URI) (source.ParseGoHandle, error) {
-	for _, ph := range p.Files() {
+	for _, ph := range p.compiledGoFiles {
+		if ph.File().Identity().URI == uri {
+			return ph, nil
+		}
+	}
+	for _, ph := range p.goFiles {
 		if ph.File().Identity().URI == uri {
 			return ph, nil
 		}
@@ -65,10 +70,10 @@ func (p *pkg) File(uri span.URI) (source.ParseGoHandle, error) {
 	return nil, errors.Errorf("no ParseGoHandle for %s", uri)
 }
 
-func (p *pkg) GetSyntax(ctx context.Context) []*ast.File {
+func (p *pkg) GetSyntax() []*ast.File {
 	var syntax []*ast.File
-	for _, ph := range p.files {
-		file, _, _, err := ph.Cached(ctx)
+	for _, ph := range p.compiledGoFiles {
+		file, _, _, _, err := ph.Cached()
 		if err == nil {
 			syntax = append(syntax, file)
 		}
@@ -76,7 +81,7 @@ func (p *pkg) GetSyntax(ctx context.Context) []*ast.File {
 	return syntax
 }
 
-func (p *pkg) GetErrors() []packages.Error {
+func (p *pkg) GetErrors() []*source.Error {
 	return p.errors
 }
 
@@ -96,7 +101,11 @@ func (p *pkg) IsIllTyped() bool {
 	return p.types == nil || p.typesInfo == nil || p.typesSizes == nil
 }
 
-func (p *pkg) GetImport(ctx context.Context, pkgPath string) (source.Package, error) {
+func (p *pkg) ForTest() string {
+	return string(p.forTest)
+}
+
+func (p *pkg) GetImport(pkgPath string) (source.Package, error) {
 	if imp := p.imports[packagePath(pkgPath)]; imp != nil {
 		return imp, nil
 	}
@@ -104,60 +113,42 @@ func (p *pkg) GetImport(ctx context.Context, pkgPath string) (source.Package, er
 	return nil, errors.Errorf("no imported package for %s", pkgPath)
 }
 
-func (p *pkg) SetDiagnostics(a *analysis.Analyzer, diags []source.Diagnostic) {
-	p.diagMu.Lock()
-	defer p.diagMu.Unlock()
-	if p.diagnostics == nil {
-		p.diagnostics = make(map[*analysis.Analyzer][]source.Diagnostic)
+func (p *pkg) Imports() []source.Package {
+	var result []source.Package
+	for _, imp := range p.imports {
+		result = append(result, imp)
 	}
-	p.diagnostics[a] = diags
+	return result
 }
 
-func (p *pkg) FindDiagnostic(pdiag protocol.Diagnostic) (*source.Diagnostic, error) {
-	p.diagMu.Lock()
-	defer p.diagMu.Unlock()
+func (p *pkg) Module() *packagesinternal.Module {
+	return p.module
+}
 
-	for a, diagnostics := range p.diagnostics {
-		if a.Name != pdiag.Source {
+func (s *snapshot) FindAnalysisError(ctx context.Context, pkgID, analyzerName, msg string, rng protocol.Range) (*source.Error, error) {
+	analyzer, ok := s.View().Options().Analyzers[analyzerName]
+	if !ok {
+		return nil, errors.Errorf("unexpected analyzer: %s", analyzerName)
+	}
+	act, err := s.actionHandle(ctx, packageID(pkgID), analyzer)
+	if err != nil {
+		return nil, err
+	}
+	errs, _, err := act.analyze(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, err := range errs {
+		if err.Category != analyzerName {
 			continue
 		}
-		for _, d := range diagnostics {
-			if d.Message != pdiag.Message {
-				continue
-			}
-			if protocol.CompareRange(d.Range, pdiag.Range) != 0 {
-				continue
-			}
-			return &d, nil
+		if err.Message != msg {
+			continue
 		}
-	}
-	return nil, errors.Errorf("no matching diagnostic for %v", pdiag)
-}
-
-func (p *pkg) FindFile(ctx context.Context, uri span.URI) (source.ParseGoHandle, source.Package, error) {
-	// Special case for ignored files.
-	if p.view.Ignore(uri) {
-		return p.view.findIgnoredFile(ctx, uri)
-	}
-
-	queue := []*pkg{p}
-	seen := make(map[string]bool)
-
-	for len(queue) > 0 {
-		pkg := queue[0]
-		queue = queue[1:]
-		seen[pkg.ID()] = true
-
-		for _, ph := range pkg.files {
-			if ph.File().Identity().URI == uri {
-				return ph, pkg, nil
-			}
+		if protocol.CompareRange(err.Range, rng) != 0 {
+			continue
 		}
-		for _, dep := range pkg.imports {
-			if !seen[dep.ID()] {
-				queue = append(queue, dep)
-			}
-		}
+		return err, nil
 	}
-	return nil, nil, errors.Errorf("no file for %s", uri)
+	return nil, errors.Errorf("no matching diagnostic for %s:%v", pkgID, analyzerName)
 }

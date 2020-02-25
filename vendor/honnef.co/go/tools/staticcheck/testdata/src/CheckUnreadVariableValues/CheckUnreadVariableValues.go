@@ -102,3 +102,31 @@ func fn8() {
 	switch b {
 	}
 }
+
+func fn9() {
+	xs := []int{}
+	for _, x := range xs {
+		foo, err := work(x) // want `this value of foo is never used`
+		if err != nil {
+			return
+		}
+		if !foo {
+			continue
+		}
+	}
+}
+
+func work(int) (bool, error) { return false, nil }
+
+func resolveWeakTypes(types []int) {
+	for i := range types {
+		runEnd := findRunLimit(i)
+
+		if true {
+			_ = runEnd
+		}
+		i = runEnd // want `this value of i is never used`
+	}
+}
+
+func findRunLimit(int) int { return 0 }

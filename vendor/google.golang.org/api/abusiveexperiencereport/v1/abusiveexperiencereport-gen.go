@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,25 +69,16 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "abusiveexperiencereport:v1"
 const apiName = "abusiveexperiencereport"
 const apiVersion = "v1"
 const basePath = "https://abusiveexperiencereport.googleapis.com/"
 
-// OAuth2 scopes used by this API.
-const (
-	// Test scope for access to the Zoo service
-	XapiZooScope = "https://www.googleapis.com/auth/xapi.zoo"
-)
-
 // NewService creates a new Service.
 func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, error) {
-	scopesOption := option.WithScopes(
-		"https://www.googleapis.com/auth/xapi.zoo",
-	)
-	// NOTE: prepend, so we don't override user-specified scopes.
-	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -322,7 +314,7 @@ func (c *SitesGetCall) Header() http.Header {
 
 func (c *SitesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -403,10 +395,7 @@ func (c *SitesGetCall) Do(opts ...googleapi.CallOption) (*SiteSummaryResponse, e
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "SiteSummaryResponse"
-	//   },
-	//   "scopes": [
-	//     "https://www.googleapis.com/auth/xapi.zoo"
-	//   ]
+	//   }
 	// }
 
 }
@@ -464,7 +453,7 @@ func (c *ViolatingSitesListCall) Header() http.Header {
 
 func (c *ViolatingSitesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -532,10 +521,7 @@ func (c *ViolatingSitesListCall) Do(opts ...googleapi.CallOption) (*ViolatingSit
 	//   "path": "v1/violatingSites",
 	//   "response": {
 	//     "$ref": "ViolatingSitesResponse"
-	//   },
-	//   "scopes": [
-	//     "https://www.googleapis.com/auth/xapi.zoo"
-	//   ]
+	//   }
 	// }
 
 }

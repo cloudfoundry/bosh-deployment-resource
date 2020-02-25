@@ -289,7 +289,7 @@
       }
     }
   },
-  "revision": "20190926",
+  "revision": "20200212",
   "rootUrl": "https://speech.googleapis.com/",
   "schemas": {
     "ListOperationsResponse": {
@@ -479,7 +479,7 @@
             "Adaptive Multi-Rate Wideband codec. `sample_rate_hertz` must be 16000.",
             "Opus encoded audio frames in Ogg container\n([OggOpus](https://wiki.xiph.org/OggOpus)).\n`sample_rate_hertz` must be one of 8000, 12000, 16000, 24000, or 48000.",
             "Although the use of lossy encodings is not recommended, if a very low\nbitrate encoding is required, `OGG_OPUS` is highly preferred over\nSpeex encoding. The [Speex](https://speex.org/)  encoding supported by\nCloud Speech API has a header byte in each block, as in MIME type\n`audio/x-speex-with-header-byte`.\nIt is a variant of the RTP Speex encoding defined in\n[RFC 5574](https://tools.ietf.org/html/rfc5574).\nThe stream is a sequence of blocks, one block per RTP packet. Each block\nstarts with a byte containing the length of the block, in bytes, followed\nby one or more frames of Speex data, padded to an integral number of\nbytes (octets) as specified in RFC 5574. In other words, each RTP header\nis replaced with a single byte containing the block length. Only Speex\nwideband is supported. `sample_rate_hertz` must be 16000.",
-            "MP3 audio. Support all standard MP3 bitrates (which range from 32-320\nkbps). When using this encoding, `sample_rate_hertz` can be optionally\nunset if not known."
+            "MP3 audio. Support all standard MP3 bitrates (which range from 32-320\nkbps). When using this encoding, `sample_rate_hertz` has to match the\nsample rate of the file being used."
           ],
           "type": "string"
         },
@@ -641,10 +641,6 @@
         "config": {
           "$ref": "RecognitionConfig",
           "description": "Required. Provides information to the recognizer that specifies how to\nprocess the request."
-        },
-        "name": {
-          "description": "Use `model` field in RecognitionConfig instead.",
-          "type": "string"
         }
       },
       "type": "object"
@@ -678,6 +674,11 @@
         },
         "minSpeakerCount": {
           "description": "Minimum number of speakers in the conversation. This range gives you more\nflexibility by allowing the system to automatically determine the correct\nnumber of speakers. If not set, the default value is 2.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "speakerTag": {
+          "description": "Output only. Unused.",
           "format": "int32",
           "type": "integer"
         }
@@ -743,7 +744,7 @@
           "type": "integer"
         },
         "languageCode": {
-          "description": "The [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) language tag\nof the language in this result. This language code was detected to have\nthe most likelihood of being spoken in the audio.",
+          "description": "Output only. The [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) language tag\nof the language in this result. This language code was detected to have\nthe most likelihood of being spoken in the audio.",
           "type": "string"
         }
       },
@@ -791,7 +792,7 @@
           "type": "string"
         },
         "speakerTag": {
-          "description": "A distinct integer value is assigned for every speaker within\nthe audio. This field specifies which one of those speakers was detected to\nhave spoken this word. Value ranges from '1' to diarization_speaker_count.\nspeaker_tag is set if enable_speaker_diarization = 'true' and only in the\ntop alternative.",
+          "description": "Output only. A distinct integer value is assigned for every speaker within\nthe audio. This field specifies which one of those speakers was detected to\nhave spoken this word. Value ranges from '1' to diarization_speaker_count.\nspeaker_tag is set if enable_speaker_diarization = 'true' and only in the\ntop alternative.",
           "format": "int32",
           "type": "integer"
         },

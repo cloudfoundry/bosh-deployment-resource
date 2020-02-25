@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "civicinfo:v2"
 const apiName = "civicinfo"
@@ -76,6 +78,7 @@ const basePath = "https://www.googleapis.com/civicinfo/v2/"
 
 // NewService creates a new Service.
 func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, error) {
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -978,117 +981,6 @@ func (s *InternalSourceSummaryProto) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-type LivegraphBacktraceRecordInfo struct {
-	DataSourcePublishMsec int64 `json:"dataSourcePublishMsec,omitempty,string"`
-
-	ExpId string `json:"expId,omitempty"`
-
-	ExpInfo *LivegraphBacktraceRecordInfoExpInfo `json:"expInfo,omitempty"`
-
-	IsRecon bool `json:"isRecon,omitempty"`
-
-	IsWlmThrottled bool `json:"isWlmThrottled,omitempty"`
-
-	NumberOfTriples int64 `json:"numberOfTriples,omitempty,string"`
-
-	Priority string `json:"priority,omitempty"`
-
-	Process string `json:"process,omitempty"`
-
-	ProxyReceiveMsec int64 `json:"proxyReceiveMsec,omitempty,string"`
-
-	ProxySentMsec int64 `json:"proxySentMsec,omitempty,string"`
-
-	RecordId string `json:"recordId,omitempty"`
-
-	ShouldMonitorLatency bool `json:"shouldMonitorLatency,omitempty"`
-
-	SubscriberReceiveMsec int64 `json:"subscriberReceiveMsec,omitempty,string"`
-
-	TopicBuildFinishMsec int64 `json:"topicBuildFinishMsec,omitempty,string"`
-
-	TopicBuildStartMsec int64 `json:"topicBuildStartMsec,omitempty,string"`
-
-	Version string `json:"version,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g.
-	// "DataSourcePublishMsec") to unconditionally include in API requests.
-	// By default, fields with empty values are omitted from API requests.
-	// However, any non-pointer, non-interface field appearing in
-	// ForceSendFields will be sent to the server regardless of whether the
-	// field is empty or not. This may be used to include empty fields in
-	// Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "DataSourcePublishMsec") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *LivegraphBacktraceRecordInfo) MarshalJSON() ([]byte, error) {
-	type NoMethod LivegraphBacktraceRecordInfo
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-type LivegraphBacktraceRecordInfoExpInfo struct {
-	DeletedIns []string `json:"deletedIns,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "DeletedIns") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "DeletedIns") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *LivegraphBacktraceRecordInfoExpInfo) MarshalJSON() ([]byte, error) {
-	type NoMethod LivegraphBacktraceRecordInfoExpInfo
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-type MessageSet struct {
-	RecordMessageSetExt *LivegraphBacktraceRecordInfo `json:"recordMessageSetExt,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "RecordMessageSetExt")
-	// to unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "RecordMessageSetExt") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *MessageSet) MarshalJSON() ([]byte, error) {
-	type NoMethod MessageSet
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // Office: Information about an Office held by one or more Officials.
 type Office struct {
 	// DivisionId: The OCD ID of the division with which this office is
@@ -1198,8 +1090,6 @@ type PointProto struct {
 	LngE7 int64 `json:"lngE7,omitempty"`
 
 	Metadata *FieldMetadataProto `json:"metadata,omitempty"`
-
-	TemporaryData *MessageSet `json:"temporaryData,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "LatE7") to
 	// unconditionally include in API requests. By default, fields with
@@ -1679,9 +1569,9 @@ type StreetSegment struct {
 
 	StartHouseNumber int64 `json:"startHouseNumber,omitempty,string"`
 
-	StartLatE7 int64 `json:"startLatE7,omitempty,string"`
+	StartLatE7 int64 `json:"startLatE7,omitempty"`
 
-	StartLngE7 int64 `json:"startLngE7,omitempty,string"`
+	StartLngE7 int64 `json:"startLngE7,omitempty"`
 
 	State string `json:"state,omitempty"`
 
@@ -1976,7 +1866,7 @@ func (c *DivisionsSearchCall) Header() http.Header {
 
 func (c *DivisionsSearchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2111,7 +2001,7 @@ func (c *ElectionsElectionQueryCall) Header() http.Header {
 
 func (c *ElectionsElectionQueryCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2269,7 +2159,7 @@ func (c *ElectionsVoterInfoQueryCall) Header() http.Header {
 
 func (c *ElectionsVoterInfoQueryCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2485,7 +2375,7 @@ func (c *RepresentativesRepresentativeInfoByAddressCall) Header() http.Header {
 
 func (c *RepresentativesRepresentativeInfoByAddressCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2741,7 +2631,7 @@ func (c *RepresentativesRepresentativeInfoByDivisionCall) Header() http.Header {
 
 func (c *RepresentativesRepresentativeInfoByDivisionCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

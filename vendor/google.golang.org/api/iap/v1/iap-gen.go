@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "iap:v1"
 const apiName = "iap"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -111,6 +114,7 @@ func New(client *http.Client) (*Service, error) {
 		return nil, errors.New("client is nil")
 	}
 	s := &Service{client: client, BasePath: basePath}
+	s.Projects = NewProjectsService(s)
 	s.V1 = NewV1Service(s)
 	return s, nil
 }
@@ -119,6 +123,8 @@ type Service struct {
 	client    *http.Client
 	BasePath  string // API endpoint base URL
 	UserAgent string // optional additional User-Agent fragment
+
+	Projects *ProjectsService
 
 	V1 *V1Service
 }
@@ -130,6 +136,39 @@ func (s *Service) userAgent() string {
 	return googleapi.UserAgent + " " + s.UserAgent
 }
 
+func NewProjectsService(s *Service) *ProjectsService {
+	rs := &ProjectsService{s: s}
+	rs.Brands = NewProjectsBrandsService(s)
+	return rs
+}
+
+type ProjectsService struct {
+	s *Service
+
+	Brands *ProjectsBrandsService
+}
+
+func NewProjectsBrandsService(s *Service) *ProjectsBrandsService {
+	rs := &ProjectsBrandsService{s: s}
+	rs.IdentityAwareProxyClients = NewProjectsBrandsIdentityAwareProxyClientsService(s)
+	return rs
+}
+
+type ProjectsBrandsService struct {
+	s *Service
+
+	IdentityAwareProxyClients *ProjectsBrandsIdentityAwareProxyClientsService
+}
+
+func NewProjectsBrandsIdentityAwareProxyClientsService(s *Service) *ProjectsBrandsIdentityAwareProxyClientsService {
+	rs := &ProjectsBrandsIdentityAwareProxyClientsService{s: s}
+	return rs
+}
+
+type ProjectsBrandsIdentityAwareProxyClientsService struct {
+	s *Service
+}
+
 func NewV1Service(s *Service) *V1Service {
 	rs := &V1Service{s: s}
 	return rs
@@ -137,6 +176,70 @@ func NewV1Service(s *Service) *V1Service {
 
 type V1Service struct {
 	s *Service
+}
+
+// AccessSettings: Access related settings for IAP protected apps.
+type AccessSettings struct {
+	// CorsSettings: Configuration to allow cross-origin requests via IAP.
+	CorsSettings *CorsSettings `json:"corsSettings,omitempty"`
+
+	// GcipSettings: GCIP claims and endpoint configurations for 3p identity
+	// providers.
+	GcipSettings *GcipSettings `json:"gcipSettings,omitempty"`
+
+	// OauthSettings: Settings to configure IAP's OAuth behavior.
+	OauthSettings *OAuthSettings `json:"oauthSettings,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CorsSettings") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CorsSettings") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AccessSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod AccessSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ApplicationSettings: Wrapper over application specific settings for
+// IAP.
+type ApplicationSettings struct {
+	// CsmSettings: Settings to configure IAP's behavior for a CSM mesh.
+	CsmSettings *CsmSettings `json:"csmSettings,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CsmSettings") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CsmSettings") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ApplicationSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod ApplicationSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Binding: Associates `members` with a `role`.
@@ -175,6 +278,38 @@ type Binding struct {
 	// group.
 	//    For example, `admins@example.com`.
 	//
+	// * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus
+	// unique
+	//    identifier) representing a user that has been recently deleted.
+	// For
+	//    example, `alice@example.com?uid=123456789012345678901`. If the
+	// user is
+	//    recovered, this value reverts to `user:{emailid}` and the
+	// recovered user
+	//    retains the role in the binding.
+	//
+	// * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address
+	// (plus
+	//    unique identifier) representing a service account that has been
+	// recently
+	//    deleted. For example,
+	//
+	// `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`.
+	//
+	//    If the service account is undeleted, this value reverts to
+	//    `serviceAccount:{emailid}` and the undeleted service account
+	// retains the
+	//    role in the binding.
+	//
+	// * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus
+	// unique
+	//    identifier) representing a Google group that has been recently
+	//    deleted. For example,
+	// `admins@example.com?uid=123456789012345678901`. If
+	//    the group is recovered, this value reverts to `group:{emailid}`
+	// and the
+	//    recovered group retains the role in the binding.
+	//
 	//
 	// * `domain:{domain}`: The G Suite domain (primary) that represents all
 	// the
@@ -211,31 +346,197 @@ func (s *Binding) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Expr: Represents an expression text. Example:
+// Brand: OAuth brand data.
+// NOTE: Only contains a portion of the data that describes a brand.
+type Brand struct {
+	// ApplicationTitle: Application name displayed on OAuth consent screen.
+	ApplicationTitle string `json:"applicationTitle,omitempty"`
+
+	// Name: Output only. Identifier of the brand.
+	// NOTE: GCP project number achieves the same brand identification
+	// purpose as
+	// only one brand per project can be created.
+	Name string `json:"name,omitempty"`
+
+	// OrgInternalOnly: Output only. Whether the brand is only intended for
+	// usage inside the
+	// GSuite organization only.
+	OrgInternalOnly bool `json:"orgInternalOnly,omitempty"`
+
+	// SupportEmail: Support email displayed on the OAuth consent screen.
+	SupportEmail string `json:"supportEmail,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ApplicationTitle") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ApplicationTitle") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Brand) MarshalJSON() ([]byte, error) {
+	type NoMethod Brand
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CorsSettings: Allows customers to configure HTTP request paths
+// that'll allow HTTP OPTIONS
+// call to bypass authentication and authorization.
+type CorsSettings struct {
+	// AllowHttpOptions: Configuration to allow HTTP OPTIONS calls to skip
+	// authorization. If
+	// undefined, IAP will not apply any special logic to OPTIONS requests.
+	AllowHttpOptions bool `json:"allowHttpOptions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AllowHttpOptions") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AllowHttpOptions") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CorsSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod CorsSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CsmSettings: Configuration for RCTokens generated for CSM workloads
+// protected by IAP.
+// RCTokens are IAP generated JWTs that can be verified at the
+// application. The
+// RCToken is primarily used for ISTIO deployments, and can be scoped to
+// a
+// single mesh by configuring the audience field accordingly
+type CsmSettings struct {
+	// RctokenAud: Audience claim set in the generated RCToken. This value
+	// is not validated by
+	// IAP.
+	RctokenAud string `json:"rctokenAud,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "RctokenAud") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "RctokenAud") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CsmSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod CsmSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Empty: A generic empty message that you can re-use to avoid defining
+// duplicated
+// empty messages in your APIs. A typical example is to use it as the
+// request
+// or the response type of an API method. For instance:
 //
-//     title: "User account presence"
-//     description: "Determines whether the request has a user account"
-//     expression: "size(request.user) > 0"
+//     service Foo {
+//       rpc Bar(google.protobuf.Empty) returns
+// (google.protobuf.Empty);
+//     }
+//
+// The JSON representation for `Empty` is empty JSON object `{}`.
+type Empty struct {
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+}
+
+// Expr: Represents a textual expression in the Common Expression
+// Language (CEL)
+// syntax. CEL is a C-like expression language. The syntax and semantics
+// of CEL
+// are documented at https://github.com/google/cel-spec.
+//
+// Example (Comparison):
+//
+//     title: "Summary size limit"
+//     description: "Determines if a summary is less than 100 chars"
+//     expression: "document.summary.size() < 100"
+//
+// Example (Equality):
+//
+//     title: "Requestor is owner"
+//     description: "Determines if requestor is the document owner"
+//     expression: "document.owner ==
+// request.auth.claims.email"
+//
+// Example (Logic):
+//
+//     title: "Public documents"
+//     description: "Determine whether the document should be publicly
+// visible"
+//     expression: "document.type != 'private' && document.type !=
+// 'internal'"
+//
+// Example (Data Manipulation):
+//
+//     title: "Notification string"
+//     description: "Create a notification string with a timestamp."
+//     expression: "'New message received at ' +
+// string(document.create_time)"
+//
+// The exact variables and functions that may be referenced within an
+// expression
+// are determined by the service that evaluates it. See the
+// service
+// documentation for additional information.
 type Expr struct {
-	// Description: An optional description of the expression. This is a
+	// Description: Optional. Description of the expression. This is a
 	// longer text which
 	// describes the expression, e.g. when hovered over it in a UI.
 	Description string `json:"description,omitempty"`
 
-	// Expression: Textual representation of an expression in
-	// Common Expression Language syntax.
-	//
-	// The application context of the containing message determines
-	// which
-	// well-known feature set of CEL is supported.
+	// Expression: Textual representation of an expression in Common
+	// Expression Language
+	// syntax.
 	Expression string `json:"expression,omitempty"`
 
-	// Location: An optional string indicating the location of the
-	// expression for error
+	// Location: Optional. String indicating the location of the expression
+	// for error
 	// reporting, e.g. a file name and a position in the file.
 	Location string `json:"location,omitempty"`
 
-	// Title: An optional title for the expression, i.e. a short string
+	// Title: Optional. Title for the expression, i.e. a short string
 	// describing
 	// its purpose. This can be used e.g. in UIs which allow to enter
 	// the
@@ -261,6 +562,51 @@ type Expr struct {
 
 func (s *Expr) MarshalJSON() ([]byte, error) {
 	type NoMethod Expr
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GcipSettings: Allows customers to configure tenant_id for GCIP
+// instance per-app.
+type GcipSettings struct {
+	// LoginPageUri: Login page URI associated with the GCIP
+	// tenants.
+	// Typically, all resources within the same project share the same login
+	// page,
+	// though it could be overridden at the sub resource level.
+	LoginPageUri string `json:"loginPageUri,omitempty"`
+
+	// TenantIds: GCIP tenant ids that are linked to the IAP
+	// resource.
+	// tenant_ids could be a string beginning with a number character to
+	// indicate
+	// authenticating with GCIP tenant flow, or in the format of
+	// _<ProjectNumber>
+	// to indicate authenticating with GCIP agent flow.
+	// If agent flow is used, tenant_ids should only contain one single
+	// element,
+	// while for tenant flow, tenant_ids can contain multiple elements.
+	TenantIds []string `json:"tenantIds,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "LoginPageUri") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LoginPageUri") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GcipSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod GcipSettings
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -336,9 +682,214 @@ func (s *GetPolicyOptions) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Policy: Defines an Identity and Access Management (IAM) policy. It is
-// used to
-// specify access control policies for Cloud Platform resources.
+// IapSettings: The IAP configurable settings.
+type IapSettings struct {
+	// AccessSettings: Top level wrapper for all access related setting in
+	// IAP
+	AccessSettings *AccessSettings `json:"accessSettings,omitempty"`
+
+	// ApplicationSettings: Top level wrapper for all application related
+	// settings in IAP
+	ApplicationSettings *ApplicationSettings `json:"applicationSettings,omitempty"`
+
+	// Name: Required. The resource name of the IAP protected resource.
+	Name string `json:"name,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "AccessSettings") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AccessSettings") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *IapSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod IapSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// IdentityAwareProxyClient: Contains the data that describes an
+// Identity Aware Proxy owned client.
+type IdentityAwareProxyClient struct {
+	// DisplayName: Human-friendly name given to the OAuth client.
+	DisplayName string `json:"displayName,omitempty"`
+
+	// Name: Output only. Unique identifier of the OAuth client.
+	Name string `json:"name,omitempty"`
+
+	// Secret: Output only. Client secret of the OAuth client.
+	Secret string `json:"secret,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "DisplayName") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DisplayName") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *IdentityAwareProxyClient) MarshalJSON() ([]byte, error) {
+	type NoMethod IdentityAwareProxyClient
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListBrandsResponse: Response message for ListBrands.
+type ListBrandsResponse struct {
+	// Brands: Brands existing in the project.
+	Brands []*Brand `json:"brands,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Brands") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Brands") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListBrandsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListBrandsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListIdentityAwareProxyClientsResponse: Response message for
+// ListIdentityAwareProxyClients.
+type ListIdentityAwareProxyClientsResponse struct {
+	// IdentityAwareProxyClients: Clients existing in the brand.
+	IdentityAwareProxyClients []*IdentityAwareProxyClient `json:"identityAwareProxyClients,omitempty"`
+
+	// NextPageToken: A token, which can be send as `page_token` to retrieve
+	// the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "IdentityAwareProxyClients") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "IdentityAwareProxyClients") to include in API requests with the JSON
+	// null value. By default, fields with empty values are omitted from API
+	// requests. However, any field with an empty value appearing in
+	// NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListIdentityAwareProxyClientsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListIdentityAwareProxyClientsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// OAuthSettings: Configuration for OAuth login&consent flow behavior as
+// well as for OAuth
+// Credentials.
+type OAuthSettings struct {
+	// ClientId: OAuth 2.0 client ID used in the OAuth flow to generate an
+	// access token. If
+	// this field is set, you can skip obtaining the OAuth credentials in
+	// this
+	// step:
+	// https://developers.google.com/identity/protocols/OAuth2?hl=
+	// en_US#1.-obtain-oauth-2.0-credentials-from-the-google-api-console.
+	// How
+	// ever, this could allow for client sharing. The risks of client
+	// sharing
+	// are outlined
+	// here:
+	// https://cloud.google.com/iap/docs/sharing-oauth-clients#risks.
+	ClientId string `json:"clientId,omitempty"`
+
+	// LoginHint: Domain hint to send as hd=? parameter in OAuth request
+	// flow. Enables
+	// redirect to primary IDP by skipping Google's login
+	// screen.
+	// https://developers.google.com/identity/protocols/OpenIDConnect
+	// #hd-param
+	// Note: IAP does not verify that the id token's hd claim matches this
+	// value
+	// since access behavior is managed by IAM policies.
+	LoginHint string `json:"loginHint,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ClientId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ClientId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OAuthSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod OAuthSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Policy: An Identity and Access Management (IAM) policy, which
+// specifies access
+// controls for Google Cloud resources.
 //
 //
 // A `Policy` is a collection of `bindings`. A `binding` binds one or
@@ -347,20 +898,24 @@ func (s *GetPolicyOptions) MarshalJSON() ([]byte, error) {
 // accounts,
 // Google groups, and domains (such as G Suite). A `role` is a named
 // list of
-// permissions (defined by IAM or configured by users). A `binding`
-// can
-// optionally specify a `condition`, which is a logic expression that
-// further
-// constrains the role binding based on attributes about the request
-// and/or
-// target resource.
+// permissions; each `role` can be an IAM predefined role or a
+// user-created
+// custom role.
 //
-// **JSON Example**
+// Optionally, a `binding` can specify a `condition`, which is a
+// logical
+// expression that allows access to a resource only if the expression
+// evaluates
+// to `true`. A condition can add constraints based on attributes of
+// the
+// request, the resource, or both.
+//
+// **JSON example:**
 //
 //     {
 //       "bindings": [
 //         {
-//           "role": "role/resourcemanager.organizationAdmin",
+//           "role": "roles/resourcemanager.organizationAdmin",
 //           "members": [
 //             "user:mike@example.com",
 //             "group:admins@example.com",
@@ -376,13 +931,15 @@ func (s *GetPolicyOptions) MarshalJSON() ([]byte, error) {
 //             "title": "expirable access",
 //             "description": "Does not grant access after Sep 2020",
 //             "expression": "request.time <
-//             timestamp('2020-10-01T00:00:00.000Z')",
+// timestamp('2020-10-01T00:00:00.000Z')",
 //           }
 //         }
-//       ]
+//       ],
+//       "etag": "BwWWja0YfJA=",
+//       "version": 3
 //     }
 //
-// **YAML Example**
+// **YAML example:**
 //
 //     bindings:
 //     - members:
@@ -399,14 +956,17 @@ func (s *GetPolicyOptions) MarshalJSON() ([]byte, error) {
 //         description: Does not grant access after Sep 2020
 //         expression: request.time <
 // timestamp('2020-10-01T00:00:00.000Z')
+//     - etag: BwWWja0YfJA=
+//     - version: 3
 //
 // For a description of IAM and its features, see the
-// [IAM developer's guide](https://cloud.google.com/iam/docs).
+// [IAM documentation](https://cloud.google.com/iam/docs/).
 type Policy struct {
-	// Bindings: Associates a list of `members` to a `role`. Optionally may
+	// Bindings: Associates a list of `members` to a `role`. Optionally, may
 	// specify a
-	// `condition` that determines when binding is in effect.
-	// `bindings` with no members will result in an error.
+	// `condition` that determines how and when the `bindings` are applied.
+	// Each
+	// of the `bindings` must contain at least one member.
 	Bindings []*Binding `json:"bindings,omitempty"`
 
 	// Etag: `etag` is used for optimistic concurrency control as a way to
@@ -424,34 +984,43 @@ type Policy struct {
 	// ensure that their change will be applied to the same version of the
 	// policy.
 	//
-	// If no `etag` is provided in the call to `setIamPolicy`, then the
-	// existing
-	// policy is overwritten. Due to blind-set semantics of an etag-less
-	// policy,
-	// 'setIamPolicy' will not fail even if either of incoming or stored
-	// policy
-	// does not meet the version requirements.
+	// **Important:** If you use IAM Conditions, you must include the `etag`
+	// field
+	// whenever you call `setIamPolicy`. If you omit this field, then IAM
+	// allows
+	// you to overwrite a version `3` policy with a version `1` policy, and
+	// all of
+	// the conditions in the version `3` policy are lost.
 	Etag string `json:"etag,omitempty"`
 
 	// Version: Specifies the format of the policy.
 	//
-	// Valid values are 0, 1, and 3. Requests specifying an invalid value
-	// will be
-	// rejected.
+	// Valid values are `0`, `1`, and `3`. Requests that specify an invalid
+	// value
+	// are rejected.
 	//
-	// Operations affecting conditional bindings must specify version 3.
-	// This can
-	// be either setting a conditional policy, modifying a conditional
-	// binding,
-	// or removing a conditional binding from the stored conditional
-	// policy.
-	// Operations on non-conditional policies may specify any valid value
-	// or
-	// leave the field unset.
-	//
-	// If no etag is provided in the call to `setIamPolicy`, any
+	// Any operation that affects conditional role bindings must specify
 	// version
-	// compliance checks on the incoming and/or stored policy is skipped.
+	// `3`. This requirement applies to the following operations:
+	//
+	// * Getting a policy that includes a conditional role binding
+	// * Adding a conditional role binding to a policy
+	// * Changing a conditional role binding in a policy
+	// * Removing any role binding, with or without a condition, from a
+	// policy
+	//   that includes conditions
+	//
+	// **Important:** If you use IAM Conditions, you must include the `etag`
+	// field
+	// whenever you call `setIamPolicy`. If you omit this field, then IAM
+	// allows
+	// you to overwrite a version `3` policy with a version `1` policy, and
+	// all of
+	// the conditions in the version `3` policy are lost.
+	//
+	// If a policy does not include any conditions, operations on that
+	// policy may
+	// specify any valid version or leave the field unset.
 	Version int64 `json:"version,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -479,6 +1048,11 @@ func (s *Policy) MarshalJSON() ([]byte, error) {
 	type NoMethod Policy
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ResetIdentityAwareProxyClientSecretRequest: The request sent to
+// ResetIdentityAwareProxyClientSecret.
+type ResetIdentityAwareProxyClientSecretRequest struct {
 }
 
 // SetIamPolicyRequest: Request message for `SetIamPolicy` method.
@@ -584,6 +1158,1212 @@ func (s *TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// method id "iap.projects.brands.create":
+
+type ProjectsBrandsCreateCall struct {
+	s          *Service
+	parent     string
+	brand      *Brand
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Create: Constructs a new OAuth brand for the project if one does not
+// exist.
+// The created brand is "internal only", meaning that OAuth clients
+// created
+// under it only accept requests from users who belong to the same G
+// Suite
+// organization as the project. The brand is created in an un-reviewed
+// status.
+// NOTE: The "internal only" status can be manually changed in the
+// Google
+// Cloud console. Requires that a brand does not already exist for
+// the
+// project, and that the specified support email is owned by the caller.
+func (r *ProjectsBrandsService) Create(parent string, brand *Brand) *ProjectsBrandsCreateCall {
+	c := &ProjectsBrandsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.brand = brand
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsBrandsCreateCall) Fields(s ...googleapi.Field) *ProjectsBrandsCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsBrandsCreateCall) Context(ctx context.Context) *ProjectsBrandsCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsBrandsCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsBrandsCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.brand)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/brands")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.projects.brands.create" call.
+// Exactly one of *Brand or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Brand.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *ProjectsBrandsCreateCall) Do(opts ...googleapi.CallOption) (*Brand, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Brand{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Constructs a new OAuth brand for the project if one does not exist.\nThe created brand is \"internal only\", meaning that OAuth clients created\nunder it only accept requests from users who belong to the same G Suite\norganization as the project. The brand is created in an un-reviewed status.\nNOTE: The \"internal only\" status can be manually changed in the Google\nCloud console. Requires that a brand does not already exist for the\nproject, and that the specified support email is owned by the caller.",
+	//   "flatPath": "v1/projects/{projectsId}/brands",
+	//   "httpMethod": "POST",
+	//   "id": "iap.projects.brands.create",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "parent": {
+	//       "description": "Required. GCP Project number/id under which the brand is to be created.\nIn the following format: projects/{project_number/id}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+parent}/brands",
+	//   "request": {
+	//     "$ref": "Brand"
+	//   },
+	//   "response": {
+	//     "$ref": "Brand"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "iap.projects.brands.get":
+
+type ProjectsBrandsGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Retrieves the OAuth brand of the project.
+func (r *ProjectsBrandsService) Get(name string) *ProjectsBrandsGetCall {
+	c := &ProjectsBrandsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsBrandsGetCall) Fields(s ...googleapi.Field) *ProjectsBrandsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsBrandsGetCall) IfNoneMatch(entityTag string) *ProjectsBrandsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsBrandsGetCall) Context(ctx context.Context) *ProjectsBrandsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsBrandsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsBrandsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.projects.brands.get" call.
+// Exactly one of *Brand or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Brand.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *ProjectsBrandsGetCall) Do(opts ...googleapi.CallOption) (*Brand, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Brand{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Retrieves the OAuth brand of the project.",
+	//   "flatPath": "v1/projects/{projectsId}/brands/{brandsId}",
+	//   "httpMethod": "GET",
+	//   "id": "iap.projects.brands.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. Name of the brand to be fetched.\nIn the following format: projects/{project_number/id}/brands/{brand}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/brands/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "Brand"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "iap.projects.brands.list":
+
+type ProjectsBrandsListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists the existing brands for the project.
+func (r *ProjectsBrandsService) List(parent string) *ProjectsBrandsListCall {
+	c := &ProjectsBrandsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsBrandsListCall) Fields(s ...googleapi.Field) *ProjectsBrandsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsBrandsListCall) IfNoneMatch(entityTag string) *ProjectsBrandsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsBrandsListCall) Context(ctx context.Context) *ProjectsBrandsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsBrandsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsBrandsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/brands")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.projects.brands.list" call.
+// Exactly one of *ListBrandsResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListBrandsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsBrandsListCall) Do(opts ...googleapi.CallOption) (*ListBrandsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListBrandsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists the existing brands for the project.",
+	//   "flatPath": "v1/projects/{projectsId}/brands",
+	//   "httpMethod": "GET",
+	//   "id": "iap.projects.brands.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "parent": {
+	//       "description": "Required. GCP Project number/id.\nIn the following format: projects/{project_number/id}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+parent}/brands",
+	//   "response": {
+	//     "$ref": "ListBrandsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "iap.projects.brands.identityAwareProxyClients.create":
+
+type ProjectsBrandsIdentityAwareProxyClientsCreateCall struct {
+	s                        *Service
+	parent                   string
+	identityawareproxyclient *IdentityAwareProxyClient
+	urlParams_               gensupport.URLParams
+	ctx_                     context.Context
+	header_                  http.Header
+}
+
+// Create: Creates an Identity Aware Proxy (IAP) OAuth client. The
+// client is owned
+// by IAP. Requires that the brand for the project exists and that it
+// is
+// set for internal-only use.
+func (r *ProjectsBrandsIdentityAwareProxyClientsService) Create(parent string, identityawareproxyclient *IdentityAwareProxyClient) *ProjectsBrandsIdentityAwareProxyClientsCreateCall {
+	c := &ProjectsBrandsIdentityAwareProxyClientsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.identityawareproxyclient = identityawareproxyclient
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsBrandsIdentityAwareProxyClientsCreateCall) Fields(s ...googleapi.Field) *ProjectsBrandsIdentityAwareProxyClientsCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsBrandsIdentityAwareProxyClientsCreateCall) Context(ctx context.Context) *ProjectsBrandsIdentityAwareProxyClientsCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsBrandsIdentityAwareProxyClientsCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsBrandsIdentityAwareProxyClientsCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.identityawareproxyclient)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/identityAwareProxyClients")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.projects.brands.identityAwareProxyClients.create" call.
+// Exactly one of *IdentityAwareProxyClient or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *IdentityAwareProxyClient.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsBrandsIdentityAwareProxyClientsCreateCall) Do(opts ...googleapi.CallOption) (*IdentityAwareProxyClient, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &IdentityAwareProxyClient{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates an Identity Aware Proxy (IAP) OAuth client. The client is owned\nby IAP. Requires that the brand for the project exists and that it is\nset for internal-only use.",
+	//   "flatPath": "v1/projects/{projectsId}/brands/{brandsId}/identityAwareProxyClients",
+	//   "httpMethod": "POST",
+	//   "id": "iap.projects.brands.identityAwareProxyClients.create",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "parent": {
+	//       "description": "Required. Path to create the client in.\nIn the following format:\nprojects/{project_number/id}/brands/{brand}.\nThe project must belong to a GSuite account.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/brands/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+parent}/identityAwareProxyClients",
+	//   "request": {
+	//     "$ref": "IdentityAwareProxyClient"
+	//   },
+	//   "response": {
+	//     "$ref": "IdentityAwareProxyClient"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "iap.projects.brands.identityAwareProxyClients.delete":
+
+type ProjectsBrandsIdentityAwareProxyClientsDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes an Identity Aware Proxy (IAP) OAuth client. Useful
+// for removing
+// obsolete clients, managing the number of clients in a given project,
+// and
+// cleaning up after tests. Requires that the client is owned by IAP.
+func (r *ProjectsBrandsIdentityAwareProxyClientsService) Delete(name string) *ProjectsBrandsIdentityAwareProxyClientsDeleteCall {
+	c := &ProjectsBrandsIdentityAwareProxyClientsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsBrandsIdentityAwareProxyClientsDeleteCall) Fields(s ...googleapi.Field) *ProjectsBrandsIdentityAwareProxyClientsDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsBrandsIdentityAwareProxyClientsDeleteCall) Context(ctx context.Context) *ProjectsBrandsIdentityAwareProxyClientsDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsBrandsIdentityAwareProxyClientsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsBrandsIdentityAwareProxyClientsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("DELETE", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.projects.brands.identityAwareProxyClients.delete" call.
+// Exactly one of *Empty or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Empty.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *ProjectsBrandsIdentityAwareProxyClientsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Empty{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes an Identity Aware Proxy (IAP) OAuth client. Useful for removing\nobsolete clients, managing the number of clients in a given project, and\ncleaning up after tests. Requires that the client is owned by IAP.",
+	//   "flatPath": "v1/projects/{projectsId}/brands/{brandsId}/identityAwareProxyClients/{identityAwareProxyClientsId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "iap.projects.brands.identityAwareProxyClients.delete",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. Name of the Identity Aware Proxy client to be deleted.\nIn the following format:\nprojects/{project_number/id}/brands/{brand}/identityAwareProxyClients/{client_id}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/brands/[^/]+/identityAwareProxyClients/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "Empty"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "iap.projects.brands.identityAwareProxyClients.get":
+
+type ProjectsBrandsIdentityAwareProxyClientsGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Retrieves an Identity Aware Proxy (IAP) OAuth client.
+// Requires that the client is owned by IAP.
+func (r *ProjectsBrandsIdentityAwareProxyClientsService) Get(name string) *ProjectsBrandsIdentityAwareProxyClientsGetCall {
+	c := &ProjectsBrandsIdentityAwareProxyClientsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsBrandsIdentityAwareProxyClientsGetCall) Fields(s ...googleapi.Field) *ProjectsBrandsIdentityAwareProxyClientsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsBrandsIdentityAwareProxyClientsGetCall) IfNoneMatch(entityTag string) *ProjectsBrandsIdentityAwareProxyClientsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsBrandsIdentityAwareProxyClientsGetCall) Context(ctx context.Context) *ProjectsBrandsIdentityAwareProxyClientsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsBrandsIdentityAwareProxyClientsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsBrandsIdentityAwareProxyClientsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.projects.brands.identityAwareProxyClients.get" call.
+// Exactly one of *IdentityAwareProxyClient or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *IdentityAwareProxyClient.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsBrandsIdentityAwareProxyClientsGetCall) Do(opts ...googleapi.CallOption) (*IdentityAwareProxyClient, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &IdentityAwareProxyClient{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Retrieves an Identity Aware Proxy (IAP) OAuth client.\nRequires that the client is owned by IAP.",
+	//   "flatPath": "v1/projects/{projectsId}/brands/{brandsId}/identityAwareProxyClients/{identityAwareProxyClientsId}",
+	//   "httpMethod": "GET",
+	//   "id": "iap.projects.brands.identityAwareProxyClients.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. Name of the Identity Aware Proxy client to be fetched.\nIn the following format:\nprojects/{project_number/id}/brands/{brand}/identityAwareProxyClients/{client_id}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/brands/[^/]+/identityAwareProxyClients/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "IdentityAwareProxyClient"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "iap.projects.brands.identityAwareProxyClients.list":
+
+type ProjectsBrandsIdentityAwareProxyClientsListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists the existing clients for the brand.
+func (r *ProjectsBrandsIdentityAwareProxyClientsService) List(parent string) *ProjectsBrandsIdentityAwareProxyClientsListCall {
+	c := &ProjectsBrandsIdentityAwareProxyClientsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of clients to return. The service may return fewer than
+// this value.
+// If unspecified, at most 100 clients will be returned.
+// The maximum value is 1000; values above 1000 will be coerced to 1000.
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) PageSize(pageSize int64) *ProjectsBrandsIdentityAwareProxyClientsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A page token,
+// received from a previous `ListIdentityAwareProxyClients`
+// call. Provide this to retrieve the subsequent page.
+//
+// When paginating, all other parameters provided
+// to
+// `ListIdentityAwareProxyClients` must match the call that provided the
+// page
+// token.
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) PageToken(pageToken string) *ProjectsBrandsIdentityAwareProxyClientsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) Fields(s ...googleapi.Field) *ProjectsBrandsIdentityAwareProxyClientsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) IfNoneMatch(entityTag string) *ProjectsBrandsIdentityAwareProxyClientsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) Context(ctx context.Context) *ProjectsBrandsIdentityAwareProxyClientsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/identityAwareProxyClients")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.projects.brands.identityAwareProxyClients.list" call.
+// Exactly one of *ListIdentityAwareProxyClientsResponse or error will
+// be non-nil. Any non-2xx status code is an error. Response headers are
+// in either
+// *ListIdentityAwareProxyClientsResponse.ServerResponse.Header or (if a
+// response was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) Do(opts ...googleapi.CallOption) (*ListIdentityAwareProxyClientsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListIdentityAwareProxyClientsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists the existing clients for the brand.",
+	//   "flatPath": "v1/projects/{projectsId}/brands/{brandsId}/identityAwareProxyClients",
+	//   "httpMethod": "GET",
+	//   "id": "iap.projects.brands.identityAwareProxyClients.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "pageSize": {
+	//       "description": "The maximum number of clients to return. The service may return fewer than\nthis value.\nIf unspecified, at most 100 clients will be returned.\nThe maximum value is 1000; values above 1000 will be coerced to 1000.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A page token, received from a previous `ListIdentityAwareProxyClients`\ncall. Provide this to retrieve the subsequent page.\n\nWhen paginating, all other parameters provided to\n`ListIdentityAwareProxyClients` must match the call that provided the page\ntoken.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. Full brand path.\nIn the following format: projects/{project_number/id}/brands/{brand}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/brands/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+parent}/identityAwareProxyClients",
+	//   "response": {
+	//     "$ref": "ListIdentityAwareProxyClientsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *ProjectsBrandsIdentityAwareProxyClientsListCall) Pages(ctx context.Context, f func(*ListIdentityAwareProxyClientsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "iap.projects.brands.identityAwareProxyClients.resetSecret":
+
+type ProjectsBrandsIdentityAwareProxyClientsResetSecretCall struct {
+	s                                          *Service
+	name                                       string
+	resetidentityawareproxyclientsecretrequest *ResetIdentityAwareProxyClientSecretRequest
+	urlParams_                                 gensupport.URLParams
+	ctx_                                       context.Context
+	header_                                    http.Header
+}
+
+// ResetSecret: Resets an Identity Aware Proxy (IAP) OAuth client
+// secret. Useful if the
+// secret was compromised. Requires that the client is owned by IAP.
+func (r *ProjectsBrandsIdentityAwareProxyClientsService) ResetSecret(name string, resetidentityawareproxyclientsecretrequest *ResetIdentityAwareProxyClientSecretRequest) *ProjectsBrandsIdentityAwareProxyClientsResetSecretCall {
+	c := &ProjectsBrandsIdentityAwareProxyClientsResetSecretCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.resetidentityawareproxyclientsecretrequest = resetidentityawareproxyclientsecretrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsBrandsIdentityAwareProxyClientsResetSecretCall) Fields(s ...googleapi.Field) *ProjectsBrandsIdentityAwareProxyClientsResetSecretCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsBrandsIdentityAwareProxyClientsResetSecretCall) Context(ctx context.Context) *ProjectsBrandsIdentityAwareProxyClientsResetSecretCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsBrandsIdentityAwareProxyClientsResetSecretCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsBrandsIdentityAwareProxyClientsResetSecretCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.resetidentityawareproxyclientsecretrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:resetSecret")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.projects.brands.identityAwareProxyClients.resetSecret" call.
+// Exactly one of *IdentityAwareProxyClient or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *IdentityAwareProxyClient.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsBrandsIdentityAwareProxyClientsResetSecretCall) Do(opts ...googleapi.CallOption) (*IdentityAwareProxyClient, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &IdentityAwareProxyClient{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Resets an Identity Aware Proxy (IAP) OAuth client secret. Useful if the\nsecret was compromised. Requires that the client is owned by IAP.",
+	//   "flatPath": "v1/projects/{projectsId}/brands/{brandsId}/identityAwareProxyClients/{identityAwareProxyClientsId}:resetSecret",
+	//   "httpMethod": "POST",
+	//   "id": "iap.projects.brands.identityAwareProxyClients.resetSecret",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. Name of the Identity Aware Proxy client to that will have its\nsecret reset. In the following format:\nprojects/{project_number/id}/brands/{brand}/identityAwareProxyClients/{client_id}.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/brands/[^/]+/identityAwareProxyClients/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}:resetSecret",
+	//   "request": {
+	//     "$ref": "ResetIdentityAwareProxyClientSecretRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "IdentityAwareProxyClient"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
 // method id "iap.getIamPolicy":
 
 type V1GetIamPolicyCall struct {
@@ -636,7 +2416,7 @@ func (c *V1GetIamPolicyCall) Header() http.Header {
 
 func (c *V1GetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -730,6 +2510,151 @@ func (c *V1GetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Policy, error) {
 
 }
 
+// method id "iap.getIapSettings":
+
+type V1GetIapSettingsCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetIapSettings: Gets the IAP settings on a particular IAP protected
+// resource.
+func (r *V1Service) GetIapSettings(name string) *V1GetIapSettingsCall {
+	c := &V1GetIapSettingsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *V1GetIapSettingsCall) Fields(s ...googleapi.Field) *V1GetIapSettingsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *V1GetIapSettingsCall) IfNoneMatch(entityTag string) *V1GetIapSettingsCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *V1GetIapSettingsCall) Context(ctx context.Context) *V1GetIapSettingsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *V1GetIapSettingsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *V1GetIapSettingsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:iapSettings")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.getIapSettings" call.
+// Exactly one of *IapSettings or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *IapSettings.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *V1GetIapSettingsCall) Do(opts ...googleapi.CallOption) (*IapSettings, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &IapSettings{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets the IAP settings on a particular IAP protected resource.",
+	//   "flatPath": "v1/{v1Id}:iapSettings",
+	//   "httpMethod": "GET",
+	//   "id": "iap.getIapSettings",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The resource name for which to retrieve the settings.\nAuthorization: Requires the `getSettings` permission for the associated\nresource.",
+	//       "location": "path",
+	//       "pattern": "^.+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}:iapSettings",
+	//   "response": {
+	//     "$ref": "IapSettings"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
 // method id "iap.setIamPolicy":
 
 type V1SetIamPolicyCall struct {
@@ -782,7 +2707,7 @@ func (c *V1SetIamPolicyCall) Header() http.Header {
 
 func (c *V1SetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -928,7 +2853,7 @@ func (c *V1TestIamPermissionsCall) Header() http.Header {
 
 func (c *V1TestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1014,6 +2939,165 @@ func (c *V1TestIamPermissionsCall) Do(opts ...googleapi.CallOption) (*TestIamPer
 	//   },
 	//   "response": {
 	//     "$ref": "TestIamPermissionsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "iap.updateIapSettings":
+
+type V1UpdateIapSettingsCall struct {
+	s           *Service
+	name        string
+	iapsettings *IapSettings
+	urlParams_  gensupport.URLParams
+	ctx_        context.Context
+	header_     http.Header
+}
+
+// UpdateIapSettings: Updates the IAP settings on a particular IAP
+// protected resource. It
+// replaces all fields unless the `update_mask` is set.
+func (r *V1Service) UpdateIapSettings(name string, iapsettings *IapSettings) *V1UpdateIapSettingsCall {
+	c := &V1UpdateIapSettingsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.iapsettings = iapsettings
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": The field mask
+// specifying which IAP settings should be updated.
+// If omitted, the all of the settings are updated.
+// See
+// https://developers.google.com/protocol-buffers/docs/reference/goog
+// le.protobuf#fieldmask
+func (c *V1UpdateIapSettingsCall) UpdateMask(updateMask string) *V1UpdateIapSettingsCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *V1UpdateIapSettingsCall) Fields(s ...googleapi.Field) *V1UpdateIapSettingsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *V1UpdateIapSettingsCall) Context(ctx context.Context) *V1UpdateIapSettingsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *V1UpdateIapSettingsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *V1UpdateIapSettingsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.iapsettings)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:iapSettings")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PATCH", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iap.updateIapSettings" call.
+// Exactly one of *IapSettings or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *IapSettings.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *V1UpdateIapSettingsCall) Do(opts ...googleapi.CallOption) (*IapSettings, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &IapSettings{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Updates the IAP settings on a particular IAP protected resource. It\nreplaces all fields unless the `update_mask` is set.",
+	//   "flatPath": "v1/{v1Id}:iapSettings",
+	//   "httpMethod": "PATCH",
+	//   "id": "iap.updateIapSettings",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The resource name of the IAP protected resource.",
+	//       "location": "path",
+	//       "pattern": "^.+$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "The field mask specifying which IAP settings should be updated.\nIf omitted, the all of the settings are updated. See\nhttps://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}:iapSettings",
+	//   "request": {
+	//     "$ref": "IapSettings"
+	//   },
+	//   "response": {
+	//     "$ref": "IapSettings"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"

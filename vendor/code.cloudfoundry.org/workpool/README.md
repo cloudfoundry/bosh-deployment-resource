@@ -6,6 +6,9 @@ Use a `WorkPool` to perform units of work concurrently at a maximum rate. The wo
 
 A `Throttler` performs a specified batch of work at a given maximum rate, internally creating a `WorkPool` and then stopping it when done.
 
+## Reporting issues and requesting features
+
+Please report all issues and feature requests in [cloudfoundry/diego-release](https://github.com/cloudfoundry/diego-release/issues).
 
 ## Example
 
