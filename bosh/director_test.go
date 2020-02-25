@@ -3,6 +3,7 @@ package bosh_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"strconv"
@@ -102,11 +103,15 @@ var _ = Describe("BoshDirector", func() {
 			}))
 			Expect(len(deployOpts.OpsFiles)).To(Equal(1))
 
-			pathPointer, _ := patch.NewPointerFromString("/my?/new_key")
+			pathPointer, err := patch.NewPointerFromString("/my?/new_key")
+			Expect(err).ToNot(HaveOccurred())
 			Expect(deployOpts.OpsFiles[0].Ops).To(Equal(patch.Ops{
-				patch.ReplaceOp{
-					Path:  pathPointer,
-					Value: "awesome",
+				patch.DescriptiveOp{
+					Op: patch.ReplaceOp{
+						Path:  pathPointer,
+						Value: "awesome",
+					},
+					ErrorMsg: fmt.Sprintf("operation [0] in %s failed", opsFile.Name()),
 				},
 			}))
 		})
@@ -289,11 +294,15 @@ var _ = Describe("BoshDirector", func() {
 			}))
 			Expect(len(interpolateOpts.OpsFiles)).To(Equal(1))
 
-			pathPointer, _ := patch.NewPointerFromString("/my?/new_key")
+			pathPointer, err := patch.NewPointerFromString("/my?/new_key")
+			Expect(err).ToNot(HaveOccurred())
 			Expect(interpolateOpts.OpsFiles[0].Ops).To(Equal(patch.Ops{
-				patch.ReplaceOp{
-					Path:  pathPointer,
-					Value: "awesome",
+				patch.DescriptiveOp{
+					Op: patch.ReplaceOp{
+						Path:  pathPointer,
+						Value: "awesome",
+					},
+					ErrorMsg: fmt.Sprintf("operation [0] in %s failed", opsFile.Name()),
 				},
 			}))
 		})
