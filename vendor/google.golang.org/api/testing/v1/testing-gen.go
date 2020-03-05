@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -56,6 +56,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -72,6 +73,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "testing:v1"
 const apiName = "testing"
@@ -95,6 +97,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -379,6 +382,10 @@ type AndroidInstrumentationTest struct {
 	// Recommended.
 	//   "DO_NOT_USE_ORCHESTRATOR" - Run test without using orchestrator.
 	OrchestratorOption string `json:"orchestratorOption,omitempty"`
+
+	// ShardingOption: The option to run tests in multiple shards in
+	// parallel.
+	ShardingOption *ShardingOption `json:"shardingOption,omitempty"`
 
 	// TestApk: Required. The APK containing the test code to be executed.
 	TestApk *FileReference `json:"testApk,omitempty"`
@@ -1591,7 +1598,7 @@ func (s *IosDeviceList) MarshalJSON() ([]byte, error) {
 }
 
 // IosModel: A description of an iOS device tests may be run on.
-// Next tag: 10
+// Next tag: 11
 type IosModel struct {
 	// DeviceCapabilities: Device capabilities.
 	// Copied
@@ -1924,6 +1931,43 @@ type Locale struct {
 
 func (s *Locale) MarshalJSON() ([]byte, error) {
 	type NoMethod Locale
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ManualSharding: Shards test cases into the specified groups of
+// packages, classes, and/or
+// methods.
+//
+// With manual sharding enabled, specifying test targets
+// via
+// environment_variables or in InstrumentationTest is invalid.
+type ManualSharding struct {
+	// TestTargetsForShard: Required. Group of packages, classes, and/or
+	// test methods to be run for
+	// each shard. The number of shard_test_targets must be >= 1 and <= 50.
+	TestTargetsForShard []*TestTargetsForShard `json:"testTargetsForShard,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TestTargetsForShard")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TestTargetsForShard") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ManualSharding) MarshalJSON() ([]byte, error) {
+	type NoMethod ManualSharding
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2297,6 +2341,75 @@ func (s *RoboStartingIntent) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// Shard: Output only. Details about the shard.
+type Shard struct {
+	// NumShards: Output only. The total number of shards.
+	NumShards int64 `json:"numShards,omitempty"`
+
+	// ShardIndex: Output only. The index of the shard among all the shards.
+	ShardIndex int64 `json:"shardIndex,omitempty"`
+
+	// TestTargetsForShard: Output only. Test targets for each shard.
+	TestTargetsForShard *TestTargetsForShard `json:"testTargetsForShard,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "NumShards") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "NumShards") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Shard) MarshalJSON() ([]byte, error) {
+	type NoMethod Shard
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ShardingOption: Options for enabling sharding.
+type ShardingOption struct {
+	// ManualSharding: Shards test cases into the specified groups of
+	// packages, classes, and/or
+	// methods.
+	ManualSharding *ManualSharding `json:"manualSharding,omitempty"`
+
+	// UniformSharding: Uniformly shards test cases given a total number of
+	// shards.
+	UniformSharding *UniformSharding `json:"uniformSharding,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ManualSharding") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ManualSharding") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ShardingOption) MarshalJSON() ([]byte, error) {
+	type NoMethod ShardingOption
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // StartActivityIntent: A starting intent specified by an action, uri,
 // and categories.
 type StartActivityIntent struct {
@@ -2329,6 +2442,35 @@ type StartActivityIntent struct {
 
 func (s *StartActivityIntent) MarshalJSON() ([]byte, error) {
 	type NoMethod StartActivityIntent
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type SystraceSetup struct {
+	// DurationSeconds: Systrace duration in seconds.
+	// Should be between 1 and 30 seconds. 0 disables systrace.
+	DurationSeconds int64 `json:"durationSeconds,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DurationSeconds") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DurationSeconds") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SystraceSetup) MarshalJSON() ([]byte, error) {
+	type NoMethod SystraceSetup
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2430,6 +2572,9 @@ type TestExecution struct {
 	// ProjectId: Output only. The cloud project that owns the test
 	// execution.
 	ProjectId string `json:"projectId,omitempty"`
+
+	// Shard: Output only. Details about the shard.
+	Shard *Shard `json:"shard,omitempty"`
 
 	// State: Output only. Indicates the current progress of the test
 	// execution
@@ -2815,6 +2960,14 @@ type TestSetup struct {
 	// TestEnvironmentDiscoveryService.GetTestEnvironmentCatalog.
 	NetworkProfile string `json:"networkProfile,omitempty"`
 
+	// Systrace: Systrace configuration for the run.
+	// If set a systrace will be taken, starting on test start and lasting
+	// for the
+	// configured duration. The systrace file thus obtained is put in the
+	// results
+	// bucket together with the other artifacts from the run.
+	Systrace *SystraceSetup `json:"systrace,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "Account") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -2898,6 +3051,41 @@ type TestSpecification struct {
 
 func (s *TestSpecification) MarshalJSON() ([]byte, error) {
 	type NoMethod TestSpecification
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// TestTargetsForShard: Test targets for a shard.
+type TestTargetsForShard struct {
+	// TestTargets: Group of packages, classes, and/or test methods to be
+	// run for each shard.
+	// The targets need to be specified in AndroidJUnitRunner argument
+	// format. For
+	// example, “package com.my.packages” “class
+	// com.my.package.MyClass”.
+	//
+	// The number of shard_test_targets must be greater than 0.
+	TestTargets []string `json:"testTargets,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TestTargets") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TestTargets") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TestTargetsForShard) MarshalJSON() ([]byte, error) {
+	type NoMethod TestTargetsForShard
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3072,6 +3260,43 @@ func (s *TrafficRule) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UniformSharding: Uniformly shards test cases given a total number of
+// shards.
+//
+// For Instrumentation test, it will be translated to “-e numShard”
+// “-e
+// shardIndex” AndroidJUnitRunner arguments. With uniform sharding
+// enabled,
+// specifying these sharding arguments via environment_variables is
+// invalid.
+type UniformSharding struct {
+	// NumShards: Required. Total number of shards. The number must be >= 1
+	// and <= 50.
+	NumShards int64 `json:"numShards,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "NumShards") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "NumShards") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UniformSharding) MarshalJSON() ([]byte, error) {
+	type NoMethod UniformSharding
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // XcodeVersion: An Xcode version that an iOS version is compatible
 // with.
 type XcodeVersion struct {
@@ -3150,7 +3375,7 @@ func (c *ApplicationDetailServiceGetApkDetailsCall) Header() http.Header {
 
 func (c *ApplicationDetailServiceGetApkDetailsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3287,7 +3512,7 @@ func (c *ProjectsTestMatricesCancelCall) Header() http.Header {
 
 func (c *ProjectsTestMatricesCancelCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3450,7 +3675,7 @@ func (c *ProjectsTestMatricesCreateCall) Header() http.Header {
 
 func (c *ProjectsTestMatricesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3611,7 +3836,7 @@ func (c *ProjectsTestMatricesGetCall) Header() http.Header {
 
 func (c *ProjectsTestMatricesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3776,7 +4001,7 @@ func (c *TestEnvironmentCatalogGetCall) Header() http.Header {
 
 func (c *TestEnvironmentCatalogGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

@@ -2917,11 +2917,11 @@ var fileDescriptor_640cb15898844b6f = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // LanguageServiceClient is the client API for LanguageService service.
 //
@@ -2937,7 +2937,7 @@ type LanguageServiceClient interface {
 	// sentiment associated with each entity and its mentions.
 	AnalyzeEntitySentiment(ctx context.Context, in *AnalyzeEntitySentimentRequest, opts ...grpc.CallOption) (*AnalyzeEntitySentimentResponse, error)
 	// Analyzes the syntax of the text and provides sentence boundaries and
-	// tokenization along with part of speech tags, dependency trees, and other
+	// tokenization along with part-of-speech tags, dependency trees, and other
 	// properties.
 	AnalyzeSyntax(ctx context.Context, in *AnalyzeSyntaxRequest, opts ...grpc.CallOption) (*AnalyzeSyntaxResponse, error)
 	// Classifies a document into categories.
@@ -2948,10 +2948,10 @@ type LanguageServiceClient interface {
 }
 
 type languageServiceClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewLanguageServiceClient(cc *grpc.ClientConn) LanguageServiceClient {
+func NewLanguageServiceClient(cc grpc.ClientConnInterface) LanguageServiceClient {
 	return &languageServiceClient{cc}
 }
 
@@ -3021,7 +3021,7 @@ type LanguageServiceServer interface {
 	// sentiment associated with each entity and its mentions.
 	AnalyzeEntitySentiment(context.Context, *AnalyzeEntitySentimentRequest) (*AnalyzeEntitySentimentResponse, error)
 	// Analyzes the syntax of the text and provides sentence boundaries and
-	// tokenization along with part of speech tags, dependency trees, and other
+	// tokenization along with part-of-speech tags, dependency trees, and other
 	// properties.
 	AnalyzeSyntax(context.Context, *AnalyzeSyntaxRequest) (*AnalyzeSyntaxResponse, error)
 	// Classifies a document into categories.

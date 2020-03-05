@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -56,6 +56,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -72,6 +73,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "gmail:v1"
 const apiName = "gmail"
@@ -82,6 +84,18 @@ const basePath = "https://www.googleapis.com/gmail/v1/users/"
 const (
 	// Read, compose, send, and permanently delete all your email from Gmail
 	MailGoogleComScope = "https://mail.google.com/"
+
+	// Manage drafts and send emails when you interact with the add-on
+	GmailAddonsCurrentActionComposeScope = "https://www.googleapis.com/auth/gmail.addons.current.action.compose"
+
+	// View your email messages when you interact with the add-on
+	GmailAddonsCurrentMessageActionScope = "https://www.googleapis.com/auth/gmail.addons.current.message.action"
+
+	// View your email message metadata when the add-on is running
+	GmailAddonsCurrentMessageMetadataScope = "https://www.googleapis.com/auth/gmail.addons.current.message.metadata"
+
+	// View your email messages when the add-on is running
+	GmailAddonsCurrentMessageReadonlyScope = "https://www.googleapis.com/auth/gmail.addons.current.message.readonly"
 
 	// Manage drafts and send emails
 	GmailComposeScope = "https://www.googleapis.com/auth/gmail.compose"
@@ -117,6 +131,10 @@ const (
 func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, error) {
 	scopesOption := option.WithScopes(
 		"https://mail.google.com/",
+		"https://www.googleapis.com/auth/gmail.addons.current.action.compose",
+		"https://www.googleapis.com/auth/gmail.addons.current.message.action",
+		"https://www.googleapis.com/auth/gmail.addons.current.message.metadata",
+		"https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
 		"https://www.googleapis.com/auth/gmail.compose",
 		"https://www.googleapis.com/auth/gmail.insert",
 		"https://www.googleapis.com/auth/gmail.labels",
@@ -129,6 +147,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -1143,7 +1162,9 @@ func (s *ListDelegatesResponse) MarshalJSON() ([]byte, error) {
 }
 
 type ListDraftsResponse struct {
-	// Drafts: List of drafts.
+	// Drafts: List of drafts. Note that the Message property in each Draft
+	// resource only contains an id and a threadId. The messages.get method
+	// can fetch additional message details.
 	Drafts []*Draft `json:"drafts,omitempty"`
 
 	// NextPageToken: Token to retrieve the next page of results in the
@@ -1287,7 +1308,9 @@ func (s *ListHistoryResponse) MarshalJSON() ([]byte, error) {
 }
 
 type ListLabelsResponse struct {
-	// Labels: List of labels.
+	// Labels: List of labels. Note that each label resource only contains
+	// an id, name, messageListVisibility, labelListVisibility, and type.
+	// The labels.get method can fetch additional label details.
 	Labels []*Label `json:"labels,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2265,7 +2288,7 @@ func (c *UsersGetProfileCall) Header() http.Header {
 
 func (c *UsersGetProfileCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2401,7 +2424,7 @@ func (c *UsersStopCall) Header() http.Header {
 
 func (c *UsersStopCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2508,7 +2531,7 @@ func (c *UsersWatchCall) Header() http.Header {
 
 func (c *UsersWatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2690,7 +2713,7 @@ func (c *UsersDraftsCreateCall) Header() http.Header {
 
 func (c *UsersDraftsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2705,7 +2728,7 @@ func (c *UsersDraftsCreateCall) doRequest(alt string) (*http.Response, error) {
 	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "{userId}/drafts")
 	if c.mediaInfo_ != nil {
-		urls = strings.Replace(urls, "https://www.googleapis.com/", "https://www.googleapis.com/upload/", 1)
+		urls = googleapi.ResolveRelative(c.s.BasePath, "/upload/gmail/v1/users/{userId}/drafts")
 		c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())
 	}
 	if body == nil {
@@ -2822,6 +2845,7 @@ func (c *UsersDraftsCreateCall) Do(opts ...googleapi.CallOption) (*Draft, error)
 	//   },
 	//   "scopes": [
 	//     "https://mail.google.com/",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.action.compose",
 	//     "https://www.googleapis.com/auth/gmail.compose",
 	//     "https://www.googleapis.com/auth/gmail.modify"
 	//   ],
@@ -2877,7 +2901,7 @@ func (c *UsersDraftsDeleteCall) Header() http.Header {
 
 func (c *UsersDraftsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3014,7 +3038,7 @@ func (c *UsersDraftsGetCall) Header() http.Header {
 
 func (c *UsersDraftsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3216,7 +3240,7 @@ func (c *UsersDraftsListCall) Header() http.Header {
 
 func (c *UsersDraftsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3438,7 +3462,7 @@ func (c *UsersDraftsSendCall) Header() http.Header {
 
 func (c *UsersDraftsSendCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3453,7 +3477,7 @@ func (c *UsersDraftsSendCall) doRequest(alt string) (*http.Response, error) {
 	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "{userId}/drafts/send")
 	if c.mediaInfo_ != nil {
-		urls = strings.Replace(urls, "https://www.googleapis.com/", "https://www.googleapis.com/upload/", 1)
+		urls = googleapi.ResolveRelative(c.s.BasePath, "/upload/gmail/v1/users/{userId}/drafts/send")
 		c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())
 	}
 	if body == nil {
@@ -3666,7 +3690,7 @@ func (c *UsersDraftsUpdateCall) Header() http.Header {
 
 func (c *UsersDraftsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3681,7 +3705,7 @@ func (c *UsersDraftsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "{userId}/drafts/{id}")
 	if c.mediaInfo_ != nil {
-		urls = strings.Replace(urls, "https://www.googleapis.com/", "https://www.googleapis.com/upload/", 1)
+		urls = googleapi.ResolveRelative(c.s.BasePath, "/upload/gmail/v1/users/{userId}/drafts/{id}")
 		c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())
 	}
 	if body == nil {
@@ -3921,7 +3945,7 @@ func (c *UsersHistoryListCall) Header() http.Header {
 
 func (c *UsersHistoryListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4120,7 +4144,7 @@ func (c *UsersLabelsCreateCall) Header() http.Header {
 
 func (c *UsersLabelsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4262,7 +4286,7 @@ func (c *UsersLabelsDeleteCall) Header() http.Header {
 
 func (c *UsersLabelsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4386,7 +4410,7 @@ func (c *UsersLabelsGetCall) Header() http.Header {
 
 func (c *UsersLabelsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4541,7 +4565,7 @@ func (c *UsersLabelsListCall) Header() http.Header {
 
 func (c *UsersLabelsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4682,7 +4706,7 @@ func (c *UsersLabelsPatchCall) Header() http.Header {
 
 func (c *UsersLabelsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4833,7 +4857,7 @@ func (c *UsersLabelsUpdateCall) Header() http.Header {
 
 func (c *UsersLabelsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4984,7 +5008,7 @@ func (c *UsersMessagesBatchDeleteCall) Header() http.Header {
 
 func (c *UsersMessagesBatchDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5095,7 +5119,7 @@ func (c *UsersMessagesBatchModifyCall) Header() http.Header {
 
 func (c *UsersMessagesBatchModifyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5208,7 +5232,7 @@ func (c *UsersMessagesDeleteCall) Header() http.Header {
 
 func (c *UsersMessagesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5350,7 +5374,7 @@ func (c *UsersMessagesGetCall) Header() http.Header {
 
 func (c *UsersMessagesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5465,6 +5489,9 @@ func (c *UsersMessagesGetCall) Do(opts ...googleapi.CallOption) (*Message, error
 	//   },
 	//   "scopes": [
 	//     "https://mail.google.com/",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.message.action",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.message.metadata",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
 	//     "https://www.googleapis.com/auth/gmail.metadata",
 	//     "https://www.googleapis.com/auth/gmail.modify",
 	//     "https://www.googleapis.com/auth/gmail.readonly"
@@ -5596,7 +5623,7 @@ func (c *UsersMessagesImportCall) Header() http.Header {
 
 func (c *UsersMessagesImportCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5611,7 +5638,7 @@ func (c *UsersMessagesImportCall) doRequest(alt string) (*http.Response, error) 
 	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "{userId}/messages/import")
 	if c.mediaInfo_ != nil {
-		urls = strings.Replace(urls, "https://www.googleapis.com/", "https://www.googleapis.com/upload/", 1)
+		urls = googleapi.ResolveRelative(c.s.BasePath, "/upload/gmail/v1/users/{userId}/messages/import")
 		c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())
 	}
 	if body == nil {
@@ -5875,7 +5902,7 @@ func (c *UsersMessagesInsertCall) Header() http.Header {
 
 func (c *UsersMessagesInsertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5890,7 +5917,7 @@ func (c *UsersMessagesInsertCall) doRequest(alt string) (*http.Response, error) 
 	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "{userId}/messages")
 	if c.mediaInfo_ != nil {
-		urls = strings.Replace(urls, "https://www.googleapis.com/", "https://www.googleapis.com/upload/", 1)
+		urls = googleapi.ResolveRelative(c.s.BasePath, "/upload/gmail/v1/users/{userId}/messages")
 		c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())
 	}
 	if body == nil {
@@ -6128,7 +6155,7 @@ func (c *UsersMessagesListCall) Header() http.Header {
 
 func (c *UsersMessagesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6317,7 +6344,7 @@ func (c *UsersMessagesModifyCall) Header() http.Header {
 
 func (c *UsersMessagesModifyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6506,7 +6533,7 @@ func (c *UsersMessagesSendCall) Header() http.Header {
 
 func (c *UsersMessagesSendCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6521,7 +6548,7 @@ func (c *UsersMessagesSendCall) doRequest(alt string) (*http.Response, error) {
 	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "{userId}/messages/send")
 	if c.mediaInfo_ != nil {
-		urls = strings.Replace(urls, "https://www.googleapis.com/", "https://www.googleapis.com/upload/", 1)
+		urls = googleapi.ResolveRelative(c.s.BasePath, "/upload/gmail/v1/users/{userId}/messages/send")
 		c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())
 	}
 	if body == nil {
@@ -6638,6 +6665,7 @@ func (c *UsersMessagesSendCall) Do(opts ...googleapi.CallOption) (*Message, erro
 	//   },
 	//   "scopes": [
 	//     "https://mail.google.com/",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.action.compose",
 	//     "https://www.googleapis.com/auth/gmail.compose",
 	//     "https://www.googleapis.com/auth/gmail.modify",
 	//     "https://www.googleapis.com/auth/gmail.send"
@@ -6693,7 +6721,7 @@ func (c *UsersMessagesTrashCall) Header() http.Header {
 
 func (c *UsersMessagesTrashCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6833,7 +6861,7 @@ func (c *UsersMessagesUntrashCall) Header() http.Header {
 
 func (c *UsersMessagesUntrashCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6986,7 +7014,7 @@ func (c *UsersMessagesAttachmentsGetCall) Header() http.Header {
 
 func (c *UsersMessagesAttachmentsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7085,6 +7113,8 @@ func (c *UsersMessagesAttachmentsGetCall) Do(opts ...googleapi.CallOption) (*Mes
 	//   },
 	//   "scopes": [
 	//     "https://mail.google.com/",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.message.action",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
 	//     "https://www.googleapis.com/auth/gmail.modify",
 	//     "https://www.googleapis.com/auth/gmail.readonly"
 	//   ]
@@ -7148,7 +7178,7 @@ func (c *UsersSettingsGetAutoForwardingCall) Header() http.Header {
 
 func (c *UsersSettingsGetAutoForwardingCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7294,7 +7324,7 @@ func (c *UsersSettingsGetImapCall) Header() http.Header {
 
 func (c *UsersSettingsGetImapCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7440,7 +7470,7 @@ func (c *UsersSettingsGetLanguageCall) Header() http.Header {
 
 func (c *UsersSettingsGetLanguageCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7586,7 +7616,7 @@ func (c *UsersSettingsGetPopCall) Header() http.Header {
 
 func (c *UsersSettingsGetPopCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7732,7 +7762,7 @@ func (c *UsersSettingsGetVacationCall) Header() http.Header {
 
 func (c *UsersSettingsGetVacationCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7874,7 +7904,7 @@ func (c *UsersSettingsUpdateAutoForwardingCall) Header() http.Header {
 
 func (c *UsersSettingsUpdateAutoForwardingCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8013,7 +8043,7 @@ func (c *UsersSettingsUpdateImapCall) Header() http.Header {
 
 func (c *UsersSettingsUpdateImapCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8158,7 +8188,7 @@ func (c *UsersSettingsUpdateLanguageCall) Header() http.Header {
 
 func (c *UsersSettingsUpdateLanguageCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8297,7 +8327,7 @@ func (c *UsersSettingsUpdatePopCall) Header() http.Header {
 
 func (c *UsersSettingsUpdatePopCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8436,7 +8466,7 @@ func (c *UsersSettingsUpdateVacationCall) Header() http.Header {
 
 func (c *UsersSettingsUpdateVacationCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8545,7 +8575,7 @@ type UsersSettingsDelegatesCreateCall struct {
 // must be a member of the same G Suite organization as the delegator
 // user.
 //
-// Gmail imposes limtations on the number of delegates and delegators
+// Gmail imposes limitations on the number of delegates and delegators
 // each user in a G Suite organization can have. These limits depend on
 // your organization, but in general each user can have up to 25
 // delegates and up to 10 delegators.
@@ -8592,7 +8622,7 @@ func (c *UsersSettingsDelegatesCreateCall) Header() http.Header {
 
 func (c *UsersSettingsDelegatesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8656,7 +8686,7 @@ func (c *UsersSettingsDelegatesCreateCall) Do(opts ...googleapi.CallOption) (*De
 	}
 	return ret, nil
 	// {
-	//   "description": "Adds a delegate with its verification status set directly to accepted, without sending any verification email. The delegate user must be a member of the same G Suite organization as the delegator user.\n\nGmail imposes limtations on the number of delegates and delegators each user in a G Suite organization can have. These limits depend on your organization, but in general each user can have up to 25 delegates and up to 10 delegators.\n\nNote that a delegate user must be referred to by their primary email address, and not an email alias.\n\nAlso note that when a new delegate is created, there may be up to a one minute delay before the new delegate is available for use.\n\nThis method is only available to service account clients that have been delegated domain-wide authority.",
+	//   "description": "Adds a delegate with its verification status set directly to accepted, without sending any verification email. The delegate user must be a member of the same G Suite organization as the delegator user.\n\nGmail imposes limitations on the number of delegates and delegators each user in a G Suite organization can have. These limits depend on your organization, but in general each user can have up to 25 delegates and up to 10 delegators.\n\nNote that a delegate user must be referred to by their primary email address, and not an email alias.\n\nAlso note that when a new delegate is created, there may be up to a one minute delay before the new delegate is available for use.\n\nThis method is only available to service account clients that have been delegated domain-wide authority.",
 	//   "httpMethod": "POST",
 	//   "id": "gmail.users.settings.delegates.create",
 	//   "parameterOrder": [
@@ -8739,7 +8769,7 @@ func (c *UsersSettingsDelegatesDeleteCall) Header() http.Header {
 
 func (c *UsersSettingsDelegatesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8867,7 +8897,7 @@ func (c *UsersSettingsDelegatesGetCall) Header() http.Header {
 
 func (c *UsersSettingsDelegatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9024,7 +9054,7 @@ func (c *UsersSettingsDelegatesListCall) Header() http.Header {
 
 func (c *UsersSettingsDelegatesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9161,7 +9191,7 @@ func (c *UsersSettingsFiltersCreateCall) Header() http.Header {
 
 func (c *UsersSettingsFiltersCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9300,7 +9330,7 @@ func (c *UsersSettingsFiltersDeleteCall) Header() http.Header {
 
 func (c *UsersSettingsFiltersDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9422,7 +9452,7 @@ func (c *UsersSettingsFiltersGetCall) Header() http.Header {
 
 func (c *UsersSettingsFiltersGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9576,7 +9606,7 @@ func (c *UsersSettingsFiltersListCall) Header() http.Header {
 
 func (c *UsersSettingsFiltersListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9719,7 +9749,7 @@ func (c *UsersSettingsForwardingAddressesCreateCall) Header() http.Header {
 
 func (c *UsersSettingsForwardingAddressesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9862,7 +9892,7 @@ func (c *UsersSettingsForwardingAddressesDeleteCall) Header() http.Header {
 
 func (c *UsersSettingsForwardingAddressesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9984,7 +10014,7 @@ func (c *UsersSettingsForwardingAddressesGetCall) Header() http.Header {
 
 func (c *UsersSettingsForwardingAddressesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10138,7 +10168,7 @@ func (c *UsersSettingsForwardingAddressesListCall) Header() http.Header {
 
 func (c *UsersSettingsForwardingAddressesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10285,7 +10315,7 @@ func (c *UsersSettingsSendAsCreateCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10428,7 +10458,7 @@ func (c *UsersSettingsSendAsDeleteCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10551,7 +10581,7 @@ func (c *UsersSettingsSendAsGetCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10707,7 +10737,7 @@ func (c *UsersSettingsSendAsListCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10851,7 +10881,7 @@ func (c *UsersSettingsSendAsPatchCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11006,7 +11036,7 @@ func (c *UsersSettingsSendAsUpdateCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11158,7 +11188,7 @@ func (c *UsersSettingsSendAsVerifyCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsVerifyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11272,7 +11302,7 @@ func (c *UsersSettingsSendAsSmimeInfoDeleteCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsSmimeInfoDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11406,7 +11436,7 @@ func (c *UsersSettingsSendAsSmimeInfoGetCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsSmimeInfoGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11563,7 +11593,7 @@ func (c *UsersSettingsSendAsSmimeInfoInsertCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsSmimeInfoInsertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11722,7 +11752,7 @@ func (c *UsersSettingsSendAsSmimeInfoListCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsSmimeInfoListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11871,7 +11901,7 @@ func (c *UsersSettingsSendAsSmimeInfoSetDefaultCall) Header() http.Header {
 
 func (c *UsersSettingsSendAsSmimeInfoSetDefaultCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11992,7 +12022,7 @@ func (c *UsersThreadsDeleteCall) Header() http.Header {
 
 func (c *UsersThreadsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12133,7 +12163,7 @@ func (c *UsersThreadsGetCall) Header() http.Header {
 
 func (c *UsersThreadsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12246,6 +12276,9 @@ func (c *UsersThreadsGetCall) Do(opts ...googleapi.CallOption) (*Thread, error) 
 	//   },
 	//   "scopes": [
 	//     "https://mail.google.com/",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.message.action",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.message.metadata",
+	//     "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
 	//     "https://www.googleapis.com/auth/gmail.metadata",
 	//     "https://www.googleapis.com/auth/gmail.modify",
 	//     "https://www.googleapis.com/auth/gmail.readonly"
@@ -12347,7 +12380,7 @@ func (c *UsersThreadsListCall) Header() http.Header {
 
 func (c *UsersThreadsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12537,7 +12570,7 @@ func (c *UsersThreadsModifyCall) Header() http.Header {
 
 func (c *UsersThreadsModifyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12685,7 +12718,7 @@ func (c *UsersThreadsTrashCall) Header() http.Header {
 
 func (c *UsersThreadsTrashCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12825,7 +12858,7 @@ func (c *UsersThreadsUntrashCall) Header() http.Header {
 
 func (c *UsersThreadsUntrashCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

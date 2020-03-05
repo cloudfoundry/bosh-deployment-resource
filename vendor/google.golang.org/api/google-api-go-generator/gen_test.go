@@ -1,16 +1,6 @@
-// Copyright 2017 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2017 Google LLC.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
 package main
 
@@ -23,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"google.golang.org/api/google-api-go-generator/internal/disco"
 	"google.golang.org/api/internal/version"
 )
 
@@ -68,7 +59,9 @@ func TestAPIs(t *testing.T) {
 			}
 			goldenFile := filepath.Join("testdata", name+".want")
 			if *updateGolden {
-				if err := ioutil.WriteFile(goldenFile, clean, 0644); err != nil {
+				clean := strings.Replace(string(clean), fmt.Sprintf("gl-go/%s", version.Go()), "gl-go/1.12.5", -1)
+				clean = strings.Replace(clean, fmt.Sprintf("gdcl/%s", version.Repo), "gdcl/00000000", -1)
+				if err := ioutil.WriteFile(goldenFile, []byte(clean), 0644); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -109,8 +102,8 @@ func TestScope(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		if got := scopeIdentifierFromURL(test[0]); got != test[1] {
-			t.Errorf("scopeIdentifierFromURL(%q) got %q, want %q", test[0], got, test[1])
+		if got := scopeIdentifier(disco.Scope{ID: test[0]}); got != test[1] {
+			t.Errorf("scopeIdentifier(%q) got %q, want %q", test[0], got, test[1])
 		}
 	}
 }

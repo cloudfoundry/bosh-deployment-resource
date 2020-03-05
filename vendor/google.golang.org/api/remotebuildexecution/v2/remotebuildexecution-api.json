@@ -22,6 +22,7 @@
   },
   "id": "remotebuildexecution:v2",
   "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://remotebuildexecution.mtls.googleapis.com/",
   "name": "remotebuildexecution",
   "ownerDomain": "google.com",
   "ownerName": "Google",
@@ -142,7 +143,7 @@
             "instanceName": {
               "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
               "location": "path",
-              "pattern": "^.+$",
+              "pattern": "^.*$",
               "required": true,
               "type": "string"
             },
@@ -182,7 +183,7 @@
             "instanceName": {
               "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
               "location": "path",
-              "pattern": "^.+$",
+              "pattern": "^.*$",
               "required": true,
               "type": "string"
             },
@@ -227,7 +228,7 @@
             "instanceName": {
               "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
               "location": "path",
-              "pattern": "^.+$",
+              "pattern": "^.*$",
               "required": true,
               "type": "string"
             }
@@ -259,7 +260,7 @@
             "instanceName": {
               "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
               "location": "path",
-              "pattern": "^.+$",
+              "pattern": "^.*$",
               "required": true,
               "type": "string"
             }
@@ -287,7 +288,7 @@
             "instanceName": {
               "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
               "location": "path",
-              "pattern": "^.+$",
+              "pattern": "^.*$",
               "required": true,
               "type": "string"
             }
@@ -315,7 +316,7 @@
             "instanceName": {
               "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
               "location": "path",
-              "pattern": "^.+$",
+              "pattern": "^.*$",
               "required": true,
               "type": "string"
             }
@@ -351,7 +352,7 @@
             "instanceName": {
               "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
               "location": "path",
-              "pattern": "^.+$",
+              "pattern": "^.*$",
               "required": true,
               "type": "string"
             },
@@ -398,7 +399,7 @@
             "name": {
               "description": "The name of the Operation\nreturned by Execute.",
               "location": "path",
-              "pattern": "^operations/.+$",
+              "pattern": "^operations/.*$",
               "required": true,
               "type": "string"
             }
@@ -430,7 +431,7 @@
             "instanceName": {
               "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
               "location": "path",
-              "pattern": "^.+$",
+              "pattern": "^.*$",
               "required": true,
               "type": "string"
             }
@@ -446,7 +447,7 @@
       }
     }
   },
-  "revision": "20190924",
+  "revision": "20200218",
   "rootUrl": "https://remotebuildexecution.googleapis.com/",
   "schemas": {
     "BuildBazelRemoteExecutionV2Action": {
@@ -1357,9 +1358,24 @@
           "format": "google-duration",
           "type": "string"
         },
+        "dockerPrepStartTime": {
+          "description": "The timestamp when docker prepartion begins.",
+          "format": "google-datetime",
+          "type": "string"
+        },
         "download": {
           "description": "The time spent downloading the input files and constructing the working\ndirectory.",
           "format": "google-duration",
+          "type": "string"
+        },
+        "downloadStartTime": {
+          "description": "The timestamp when downloading the input files begins.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "execStartTime": {
+          "description": "The timestamp when execution begins.",
+          "format": "google-datetime",
           "type": "string"
         },
         "execution": {
@@ -1385,6 +1401,11 @@
         "upload": {
           "description": "The time spent uploading the output files.",
           "format": "google-duration",
+          "type": "string"
+        },
+        "uploadStartTime": {
+          "description": "The timestamp when uploading the output files begins.",
+          "format": "google-datetime",
           "type": "string"
         }
       },
@@ -1442,7 +1463,16 @@
             "DOCKER_IMAGE_NOT_FOUND",
             "WORKING_DIR_NOT_FOUND",
             "WORKING_DIR_NOT_IN_BASE_DIR",
-            "DOCKER_UNAVAILABLE"
+            "DOCKER_UNAVAILABLE",
+            "NO_CUDA_CAPABLE_DEVICE",
+            "REMOTE_CAS_DOWNLOAD_ERROR",
+            "REMOTE_CAS_UPLOAD_ERROR",
+            "LOCAL_CASPROXY_NOT_RUNNING",
+            "DOCKER_CREATE_CONTAINER_ERROR",
+            "DOCKER_INVALID_ULIMIT",
+            "DOCKER_UNKNOWN_RUNTIME",
+            "DOCKER_UNKNOWN_CAPABILITY",
+            "DOCKER_UNKNOWN_ERROR"
           ],
           "enumDescriptions": [
             "The command succeeded.",
@@ -1464,12 +1494,52 @@
             "The docker image cannot be found.",
             "Working directory is not found.",
             "Working directory is not under the base directory",
-            "There are issues with docker service/runtime."
+            "There are issues with docker service/runtime.",
+            "The command failed with \"no cuda-capable device is detected\" error.",
+            "The bot encountered errors from remote CAS when downloading blobs.",
+            "The bot encountered errors from remote CAS when uploading blobs.",
+            "The local casproxy is not running.",
+            "The bot couldn't start the container.",
+            "The docker ulimit is not valid.",
+            "The docker runtime is unknown.",
+            "The docker capability is unknown.",
+            "The command failed with unknown docker errors."
           ],
           "type": "string"
         },
         "message": {
           "description": "The error message.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleDevtoolsRemotebuildbotResourceUsage": {
+      "description": "ResourceUsage is the system resource usage of the host machine.",
+      "id": "GoogleDevtoolsRemotebuildbotResourceUsage",
+      "properties": {
+        "cpuUsedPercent": {
+          "format": "double",
+          "type": "number"
+        },
+        "diskUsage": {
+          "$ref": "GoogleDevtoolsRemotebuildbotResourceUsageStat"
+        },
+        "memoryUsage": {
+          "$ref": "GoogleDevtoolsRemotebuildbotResourceUsageStat"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleDevtoolsRemotebuildbotResourceUsageStat": {
+      "id": "GoogleDevtoolsRemotebuildbotResourceUsageStat",
+      "properties": {
+        "total": {
+          "format": "uint64",
+          "type": "string"
+        },
+        "used": {
+          "format": "uint64",
           "type": "string"
         }
       },
@@ -1658,6 +1728,26 @@
       },
       "type": "object"
     },
+    "GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateInstanceRequest": {
+      "description": "The request used for `UpdateInstance`.",
+      "id": "GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateInstanceRequest",
+      "properties": {
+        "loggingEnabled": {
+          "description": "Whether to enable Stackdriver logging for this instance.",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "Name of the instance to update.\nFormat: `projects/[PROJECT_ID]/instances/[INSTANCE_ID]`.",
+          "type": "string"
+        },
+        "updateMask": {
+          "description": "The fields to update.",
+          "format": "google-fieldmask",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest": {
       "description": "The request used for UpdateWorkerPool.",
       "id": "GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest",
@@ -1688,7 +1778,7 @@
           "type": "string"
         },
         "diskType": {
-          "description": "Required. Disk Type to use for the worker.\nSee [Storage\noptions](https://cloud.google.com/compute/docs/disks/#introduction).\nCurrently only `pd-standard` is supported.",
+          "description": "Required. Disk Type to use for the worker.\nSee [Storage\noptions](https://cloud.google.com/compute/docs/disks/#introduction).\nCurrently only `pd-standard` and `pd-ssd` are supported.",
           "type": "string"
         },
         "labels": {
@@ -1700,6 +1790,11 @@
         },
         "machineType": {
           "description": "Required. Machine type of the worker, such as `n1-standard-2`.\nSee https://cloud.google.com/compute/docs/machine-types for a list of\nsupported machine types. Note that `f1-micro` and `g1-small` are not yet\nsupported.",
+          "type": "string"
+        },
+        "maxConcurrentActions": {
+          "description": "The maximum number of actions a worker can execute concurrently.",
+          "format": "int64",
           "type": "string"
         },
         "minCpuPlatform": {

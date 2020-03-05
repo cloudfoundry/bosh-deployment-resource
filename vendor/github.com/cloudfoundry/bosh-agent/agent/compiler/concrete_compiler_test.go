@@ -32,6 +32,7 @@ func getCompileArgs() (Package, []boshmodels.Package) {
 	pkg := Package{
 		BlobstoreID:         "blobstore_id",
 		PackageGetSignedURL: "/some/signed/url",
+		BlobstoreHeaders:    map[string]string{"key": "value"},
 		Sha1:                boshcrypto.MustNewMultipleDigest(boshcrypto.NewDigest(boshcrypto.DigestAlgorithmSHA1, "sha1")),
 		Name:                "pkg_name",
 		Version:             "pkg_version",
@@ -42,18 +43,20 @@ func getCompileArgs() (Package, []boshmodels.Package) {
 			Name:    "first_dep_name",
 			Version: "first_dep_version",
 			Source: boshmodels.Source{
-				SignedURL:   "first_dep/signed/url",
-				Sha1:        boshcrypto.MustNewMultipleDigest(boshcrypto.NewDigest(boshcrypto.DigestAlgorithmSHA1, "first_dep_sha1")),
-				BlobstoreID: "first_dep_blobstore_id",
+				SignedURL:        "first_dep/signed/url",
+				BlobstoreHeaders: map[string]string{"key": "value"},
+				Sha1:             boshcrypto.MustNewMultipleDigest(boshcrypto.NewDigest(boshcrypto.DigestAlgorithmSHA1, "first_dep_sha1")),
+				BlobstoreID:      "first_dep_blobstore_id",
 			},
 		},
 		{
 			Name:    "sec_dep_name",
 			Version: "sec_dep_version",
 			Source: boshmodels.Source{
-				SignedURL:   "sec_dep/signed/url",
-				Sha1:        boshcrypto.MustNewMultipleDigest(boshcrypto.NewDigest(boshcrypto.DigestAlgorithmSHA1, "sec_dep_sha1")),
-				BlobstoreID: "sec_dep_blobstore_id",
+				SignedURL:        "sec_dep/signed/url",
+				BlobstoreHeaders: map[string]string{"key": "value"},
+				Sha1:             boshcrypto.MustNewMultipleDigest(boshcrypto.NewDigest(boshcrypto.DigestAlgorithmSHA1, "sec_dep_sha1")),
+				BlobstoreID:      "sec_dep_blobstore_id",
 			},
 		},
 	}
@@ -89,6 +92,7 @@ func init() {
 				FakeCompileDirProvider{Dir: "/fake-compile-dir"},
 				packageApplier,
 				packagesBc,
+				new(fakebc.FakeClock),
 			)
 
 			fs.MkdirAll("/fake-compile-dir", os.ModePerm)
@@ -148,9 +152,10 @@ func init() {
 				Expect(digest.String()).To(Equal("sha256:d12d3a3ee8dcdc9e7ea3416fd618298ea50abde2cf434313c6c3edb213f441cd"))
 
 				Expect(blobstore.GetCallCount()).To(Equal(1))
-				fingerprint, signedURL, blobID := blobstore.GetArgsForCall(0)
+				fingerprint, signedURL, blobID, headers := blobstore.GetArgsForCall(0)
 				Expect(signedURL).To(Equal("/some/signed/url"))
 				Expect(blobID).To(Equal("blobstore_id"))
+				Expect(headers).To(Equal(map[string]string{"key": "value"}))
 				Expect(fingerprint).To(Equal(pkg.Sha1))
 			})
 
@@ -341,8 +346,9 @@ func init() {
 				_, _, err := compiler.Compile(pkg, pkgDeps)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, filePathArg := blobstore.WriteArgsForCall(0)
+				_, filePathArg, headers := blobstore.WriteArgsForCall(0)
 				Expect(filePathArg).To(Equal("/tmp/compressed-compiled-package"))
+				Expect(headers).To(Equal(map[string]string{"key": "value"}))
 			})
 
 			It("returs error if uploading compressed package fails", func() {
@@ -356,7 +362,7 @@ func init() {
 			It("cleans up compressed package after uploading it to blobstore", func() {
 				var beforeCleanUpTarballPath, afterCleanUpTarballPath string
 
-				blobstore.WriteStub = func(signedURL, fileName string) (blobID string, digest boshcrypto.MultipleDigest, err error) {
+				blobstore.WriteStub = func(signedURL, fileName string, headers map[string]string) (blobID string, digest boshcrypto.MultipleDigest, err error) {
 					beforeCleanUpTarballPath = compressor.CleanUpTarballPath
 					return "my-blob-id", boshcrypto.MultipleDigest{}, nil
 				}

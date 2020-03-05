@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -56,6 +56,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -72,6 +73,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "cloudtrace:v2"
 const apiName = "cloudtrace"
@@ -95,6 +97,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -533,8 +536,8 @@ type Span struct {
 	// spans.
 	ChildSpanCount int64 `json:"childSpanCount,omitempty"`
 
-	// DisplayName: A description of the span's operation (up to 128
-	// bytes).
+	// DisplayName: Required. A description of the span's operation (up to
+	// 128 bytes).
 	// Stackdriver Trace displays the description in the
 	// Google Cloud Platform Console.
 	// For example, the display name can be a qualified method name or a
@@ -546,8 +549,8 @@ type Span struct {
 	// This makes it easier to correlate spans in different traces.
 	DisplayName *TruncatableString `json:"displayName,omitempty"`
 
-	// EndTime: The end time of the span. On the client side, this is the
-	// time kept by
+	// EndTime: Required. The end time of the span. On the client side, this
+	// is the time kept by
 	// the local machine where the span execution ends. On the server side,
 	// this
 	// is the time when the server application handler stops running.
@@ -582,7 +585,7 @@ type Span struct {
 	// information.
 	SameProcessAsParentSpan bool `json:"sameProcessAsParentSpan,omitempty"`
 
-	// SpanId: The [SPAN_ID] portion of the span's resource name.
+	// SpanId: Required. The [SPAN_ID] portion of the span's resource name.
 	SpanId string `json:"spanId,omitempty"`
 
 	// SpanKind: Distinguishes between spans generated in a particular
@@ -622,8 +625,8 @@ type Span struct {
 	// StackTrace: Stack trace captured at the start of the span.
 	StackTrace *StackTrace `json:"stackTrace,omitempty"`
 
-	// StartTime: The start time of the span. On the client side, this is
-	// the time kept by
+	// StartTime: Required. The start time of the span. On the client side,
+	// this is the time kept by
 	// the local machine where the span execution starts. On the server
 	// side, this
 	// is the time when the server's application handler starts running.
@@ -988,6 +991,9 @@ type ProjectsTracesBatchWriteCall struct {
 // BatchWrite: Sends new spans to new or existing traces. You cannot
 // update
 // existing spans.
+// In this case, writing traces is not considered an active
+// developer
+// method since traces are machine generated.
 func (r *ProjectsTracesService) BatchWrite(name string, batchwritespansrequest *BatchWriteSpansRequest) *ProjectsTracesBatchWriteCall {
 	c := &ProjectsTracesBatchWriteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -1022,7 +1028,7 @@ func (c *ProjectsTracesBatchWriteCall) Header() http.Header {
 
 func (c *ProjectsTracesBatchWriteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1086,7 +1092,7 @@ func (c *ProjectsTracesBatchWriteCall) Do(opts ...googleapi.CallOption) (*Empty,
 	}
 	return ret, nil
 	// {
-	//   "description": "Sends new spans to new or existing traces. You cannot update\nexisting spans.",
+	//   "description": "Sends new spans to new or existing traces. You cannot update\nexisting spans.\nIn this case, writing traces is not considered an active developer\nmethod since traces are machine generated.",
 	//   "flatPath": "v2/projects/{projectsId}/traces:batchWrite",
 	//   "httpMethod": "POST",
 	//   "id": "cloudtrace.projects.traces.batchWrite",
@@ -1129,6 +1135,9 @@ type ProjectsTracesSpansCreateSpanCall struct {
 }
 
 // CreateSpan: Creates a new span.
+// In this case, writing traces is not considered an active
+// developer
+// method since traces are machine generated.
 func (r *ProjectsTracesSpansService) CreateSpan(nameid string, span *Span) *ProjectsTracesSpansCreateSpanCall {
 	c := &ProjectsTracesSpansCreateSpanCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.nameid = nameid
@@ -1163,7 +1172,7 @@ func (c *ProjectsTracesSpansCreateSpanCall) Header() http.Header {
 
 func (c *ProjectsTracesSpansCreateSpanCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1227,7 +1236,7 @@ func (c *ProjectsTracesSpansCreateSpanCall) Do(opts ...googleapi.CallOption) (*S
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a new span.",
+	//   "description": "Creates a new span.\nIn this case, writing traces is not considered an active developer\nmethod since traces are machine generated.",
 	//   "flatPath": "v2/projects/{projectsId}/traces/{tracesId}/spans/{spansId}",
 	//   "httpMethod": "POST",
 	//   "id": "cloudtrace.projects.traces.spans.createSpan",

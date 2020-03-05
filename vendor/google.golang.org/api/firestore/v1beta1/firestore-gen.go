@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -58,6 +58,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -74,6 +75,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "firestore:v1beta1"
 const apiName = "firestore"
@@ -97,6 +99,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -460,7 +463,9 @@ func (s *CommitRequest) MarshalJSON() ([]byte, error) {
 
 // CommitResponse: The response for Firestore.Commit.
 type CommitResponse struct {
-	// CommitTime: The time at which the commit occurred.
+	// CommitTime: The time at which the commit occurred. Any read with an
+	// equal or greater
+	// `read_time` is guaranteed to see the effects of the commit.
 	CommitTime string `json:"commitTime,omitempty"`
 
 	// WriteResults: The result of applying the writes.
@@ -985,6 +990,12 @@ type FieldFilter struct {
 	// `order_by`.
 	//   "EQUAL" - Equal.
 	//   "ARRAY_CONTAINS" - Contains. Requires that the field is an array.
+	//   "IN" - In. Requires that `value` is a non-empty ArrayValue with at
+	// most 10
+	// values.
+	//   "ARRAY_CONTAINS_ANY" - Contains any. Requires that the field is an
+	// array and
+	// `value` is a non-empty ArrayValue with at most 10 values.
 	Op string `json:"op,omitempty"`
 
 	// Value: The value to compare to.
@@ -2269,7 +2280,7 @@ func (s *ReadWrite) MarshalJSON() ([]byte, error) {
 
 // RollbackRequest: The request for Firestore.Rollback.
 type RollbackRequest struct {
-	// Transaction: The transaction to roll back.
+	// Transaction: Required. The transaction to roll back.
 	Transaction string `json:"transaction,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Transaction") to
@@ -2844,11 +2855,6 @@ type Write struct {
 	Delete string `json:"delete,omitempty"`
 
 	// Transform: Applies a transformation to a document.
-	// At most one `transform` per document is allowed in a given
-	// request.
-	// An `update` cannot follow a `transform` on the same document in a
-	// given
-	// request.
 	Transform *DocumentTransform `json:"transform,omitempty"`
 
 	// Update: A document to write.
@@ -2972,7 +2978,9 @@ func (s *WriteRequest) MarshalJSON() ([]byte, error) {
 
 // WriteResponse: The response for Firestore.Write.
 type WriteResponse struct {
-	// CommitTime: The time at which the commit occurred.
+	// CommitTime: The time at which the commit occurred. Any read with an
+	// equal or greater
+	// `read_time` is guaranteed to see the effects of the write.
 	CommitTime string `json:"commitTime,omitempty"`
 
 	// StreamId: The ID of the stream.
@@ -3120,7 +3128,7 @@ func (c *ProjectsDatabasesExportDocumentsCall) Header() http.Header {
 
 func (c *ProjectsDatabasesExportDocumentsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3270,7 +3278,7 @@ func (c *ProjectsDatabasesImportDocumentsCall) Header() http.Header {
 
 func (c *ProjectsDatabasesImportDocumentsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3415,7 +3423,7 @@ func (c *ProjectsDatabasesDocumentsBatchGetCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsBatchGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3488,7 +3496,7 @@ func (c *ProjectsDatabasesDocumentsBatchGetCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "database": {
-	//       "description": "The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
+	//       "description": "Required. The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+$",
 	//       "required": true,
@@ -3556,7 +3564,7 @@ func (c *ProjectsDatabasesDocumentsBeginTransactionCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsBeginTransactionCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3629,7 +3637,7 @@ func (c *ProjectsDatabasesDocumentsBeginTransactionCall) Do(opts ...googleapi.Ca
 	//   ],
 	//   "parameters": {
 	//     "database": {
-	//       "description": "The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
+	//       "description": "Required. The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+$",
 	//       "required": true,
@@ -3697,7 +3705,7 @@ func (c *ProjectsDatabasesDocumentsCommitCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsCommitCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3770,7 +3778,7 @@ func (c *ProjectsDatabasesDocumentsCommitCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "database": {
-	//       "description": "The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
+	//       "description": "Required. The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+$",
 	//       "required": true,
@@ -3857,7 +3865,7 @@ func (c *ProjectsDatabasesDocumentsCreateDocumentCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsCreateDocumentCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3932,7 +3940,7 @@ func (c *ProjectsDatabasesDocumentsCreateDocumentCall) Do(opts ...googleapi.Call
 	//   ],
 	//   "parameters": {
 	//     "collectionId": {
-	//       "description": "The collection ID, relative to `parent`, to list. For example: `chatrooms`.",
+	//       "description": "Required. The collection ID, relative to `parent`, to list. For example: `chatrooms`.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -3949,7 +3957,7 @@ func (c *ProjectsDatabasesDocumentsCreateDocumentCall) Do(opts ...googleapi.Call
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The parent resource. For example:\n`projects/{project_id}/databases/{database_id}/documents` or\n`projects/{project_id}/databases/{database_id}/documents/chatrooms/{chatroom_id}`",
+	//       "description": "Required. The parent resource. For example:\n`projects/{project_id}/databases/{database_id}/documents` or\n`projects/{project_id}/databases/{database_id}/documents/chatrooms/{chatroom_id}`",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+/documents/.+$",
 	//       "required": true,
@@ -4033,7 +4041,7 @@ func (c *ProjectsDatabasesDocumentsDeleteCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4112,7 +4120,7 @@ func (c *ProjectsDatabasesDocumentsDeleteCall) Do(opts ...googleapi.CallOption) 
 	//       "type": "string"
 	//     },
 	//     "name": {
-	//       "description": "The resource name of the Document to delete. In the format:\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.",
+	//       "description": "Required. The resource name of the Document to delete. In the format:\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+/documents/[^/]+/.+$",
 	//       "required": true,
@@ -4209,7 +4217,7 @@ func (c *ProjectsDatabasesDocumentsGetCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4286,7 +4294,7 @@ func (c *ProjectsDatabasesDocumentsGetCall) Do(opts ...googleapi.CallOption) (*D
 	//       "type": "string"
 	//     },
 	//     "name": {
-	//       "description": "The resource name of the Document to get. In the format:\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.",
+	//       "description": "Required. The resource name of the Document to get. In the format:\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+/documents/[^/]+/.+$",
 	//       "required": true,
@@ -4434,7 +4442,7 @@ func (c *ProjectsDatabasesDocumentsListCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4507,7 +4515,7 @@ func (c *ProjectsDatabasesDocumentsListCall) Do(opts ...googleapi.CallOption) (*
 	//   ],
 	//   "parameters": {
 	//     "collectionId": {
-	//       "description": "The collection ID, relative to `parent`, to list. For example: `chatrooms`\nor `messages`.",
+	//       "description": "Required. The collection ID, relative to `parent`, to list. For example: `chatrooms`\nor `messages`.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -4535,7 +4543,7 @@ func (c *ProjectsDatabasesDocumentsListCall) Do(opts ...googleapi.CallOption) (*
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The parent resource name. In the format:\n`projects/{project_id}/databases/{database_id}/documents` or\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.\nFor example:\n`projects/my-project/databases/my-database/documents` or\n`projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`",
+	//       "description": "Required. The parent resource name. In the format:\n`projects/{project_id}/databases/{database_id}/documents` or\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.\nFor example:\n`projects/my-project/databases/my-database/documents` or\n`projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+/documents/[^/]+/.+$",
 	//       "required": true,
@@ -4639,7 +4647,7 @@ func (c *ProjectsDatabasesDocumentsListCollectionIdsCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsListCollectionIdsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4712,7 +4720,7 @@ func (c *ProjectsDatabasesDocumentsListCollectionIdsCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The parent document. In the format:\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.\nFor example:\n`projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`",
+	//       "description": "Required. The parent document. In the format:\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.\nFor example:\n`projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+/documents/[^/]+/.+$",
 	//       "required": true,
@@ -4801,7 +4809,7 @@ func (c *ProjectsDatabasesDocumentsListenCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsListenCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4874,7 +4882,7 @@ func (c *ProjectsDatabasesDocumentsListenCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "database": {
-	//       "description": "The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
+	//       "description": "Required. The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+$",
 	//       "required": true,
@@ -4977,7 +4985,7 @@ func (c *ProjectsDatabasesDocumentsPatchCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5141,7 +5149,7 @@ func (c *ProjectsDatabasesDocumentsRollbackCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsRollbackCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5214,7 +5222,7 @@ func (c *ProjectsDatabasesDocumentsRollbackCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "database": {
-	//       "description": "The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
+	//       "description": "Required. The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+$",
 	//       "required": true,
@@ -5282,7 +5290,7 @@ func (c *ProjectsDatabasesDocumentsRunQueryCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsRunQueryCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5355,7 +5363,7 @@ func (c *ProjectsDatabasesDocumentsRunQueryCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The parent resource name. In the format:\n`projects/{project_id}/databases/{database_id}/documents` or\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.\nFor example:\n`projects/my-project/databases/my-database/documents` or\n`projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`",
+	//       "description": "Required. The parent resource name. In the format:\n`projects/{project_id}/databases/{database_id}/documents` or\n`projects/{project_id}/databases/{database_id}/documents/{document_path}`.\nFor example:\n`projects/my-project/databases/my-database/documents` or\n`projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+/documents/[^/]+/.+$",
 	//       "required": true,
@@ -5423,7 +5431,7 @@ func (c *ProjectsDatabasesDocumentsWriteCall) Header() http.Header {
 
 func (c *ProjectsDatabasesDocumentsWriteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5496,7 +5504,7 @@ func (c *ProjectsDatabasesDocumentsWriteCall) Do(opts ...googleapi.CallOption) (
 	//   ],
 	//   "parameters": {
 	//     "database": {
-	//       "description": "The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.\nThis is only required in the first message.",
+	//       "description": "Required. The database name. In the format:\n`projects/{project_id}/databases/{database_id}`.\nThis is only required in the first message.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/databases/[^/]+$",
 	//       "required": true,
@@ -5581,7 +5589,7 @@ func (c *ProjectsDatabasesIndexesCreateCall) Header() http.Header {
 
 func (c *ProjectsDatabasesIndexesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5720,7 +5728,7 @@ func (c *ProjectsDatabasesIndexesDeleteCall) Header() http.Header {
 
 func (c *ProjectsDatabasesIndexesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5862,7 +5870,7 @@ func (c *ProjectsDatabasesIndexesGetCall) Header() http.Header {
 
 func (c *ProjectsDatabasesIndexesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6027,7 +6035,7 @@ func (c *ProjectsDatabasesIndexesListCall) Header() http.Header {
 
 func (c *ProjectsDatabasesIndexesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

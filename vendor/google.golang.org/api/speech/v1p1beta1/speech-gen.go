@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -54,6 +54,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -70,6 +71,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "speech:v1p1beta1"
 const apiName = "speech"
@@ -89,6 +91,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -636,9 +639,9 @@ type RecognitionConfig struct {
 	// wideband is supported. `sample_rate_hertz` must be 16000.
 	//   "MP3" - MP3 audio. Support all standard MP3 bitrates (which range
 	// from 32-320
-	// kbps). When using this encoding, `sample_rate_hertz` can be
-	// optionally
-	// unset if not known.
+	// kbps). When using this encoding, `sample_rate_hertz` has to match
+	// the
+	// sample rate of the file being used.
 	Encoding string `json:"encoding,omitempty"`
 
 	// LanguageCode: Required. The language of the supplied audio as
@@ -915,9 +918,6 @@ type RecognizeRequest struct {
 	// process the request.
 	Config *RecognitionConfig `json:"config,omitempty"`
 
-	// Name: Use `model` field in RecognitionConfig instead.
-	Name string `json:"name,omitempty"`
-
 	// ForceSendFields is a list of field names (e.g. "Audio") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -1001,6 +1001,9 @@ type SpeakerDiarizationConfig struct {
 	// correct
 	// number of speakers. If not set, the default value is 2.
 	MinSpeakerCount int64 `json:"minSpeakerCount,omitempty"`
+
+	// SpeakerTag: Output only. Unused.
+	SpeakerTag int64 `json:"speakerTag,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g.
 	// "EnableSpeakerDiarization") to unconditionally include in API
@@ -1193,7 +1196,7 @@ type SpeechRecognitionResult struct {
 	// 'N'.
 	ChannelTag int64 `json:"channelTag,omitempty"`
 
-	// LanguageCode: The
+	// LanguageCode: Output only. The
 	// [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) language
 	// tag
 	// of the language in this result. This language code was detected to
@@ -1301,8 +1304,8 @@ type WordInfo struct {
 	// vary.
 	EndTime string `json:"endTime,omitempty"`
 
-	// SpeakerTag: A distinct integer value is assigned for every speaker
-	// within
+	// SpeakerTag: Output only. A distinct integer value is assigned for
+	// every speaker within
 	// the audio. This field specifies which one of those speakers was
 	// detected to
 	// have spoken this word. Value ranges from '1' to
@@ -1420,7 +1423,7 @@ func (c *OperationsGetCall) Header() http.Header {
 
 func (c *OperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1606,7 +1609,7 @@ func (c *OperationsListCall) Header() http.Header {
 
 func (c *OperationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1784,7 +1787,7 @@ func (c *ProjectsLocationsOperationsGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsOperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1965,7 +1968,7 @@ func (c *ProjectsLocationsOperationsListCall) Header() http.Header {
 
 func (c *ProjectsLocationsOperationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2144,7 +2147,7 @@ func (c *SpeechLongrunningrecognizeCall) Header() http.Header {
 
 func (c *SpeechLongrunningrecognizeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2271,7 +2274,7 @@ func (c *SpeechRecognizeCall) Header() http.Header {
 
 func (c *SpeechRecognizeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

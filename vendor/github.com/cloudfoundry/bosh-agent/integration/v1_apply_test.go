@@ -4,7 +4,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"os"
 	"path/filepath"
 	"time"
 
@@ -85,36 +84,18 @@ var _ = Describe("v1_apply", func() {
 		var (
 			barPackageSignedURL string
 			fooPackageSignedURL string
-			foobarJobSignedURL  string
-			s3Bucket            string
 		)
 
-		AfterEach(func() {
-			removeS3Object(s3Bucket, "foobar.tgz")
-			removeS3Object(s3Bucket, "foo.tgz")
-			removeS3Object(s3Bucket, "bar.tgz")
-		})
-
 		BeforeEach(func() {
-			s3Bucket = os.Getenv("AWS_BUCKET")
-			foobarReader, err := os.Open(filepath.Join("assets", "release", "jobs", "foobar.tgz"))
-			defer foobarReader.Close()
+			err := testEnvironment.StartBlobstore()
 			Expect(err).NotTo(HaveOccurred())
-			uploadS3Object(s3Bucket, "foobar.tgz", foobarReader)
 
-			barReader, err := os.Open(filepath.Join("assets", "release", "packages", "bar.tgz"))
-			defer barReader.Close()
-			Expect(err).NotTo(HaveOccurred())
-			uploadS3Object(s3Bucket, "bar.tgz", barReader)
+			fooPackageSignedURL = "http://127.0.0.1:9091/get_package/release/packages/foo.tgz?encrypted"
+			barPackageSignedURL = "http://127.0.0.1:9091/get_package/release/packages/bar.tgz?encrypted"
 
-			fooReader, err := os.Open(filepath.Join("assets", "release", "packages", "foo.tgz"))
-			defer fooReader.Close()
-			Expect(err).NotTo(HaveOccurred())
-			uploadS3Object(s3Bucket, "foo.tgz", fooReader)
-
-			foobarJobSignedURL = generateSignedURLForGet(s3Bucket, "foobar.tgz")
-			fooPackageSignedURL = generateSignedURLForGet(s3Bucket, "foo.tgz")
-			barPackageSignedURL = generateSignedURLForGet(s3Bucket, "bar.tgz")
+			encryptionHeaders := map[string]string{
+				"encryption-key": "key-value",
+			}
 
 			stringPointerFunc := func(a string) *string {
 				return &a
@@ -144,25 +125,32 @@ var _ = Describe("v1_apply", func() {
 				},
 
 				RenderedTemplatesArchiveSpec: &applyspec.RenderedTemplatesArchiveSpec{
-					SignedURL: foobarJobSignedURL,
-					Sha1:      getDigest("b70d2e6fefb1ff48f33a1cb08a609f19dd0f2c7d"),
+					BlobstoreID: "abc",
+					Sha1:        getDigest("b70d2e6fefb1ff48f33a1cb08a609f19dd0f2c7d"),
 				},
 
 				PackageSpecs: map[string]applyspec.PackageSpec{
 					"bar": {
-						Name:      "bar",
-						Sha1:      *getDigest("e2b85b98dcd20e9738f8db9e33dde65de2d623a4"),
-						SignedURL: barPackageSignedURL,
-						Version:   "1",
+						Name:             "bar",
+						Sha1:             *getDigest("e2b85b98dcd20e9738f8db9e33dde65de2d623a4"),
+						SignedURL:        barPackageSignedURL,
+						Version:          "1",
+						BlobstoreHeaders: encryptionHeaders,
 					},
 					"foo": {
-						Name:      "foo",
-						Sha1:      *getDigest("78848d5018c93761a48bdd35f221a15d28ff7a5e"),
-						SignedURL: fooPackageSignedURL,
-						Version:   "1",
+						Name:             "foo",
+						Sha1:             *getDigest("78848d5018c93761a48bdd35f221a15d28ff7a5e"),
+						SignedURL:        fooPackageSignedURL,
+						Version:          "1",
+						BlobstoreHeaders: encryptionHeaders,
 					},
 				},
 			}
+		})
+
+		JustBeforeEach(func() {
+			err := testEnvironment.CreateSensitiveBlobFromAsset(filepath.Join("release", "jobs/foobar.tgz"), "abc")
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should send agent apply and create appropriate /var/vcap/data directories for a job", func() {

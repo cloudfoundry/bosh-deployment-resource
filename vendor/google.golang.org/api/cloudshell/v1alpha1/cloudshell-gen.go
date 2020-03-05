@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "cloudshell:v1alpha1"
 const apiName = "cloudshell"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -260,8 +263,9 @@ type Environment struct {
 	// "gcr.io/dev-con/cloud-devshell:latest".
 	DockerImage string `json:"dockerImage,omitempty"`
 
-	// Id: Output only. The environment's identifier, which is always
-	// "default".
+	// Id: Output only. The environment's identifier, unique among the
+	// user's
+	// environments.
 	Id string `json:"id,omitempty"`
 
 	// Name: Output only. Full name of this resource, in the
@@ -285,6 +289,18 @@ type Environment struct {
 	// DeletePublicKey
 	// methods.
 	PublicKeys []*PublicKey `json:"publicKeys,omitempty"`
+
+	// Size: Indicates the size of the backing VM running the environment.
+	// If set to
+	// something other than DEFAULT, it will be reverted to the default VM
+	// size
+	// after vm_size_expire_time.
+	//
+	// Possible values:
+	//   "VM_SIZE_UNSPECIFIED" - The VM size is unknown.
+	//   "DEFAULT" - The default VM size.
+	//   "BOOSTED" - The boosted VM size.
+	Size string `json:"size,omitempty"`
 
 	// SshHost: Output only. Host to which clients can connect to initiate
 	// SSH sessions
@@ -318,10 +334,20 @@ type Environment struct {
 	// if another environment is started.
 	State string `json:"state,omitempty"`
 
+	// VmSizeExpireTime: Output only. The time when the Environment will
+	// expire back to the default
+	// VM size.
+	VmSizeExpireTime string `json:"vmSizeExpireTime,omitempty"`
+
 	// WebHost: Output only. Host to which clients can connect to initiate
 	// HTTPS or WSS
 	// connections with the environment.
 	WebHost string `json:"webHost,omitempty"`
+
+	// WebPorts: Output only. Ports to which clients can connect to initiate
+	// HTTPS or WSS
+	// connections with the environment.
+	WebPorts []int64 `json:"webPorts,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -503,6 +529,13 @@ type StartEnvironmentMetadata struct {
 	// when the user returns to Cloud Shell after not having used it for
 	// a
 	// while, and suggests that startup will take longer than normal.
+	//   "AWAITING_VM" - Startup is waiting for a VM to be assigned to the
+	// environment. This
+	// should normally happen very quickly, but an environment might stay
+	// in
+	// this state for an extended period of time if the system is
+	// experiencing
+	// heavy load.
 	//   "FINISHED" - Startup is complete and the user should be able to
 	// establish an SSH
 	// connection to their environment.
@@ -700,7 +733,7 @@ func (c *UsersEnvironmentsAuthorizeCall) Header() http.Header {
 
 func (c *UsersEnvironmentsAuthorizeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -850,7 +883,7 @@ func (c *UsersEnvironmentsGetCall) Header() http.Header {
 
 func (c *UsersEnvironmentsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -992,7 +1025,7 @@ func (c *UsersEnvironmentsPatchCall) Header() http.Header {
 
 func (c *UsersEnvironmentsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1148,7 +1181,7 @@ func (c *UsersEnvironmentsStartCall) Header() http.Header {
 
 func (c *UsersEnvironmentsStartCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1294,7 +1327,7 @@ func (c *UsersEnvironmentsPublicKeysCreateCall) Header() http.Header {
 
 func (c *UsersEnvironmentsPublicKeysCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1435,7 +1468,7 @@ func (c *UsersEnvironmentsPublicKeysDeleteCall) Header() http.Header {
 
 func (c *UsersEnvironmentsPublicKeysDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

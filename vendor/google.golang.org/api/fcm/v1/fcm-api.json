@@ -22,6 +22,7 @@
   },
   "id": "fcm:v1",
   "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://fcm.mtls.googleapis.com/",
   "name": "fcm",
   "ownerDomain": "google.com",
   "ownerName": "Google",
@@ -141,7 +142,7 @@
       }
     }
   },
-  "revision": "20191002",
+  "revision": "20200203",
   "rootUrl": "https://fcm.googleapis.com/",
   "schemas": {
     "AndroidConfig": {
@@ -158,6 +159,10 @@
           },
           "description": "Arbitrary key/value payload. If present, it will override\ngoogle.firebase.fcm.v1.Message.data.",
           "type": "object"
+        },
+        "directBootOk": {
+          "description": "If set to true, messages will be allowed to be delivered to the app while\nthe device is in direct boot mode. See [Support Direct Boot\nmode](https://developer.android.com/training/articles/direct-boot).",
+          "type": "boolean"
         },
         "fcmOptions": {
           "$ref": "AndroidFcmOptions",
@@ -570,6 +575,10 @@
       "description": "Options for features provided by the FCM SDK for Web.",
       "id": "WebpushFcmOptions",
       "properties": {
+        "analyticsLabel": {
+          "description": "Label associated with the message's analytics data.",
+          "type": "string"
+        },
         "link": {
           "description": "The link to open when the user clicks on the notification.\nFor all URL values, HTTPS is required.",
           "type": "string"

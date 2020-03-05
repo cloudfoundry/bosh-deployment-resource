@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/awstesting"
 	"github.com/aws/aws-sdk-go/internal/sdktesting"
 	"github.com/aws/aws-sdk-go/internal/shareddefaults"
@@ -84,7 +85,10 @@ func TestLoadEnvConfig_Creds(t *testing.T) {
 				os.Setenv(k, v)
 			}
 
-			cfg := loadEnvConfig()
+			cfg, err := loadEnvConfig()
+			if err != nil {
+				t.Fatalf("failed to load env config, %v", err)
+			}
 			if !reflect.DeepEqual(c.Val, cfg.Creds) {
 				t.Errorf("expect credentials to match.\n%s",
 					awstesting.SprintExpectActual(c.Val, cfg.Creds))
@@ -268,6 +272,36 @@ func TestLoadEnvConfig(t *testing.T) {
 				SharedConfigFile:      "/path/to/config/file",
 			},
 		},
+		{
+			Env: map[string]string{
+				"AWS_STS_REGIONAL_ENDPOINTS": "regional",
+			},
+			Config: envConfig{
+				STSRegionalEndpoint:   endpoints.RegionalSTSEndpoint,
+				SharedCredentialsFile: shareddefaults.SharedCredentialsFilename(),
+				SharedConfigFile:      shareddefaults.SharedConfigFilename(),
+			},
+		},
+		{
+			Env: map[string]string{
+				"AWS_S3_US_EAST_1_REGIONAL_ENDPOINT": "regional",
+			},
+			Config: envConfig{
+				S3UsEast1RegionalEndpoint: endpoints.RegionalS3UsEast1Endpoint,
+				SharedCredentialsFile:     shareddefaults.SharedCredentialsFilename(),
+				SharedConfigFile:          shareddefaults.SharedConfigFilename(),
+			},
+		},
+		{
+			Env: map[string]string{
+				"AWS_S3_USE_ARN_REGION": "true",
+			},
+			Config: envConfig{
+				S3UseARNRegion:        true,
+				SharedCredentialsFile: shareddefaults.SharedCredentialsFilename(),
+				SharedConfigFile:      shareddefaults.SharedConfigFilename(),
+			},
+		},
 	}
 
 	for i, c := range cases {
@@ -279,10 +313,17 @@ func TestLoadEnvConfig(t *testing.T) {
 			}
 
 			var cfg envConfig
+			var err error
 			if c.UseSharedConfigCall {
-				cfg = loadSharedEnvConfig()
+				cfg, err = loadSharedEnvConfig()
+				if err != nil {
+					t.Errorf("failed to load shared env config, %v", err)
+				}
 			} else {
-				cfg = loadEnvConfig()
+				cfg, err = loadEnvConfig()
+				if err != nil {
+					t.Errorf("failed to load env config, %v", err)
+				}
 			}
 
 			if !reflect.DeepEqual(c.Config, cfg) {

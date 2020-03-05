@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "websecurityscanner:v1beta"
 const apiName = "websecurityscanner"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -206,6 +209,9 @@ type Authentication struct {
 
 	// GoogleAccount: Authentication using a Google account.
 	GoogleAccount *GoogleAccount `json:"googleAccount,omitempty"`
+
+	// IapCredential: Authentication using Identity-Aware-Proxy (IAP).
+	IapCredential *IapCredential `json:"iapCredential,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CustomAccount") to
 	// unconditionally include in API requests. By default, fields with
@@ -560,6 +566,74 @@ func (s *Header) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// IapCredential: Describes authentication configuration for
+// Identity-Aware-Proxy (IAP).
+type IapCredential struct {
+	// IapTestServiceAccountInfo: Authentication configuration when
+	// Web-Security-Scanner service
+	// account is added in Identity-Aware-Proxy (IAP) access policies.
+	IapTestServiceAccountInfo *IapTestServiceAccountInfo `json:"iapTestServiceAccountInfo,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "IapTestServiceAccountInfo") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "IapTestServiceAccountInfo") to include in API requests with the JSON
+	// null value. By default, fields with empty values are omitted from API
+	// requests. However, any field with an empty value appearing in
+	// NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *IapCredential) MarshalJSON() ([]byte, error) {
+	type NoMethod IapCredential
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// IapTestServiceAccountInfo: Describes authentication configuration
+// when Web-Security-Scanner
+// service account is added in Identity-Aware-Proxy (IAP) access
+// policies.
+type IapTestServiceAccountInfo struct {
+	// TargetAudienceClientId: Required. Describes OAuth2 Client ID of
+	// resources protected by
+	// Identity-Aware-Proxy(IAP).
+	TargetAudienceClientId string `json:"targetAudienceClientId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "TargetAudienceClientId") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TargetAudienceClientId")
+	// to include in API requests with the JSON null value. By default,
+	// fields with empty values are omitted from API requests. However, any
+	// field with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *IapTestServiceAccountInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod IapTestServiceAccountInfo
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ListCrawledUrlsResponse: Response for the `ListCrawledUrls` method.
 type ListCrawledUrlsResponse struct {
 	// CrawledUrls: The list of CrawledUrls returned.
@@ -810,6 +884,11 @@ type ScanConfig struct {
 	// LatestRun: Latest ScanRun if available.
 	LatestRun *ScanRun `json:"latestRun,omitempty"`
 
+	// ManagedScan: Whether the scan config is managed by Cloud Web Security
+	// Scanner, output
+	// only.
+	ManagedScan bool `json:"managedScan,omitempty"`
+
 	// MaxQps: The maximum QPS during scanning. A valid value ranges from 5
 	// to 20
 	// inclusively. If the field is unspecified or its value is set 0,
@@ -840,6 +919,12 @@ type ScanConfig struct {
 	// StartingUrls: Required. The starting URLs from which the scanner
 	// finds site pages.
 	StartingUrls []string `json:"startingUrls,omitempty"`
+
+	// StaticIpScan: Whether the scan configuration has enabled static IP
+	// address scan feature.
+	// If enabled, the scanner will access applications from static IP
+	// addresses.
+	StaticIpScan bool `json:"staticIpScan,omitempty"`
 
 	// TargetPlatforms: Set of Cloud Platforms targeted by the scan. If
 	// empty, APP_ENGINE will be
@@ -1470,7 +1555,7 @@ func (c *ProjectsScanConfigsCreateCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1608,7 +1693,7 @@ func (c *ProjectsScanConfigsDeleteCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1749,7 +1834,7 @@ func (c *ProjectsScanConfigsGetCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1913,7 +1998,7 @@ func (c *ProjectsScanConfigsListCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2092,7 +2177,7 @@ func (c *ProjectsScanConfigsPatchCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2238,7 +2323,7 @@ func (c *ProjectsScanConfigsStartCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsStartCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2387,7 +2472,7 @@ func (c *ProjectsScanConfigsScanRunsGetCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsScanRunsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2553,7 +2638,7 @@ func (c *ProjectsScanConfigsScanRunsListCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsScanRunsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2720,7 +2805,7 @@ func (c *ProjectsScanConfigsScanRunsStopCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsScanRunsStopCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2889,7 +2974,7 @@ func (c *ProjectsScanConfigsScanRunsCrawledUrlsListCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsScanRunsCrawledUrlsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3065,7 +3150,7 @@ func (c *ProjectsScanConfigsScanRunsFindingTypeStatsListCall) Header() http.Head
 
 func (c *ProjectsScanConfigsScanRunsFindingTypeStatsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3209,7 +3294,7 @@ func (c *ProjectsScanConfigsScanRunsFindingsGetCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsScanRunsFindingsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3383,7 +3468,7 @@ func (c *ProjectsScanConfigsScanRunsFindingsListCall) Header() http.Header {
 
 func (c *ProjectsScanConfigsScanRunsFindingsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

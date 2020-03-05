@@ -2115,7 +2115,7 @@ type UploadRequest struct {
 	// FileSet: [*].
 	UpdateMask *field_mask.FieldMask `protobuf:"bytes,3,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
 	// If true then the Update, Merge operation will become a Create operation if
-	// the resource is NOT_FOUND.
+	// the resource is NOT_FOUND. Not supported for Invocation resource.
 	CreateIfNotFound bool `protobuf:"varint,10,opt,name=create_if_not_found,json=createIfNotFound,proto3" json:"create_if_not_found,omitempty"`
 	// The proto of the resource being uploaded.
 	//
@@ -2596,11 +2596,11 @@ var fileDescriptor_3c379de3a2f884aa = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // ResultStoreUploadClient is the client API for ResultStoreUpload service.
 //
@@ -2915,10 +2915,10 @@ type ResultStoreUploadClient interface {
 }
 
 type resultStoreUploadClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewResultStoreUploadClient(cc *grpc.ClientConn) ResultStoreUploadClient {
+func NewResultStoreUploadClient(cc grpc.ClientConnInterface) ResultStoreUploadClient {
 	return &resultStoreUploadClient{cc}
 }
 

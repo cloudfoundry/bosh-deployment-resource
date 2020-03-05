@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,7 +6,7 @@
 
 // Package tagmanager provides access to the Tag Manager API.
 //
-// For product documentation, see: https://developers.google.com/tag-manager/api/v2/
+// For product documentation, see: https://developers.google.com/tag-manager
 //
 // Creating a client
 //
@@ -56,6 +56,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -72,11 +73,12 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "tagmanager:v2"
 const apiName = "tagmanager"
 const apiVersion = "v2"
-const basePath = "https://www.googleapis.com/tagmanager/v2/"
+const basePath = "https://www.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -117,6 +119,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -331,21 +334,29 @@ type Account struct {
 	AccountId string `json:"accountId,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Account as computed at
-	// storage time. This value is recomputed whenever the account is
-	// modified.
+	// storage time.
+	// This value is recomputed whenever the account is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// Name: Account display name.
+	// @mutable tagmanager.accounts.create
+	// @mutable tagmanager.accounts.update
 	Name string `json:"name,omitempty"`
 
 	// Path: GTM Account's API relative path.
 	Path string `json:"path,omitempty"`
 
 	// ShareData: Whether the account shares data anonymously with Google
-	// and others. This flag enables benchmarking by sharing your data in an
-	// anonymous form. Google will remove all identifiable information about
-	// your website, combine the data with hundreds of other anonymous sites
-	// and report aggregate trends in the benchmarking service.
+	// and others.
+	// This flag enables benchmarking by sharing your data in an anonymous
+	// form.
+	// Google will remove all identifiable information about your website,
+	// combine
+	// the data with hundreds of other anonymous sites and report aggregate
+	// trends
+	// in the benchmarking service.
+	// @mutable tagmanager.accounts.create
+	// @mutable tagmanager.accounts.update
 	ShareData bool `json:"shareData,omitempty"`
 
 	// TagManagerUrl: Auto generated link to the tag manager UI
@@ -383,12 +394,14 @@ func (s *Account) MarshalJSON() ([]byte, error) {
 type AccountAccess struct {
 	// Permission: Whether the user has no access, user access, or admin
 	// access to an account.
+	// @mutable tagmanager.accounts.permissions.create
+	// @mutable tagmanager.accounts.permissions.update
 	//
 	// Possible values:
 	//   "accountPermissionUnspecified"
-	//   "admin"
 	//   "noAccess"
 	//   "user"
+	//   "admin"
 	Permission string `json:"permission,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Permission") to
@@ -415,9 +428,12 @@ func (s *AccountAccess) MarshalJSON() ([]byte, error) {
 }
 
 // BuiltInVariable: Built-in variables are a special category of
-// variables that are pre-created and non-customizable. They provide
-// common functionality like accessing propeties of the gtm data layer,
-// monitoring clicks, or accessing elements of a page URL.
+// variables that are pre-created
+// and non-customizable. They provide common functionality like
+// accessing
+// propeties of the gtm data layer, monitoring clicks, or accessing
+// elements
+// of a page URL.
 type BuiltInVariable struct {
 	// AccountId: GTM Account ID.
 	AccountId string `json:"accountId,omitempty"`
@@ -432,55 +448,81 @@ type BuiltInVariable struct {
 	// Path: GTM BuiltInVariable's API relative path.
 	Path string `json:"path,omitempty"`
 
-	// Type: Type of built-in variable.
+	// Type: Type of built-in
+	// variable.
+	// @required.tagmanager.accounts.containers.workspaces.built_in
+	// _variable.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.built_in_variable.update
 	//
 	// Possible values:
-	//   "advertiserId"
-	//   "advertisingTrackingEnabled"
-	//   "ampBrowserLanguage"
-	//   "ampCanonicalHost"
-	//   "ampCanonicalPath"
-	//   "ampCanonicalUrl"
-	//   "ampClientId"
-	//   "ampClientMaxScrollX"
-	//   "ampClientMaxScrollY"
-	//   "ampClientScreenHeight"
-	//   "ampClientScreenWidth"
-	//   "ampClientScrollX"
-	//   "ampClientScrollY"
-	//   "ampClientTimestamp"
-	//   "ampClientTimezone"
-	//   "ampGtmEvent"
-	//   "ampPageDownloadTime"
-	//   "ampPageLoadTime"
-	//   "ampPageViewId"
-	//   "ampReferrer"
-	//   "ampTitle"
-	//   "ampTotalEngagedTime"
+	//   "builtInVariableTypeUnspecified"
+	//   "pageUrl"
+	//   "pageHostname"
+	//   "pagePath"
+	//   "referrer"
+	//   "event" - For web or mobile.
+	//   "clickElement"
+	//   "clickClasses"
+	//   "clickId"
+	//   "clickTarget"
+	//   "clickUrl"
+	//   "clickText"
+	//   "firstPartyServingUrl"
+	//   "formElement"
+	//   "formClasses"
+	//   "formId"
+	//   "formTarget"
+	//   "formUrl"
+	//   "formText"
+	//   "errorMessage"
+	//   "errorUrl"
+	//   "errorLine"
+	//   "newHistoryUrl"
+	//   "oldHistoryUrl"
+	//   "newHistoryFragment"
+	//   "oldHistoryFragment"
+	//   "newHistoryState"
+	//   "oldHistoryState"
+	//   "historySource"
+	//   "containerVersion" - For web or mobile.
+	//   "debugMode"
+	//   "randomNumber" - For web or mobile.
+	//   "containerId" - For web or mobile.
 	//   "appId"
 	//   "appName"
 	//   "appVersionCode"
 	//   "appVersionName"
-	//   "builtInVariableTypeUnspecified"
-	//   "clickClasses"
-	//   "clickElement"
-	//   "clickId"
-	//   "clickTarget"
-	//   "clickText"
-	//   "clickUrl"
-	//   "containerId"
-	//   "containerVersion"
-	//   "debugMode"
+	//   "language"
+	//   "osVersion"
+	//   "platform"
+	//   "sdkVersion"
 	//   "deviceName"
-	//   "elementVisibilityFirstTime"
-	//   "elementVisibilityRatio"
-	//   "elementVisibilityRecentTime"
-	//   "elementVisibilityTime"
+	//   "resolution"
+	//   "advertiserId"
+	//   "advertisingTrackingEnabled"
+	//   "htmlId"
 	//   "environmentName"
-	//   "errorLine"
-	//   "errorMessage"
-	//   "errorUrl"
-	//   "event"
+	//   "ampBrowserLanguage"
+	//   "ampCanonicalPath"
+	//   "ampCanonicalUrl"
+	//   "ampCanonicalHost"
+	//   "ampReferrer"
+	//   "ampTitle"
+	//   "ampClientId"
+	//   "ampClientTimezone"
+	//   "ampClientTimestamp"
+	//   "ampClientScreenWidth"
+	//   "ampClientScreenHeight"
+	//   "ampClientScrollX"
+	//   "ampClientScrollY"
+	//   "ampClientMaxScrollX"
+	//   "ampClientMaxScrollY"
+	//   "ampTotalEngagedTime"
+	//   "ampPageViewId"
+	//   "ampPageLoadTime"
+	//   "ampPageDownloadTime"
+	//   "ampGtmEvent"
 	//   "eventName"
 	//   "firebaseEventParameterCampaign"
 	//   "firebaseEventParameterCampaignAclid"
@@ -505,41 +547,25 @@ type BuiltInVariable struct {
 	//   "firebaseEventParameterProductId"
 	//   "firebaseEventParameterQuantity"
 	//   "firebaseEventParameterValue"
-	//   "formClasses"
-	//   "formElement"
-	//   "formId"
-	//   "formTarget"
-	//   "formText"
-	//   "formUrl"
-	//   "historySource"
-	//   "htmlId"
-	//   "language"
-	//   "newHistoryFragment"
-	//   "newHistoryState"
-	//   "newHistoryUrl"
-	//   "oldHistoryFragment"
-	//   "oldHistoryState"
-	//   "oldHistoryUrl"
-	//   "osVersion"
-	//   "pageHostname"
-	//   "pagePath"
-	//   "pageUrl"
-	//   "platform"
-	//   "randomNumber"
-	//   "referrer"
-	//   "resolution"
-	//   "scrollDepthDirection"
-	//   "scrollDepthThreshold"
-	//   "scrollDepthUnits"
-	//   "sdkVersion"
-	//   "videoCurrentTime"
+	//   "videoProvider"
+	//   "videoUrl"
+	//   "videoTitle"
 	//   "videoDuration"
 	//   "videoPercent"
-	//   "videoProvider"
-	//   "videoStatus"
-	//   "videoTitle"
-	//   "videoUrl"
 	//   "videoVisible"
+	//   "videoStatus"
+	//   "videoCurrentTime"
+	//   "scrollDepthThreshold"
+	//   "scrollDepthUnits"
+	//   "scrollDepthDirection"
+	//   "elementVisibilityRatio"
+	//   "elementVisibilityTime"
+	//   "elementVisibilityFirstTime"
+	//   "elementVisibilityRecentTime"
+	//   "requestPath"
+	//   "requestMethod"
+	//   "clientName"
+	//   "queryString"
 	Type string `json:"type,omitempty"`
 
 	// WorkspaceId: GTM Workspace ID.
@@ -568,36 +594,125 @@ func (s *BuiltInVariable) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type Client struct {
+	// AccountId: GTM Account ID.
+	AccountId string `json:"accountId,omitempty"`
+
+	// ClientId: The Client ID uniquely identifies the GTM client.
+	ClientId string `json:"clientId,omitempty"`
+
+	// ContainerId: GTM Container ID.
+	ContainerId string `json:"containerId,omitempty"`
+
+	// Fingerprint: The fingerprint of the GTM Client as computed at storage
+	// time.
+	// This value is recomputed whenever the client is modified.
+	Fingerprint string `json:"fingerprint,omitempty"`
+
+	// Name: Client display name.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.clients.create
+	// @mutable tagmanager.accounts.containers.workspaces.clients.update
+	Name string `json:"name,omitempty"`
+
+	// Parameter: The client's parameters.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.clients.create
+	// @mutable tagmanager.accounts.containers.workspaces.clients.update
+	Parameter []*Parameter `json:"parameter,omitempty"`
+
+	// Path: GTM client's API relative path.
+	Path string `json:"path,omitempty"`
+
+	// Priority: Priority determines relative firing order.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.clients.create
+	// @mutable tagmanager.accounts.containers.workspaces.clients.update
+	Priority int64 `json:"priority,omitempty"`
+
+	// TagManagerUrl: Auto generated link to the tag manager UI
+	TagManagerUrl string `json:"tagManagerUrl,omitempty"`
+
+	// Type: Client type.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.clients.create
+	// @mutable tagmanager.accounts.containers.workspaces.clients.update
+	Type string `json:"type,omitempty"`
+
+	// WorkspaceId: GTM Workspace ID.
+	WorkspaceId string `json:"workspaceId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AccountId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AccountId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Client) MarshalJSON() ([]byte, error) {
+	type NoMethod Client
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Condition: Represents a predicate.
 type Condition struct {
 	// Parameter: A list of named parameters (key/value), depending on the
-	// condition's type. Notes:
-	// - For binary operators, include parameters named arg0 and arg1 for
-	// specifying the left and right operands, respectively.
-	// - At this time, the left operand (arg0) must be a reference to a
-	// variable.
-	// - For case-insensitive Regex matching, include a boolean parameter
-	// named ignore_case that is set to true. If not specified or set to any
-	// other value, the matching will be case sensitive.
-	// - To negate an operator, include a boolean parameter named negate
-	// boolean parameter that is set to true.
+	// condition's type.
+	// Notes:<ul>
+	// <li>For binary operators, include parameters named <code>arg0</code>
+	// and
+	//    <code>arg1</code> for specifying the left and right operands,
+	//    respectively.</li>
+	// <li>At this time, the left operand (<code>arg0</code>) must be a
+	// reference
+	//     to a variable.</li>
+	// <li>For case-insensitive Regex matching, include a boolean parameter
+	// named
+	//     <code>ignore_case</code> that is set to <code>true</code>.
+	//     If not specified or set to any other value, the matching will be
+	// case
+	//     sensitive.</li>
+	// <li>To negate an operator, include a boolean parameter named
+	//     <code>negate</code> boolean parameter that is set to
+	// <code>true</code>.
+	//     </li>
+	// </ul>
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	Parameter []*Parameter `json:"parameter,omitempty"`
 
 	// Type: The type of operator for this condition.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	//
 	// Possible values:
 	//   "conditionTypeUnspecified"
-	//   "contains"
-	//   "cssSelector"
-	//   "endsWith"
 	//   "equals"
+	//   "contains"
+	//   "startsWith"
+	//   "endsWith"
+	//   "matchRegex"
 	//   "greater"
 	//   "greaterOrEquals"
 	//   "less"
 	//   "lessOrEquals"
-	//   "matchRegex"
-	//   "startsWith"
-	//   "urlMatches"
+	//   "cssSelector"
+	//   "urlMatches" - NOTE(lanzone): When defining a ConditionType here,
+	// don't forget to also
+	// define a matching PredicateType (in condition.proto).
 	Type string `json:"type,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Parameter") to
@@ -624,8 +739,8 @@ func (s *Condition) MarshalJSON() ([]byte, error) {
 }
 
 // Container: Represents a Google Tag Manager Container, which specifies
-// the platform tags will run on, manages workspaces, and retains
-// container versions.
+// the platform tags
+// will run on, manages workspaces, and retains container versions.
 type Container struct {
 	// AccountId: GTM Account ID.
 	AccountId string `json:"accountId,omitempty"`
@@ -633,18 +748,25 @@ type Container struct {
 	// ContainerId: The Container ID uniquely identifies the GTM Container.
 	ContainerId string `json:"containerId,omitempty"`
 
-	// DomainName: List of domain names associated with the Container.
+	// DomainName: List of domain names associated with the
+	// Container.
+	// @mutable tagmanager.accounts.containers.create
+	// @mutable tagmanager.accounts.containers.update
 	DomainName []string `json:"domainName,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Container as computed at
-	// storage time. This value is recomputed whenever the account is
-	// modified.
+	// storage time.  This
+	// value is recomputed whenever the account is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// Name: Container display name.
+	// @mutable tagmanager.accounts.containers.create
+	// @mutable tagmanager.accounts.containers.update
 	Name string `json:"name,omitempty"`
 
 	// Notes: Container Notes.
+	// @mutable tagmanager.accounts.containers.create
+	// @mutable tagmanager.accounts.containers.update
 	Notes string `json:"notes,omitempty"`
 
 	// Path: GTM Container's API relative path.
@@ -657,16 +779,19 @@ type Container struct {
 	TagManagerUrl string `json:"tagManagerUrl,omitempty"`
 
 	// UsageContext: List of Usage Contexts for the Container. Valid values
-	// include: web, android, or ios.
+	// include: <code>web,
+	// android, or ios</code>.
+	// @mutable tagmanager.accounts.containers.create
+	// @mutable tagmanager.accounts.containers.update
 	//
 	// Possible values:
-	//   "amp"
-	//   "android"
-	//   "androidSdk5"
-	//   "ios"
-	//   "iosSdk5"
 	//   "usageContextUnspecified"
 	//   "web"
+	//   "android"
+	//   "ios"
+	//   "androidSdk5"
+	//   "iosSdk5"
+	//   "amp"
 	UsageContext []string `json:"usageContext,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -700,17 +825,21 @@ func (s *Container) MarshalJSON() ([]byte, error) {
 // permissions.
 type ContainerAccess struct {
 	// ContainerId: GTM Container ID.
+	// @mutable tagmanager.accounts.permissions.create
+	// @mutable tagmanager.accounts.permissions.update
 	ContainerId string `json:"containerId,omitempty"`
 
 	// Permission: List of Container permissions.
+	// @mutable tagmanager.accounts.permissions.create
+	// @mutable tagmanager.accounts.permissions.update
 	//
 	// Possible values:
-	//   "approve"
 	//   "containerPermissionUnspecified"
-	//   "edit"
 	//   "noAccess"
-	//   "publish"
 	//   "read"
+	//   "edit"
+	//   "approve"
+	//   "publish"
 	Permission string `json:"permission,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ContainerId") to
@@ -745,6 +874,10 @@ type ContainerVersion struct {
 	// version was taken from.
 	BuiltInVariable []*BuiltInVariable `json:"builtInVariable,omitempty"`
 
+	// Client: The clients in the container that this version was taken
+	// from.
+	Client []*Client `json:"client,omitempty"`
+
 	// Container: The container that this version was taken from.
 	Container *Container `json:"container,omitempty"`
 
@@ -764,11 +897,14 @@ type ContainerVersion struct {
 	Deleted bool `json:"deleted,omitempty"`
 
 	// Description: Container version description.
+	// @mutable tagmanager.accounts.containers.versions.update
 	Description string `json:"description,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Container Version as computed
-	// at storage time. This value is recomputed whenever the container
-	// version is modified.
+	// at
+	// storage time. This value is recomputed whenever the container version
+	// is
+	// modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// Folder: The folders in the container that this version was taken
@@ -776,6 +912,7 @@ type ContainerVersion struct {
 	Folder []*Folder `json:"folder,omitempty"`
 
 	// Name: Container version display name.
+	// @mutable tagmanager.accounts.containers.versions.update
 	Name string `json:"name,omitempty"`
 
 	// Path: GTM ContainerVersions's API relative path.
@@ -970,12 +1107,15 @@ type CreateContainerVersionResponse struct {
 	ContainerVersion *ContainerVersion `json:"containerVersion,omitempty"`
 
 	// NewWorkspacePath: Auto generated workspace path created as a result
-	// of version creation. This field should only be populated if the
-	// created version was not a quick preview.
+	// of version creation. This
+	// field should only be populated if the created version was not a
+	// quick
+	// preview.
 	NewWorkspacePath string `json:"newWorkspacePath,omitempty"`
 
 	// SyncStatus: Whether version creation failed when syncing the
-	// workspace to the latest container version.
+	// workspace to the latest
+	// container version.
 	SyncStatus *SyncStatus `json:"syncStatus,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1015,9 +1155,13 @@ type CustomTemplate struct {
 	ContainerId string `json:"containerId,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Custom Template as computed
-	// at storage time. This value is recomputed whenever the template is
-	// modified.
+	// at storage time.
+	// This value is recomputed whenever the template is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
+
+	// GalleryReference: A reference to the Community Template Gallery
+	// entry.
+	GalleryReference *GalleryReference `json:"galleryReference,omitempty"`
 
 	// Name: Custom Template display name.
 	Name string `json:"name,omitempty"`
@@ -1066,17 +1210,18 @@ func (s *CustomTemplate) MarshalJSON() ([]byte, error) {
 }
 
 // Entity: A workspace entity that may represent a tag, trigger,
-// variable, or folder in addition to its status in the workspace.
+// variable, or folder in
+// addition to its status in the workspace.
 type Entity struct {
 	// ChangeStatus: Represents how the entity has been changed in the
 	// workspace.
 	//
 	// Possible values:
-	//   "added"
 	//   "changeStatusUnspecified"
-	//   "deleted"
-	//   "none"
-	//   "updated"
+	//   "none" - The entity has never been changed.
+	//   "added" - The entity is added to the workspace.
+	//   "deleted" - The entity is deleted from the workspace.
+	//   "updated" - The entity has been updated in the workspace.
 	ChangeStatus string `json:"changeStatus,omitempty"`
 
 	// Folder: The Folder being represented by the entity.
@@ -1115,9 +1260,10 @@ func (s *Entity) MarshalJSON() ([]byte, error) {
 }
 
 // Environment: Represents a Google Tag Manager Environment. Note that a
-// user can create, delete and update environments of type USER, but can
-// only update the enable_debug and url fields of environments of other
-// types.
+// user can create,
+// delete and update environments of type USER, but can only update
+// the
+// enable_debug and url fields of environments of other types.
 type Environment struct {
 	// AccountId: GTM Account ID.
 	AccountId string `json:"accountId,omitempty"`
@@ -1127,7 +1273,7 @@ type Environment struct {
 
 	// AuthorizationTimestamp: The last update time-stamp for the
 	// authorization code.
-	AuthorizationTimestamp *Timestamp `json:"authorizationTimestamp,omitempty"`
+	AuthorizationTimestamp string `json:"authorizationTimestamp,omitempty"`
 
 	// ContainerId: GTM Container ID.
 	ContainerId string `json:"containerId,omitempty"`
@@ -1136,11 +1282,16 @@ type Environment struct {
 	ContainerVersionId string `json:"containerVersionId,omitempty"`
 
 	// Description: The environment description. Can be set or changed only
-	// on USER type environments.
+	// on USER type
+	// environments.
+	// @mutable tagmanager.accounts.containers.environments.create
+	// @mutable tagmanager.accounts.containers.environments.update
 	Description string `json:"description,omitempty"`
 
 	// EnableDebug: Whether or not to enable debug by default for the
 	// environment.
+	// @mutable tagmanager.accounts.containers.environments.create
+	// @mutable tagmanager.accounts.containers.environments.update
 	EnableDebug bool `json:"enableDebug,omitempty"`
 
 	// EnvironmentId: GTM Environment ID uniquely identifies the GTM
@@ -1148,12 +1299,15 @@ type Environment struct {
 	EnvironmentId string `json:"environmentId,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM environment as computed at
-	// storage time. This value is recomputed whenever the environment is
-	// modified.
+	// storage time.
+	// This value is recomputed whenever the environment is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// Name: The environment display name. Can be set or changed only on
-	// USER type environments.
+	// USER type
+	// environments.
+	// @mutable tagmanager.accounts.containers.environments.create
+	// @mutable tagmanager.accounts.containers.environments.update
 	Name string `json:"name,omitempty"`
 
 	// Path: GTM Environment's API relative path.
@@ -1165,13 +1319,17 @@ type Environment struct {
 	// Type: The type of this environment.
 	//
 	// Possible values:
-	//   "latest"
-	//   "live"
-	//   "user"
-	//   "workspace"
+	//   "user" - Points to a user defined environment.
+	//   "live" - Points to the current live container version.
+	//   "latest" - Points to the latest container version.
+	//   "workspace" - Automatically managed environment that points to a
+	// workspace preview or
+	// version created by a workspace.
 	Type string `json:"type,omitempty"`
 
 	// Url: Default preview page url for the environment.
+	// @mutable tagmanager.accounts.containers.environments.create
+	// @mutable tagmanager.accounts.containers.environments.update
 	Url string `json:"url,omitempty"`
 
 	// WorkspaceId: Represents a link to a quick preview of a workspace.
@@ -1213,16 +1371,24 @@ type Folder struct {
 	ContainerId string `json:"containerId,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Folder as computed at storage
-	// time. This value is recomputed whenever the folder is modified.
+	// time.
+	// This value is recomputed whenever the folder is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// FolderId: The Folder ID uniquely identifies the GTM Folder.
 	FolderId string `json:"folderId,omitempty"`
 
 	// Name: Folder display name.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.folders.create
+	// @mutable tagmanager.accounts.containers.workspaces.folders.update
 	Name string `json:"name,omitempty"`
 
-	// Notes: User notes on how to apply this folder in the container.
+	// Notes: User notes on how to apply this folder in the
+	// container.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.folders.create
+	// @mutable tagmanager.accounts.containers.workspaces.folders.update
 	Notes string `json:"notes,omitempty"`
 
 	// Path: GTM Folder's API relative path.
@@ -1303,8 +1469,59 @@ func (s *FolderEntities) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GalleryReference: Represents the link between a custom template and
+// an entry on the Community
+// Template Gallery site.
+type GalleryReference struct {
+	// Host: The name of the host for the community gallery template.
+	Host string `json:"host,omitempty"`
+
+	// IsModified: If a user has manually edited the community  gallery
+	// template.
+	IsModified bool `json:"isModified,omitempty"`
+
+	// Owner: The name of the owner for the community gallery template.
+	Owner string `json:"owner,omitempty"`
+
+	// Repository: The name of the repository for the community gallery
+	// template.
+	Repository string `json:"repository,omitempty"`
+
+	// Signature: The signature of the community gallery template as
+	// computed at import time.
+	// This value is recomputed whenever the template is updated from the
+	// gallery.
+	Signature string `json:"signature,omitempty"`
+
+	// Version: The version of the community gallery template.
+	Version string `json:"version,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Host") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Host") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GalleryReference) MarshalJSON() ([]byte, error) {
+	type NoMethod GalleryReference
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GetWorkspaceStatusResponse: The changes that have occurred in the
-// workspace since the base container version.
+// workspace since the base container
+// version.
 type GetWorkspaceStatusResponse struct {
 	// MergeConflict: The merge conflict after sync.
 	MergeConflict []*MergeConflict `json:"mergeConflict,omitempty"`
@@ -1813,14 +2030,17 @@ func (s *ListZonesResponse) MarshalJSON() ([]byte, error) {
 // MergeConflict: Represents a merge conflict.
 type MergeConflict struct {
 	// EntityInBaseVersion: The base version entity (since the latest sync
-	// operation) that has conflicting changes compared to the workspace. If
-	// this field is missing, it means the workspace entity is deleted from
-	// the base version.
+	// operation) that has
+	// conflicting changes compared to the workspace. If this field is
+	// missing,
+	// it means the workspace entity is deleted from the base version.
 	EntityInBaseVersion *Entity `json:"entityInBaseVersion,omitempty"`
 
 	// EntityInWorkspace: The workspace entity that has conflicting changes
-	// compared to the base version. If an entity is deleted in a workspace,
-	// it will still appear with a deleted change status.
+	// compared to the
+	// base version. If an entity is deleted in a workspace, it will
+	// still
+	// appear with a deleted change status.
 	EntityInWorkspace *Entity `json:"entityInWorkspace,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "EntityInBaseVersion")
@@ -1849,42 +2069,114 @@ func (s *MergeConflict) MarshalJSON() ([]byte, error) {
 
 // Parameter: Represents a Google Tag Manager Parameter.
 type Parameter struct {
-	// Key: The named key that uniquely identifies a parameter. Required for
-	// top-level parameters, as well as map values. Ignored for list values.
+	// Key: The named key that uniquely identifies a parameter.  Required
+	// for top-level
+	// parameters, as well as map values.  Ignored for list values.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Key string `json:"key,omitempty"`
 
-	// List: This list parameter's parameters (keys will be ignored).
+	// List: This list parameter's parameters (keys will be
+	// ignored).
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	List []*Parameter `json:"list,omitempty"`
 
 	// Map: This map parameter's parameters (must have keys; keys must be
 	// unique).
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Map []*Parameter `json:"map,omitempty"`
 
-	// Type: The parameter type. Valid values are:
-	// - boolean: The value represents a boolean, represented as 'true' or
-	// 'false'
-	// - integer: The value represents a 64-bit signed integer value, in
-	// base 10
-	// - list: A list of parameters should be specified
-	// - map: A map of parameters should be specified
-	// - template: The value represents any text; this can include variable
-	// references (even variable references that might return non-string
-	// types)
-	// - trigger_reference: The value represents a trigger, represented as
-	// the trigger id
+	// Type: The parameter type.  Valid values
+	// are:<ul>
+	// <li><code>boolean</code>: The value represents a boolean, represented
+	// as
+	//     'true' or 'false'</li>
+	// <li><code>integer</code>: The value represents a 64-bit signed
+	// integer
+	//     value, in base 10</li>
+	// <li><code>list</code>: A list of parameters should be
+	// specified</li>
+	// <li><code>map</code>: A map of parameters should be
+	// specified</li>
+	// <li><code>template</code>: The value represents any text; this can
+	// include
+	//     variable references (even variable references that might return
+	//     non-string types)</li>
+	// <li><code>trigger_reference</code>: The value represents a trigger,
+	//     represented as the trigger
+	// id</li>
+	// <li><code>tag_reference</code>: The value represents a tag,
+	// represented as
+	//     the tag name</li>
+	// </ul>
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	//
 	// Possible values:
-	//   "boolean"
+	//   "typeUnspecified"
+	//   "template" - May include variable references (such as
+	// "{{myVariable}}").
 	//   "integer"
+	//   "boolean"
 	//   "list"
 	//   "map"
-	//   "template"
 	//   "triggerReference"
-	//   "typeUnspecified"
+	//   "tagReference"
 	Type string `json:"type,omitempty"`
 
-	// Value: A parameter's value (may contain variable references such as
-	// "{{myVariable}}") as appropriate to the specified type.
+	// Value: A parameter's value (may contain variable references such
+	// as
+	// "{{myVariable}}")
+	// as appropriate to the specified type.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.update
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Value string `json:"value,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Key") to
@@ -1954,7 +2246,8 @@ type QuickPreviewResponse struct {
 	ContainerVersion *ContainerVersion `json:"containerVersion,omitempty"`
 
 	// SyncStatus: Whether quick previewing failed when syncing the
-	// workspace to the latest container version.
+	// workspace to the latest
+	// container version.
 	SyncStatus *SyncStatus `json:"syncStatus,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2021,9 +2314,10 @@ func (s *RevertBuiltInVariableResponse) MarshalJSON() ([]byte, error) {
 // workspace.
 type RevertFolderResponse struct {
 	// Folder: Folder as it appears in the latest container version since
-	// the last workspace synchronization operation. If no folder is
-	// present, that means the folder was deleted in the latest container
-	// version.
+	// the last
+	// workspace synchronization operation. If no folder is present, that
+	// means
+	// the folder was deleted in the latest container version.
 	Folder *Folder `json:"folder,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2055,8 +2349,10 @@ func (s *RevertFolderResponse) MarshalJSON() ([]byte, error) {
 
 // RevertTagResponse: The result of reverting a tag in a workspace.
 type RevertTagResponse struct {
-	// Tag: Tag as it appears in the latest container version since the last
-	// workspace synchronization operation. If no tag is present, that means
+	// Tag: Tag as it appears in the latest container version since the
+	// last
+	// workspace synchronization operation. If no tag is present, that
+	// means
 	// the tag was deleted in the latest container version.
 	Tag *Tag `json:"tag,omitempty"`
 
@@ -2091,9 +2387,10 @@ func (s *RevertTagResponse) MarshalJSON() ([]byte, error) {
 // workspace.
 type RevertTemplateResponse struct {
 	// Template: Template as it appears in the latest container version
-	// since the last workspace synchronization operation. If no template is
-	// present, that means the template was deleted in the latest container
-	// version.
+	// since the last
+	// workspace synchronization operation. If no template is present, that
+	// means
+	// the template was deleted in the latest container version.
 	Template *CustomTemplate `json:"template,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2127,9 +2424,10 @@ func (s *RevertTemplateResponse) MarshalJSON() ([]byte, error) {
 // workspace.
 type RevertTriggerResponse struct {
 	// Trigger: Trigger as it appears in the latest container version since
-	// the last workspace synchronization operation. If no trigger is
-	// present, that means the trigger was deleted in the latest container
-	// version.
+	// the last
+	// workspace synchronization operation. If no trigger is present, that
+	// means
+	// the trigger was deleted in the latest container version.
 	Trigger *Trigger `json:"trigger,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2163,9 +2461,10 @@ func (s *RevertTriggerResponse) MarshalJSON() ([]byte, error) {
 // workspace.
 type RevertVariableResponse struct {
 	// Variable: Variable as it appears in the latest container version
-	// since the last workspace synchronization operation. If no variable is
-	// present, that means the variable was deleted in the latest container
-	// version.
+	// since the last
+	// workspace synchronization operation. If no variable is present, that
+	// means
+	// the variable was deleted in the latest container version.
 	Variable *Variable `json:"variable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2198,8 +2497,10 @@ func (s *RevertVariableResponse) MarshalJSON() ([]byte, error) {
 // RevertZoneResponse: The result of reverting a zone in a workspace.
 type RevertZoneResponse struct {
 	// Zone: Zone as it appears in the latest container version since the
-	// last workspace synchronization operation. If no zone is present, that
-	// means the zone was deleted in the latest container version.
+	// last
+	// workspace synchronization operation. If no zone is present, that
+	// means
+	// the zone was deleted in the latest container version.
 	Zone *Zone `json:"zone,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2230,11 +2531,13 @@ func (s *RevertZoneResponse) MarshalJSON() ([]byte, error) {
 }
 
 // SetupTag: Represents a reference to atag that fires before another
-// tag in order to set up dependencies.
+// tag in order to
+// set up dependencies.
 type SetupTag struct {
 	// StopOnSetupFailure: If true, fire the main tag if and only if the
-	// setup tag fires successfully. If false, fire the main tag regardless
-	// of setup tag firing status.
+	// setup tag fires
+	// successfully.
+	// If false, fire the main tag regardless of setup tag firing status.
 	StopOnSetupFailure bool `json:"stopOnSetupFailure,omitempty"`
 
 	// TagName: The name of the setup tag.
@@ -2298,9 +2601,10 @@ func (s *SyncStatus) MarshalJSON() ([]byte, error) {
 // SyncWorkspaceResponse: A response after synchronizing the workspace
 // to the latest container version.
 type SyncWorkspaceResponse struct {
-	// MergeConflict: The merge conflict after sync. If this field is not
-	// empty, the sync is still treated as successful. But a version cannot
-	// be created until all conflicts are resolved.
+	// MergeConflict: The merge conflict after sync.
+	// If this field is not empty, the sync is still treated as
+	// successful.
+	// But a version cannot be created until all conflicts are resolved.
 	MergeConflict []*MergeConflict `json:"mergeConflict,omitempty"`
 
 	// SyncStatus: Indicates whether synchronization caused a merge conflict
@@ -2340,41 +2644,94 @@ type Tag struct {
 	AccountId string `json:"accountId,omitempty"`
 
 	// BlockingRuleId: Blocking rule IDs. If any of the listed rules
-	// evaluate to true, the tag will not fire.
+	// evaluate to true, the tag
+	//     will not fire.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	BlockingRuleId []string `json:"blockingRuleId,omitempty"`
 
 	// BlockingTriggerId: Blocking trigger IDs. If any of the listed
-	// triggers evaluate to true, the tag will not fire.
+	// triggers evaluate to true, the
+	// tag will not fire.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	BlockingTriggerId []string `json:"blockingTriggerId,omitempty"`
 
 	// ContainerId: GTM Container ID.
 	ContainerId string `json:"containerId,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Tag as computed at storage
-	// time. This value is recomputed whenever the tag is modified.
+	// time.
+	// This value is recomputed whenever the tag is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// FiringRuleId: Firing rule IDs. A tag will fire when any of the listed
-	// rules are true and all of its blockingRuleIds (if any specified) are
+	// rules are true and
+	//     all of its <code>blockingRuleIds</code> (if any specified) are
 	// false.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	FiringRuleId []string `json:"firingRuleId,omitempty"`
 
 	// FiringTriggerId: Firing trigger IDs. A tag will fire when any of the
-	// listed triggers are true and all of its blockingTriggerIds (if any
-	// specified) are false.
+	// listed triggers are
+	// true and all of its <code>blockingTriggerIds</code> (if any
+	// specified) are
+	// false.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	FiringTriggerId []string `json:"firingTriggerId,omitempty"`
 
 	// LiveOnly: If set to true, this tag will only fire in the live
-	// environment (e.g. not in preview or debug mode).
+	// environment (e.g. not
+	// in preview or debug mode).
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	LiveOnly bool `json:"liveOnly,omitempty"`
 
+	// MonitoringMetadata: A map of key-value pairs of tag metadata to be
+	// included in the event data
+	// for tag monitoring.
+	// Notes:<ul>
+	// <li>This parameter must be type <code>MAP</code>.</li>
+	// <li>Each parameter in the map are type <code>TEMPLATE</code>,
+	// however
+	// cannot contain variable references.</li>
+	// </ul>
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
+	MonitoringMetadata *Parameter `json:"monitoringMetadata,omitempty"`
+
+	// MonitoringMetadataTagNameKey: If non-empty, then the tag display name
+	// will be included in the monitoring
+	// metadata map using the key specified.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
+	MonitoringMetadataTagNameKey string `json:"monitoringMetadataTagNameKey,omitempty"`
+
 	// Name: Tag display name.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Name string `json:"name,omitempty"`
 
 	// Notes: User notes on how to apply this tag in the container.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Notes string `json:"notes,omitempty"`
 
 	// Parameter: The tag's parameters.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Parameter []*Parameter `json:"parameter,omitempty"`
 
 	// ParentFolderId: Parent folder id.
@@ -2385,19 +2742,34 @@ type Tag struct {
 
 	// Paused: Indicates whether the tag is paused, which prevents the tag
 	// from firing.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Paused bool `json:"paused,omitempty"`
 
 	// Priority: User defined numeric priority of the tag. Tags are fired
-	// asynchronously in order of priority. Tags with higher numeric value
-	// fire first. A tag's priority can be a positive or negative value. The
-	// default value is 0.
+	// asynchronously in
+	// order of priority. Tags with higher numeric value fire first. A
+	// tag's
+	// priority can be a positive or negative value. The default value is
+	// 0.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Priority *Parameter `json:"priority,omitempty"`
 
-	// ScheduleEndMs: The end timestamp in milliseconds to schedule a tag.
+	// ScheduleEndMs: The end timestamp in milliseconds to schedule a
+	// tag.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	ScheduleEndMs int64 `json:"scheduleEndMs,omitempty,string"`
 
 	// ScheduleStartMs: The start timestamp in milliseconds to schedule a
 	// tag.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	ScheduleStartMs int64 `json:"scheduleStartMs,omitempty,string"`
 
 	// SetupTag: The list of setup tags. Currently we only allow one.
@@ -2406,10 +2778,13 @@ type Tag struct {
 	// TagFiringOption: Option to fire this tag.
 	//
 	// Possible values:
-	//   "oncePerEvent"
-	//   "oncePerLoad"
 	//   "tagFiringOptionUnspecified"
-	//   "unlimited"
+	//   "unlimited" - Tag can be fired multiple times per event.
+	//   "oncePerEvent" - Tag can only be fired per event but can be fired
+	// multiple times per load
+	// (e.g., app load or page load).
+	//   "oncePerLoad" - Tag can only be fired per load (e.g., app load or
+	// page load).
 	TagFiringOption string `json:"tagFiringOption,omitempty"`
 
 	// TagId: The Tag ID uniquely identifies the GTM Tag.
@@ -2422,6 +2797,9 @@ type Tag struct {
 	TeardownTag []*TeardownTag `json:"teardownTag,omitempty"`
 
 	// Type: GTM Tag Type.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.tags.create
+	// @mutable tagmanager.accounts.containers.workspaces.tags.update
 	Type string `json:"type,omitempty"`
 
 	// WorkspaceId: GTM Workspace ID.
@@ -2455,11 +2833,13 @@ func (s *Tag) MarshalJSON() ([]byte, error) {
 }
 
 // TeardownTag: Represents a tag that fires after another tag in order
-// to tear down dependencies.
+// to tear down
+// dependencies.
 type TeardownTag struct {
 	// StopTeardownOnFailure: If true, fire the teardown tag if and only if
-	// the main tag fires successfully. If false, fire the teardown tag
-	// regardless of main tag firing status.
+	// the main tag fires
+	// successfully.
+	// If false, fire the teardown tag regardless of main tag firing status.
 	StopTeardownOnFailure bool `json:"stopTeardownOnFailure,omitempty"`
 
 	// TagName: The name of the teardown tag.
@@ -2490,194 +2870,127 @@ func (s *TeardownTag) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Timestamp: A Timestamp represents a point in time independent of any
-// time zone or local calendar, encoded as a count of seconds and
-// fractions of seconds at nanosecond resolution. The count is relative
-// to an epoch at UTC midnight on January 1, 1970, in the proleptic
-// Gregorian calendar which extends the Gregorian calendar backwards to
-// year one.
-//
-// All minutes are 60 seconds long. Leap seconds are "smeared" so that
-// no leap second table is needed for interpretation, using a [24-hour
-// linear smear](https://developers.google.com/time/smear).
-//
-// The range is from 0001-01-01T00:00:00Z to
-// 9999-12-31T23:59:59.999999999Z. By restricting to that range, we
-// ensure that we can convert to and from [RFC
-// 3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
-//
-// # Examples
-//
-// Example 1: Compute Timestamp from POSIX `time()`.
-//
-// Timestamp timestamp; timestamp.set_seconds(time(NULL));
-// timestamp.set_nanos(0);
-//
-// Example 2: Compute Timestamp from POSIX `gettimeofday()`.
-//
-// struct timeval tv; gettimeofday(&tv, NULL);
-//
-// Timestamp timestamp; timestamp.set_seconds(tv.tv_sec);
-// timestamp.set_nanos(tv.tv_usec * 1000);
-//
-// Example 3: Compute Timestamp from Win32
-// `GetSystemTimeAsFileTime()`.
-//
-// FILETIME ft; GetSystemTimeAsFileTime(&ft); UINT64 ticks =
-// (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
-//
-// // A Windows tick is 100 nanoseconds. Windows epoch
-// 1601-01-01T00:00:00Z // is 11644473600 seconds before Unix epoch
-// 1970-01-01T00:00:00Z. Timestamp timestamp;
-// timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
-// timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
-//
-// Example 4: Compute Timestamp from Java
-// `System.currentTimeMillis()`.
-//
-// long millis = System.currentTimeMillis();
-//
-// Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis /
-// 1000) .setNanos((int) ((millis % 1000) *
-// 1000000)).build();
-//
-//
-//
-// Example 5: Compute Timestamp from current time in Python.
-//
-// timestamp = Timestamp() timestamp.GetCurrentTime()
-//
-// # JSON Mapping
-//
-// In JSON format, the Timestamp type is encoded as a string in the [RFC
-// 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
-// format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
-// where {year} is always expressed using four digits while {month},
-// {day}, {hour}, {min}, and {sec} are zero-padded to two digits each.
-// The fractional seconds, which can go up to 9 digits (i.e. up to 1
-// nanosecond resolution), are optional. The "Z" suffix indicates the
-// timezone ("UTC"); the timezone is required. A proto3 JSON serializer
-// should always use UTC (as indicated by "Z") when printing the
-// Timestamp type and a proto3 JSON parser should be able to accept both
-// UTC and other timezones (as indicated by an offset).
-//
-// For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
-// 01:30 UTC on January 15, 2017.
-//
-// In JavaScript, one can convert a Date object to this format using the
-// standard
-// [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScrip
-// t/Reference/Global_Objects/Date/toISOString) method. In Python, a
-// standard `datetime.datetime` object can be converted to this format
-// using
-// [`strftime`](https://docs.python.org/2/library/time.html#time.strftime
-// ) with the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in
-// Java, one can use the Joda Time's [`ISODateTimeFormat.dateTime()`](
-// http://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime%2D%2D ) to obtain a formatter capable of generating timestamps in this
-// format.
-type Timestamp struct {
-	// Nanos: Non-negative fractions of a second at nanosecond resolution.
-	// Negative second values with fractions must still have non-negative
-	// nanos values that count forward in time. Must be from 0 to
-	// 999,999,999 inclusive.
-	Nanos int64 `json:"nanos,omitempty"`
-
-	// Seconds: Represents seconds of UTC time since Unix epoch
-	// 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
-	// 9999-12-31T23:59:59Z inclusive.
-	Seconds int64 `json:"seconds,omitempty,string"`
-
-	// ForceSendFields is a list of field names (e.g. "Nanos") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Nanos") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Timestamp) MarshalJSON() ([]byte, error) {
-	type NoMethod Timestamp
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // Trigger: Represents a Google Tag Manager Trigger
 type Trigger struct {
 	// AccountId: GTM Account ID.
 	AccountId string `json:"accountId,omitempty"`
 
 	// AutoEventFilter: Used in the case of auto event tracking.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	AutoEventFilter []*Condition `json:"autoEventFilter,omitempty"`
 
 	// CheckValidation: Whether or not we should only fire tags if the form
-	// submit or link click event is not cancelled by some other event
-	// handler (e.g. because of validation). Only valid for Form Submission
-	// and Link Click triggers.
+	// submit or link click
+	// event is not cancelled by some other event handler (e.g. because
+	// of
+	// validation). Only valid for Form Submission and Link Click
+	// triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	CheckValidation *Parameter `json:"checkValidation,omitempty"`
 
 	// ContainerId: GTM Container ID.
 	ContainerId string `json:"containerId,omitempty"`
 
 	// ContinuousTimeMinMilliseconds: A visibility trigger minimum
-	// continuous visible time (in milliseconds). Only valid for AMP
-	// Visibility trigger.
+	// continuous visible time (in milliseconds).
+	// Only valid for AMP Visibility trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	ContinuousTimeMinMilliseconds *Parameter `json:"continuousTimeMinMilliseconds,omitempty"`
 
 	// CustomEventFilter: Used in the case of custom event, which is fired
-	// iff all Conditions are true.
+	// iff all Conditions are
+	// true.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	CustomEventFilter []*Condition `json:"customEventFilter,omitempty"`
 
 	// EventName: Name of the GTM event that is fired. Only valid for Timer
 	// triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	EventName *Parameter `json:"eventName,omitempty"`
 
-	// Filter: The trigger will only fire iff all Conditions are true.
+	// Filter: The trigger will only fire iff all Conditions are
+	// true.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	Filter []*Condition `json:"filter,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Trigger as computed at
-	// storage time. This value is recomputed whenever the trigger is
-	// modified.
+	// storage time.
+	// This value is recomputed whenever the trigger is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// HorizontalScrollPercentageList: List of integer percentage values for
-	// scroll triggers. The trigger will fire when each percentage is
-	// reached when the view is scrolled horizontally. Only valid for AMP
-	// scroll triggers.
+	// scroll triggers. The trigger will
+	// fire when each percentage is reached when the view is
+	// scrolled
+	// horizontally. Only valid for AMP scroll triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	HorizontalScrollPercentageList *Parameter `json:"horizontalScrollPercentageList,omitempty"`
 
 	// Interval: Time between triggering recurring Timer Events (in
-	// milliseconds). Only valid for Timer triggers.
+	// milliseconds). Only
+	// valid for Timer triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	Interval *Parameter `json:"interval,omitempty"`
 
 	// IntervalSeconds: Time between Timer Events to fire (in seconds). Only
-	// valid for AMP Timer trigger.
+	// valid for AMP Timer
+	// trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	IntervalSeconds *Parameter `json:"intervalSeconds,omitempty"`
 
 	// Limit: Limit of the number of GTM events this Timer Trigger will
-	// fire. If no limit is set, we will continue to fire GTM events until
-	// the user leaves the page. Only valid for Timer triggers.
+	// fire. If no limit
+	// is set, we will continue to fire GTM events until the user leaves the
+	// page.
+	// Only valid for Timer triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	Limit *Parameter `json:"limit,omitempty"`
 
 	// MaxTimerLengthSeconds: Max time to fire Timer Events (in seconds).
-	// Only valid for AMP Timer trigger.
+	// Only valid for AMP Timer
+	// trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	MaxTimerLengthSeconds *Parameter `json:"maxTimerLengthSeconds,omitempty"`
 
 	// Name: Trigger display name.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	Name string `json:"name,omitempty"`
 
-	// Notes: User notes on how to apply this trigger in the container.
+	// Notes: User notes on how to apply this trigger in the
+	// container.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	Notes string `json:"notes,omitempty"`
 
 	// Parameter: Additional parameters.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	Parameter []*Parameter `json:"parameter,omitempty"`
 
 	// ParentFolderId: Parent folder id.
@@ -2687,32 +3000,40 @@ type Trigger struct {
 	Path string `json:"path,omitempty"`
 
 	// Selector: A click trigger CSS selector (i.e. "a", "button" etc.).
-	// Only valid for AMP Click trigger.
+	// Only valid for AMP
+	// Click trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	Selector *Parameter `json:"selector,omitempty"`
 
 	// TagManagerUrl: Auto generated link to the tag manager UI
 	TagManagerUrl string `json:"tagManagerUrl,omitempty"`
 
 	// TotalTimeMinMilliseconds: A visibility trigger minimum total visible
-	// time (in milliseconds). Only valid for AMP Visibility trigger.
+	// time (in milliseconds).
+	// Only valid for AMP Visibility trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	TotalTimeMinMilliseconds *Parameter `json:"totalTimeMinMilliseconds,omitempty"`
 
 	// TriggerId: The Trigger ID uniquely identifies the GTM Trigger.
 	TriggerId string `json:"triggerId,omitempty"`
 
 	// Type: Defines the data layer event that causes this trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	//
 	// Possible values:
-	//   "always"
-	//   "ampClick"
-	//   "ampScroll"
-	//   "ampTimer"
-	//   "ampVisibility"
-	//   "click"
-	//   "customEvent"
-	//   "domReady"
-	//   "elementVisibility"
 	//   "eventTypeUnspecified"
+	//   "pageview"
+	//   "domReady"
+	//   "windowLoaded"
+	//   "customEvent"
+	//   "triggerGroup"
+	//   "always"
 	//   "firebaseAppException"
 	//   "firebaseAppUpdate"
 	//   "firebaseCampaign"
@@ -2726,52 +3047,88 @@ type Trigger struct {
 	//   "firebaseSessionStart"
 	//   "firebaseUserEngagement"
 	//   "formSubmission"
-	//   "historyChange"
-	//   "jsError"
+	//   "click"
 	//   "linkClick"
-	//   "pageview"
-	//   "scrollDepth"
+	//   "jsError"
+	//   "historyChange"
 	//   "timer"
-	//   "triggerGroup"
-	//   "windowLoaded"
+	//   "ampClick"
+	//   "ampTimer"
+	//   "ampScroll"
+	//   "ampVisibility"
 	//   "youTubeVideo"
+	//   "scrollDepth"
+	//   "elementVisibility"
 	Type string `json:"type,omitempty"`
 
 	// UniqueTriggerId: Globally unique id of the trigger that
-	// auto-generates this (a Form Submit, Link Click or Timer listener) if
-	// any. Used to make incompatible auto-events work together with trigger
-	// filtering based on trigger ids. This value is populated during output
-	// generation since the tags implied by triggers don't exist until then.
-	// Only valid for Form Submit, Link Click and Timer triggers.
+	// auto-generates this (a Form Submit,
+	// Link Click or Timer listener) if any. Used to make incompatible
+	// auto-events
+	// work together with trigger filtering based on trigger ids. This value
+	// is
+	// populated during output generation since the tags implied by triggers
+	// don't
+	// exist until then. Only valid for Form Submit, Link Click and
+	// Timer
+	// triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	UniqueTriggerId *Parameter `json:"uniqueTriggerId,omitempty"`
 
 	// VerticalScrollPercentageList: List of integer percentage values for
-	// scroll triggers. The trigger will fire when each percentage is
-	// reached when the view is scrolled vertically. Only valid for AMP
-	// scroll triggers.
+	// scroll triggers. The trigger will
+	// fire when each percentage is reached when the view is scrolled
+	// vertically.
+	// Only valid for AMP scroll triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	VerticalScrollPercentageList *Parameter `json:"verticalScrollPercentageList,omitempty"`
 
 	// VisibilitySelector: A visibility trigger CSS selector (i.e. "#id").
-	// Only valid for AMP Visibility trigger.
+	// Only valid for AMP
+	// Visibility trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	VisibilitySelector *Parameter `json:"visibilitySelector,omitempty"`
 
 	// VisiblePercentageMax: A visibility trigger maximum percent
-	// visibility. Only valid for AMP Visibility trigger.
+	// visibility. Only valid for AMP
+	// Visibility trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	VisiblePercentageMax *Parameter `json:"visiblePercentageMax,omitempty"`
 
 	// VisiblePercentageMin: A visibility trigger minimum percent
-	// visibility. Only valid for AMP Visibility trigger.
+	// visibility. Only valid for AMP
+	// Visibility trigger.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	VisiblePercentageMin *Parameter `json:"visiblePercentageMin,omitempty"`
 
 	// WaitForTags: Whether or not we should delay the form submissions or
-	// link opening until all of the tags have fired (by preventing the
-	// default action and later simulating the default action). Only valid
-	// for Form Submission and Link Click triggers.
+	// link opening
+	// until all of the tags have fired (by preventing the default
+	// action and later simulating the default action). Only valid for
+	// Form Submission and Link Click triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	WaitForTags *Parameter `json:"waitForTags,omitempty"`
 
 	// WaitForTagsTimeout: How long to wait (in milliseconds) for tags to
-	// fire when 'waits_for_tags' above evaluates to true. Only valid for
-	// Form Submission and Link Click triggers.
+	// fire when 'waits_for_tags'
+	// above evaluates to <code>true</code>.  Only valid for Form Submission
+	// and
+	// Link Click triggers.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.triggers.create
+	// @mutable tagmanager.accounts.containers.workspaces.triggers.update
 	WaitForTagsTimeout *Parameter `json:"waitForTagsTimeout,omitempty"`
 
 	// WorkspaceId: GTM Workspace ID.
@@ -2808,15 +3165,20 @@ func (s *Trigger) MarshalJSON() ([]byte, error) {
 // container.
 type UserPermission struct {
 	// AccountAccess: GTM Account access permissions.
+	// @mutable tagmanager.accounts.permissions.create
+	// @mutable tagmanager.accounts.permissions.update
 	AccountAccess *AccountAccess `json:"accountAccess,omitempty"`
 
 	// AccountId: The Account ID uniquely identifies the GTM Account.
 	AccountId string `json:"accountId,omitempty"`
 
 	// ContainerAccess: GTM Container access permissions.
+	// @mutable tagmanager.accounts.permissions.create
+	// @mutable tagmanager.accounts.permissions.update
 	ContainerAccess []*ContainerAccess `json:"containerAccess,omitempty"`
 
 	// EmailAddress: User's email address.
+	// @mutable tagmanager.accounts.permissions.create
 	EmailAddress string `json:"emailAddress,omitempty"`
 
 	// Path: GTM UserPermission's API relative path.
@@ -2858,32 +3220,52 @@ type Variable struct {
 	ContainerId string `json:"containerId,omitempty"`
 
 	// DisablingTriggerId: For mobile containers only: A list of trigger IDs
-	// for disabling conditional variables; the variable is enabled if one
-	// of the enabling trigger is true while all the disabling trigger are
-	// false. Treated as an unordered set.
+	// for disabling conditional
+	// variables; the variable is enabled if one of the enabling trigger is
+	// true
+	// while all the disabling trigger are false. Treated as an unordered
+	// set.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable tagmanager.accounts.containers.workspaces.variables.update
 	DisablingTriggerId []string `json:"disablingTriggerId,omitempty"`
 
 	// EnablingTriggerId: For mobile containers only: A list of trigger IDs
-	// for enabling conditional variables; the variable is enabled if one of
-	// the enabling triggers is true while all the disabling triggers are
-	// false. Treated as an unordered set.
+	// for enabling conditional
+	// variables; the variable is enabled if one of the enabling triggers is
+	// true
+	// while all the disabling triggers are false. Treated as an unordered
+	// set.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable tagmanager.accounts.containers.workspaces.variables.update
 	EnablingTriggerId []string `json:"enablingTriggerId,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Variable as computed at
-	// storage time. This value is recomputed whenever the variable is
-	// modified.
+	// storage time.
+	// This value is recomputed whenever the variable is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// FormatValue: Option to convert a variable value to other value.
 	FormatValue *VariableFormatValue `json:"formatValue,omitempty"`
 
 	// Name: Variable display name.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable tagmanager.accounts.containers.workspaces.variables.update
 	Name string `json:"name,omitempty"`
 
-	// Notes: User notes on how to apply this variable in the container.
+	// Notes: User notes on how to apply this variable in the
+	// container.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable tagmanager.accounts.containers.workspaces.variables.update
 	Notes string `json:"notes,omitempty"`
 
 	// Parameter: The variable's parameters.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable tagmanager.accounts.containers.workspaces.variables.update
 	Parameter []*Parameter `json:"parameter,omitempty"`
 
 	// ParentFolderId: Parent folder id.
@@ -2894,16 +3276,25 @@ type Variable struct {
 
 	// ScheduleEndMs: The end timestamp in milliseconds to schedule a
 	// variable.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable tagmanager.accounts.containers.workspaces.variables.update
 	ScheduleEndMs int64 `json:"scheduleEndMs,omitempty,string"`
 
 	// ScheduleStartMs: The start timestamp in milliseconds to schedule a
 	// variable.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable tagmanager.accounts.containers.workspaces.variables.update
 	ScheduleStartMs int64 `json:"scheduleStartMs,omitempty,string"`
 
 	// TagManagerUrl: Auto generated link to the tag manager UI
 	TagManagerUrl string `json:"tagManagerUrl,omitempty"`
 
 	// Type: GTM Variable Type.
+	// @mutable
+	// tagmanager.accounts.containers.workspaces.variables.create
+	// @mutable tagmanager.accounts.containers.workspaces.variables.update
 	Type string `json:"type,omitempty"`
 
 	// VariableId: The Variable ID uniquely identifies the GTM Variable.
@@ -2941,12 +3332,13 @@ func (s *Variable) MarshalJSON() ([]byte, error) {
 
 type VariableFormatValue struct {
 	// CaseConversionType: The option to convert a string-type variable
-	// value to either lowercase or uppercase.
+	// value to either lowercase or
+	// uppercase.
 	//
 	// Possible values:
-	//   "lowercase"
 	//   "none"
-	//   "uppercase"
+	//   "lowercase" - The option to convert a variable value to lowercase.
+	//   "uppercase" - The option to convert a variable value to uppercase.
 	CaseConversionType string `json:"caseConversionType,omitempty"`
 
 	// ConvertFalseToValue: The value to convert if a variable value is
@@ -2996,14 +3388,18 @@ type Workspace struct {
 	ContainerId string `json:"containerId,omitempty"`
 
 	// Description: Workspace description.
+	// @mutable tagmanager.accounts.containers.workspaces.create
+	// @mutable tagmanager.accounts.containers.workspaces.update
 	Description string `json:"description,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Workspace as computed at
-	// storage time. This value is recomputed whenever the workspace is
-	// modified.
+	// storage time. This
+	// value is recomputed whenever the workspace is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// Name: Workspace display name.
+	// @mutable tagmanager.accounts.containers.workspaces.create
+	// @mutable tagmanager.accounts.containers.workspaces.update
 	Name string `json:"name,omitempty"`
 
 	// Path: GTM Workspace's API relative path.
@@ -3057,7 +3453,8 @@ type Zone struct {
 	ContainerId string `json:"containerId,omitempty"`
 
 	// Fingerprint: The fingerprint of the GTM Zone as computed at storage
-	// time. This value is recomputed whenever the zone is modified.
+	// time.
+	// This value is recomputed whenever the zone is modified.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// Name: Zone display name.
@@ -3114,8 +3511,8 @@ type ZoneBoundary struct {
 	Condition []*Condition `json:"condition,omitempty"`
 
 	// CustomEvaluationTriggerId: Custom evaluation trigger IDs. A zone will
-	// evaluate its boundary conditions when any of the listed triggers are
-	// true.
+	// evaluate its boundary
+	// conditions when any of the listed triggers are true.
 	CustomEvaluationTriggerId []string `json:"customEvaluationTriggerId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Condition") to
@@ -3259,7 +3656,7 @@ func (c *AccountsGetCall) Header() http.Header {
 
 func (c *AccountsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3270,7 +3667,7 @@ func (c *AccountsGetCall) doRequest(alt string) (*http.Response, error) {
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -3322,6 +3719,7 @@ func (c *AccountsGetCall) Do(opts ...googleapi.CallOption) (*Account, error) {
 	return ret, nil
 	// {
 	//   "description": "Gets a GTM Account.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.get",
 	//   "parameterOrder": [
@@ -3329,13 +3727,14 @@ func (c *AccountsGetCall) Do(opts ...googleapi.CallOption) (*Account, error) {
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Accounts's API relative path. Example: accounts/{account_id}",
+	//       "description": "GTM Accounts's API relative path.\nExample: accounts/{account_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Account"
 	//   },
@@ -3408,7 +3807,7 @@ func (c *AccountsListCall) Header() http.Header {
 
 func (c *AccountsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3419,7 +3818,7 @@ func (c *AccountsListCall) doRequest(alt string) (*http.Response, error) {
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "accounts")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/accounts")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -3468,8 +3867,10 @@ func (c *AccountsListCall) Do(opts ...googleapi.CallOption) (*ListAccountsRespon
 	return ret, nil
 	// {
 	//   "description": "Lists all GTM Accounts that a user has access to.",
+	//   "flatPath": "tagmanager/v2/accounts",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.list",
+	//   "parameterOrder": [],
 	//   "parameters": {
 	//     "pageToken": {
 	//       "description": "Continuation token for fetching the next page of results.",
@@ -3477,7 +3878,7 @@ func (c *AccountsListCall) Do(opts ...googleapi.CallOption) (*ListAccountsRespon
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "accounts",
+	//   "path": "tagmanager/v2/accounts",
 	//   "response": {
 	//     "$ref": "ListAccountsResponse"
 	//   },
@@ -3531,8 +3932,8 @@ func (r *AccountsService) Update(path string, account *Account) *AccountsUpdateC
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the account in
-// storage.
+// this fingerprint must match the fingerprint of the account
+// in storage.
 func (c *AccountsUpdateCall) Fingerprint(fingerprint string) *AccountsUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -3565,7 +3966,7 @@ func (c *AccountsUpdateCall) Header() http.Header {
 
 func (c *AccountsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3578,7 +3979,7 @@ func (c *AccountsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -3630,6 +4031,7 @@ func (c *AccountsUpdateCall) Do(opts ...googleapi.CallOption) (*Account, error) 
 	return ret, nil
 	// {
 	//   "description": "Updates a GTM Account.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.update",
 	//   "parameterOrder": [
@@ -3637,18 +4039,19 @@ func (c *AccountsUpdateCall) Do(opts ...googleapi.CallOption) (*Account, error) 
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the account in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the account\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Accounts's API relative path. Example: accounts/{account_id}",
+	//       "description": "GTM Accounts's API relative path.\nExample: accounts/{account_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Account"
 	//   },
@@ -3708,7 +4111,7 @@ func (c *AccountsContainersCreateCall) Header() http.Header {
 
 func (c *AccountsContainersCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3721,7 +4124,7 @@ func (c *AccountsContainersCreateCall) doRequest(alt string) (*http.Response, er
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/containers")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/containers")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -3773,6 +4176,7 @@ func (c *AccountsContainersCreateCall) Do(opts ...googleapi.CallOption) (*Contai
 	return ret, nil
 	// {
 	//   "description": "Creates a Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.create",
 	//   "parameterOrder": [
@@ -3780,13 +4184,14 @@ func (c *AccountsContainersCreateCall) Do(opts ...googleapi.CallOption) (*Contai
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Account's API relative path. Example: accounts/{account_id}.",
+	//       "description": "GTM Account's API relative path.\nExample: accounts/{account_id}.",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/containers",
+	//   "path": "tagmanager/v2/{+parent}/containers",
 	//   "request": {
 	//     "$ref": "Container"
 	//   },
@@ -3844,7 +4249,7 @@ func (c *AccountsContainersDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3852,7 +4257,7 @@ func (c *AccountsContainersDeleteCall) doRequest(alt string) (*http.Response, er
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -3879,6 +4284,7 @@ func (c *AccountsContainersDeleteCall) Do(opts ...googleapi.CallOption) error {
 	return nil
 	// {
 	//   "description": "Deletes a Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.delete",
 	//   "parameterOrder": [
@@ -3886,13 +4292,14 @@ func (c *AccountsContainersDeleteCall) Do(opts ...googleapi.CallOption) error {
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.delete.containers"
 	//   ]
@@ -3955,7 +4362,7 @@ func (c *AccountsContainersGetCall) Header() http.Header {
 
 func (c *AccountsContainersGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3966,7 +4373,7 @@ func (c *AccountsContainersGetCall) doRequest(alt string) (*http.Response, error
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -4018,6 +4425,7 @@ func (c *AccountsContainersGetCall) Do(opts ...googleapi.CallOption) (*Container
 	return ret, nil
 	// {
 	//   "description": "Gets a Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.get",
 	//   "parameterOrder": [
@@ -4025,13 +4433,14 @@ func (c *AccountsContainersGetCall) Do(opts ...googleapi.CallOption) (*Container
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Container"
 	//   },
@@ -4105,7 +4514,7 @@ func (c *AccountsContainersListCall) Header() http.Header {
 
 func (c *AccountsContainersListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4116,7 +4525,7 @@ func (c *AccountsContainersListCall) doRequest(alt string) (*http.Response, erro
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/containers")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/containers")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -4168,6 +4577,7 @@ func (c *AccountsContainersListCall) Do(opts ...googleapi.CallOption) (*ListCont
 	return ret, nil
 	// {
 	//   "description": "Lists all Containers that belongs to a GTM Account.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.list",
 	//   "parameterOrder": [
@@ -4180,13 +4590,14 @@ func (c *AccountsContainersListCall) Do(opts ...googleapi.CallOption) (*ListCont
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Accounts's API relative path. Example: accounts/{account_id}.",
+	//       "description": "GTM Accounts's API relative path.\nExample: accounts/{account_id}.",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/containers",
+	//   "path": "tagmanager/v2/{+parent}/containers",
 	//   "response": {
 	//     "$ref": "ListContainersResponse"
 	//   },
@@ -4239,8 +4650,8 @@ func (r *AccountsContainersService) Update(path string, container *Container) *A
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the container in
-// storage.
+// this fingerprint must match the fingerprint of the
+// container in storage.
 func (c *AccountsContainersUpdateCall) Fingerprint(fingerprint string) *AccountsContainersUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -4273,7 +4684,7 @@ func (c *AccountsContainersUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4286,7 +4697,7 @@ func (c *AccountsContainersUpdateCall) doRequest(alt string) (*http.Response, er
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -4338,6 +4749,7 @@ func (c *AccountsContainersUpdateCall) Do(opts ...googleapi.CallOption) (*Contai
 	return ret, nil
 	// {
 	//   "description": "Updates a Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.update",
 	//   "parameterOrder": [
@@ -4345,18 +4757,19 @@ func (c *AccountsContainersUpdateCall) Do(opts ...googleapi.CallOption) (*Contai
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the container in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the\ncontainer in storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Container"
 	//   },
@@ -4416,7 +4829,7 @@ func (c *AccountsContainersEnvironmentsCreateCall) Header() http.Header {
 
 func (c *AccountsContainersEnvironmentsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4429,7 +4842,7 @@ func (c *AccountsContainersEnvironmentsCreateCall) doRequest(alt string) (*http.
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/environments")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/environments")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -4481,6 +4894,7 @@ func (c *AccountsContainersEnvironmentsCreateCall) Do(opts ...googleapi.CallOpti
 	return ret, nil
 	// {
 	//   "description": "Creates a GTM Environment.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/environments",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.environments.create",
 	//   "parameterOrder": [
@@ -4488,13 +4902,14 @@ func (c *AccountsContainersEnvironmentsCreateCall) Do(opts ...googleapi.CallOpti
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/environments",
+	//   "path": "tagmanager/v2/{+parent}/environments",
 	//   "request": {
 	//     "$ref": "Environment"
 	//   },
@@ -4552,7 +4967,7 @@ func (c *AccountsContainersEnvironmentsDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersEnvironmentsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4560,7 +4975,7 @@ func (c *AccountsContainersEnvironmentsDeleteCall) doRequest(alt string) (*http.
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -4587,6 +5002,7 @@ func (c *AccountsContainersEnvironmentsDeleteCall) Do(opts ...googleapi.CallOpti
 	return nil
 	// {
 	//   "description": "Deletes a GTM Environment.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/environments/{environmentsId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.environments.delete",
 	//   "parameterOrder": [
@@ -4594,13 +5010,14 @@ func (c *AccountsContainersEnvironmentsDeleteCall) Do(opts ...googleapi.CallOpti
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Environment's API relative path. Example: accounts/{account_id}/containers/{container_id}/environments/{environment_id}",
+	//       "description": "GTM Environment's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/environments/{environment_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/environments/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containers"
 	//   ]
@@ -4663,7 +5080,7 @@ func (c *AccountsContainersEnvironmentsGetCall) Header() http.Header {
 
 func (c *AccountsContainersEnvironmentsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4674,7 +5091,7 @@ func (c *AccountsContainersEnvironmentsGetCall) doRequest(alt string) (*http.Res
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -4726,6 +5143,7 @@ func (c *AccountsContainersEnvironmentsGetCall) Do(opts ...googleapi.CallOption)
 	return ret, nil
 	// {
 	//   "description": "Gets a GTM Environment.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/environments/{environmentsId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.environments.get",
 	//   "parameterOrder": [
@@ -4733,13 +5151,14 @@ func (c *AccountsContainersEnvironmentsGetCall) Do(opts ...googleapi.CallOption)
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Environment's API relative path. Example: accounts/{account_id}/containers/{container_id}/environments/{environment_id}",
+	//       "description": "GTM Environment's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/environments/{environment_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/environments/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Environment"
 	//   },
@@ -4813,7 +5232,7 @@ func (c *AccountsContainersEnvironmentsListCall) Header() http.Header {
 
 func (c *AccountsContainersEnvironmentsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4824,7 +5243,7 @@ func (c *AccountsContainersEnvironmentsListCall) doRequest(alt string) (*http.Re
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/environments")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/environments")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -4876,6 +5295,7 @@ func (c *AccountsContainersEnvironmentsListCall) Do(opts ...googleapi.CallOption
 	return ret, nil
 	// {
 	//   "description": "Lists all GTM Environments of a GTM Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/environments",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.environments.list",
 	//   "parameterOrder": [
@@ -4888,13 +5308,14 @@ func (c *AccountsContainersEnvironmentsListCall) Do(opts ...googleapi.CallOption
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/environments",
+	//   "path": "tagmanager/v2/{+parent}/environments",
 	//   "response": {
 	//     "$ref": "ListEnvironmentsResponse"
 	//   },
@@ -4974,7 +5395,7 @@ func (c *AccountsContainersEnvironmentsReauthorizeCall) Header() http.Header {
 
 func (c *AccountsContainersEnvironmentsReauthorizeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4987,7 +5408,7 @@ func (c *AccountsContainersEnvironmentsReauthorizeCall) doRequest(alt string) (*
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:reauthorize")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:reauthorize")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -5039,6 +5460,7 @@ func (c *AccountsContainersEnvironmentsReauthorizeCall) Do(opts ...googleapi.Cal
 	return ret, nil
 	// {
 	//   "description": "Re-generates the authorization code for a GTM Environment.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/environments/{environmentsId}:reauthorize",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.environments.reauthorize",
 	//   "parameterOrder": [
@@ -5046,13 +5468,14 @@ func (c *AccountsContainersEnvironmentsReauthorizeCall) Do(opts ...googleapi.Cal
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Environment's API relative path. Example: accounts/{account_id}/containers/{container_id}/environments/{environment_id}",
+	//       "description": "GTM Environment's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/environments/{environment_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/environments/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:reauthorize",
+	//   "path": "tagmanager/v2/{+path}:reauthorize",
 	//   "request": {
 	//     "$ref": "Environment"
 	//   },
@@ -5086,8 +5509,8 @@ func (r *AccountsContainersEnvironmentsService) Update(path string, environment 
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the environment in
-// storage.
+// this fingerprint must match the fingerprint of the
+// environment in storage.
 func (c *AccountsContainersEnvironmentsUpdateCall) Fingerprint(fingerprint string) *AccountsContainersEnvironmentsUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -5120,7 +5543,7 @@ func (c *AccountsContainersEnvironmentsUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersEnvironmentsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5133,7 +5556,7 @@ func (c *AccountsContainersEnvironmentsUpdateCall) doRequest(alt string) (*http.
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -5185,6 +5608,7 @@ func (c *AccountsContainersEnvironmentsUpdateCall) Do(opts ...googleapi.CallOpti
 	return ret, nil
 	// {
 	//   "description": "Updates a GTM Environment.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/environments/{environmentsId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.environments.update",
 	//   "parameterOrder": [
@@ -5192,18 +5616,19 @@ func (c *AccountsContainersEnvironmentsUpdateCall) Do(opts ...googleapi.CallOpti
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the environment in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the\nenvironment in storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Environment's API relative path. Example: accounts/{account_id}/containers/{container_id}/environments/{environment_id}",
+	//       "description": "GTM Environment's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/environments/{environment_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/environments/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Environment"
 	//   },
@@ -5272,7 +5697,7 @@ func (c *AccountsContainersVersionHeadersLatestCall) Header() http.Header {
 
 func (c *AccountsContainersVersionHeadersLatestCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5283,7 +5708,7 @@ func (c *AccountsContainersVersionHeadersLatestCall) doRequest(alt string) (*htt
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/version_headers:latest")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/version_headers:latest")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -5335,6 +5760,7 @@ func (c *AccountsContainersVersionHeadersLatestCall) Do(opts ...googleapi.CallOp
 	return ret, nil
 	// {
 	//   "description": "Gets the latest container version header",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/version_headers:latest",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.version_headers.latest",
 	//   "parameterOrder": [
@@ -5342,13 +5768,14 @@ func (c *AccountsContainersVersionHeadersLatestCall) Do(opts ...googleapi.CallOp
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/version_headers:latest",
+	//   "path": "tagmanager/v2/{+parent}/version_headers:latest",
 	//   "response": {
 	//     "$ref": "ContainerVersionHeader"
 	//   },
@@ -5429,7 +5856,7 @@ func (c *AccountsContainersVersionHeadersListCall) Header() http.Header {
 
 func (c *AccountsContainersVersionHeadersListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5440,7 +5867,7 @@ func (c *AccountsContainersVersionHeadersListCall) doRequest(alt string) (*http.
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/version_headers")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/version_headers")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -5492,6 +5919,7 @@ func (c *AccountsContainersVersionHeadersListCall) Do(opts ...googleapi.CallOpti
 	return ret, nil
 	// {
 	//   "description": "Lists all Container Versions of a GTM Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/version_headers",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.version_headers.list",
 	//   "parameterOrder": [
@@ -5509,13 +5937,14 @@ func (c *AccountsContainersVersionHeadersListCall) Do(opts ...googleapi.CallOpti
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/version_headers",
+	//   "path": "tagmanager/v2/{+parent}/version_headers",
 	//   "response": {
 	//     "$ref": "ListContainerVersionsResponse"
 	//   },
@@ -5593,7 +6022,7 @@ func (c *AccountsContainersVersionsDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersVersionsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5601,7 +6030,7 @@ func (c *AccountsContainersVersionsDeleteCall) doRequest(alt string) (*http.Resp
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -5628,6 +6057,7 @@ func (c *AccountsContainersVersionsDeleteCall) Do(opts ...googleapi.CallOption) 
 	return nil
 	// {
 	//   "description": "Deletes a Container Version.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/versions/{versionsId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.versions.delete",
 	//   "parameterOrder": [
@@ -5635,13 +6065,14 @@ func (c *AccountsContainersVersionsDeleteCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM ContainerVersion's API relative path. Example: accounts/{account_id}/containers/{container_id}/versions/{version_id}",
+	//       "description": "GTM ContainerVersion's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/versions/{version_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/versions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containerversions"
 	//   ]
@@ -5668,8 +6099,9 @@ func (r *AccountsContainersVersionsService) Get(path string) *AccountsContainers
 }
 
 // ContainerVersionId sets the optional parameter "containerVersionId":
-// The GTM ContainerVersion ID. Specify published to retrieve the
-// currently published version.
+// The GTM ContainerVersion ID. Specify <code>published</code> to
+// retrieve
+// the currently published version.
 func (c *AccountsContainersVersionsGetCall) ContainerVersionId(containerVersionId string) *AccountsContainersVersionsGetCall {
 	c.urlParams_.Set("containerVersionId", containerVersionId)
 	return c
@@ -5712,7 +6144,7 @@ func (c *AccountsContainersVersionsGetCall) Header() http.Header {
 
 func (c *AccountsContainersVersionsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5723,7 +6155,7 @@ func (c *AccountsContainersVersionsGetCall) doRequest(alt string) (*http.Respons
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -5775,6 +6207,7 @@ func (c *AccountsContainersVersionsGetCall) Do(opts ...googleapi.CallOption) (*C
 	return ret, nil
 	// {
 	//   "description": "Gets a Container Version.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/versions/{versionsId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.versions.get",
 	//   "parameterOrder": [
@@ -5782,18 +6215,19 @@ func (c *AccountsContainersVersionsGetCall) Do(opts ...googleapi.CallOption) (*C
 	//   ],
 	//   "parameters": {
 	//     "containerVersionId": {
-	//       "description": "The GTM ContainerVersion ID. Specify published to retrieve the currently published version.",
+	//       "description": "The GTM ContainerVersion ID. Specify \u003ccode\u003epublished\u003c/code\u003e to retrieve\nthe currently published version.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM ContainerVersion's API relative path. Example: accounts/{account_id}/containers/{container_id}/versions/{version_id}",
+	//       "description": "GTM ContainerVersion's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/versions/{version_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/versions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "ContainerVersion"
 	//   },
@@ -5861,7 +6295,7 @@ func (c *AccountsContainersVersionsLiveCall) Header() http.Header {
 
 func (c *AccountsContainersVersionsLiveCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5872,7 +6306,7 @@ func (c *AccountsContainersVersionsLiveCall) doRequest(alt string) (*http.Respon
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/versions:live")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/versions:live")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -5924,6 +6358,7 @@ func (c *AccountsContainersVersionsLiveCall) Do(opts ...googleapi.CallOption) (*
 	return ret, nil
 	// {
 	//   "description": "Gets the live (i.e. published) container version",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/versions:live",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.versions.live",
 	//   "parameterOrder": [
@@ -5931,13 +6366,14 @@ func (c *AccountsContainersVersionsLiveCall) Do(opts ...googleapi.CallOption) (*
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/versions:live",
+	//   "path": "tagmanager/v2/{+parent}/versions:live",
 	//   "response": {
 	//     "$ref": "ContainerVersion"
 	//   },
@@ -5967,8 +6403,8 @@ func (r *AccountsContainersVersionsService) Publish(path string) *AccountsContai
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the container version
-// in storage.
+// this fingerprint must match the fingerprint of the
+// container version in storage.
 func (c *AccountsContainersVersionsPublishCall) Fingerprint(fingerprint string) *AccountsContainersVersionsPublishCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -6001,7 +6437,7 @@ func (c *AccountsContainersVersionsPublishCall) Header() http.Header {
 
 func (c *AccountsContainersVersionsPublishCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6009,7 +6445,7 @@ func (c *AccountsContainersVersionsPublishCall) doRequest(alt string) (*http.Res
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:publish")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:publish")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -6061,6 +6497,7 @@ func (c *AccountsContainersVersionsPublishCall) Do(opts ...googleapi.CallOption)
 	return ret, nil
 	// {
 	//   "description": "Publishes a Container Version.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/versions/{versionsId}:publish",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.versions.publish",
 	//   "parameterOrder": [
@@ -6068,18 +6505,19 @@ func (c *AccountsContainersVersionsPublishCall) Do(opts ...googleapi.CallOption)
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the container version in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the\ncontainer version in storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM ContainerVersion's API relative path. Example: accounts/{account_id}/containers/{container_id}/versions/{version_id}",
+	//       "description": "GTM ContainerVersion's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/versions/{version_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/versions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:publish",
+	//   "path": "tagmanager/v2/{+path}:publish",
 	//   "response": {
 	//     "$ref": "PublishContainerVersionResponse"
 	//   },
@@ -6101,7 +6539,8 @@ type AccountsContainersVersionsSetLatestCall struct {
 }
 
 // SetLatest: Sets the latest version used for synchronization of
-// workspaces when detecting conflicts and errors.
+// workspaces when
+// detecting conflicts and errors.
 func (r *AccountsContainersVersionsService) SetLatest(path string) *AccountsContainersVersionsSetLatestCall {
 	c := &AccountsContainersVersionsSetLatestCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.path = path
@@ -6135,7 +6574,7 @@ func (c *AccountsContainersVersionsSetLatestCall) Header() http.Header {
 
 func (c *AccountsContainersVersionsSetLatestCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6143,7 +6582,7 @@ func (c *AccountsContainersVersionsSetLatestCall) doRequest(alt string) (*http.R
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:set_latest")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:set_latest")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -6194,7 +6633,8 @@ func (c *AccountsContainersVersionsSetLatestCall) Do(opts ...googleapi.CallOptio
 	}
 	return ret, nil
 	// {
-	//   "description": "Sets the latest version used for synchronization of workspaces when detecting conflicts and errors.",
+	//   "description": "Sets the latest version used for synchronization of workspaces when\ndetecting conflicts and errors.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/versions/{versionsId}:set_latest",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.versions.set_latest",
 	//   "parameterOrder": [
@@ -6202,13 +6642,14 @@ func (c *AccountsContainersVersionsSetLatestCall) Do(opts ...googleapi.CallOptio
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM ContainerVersion's API relative path. Example: accounts/{account_id}/containers/{container_id}/versions/{version_id}",
+	//       "description": "GTM ContainerVersion's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/versions/{version_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/versions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:set_latest",
+	//   "path": "tagmanager/v2/{+path}:set_latest",
 	//   "response": {
 	//     "$ref": "ContainerVersion"
 	//   },
@@ -6263,7 +6704,7 @@ func (c *AccountsContainersVersionsUndeleteCall) Header() http.Header {
 
 func (c *AccountsContainersVersionsUndeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6271,7 +6712,7 @@ func (c *AccountsContainersVersionsUndeleteCall) doRequest(alt string) (*http.Re
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:undelete")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:undelete")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -6323,6 +6764,7 @@ func (c *AccountsContainersVersionsUndeleteCall) Do(opts ...googleapi.CallOption
 	return ret, nil
 	// {
 	//   "description": "Undeletes a Container Version.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/versions/{versionsId}:undelete",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.versions.undelete",
 	//   "parameterOrder": [
@@ -6330,13 +6772,14 @@ func (c *AccountsContainersVersionsUndeleteCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM ContainerVersion's API relative path. Example: accounts/{account_id}/containers/{container_id}/versions/{version_id}",
+	//       "description": "GTM ContainerVersion's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/versions/{version_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/versions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:undelete",
+	//   "path": "tagmanager/v2/{+path}:undelete",
 	//   "response": {
 	//     "$ref": "ContainerVersion"
 	//   },
@@ -6367,8 +6810,8 @@ func (r *AccountsContainersVersionsService) Update(path string, containerversion
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the container version
-// in storage.
+// this fingerprint must match the fingerprint of the
+// container version in storage.
 func (c *AccountsContainersVersionsUpdateCall) Fingerprint(fingerprint string) *AccountsContainersVersionsUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -6401,7 +6844,7 @@ func (c *AccountsContainersVersionsUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersVersionsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6414,7 +6857,7 @@ func (c *AccountsContainersVersionsUpdateCall) doRequest(alt string) (*http.Resp
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -6466,6 +6909,7 @@ func (c *AccountsContainersVersionsUpdateCall) Do(opts ...googleapi.CallOption) 
 	return ret, nil
 	// {
 	//   "description": "Updates a Container Version.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/versions/{versionsId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.versions.update",
 	//   "parameterOrder": [
@@ -6473,18 +6917,19 @@ func (c *AccountsContainersVersionsUpdateCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the container version in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the\ncontainer version in storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM ContainerVersion's API relative path. Example: accounts/{account_id}/containers/{container_id}/versions/{version_id}",
+	//       "description": "GTM ContainerVersion's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/versions/{version_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/versions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "ContainerVersion"
 	//   },
@@ -6544,7 +6989,7 @@ func (c *AccountsContainersWorkspacesCreateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6557,7 +7002,7 @@ func (c *AccountsContainersWorkspacesCreateCall) doRequest(alt string) (*http.Re
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/workspaces")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/workspaces")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -6609,6 +7054,7 @@ func (c *AccountsContainersWorkspacesCreateCall) Do(opts ...googleapi.CallOption
 	return ret, nil
 	// {
 	//   "description": "Creates a Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.create",
 	//   "parameterOrder": [
@@ -6616,13 +7062,14 @@ func (c *AccountsContainersWorkspacesCreateCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM parent Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM parent Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/workspaces",
+	//   "path": "tagmanager/v2/{+parent}/workspaces",
 	//   "request": {
 	//     "$ref": "Workspace"
 	//   },
@@ -6648,8 +7095,10 @@ type AccountsContainersWorkspacesCreateVersionCall struct {
 }
 
 // CreateVersion: Creates a Container Version from the entities present
-// in the workspace, deletes the workspace, and sets the base container
-// version to the newly created version.
+// in the workspace,
+// deletes the workspace, and sets the base container version to the
+// newly
+// created version.
 func (r *AccountsContainersWorkspacesService) CreateVersion(path string, createcontainerversionrequestversionoptions *CreateContainerVersionRequestVersionOptions) *AccountsContainersWorkspacesCreateVersionCall {
 	c := &AccountsContainersWorkspacesCreateVersionCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.path = path
@@ -6684,7 +7133,7 @@ func (c *AccountsContainersWorkspacesCreateVersionCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesCreateVersionCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6697,7 +7146,7 @@ func (c *AccountsContainersWorkspacesCreateVersionCall) doRequest(alt string) (*
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:create_version")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:create_version")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -6748,7 +7197,8 @@ func (c *AccountsContainersWorkspacesCreateVersionCall) Do(opts ...googleapi.Cal
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a Container Version from the entities present in the workspace, deletes the workspace, and sets the base container version to the newly created version.",
+	//   "description": "Creates a Container Version from the entities present in the workspace,\ndeletes the workspace, and sets the base container version to the newly\ncreated version.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}:create_version",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.create_version",
 	//   "parameterOrder": [
@@ -6756,13 +7206,14 @@ func (c *AccountsContainersWorkspacesCreateVersionCall) Do(opts ...googleapi.Cal
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:create_version",
+	//   "path": "tagmanager/v2/{+path}:create_version",
 	//   "request": {
 	//     "$ref": "CreateContainerVersionRequestVersionOptions"
 	//   },
@@ -6820,7 +7271,7 @@ func (c *AccountsContainersWorkspacesDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6828,7 +7279,7 @@ func (c *AccountsContainersWorkspacesDeleteCall) doRequest(alt string) (*http.Re
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -6855,6 +7306,7 @@ func (c *AccountsContainersWorkspacesDeleteCall) Do(opts ...googleapi.CallOption
 	return nil
 	// {
 	//   "description": "Deletes a Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.workspaces.delete",
 	//   "parameterOrder": [
@@ -6862,13 +7314,14 @@ func (c *AccountsContainersWorkspacesDeleteCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.delete.containers"
 	//   ]
@@ -6931,7 +7384,7 @@ func (c *AccountsContainersWorkspacesGetCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6942,7 +7395,7 @@ func (c *AccountsContainersWorkspacesGetCall) doRequest(alt string) (*http.Respo
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -6994,6 +7447,7 @@ func (c *AccountsContainersWorkspacesGetCall) Do(opts ...googleapi.CallOption) (
 	return ret, nil
 	// {
 	//   "description": "Gets a Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.get",
 	//   "parameterOrder": [
@@ -7001,13 +7455,14 @@ func (c *AccountsContainersWorkspacesGetCall) Do(opts ...googleapi.CallOption) (
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Workspace"
 	//   },
@@ -7074,7 +7529,7 @@ func (c *AccountsContainersWorkspacesGetStatusCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesGetStatusCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7085,7 +7540,7 @@ func (c *AccountsContainersWorkspacesGetStatusCall) doRequest(alt string) (*http
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}/status")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}/status")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -7137,6 +7592,7 @@ func (c *AccountsContainersWorkspacesGetStatusCall) Do(opts ...googleapi.CallOpt
 	return ret, nil
 	// {
 	//   "description": "Finds conflicting and modified entities in the workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/status",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.getStatus",
 	//   "parameterOrder": [
@@ -7144,13 +7600,14 @@ func (c *AccountsContainersWorkspacesGetStatusCall) Do(opts ...googleapi.CallOpt
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}/status",
+	//   "path": "tagmanager/v2/{+path}/status",
 	//   "response": {
 	//     "$ref": "GetWorkspaceStatusResponse"
 	//   },
@@ -7224,7 +7681,7 @@ func (c *AccountsContainersWorkspacesListCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7235,7 +7692,7 @@ func (c *AccountsContainersWorkspacesListCall) doRequest(alt string) (*http.Resp
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/workspaces")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/workspaces")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -7287,6 +7744,7 @@ func (c *AccountsContainersWorkspacesListCall) Do(opts ...googleapi.CallOption) 
 	return ret, nil
 	// {
 	//   "description": "Lists all Workspaces that belong to a GTM Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.list",
 	//   "parameterOrder": [
@@ -7299,13 +7757,14 @@ func (c *AccountsContainersWorkspacesListCall) Do(opts ...googleapi.CallOption) 
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM parent Container's API relative path. Example: accounts/{account_id}/containers/{container_id}",
+	//       "description": "GTM parent Container's API relative path.\nExample: accounts/{account_id}/containers/{container_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/workspaces",
+	//   "path": "tagmanager/v2/{+parent}/workspaces",
 	//   "response": {
 	//     "$ref": "ListWorkspacesResponse"
 	//   },
@@ -7349,7 +7808,8 @@ type AccountsContainersWorkspacesQuickPreviewCall struct {
 }
 
 // QuickPreview: Quick previews a workspace by creating a fake container
-// version from all entities in the provided workspace.
+// version from all
+// entities in the provided workspace.
 func (r *AccountsContainersWorkspacesService) QuickPreview(path string) *AccountsContainersWorkspacesQuickPreviewCall {
 	c := &AccountsContainersWorkspacesQuickPreviewCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.path = path
@@ -7383,7 +7843,7 @@ func (c *AccountsContainersWorkspacesQuickPreviewCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesQuickPreviewCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7391,7 +7851,7 @@ func (c *AccountsContainersWorkspacesQuickPreviewCall) doRequest(alt string) (*h
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:quick_preview")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:quick_preview")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -7442,7 +7902,8 @@ func (c *AccountsContainersWorkspacesQuickPreviewCall) Do(opts ...googleapi.Call
 	}
 	return ret, nil
 	// {
-	//   "description": "Quick previews a workspace by creating a fake container version from all entities in the provided workspace.",
+	//   "description": "Quick previews a workspace by creating a fake container version from all\nentities in the provided workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}:quick_preview",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.quick_preview",
 	//   "parameterOrder": [
@@ -7450,13 +7911,14 @@ func (c *AccountsContainersWorkspacesQuickPreviewCall) Do(opts ...googleapi.Call
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:quick_preview",
+	//   "path": "tagmanager/v2/{+path}:quick_preview",
 	//   "response": {
 	//     "$ref": "QuickPreviewResponse"
 	//   },
@@ -7479,7 +7941,8 @@ type AccountsContainersWorkspacesResolveConflictCall struct {
 }
 
 // ResolveConflict: Resolves a merge conflict for a workspace entity by
-// updating it to the resolved entity passed in the request.
+// updating it to the
+// resolved entity passed in the request.
 func (r *AccountsContainersWorkspacesService) ResolveConflict(path string, entity *Entity) *AccountsContainersWorkspacesResolveConflictCall {
 	c := &AccountsContainersWorkspacesResolveConflictCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.path = path
@@ -7488,7 +7951,8 @@ func (r *AccountsContainersWorkspacesService) ResolveConflict(path string, entit
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the
+// this fingerprint must match the fingerprint of
+// the
 // entity_in_workspace in the merge conflict.
 func (c *AccountsContainersWorkspacesResolveConflictCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesResolveConflictCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
@@ -7522,7 +7986,7 @@ func (c *AccountsContainersWorkspacesResolveConflictCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesResolveConflictCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7535,7 +7999,7 @@ func (c *AccountsContainersWorkspacesResolveConflictCall) doRequest(alt string) 
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:resolve_conflict")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:resolve_conflict")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -7561,7 +8025,8 @@ func (c *AccountsContainersWorkspacesResolveConflictCall) Do(opts ...googleapi.C
 	}
 	return nil
 	// {
-	//   "description": "Resolves a merge conflict for a workspace entity by updating it to the resolved entity passed in the request.",
+	//   "description": "Resolves a merge conflict for a workspace entity by updating it to the\nresolved entity passed in the request.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}:resolve_conflict",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.resolve_conflict",
 	//   "parameterOrder": [
@@ -7569,18 +8034,19 @@ func (c *AccountsContainersWorkspacesResolveConflictCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the entity_in_workspace in the merge conflict.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the\nentity_in_workspace in the merge conflict.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:resolve_conflict",
+	//   "path": "tagmanager/v2/{+path}:resolve_conflict",
 	//   "request": {
 	//     "$ref": "Entity"
 	//   },
@@ -7602,8 +8068,10 @@ type AccountsContainersWorkspacesSyncCall struct {
 }
 
 // Sync: Syncs a workspace to the latest container version by updating
-// all unmodified workspace entities and displaying conflicts for
-// modified entities.
+// all
+// unmodified workspace entities and displaying conflicts for
+// modified
+// entities.
 func (r *AccountsContainersWorkspacesService) Sync(path string) *AccountsContainersWorkspacesSyncCall {
 	c := &AccountsContainersWorkspacesSyncCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.path = path
@@ -7637,7 +8105,7 @@ func (c *AccountsContainersWorkspacesSyncCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesSyncCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7645,7 +8113,7 @@ func (c *AccountsContainersWorkspacesSyncCall) doRequest(alt string) (*http.Resp
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:sync")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:sync")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -7696,7 +8164,8 @@ func (c *AccountsContainersWorkspacesSyncCall) Do(opts ...googleapi.CallOption) 
 	}
 	return ret, nil
 	// {
-	//   "description": "Syncs a workspace to the latest container version by updating all unmodified workspace entities and displaying conflicts for modified entities.",
+	//   "description": "Syncs a workspace to the latest container version by updating all\nunmodified workspace entities and displaying conflicts for modified\nentities.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}:sync",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.sync",
 	//   "parameterOrder": [
@@ -7704,13 +8173,14 @@ func (c *AccountsContainersWorkspacesSyncCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:sync",
+	//   "path": "tagmanager/v2/{+path}:sync",
 	//   "response": {
 	//     "$ref": "SyncWorkspaceResponse"
 	//   },
@@ -7741,8 +8211,8 @@ func (r *AccountsContainersWorkspacesService) Update(path string, workspace *Wor
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the workspace in
-// storage.
+// this fingerprint must match the fingerprint of the
+// workspace in storage.
 func (c *AccountsContainersWorkspacesUpdateCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -7775,7 +8245,7 @@ func (c *AccountsContainersWorkspacesUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7788,7 +8258,7 @@ func (c *AccountsContainersWorkspacesUpdateCall) doRequest(alt string) (*http.Re
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -7840,6 +8310,7 @@ func (c *AccountsContainersWorkspacesUpdateCall) Do(opts ...googleapi.CallOption
 	return ret, nil
 	// {
 	//   "description": "Updates a Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.workspaces.update",
 	//   "parameterOrder": [
@@ -7847,18 +8318,19 @@ func (c *AccountsContainersWorkspacesUpdateCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the workspace in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the\nworkspace in storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Workspace"
 	//   },
@@ -7893,52 +8365,73 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Create(parent stri
 // variables to enable.
 //
 // Possible values:
-//   "advertiserId"
-//   "advertisingTrackingEnabled"
-//   "ampBrowserLanguage"
-//   "ampCanonicalHost"
-//   "ampCanonicalPath"
-//   "ampCanonicalUrl"
-//   "ampClientId"
-//   "ampClientMaxScrollX"
-//   "ampClientMaxScrollY"
-//   "ampClientScreenHeight"
-//   "ampClientScreenWidth"
-//   "ampClientScrollX"
-//   "ampClientScrollY"
-//   "ampClientTimestamp"
-//   "ampClientTimezone"
-//   "ampGtmEvent"
-//   "ampPageDownloadTime"
-//   "ampPageLoadTime"
-//   "ampPageViewId"
-//   "ampReferrer"
-//   "ampTitle"
-//   "ampTotalEngagedTime"
+//   "builtInVariableTypeUnspecified"
+//   "pageUrl"
+//   "pageHostname"
+//   "pagePath"
+//   "referrer"
+//   "event"
+//   "clickElement"
+//   "clickClasses"
+//   "clickId"
+//   "clickTarget"
+//   "clickUrl"
+//   "clickText"
+//   "firstPartyServingUrl"
+//   "formElement"
+//   "formClasses"
+//   "formId"
+//   "formTarget"
+//   "formUrl"
+//   "formText"
+//   "errorMessage"
+//   "errorUrl"
+//   "errorLine"
+//   "newHistoryUrl"
+//   "oldHistoryUrl"
+//   "newHistoryFragment"
+//   "oldHistoryFragment"
+//   "newHistoryState"
+//   "oldHistoryState"
+//   "historySource"
+//   "containerVersion"
+//   "debugMode"
+//   "randomNumber"
+//   "containerId"
 //   "appId"
 //   "appName"
 //   "appVersionCode"
 //   "appVersionName"
-//   "builtInVariableTypeUnspecified"
-//   "clickClasses"
-//   "clickElement"
-//   "clickId"
-//   "clickTarget"
-//   "clickText"
-//   "clickUrl"
-//   "containerId"
-//   "containerVersion"
-//   "debugMode"
+//   "language"
+//   "osVersion"
+//   "platform"
+//   "sdkVersion"
 //   "deviceName"
-//   "elementVisibilityFirstTime"
-//   "elementVisibilityRatio"
-//   "elementVisibilityRecentTime"
-//   "elementVisibilityTime"
+//   "resolution"
+//   "advertiserId"
+//   "advertisingTrackingEnabled"
+//   "htmlId"
 //   "environmentName"
-//   "errorLine"
-//   "errorMessage"
-//   "errorUrl"
-//   "event"
+//   "ampBrowserLanguage"
+//   "ampCanonicalPath"
+//   "ampCanonicalUrl"
+//   "ampCanonicalHost"
+//   "ampReferrer"
+//   "ampTitle"
+//   "ampClientId"
+//   "ampClientTimezone"
+//   "ampClientTimestamp"
+//   "ampClientScreenWidth"
+//   "ampClientScreenHeight"
+//   "ampClientScrollX"
+//   "ampClientScrollY"
+//   "ampClientMaxScrollX"
+//   "ampClientMaxScrollY"
+//   "ampTotalEngagedTime"
+//   "ampPageViewId"
+//   "ampPageLoadTime"
+//   "ampPageDownloadTime"
+//   "ampGtmEvent"
 //   "eventName"
 //   "firebaseEventParameterCampaign"
 //   "firebaseEventParameterCampaignAclid"
@@ -7963,41 +8456,25 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Create(parent stri
 //   "firebaseEventParameterProductId"
 //   "firebaseEventParameterQuantity"
 //   "firebaseEventParameterValue"
-//   "formClasses"
-//   "formElement"
-//   "formId"
-//   "formTarget"
-//   "formText"
-//   "formUrl"
-//   "historySource"
-//   "htmlId"
-//   "language"
-//   "newHistoryFragment"
-//   "newHistoryState"
-//   "newHistoryUrl"
-//   "oldHistoryFragment"
-//   "oldHistoryState"
-//   "oldHistoryUrl"
-//   "osVersion"
-//   "pageHostname"
-//   "pagePath"
-//   "pageUrl"
-//   "platform"
-//   "randomNumber"
-//   "referrer"
-//   "resolution"
-//   "scrollDepthDirection"
-//   "scrollDepthThreshold"
-//   "scrollDepthUnits"
-//   "sdkVersion"
-//   "videoCurrentTime"
+//   "videoProvider"
+//   "videoUrl"
+//   "videoTitle"
 //   "videoDuration"
 //   "videoPercent"
-//   "videoProvider"
-//   "videoStatus"
-//   "videoTitle"
-//   "videoUrl"
 //   "videoVisible"
+//   "videoStatus"
+//   "videoCurrentTime"
+//   "scrollDepthThreshold"
+//   "scrollDepthUnits"
+//   "scrollDepthDirection"
+//   "elementVisibilityRatio"
+//   "elementVisibilityTime"
+//   "elementVisibilityFirstTime"
+//   "elementVisibilityRecentTime"
+//   "requestPath"
+//   "requestMethod"
+//   "clientName"
+//   "queryString"
 func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) Type(type_ ...string) *AccountsContainersWorkspacesBuiltInVariablesCreateCall {
 	c.urlParams_.SetMulti("type", append([]string{}, type_...))
 	return c
@@ -8030,7 +8507,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) Header() http.H
 
 func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8038,7 +8515,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) doRequest(alt s
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/built_in_variables")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/built_in_variables")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -8090,6 +8567,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) Do(opts ...goog
 	return ret, nil
 	// {
 	//   "description": "Creates one or more GTM Built-In Variables.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/built_in_variables",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.built_in_variables.create",
 	//   "parameterOrder": [
@@ -8097,60 +8575,82 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) Do(opts ...goog
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "type": {
 	//       "description": "The types of built-in variables to enable.",
 	//       "enum": [
-	//         "advertiserId",
-	//         "advertisingTrackingEnabled",
-	//         "ampBrowserLanguage",
-	//         "ampCanonicalHost",
-	//         "ampCanonicalPath",
-	//         "ampCanonicalUrl",
-	//         "ampClientId",
-	//         "ampClientMaxScrollX",
-	//         "ampClientMaxScrollY",
-	//         "ampClientScreenHeight",
-	//         "ampClientScreenWidth",
-	//         "ampClientScrollX",
-	//         "ampClientScrollY",
-	//         "ampClientTimestamp",
-	//         "ampClientTimezone",
-	//         "ampGtmEvent",
-	//         "ampPageDownloadTime",
-	//         "ampPageLoadTime",
-	//         "ampPageViewId",
-	//         "ampReferrer",
-	//         "ampTitle",
-	//         "ampTotalEngagedTime",
+	//         "builtInVariableTypeUnspecified",
+	//         "pageUrl",
+	//         "pageHostname",
+	//         "pagePath",
+	//         "referrer",
+	//         "event",
+	//         "clickElement",
+	//         "clickClasses",
+	//         "clickId",
+	//         "clickTarget",
+	//         "clickUrl",
+	//         "clickText",
+	//         "firstPartyServingUrl",
+	//         "formElement",
+	//         "formClasses",
+	//         "formId",
+	//         "formTarget",
+	//         "formUrl",
+	//         "formText",
+	//         "errorMessage",
+	//         "errorUrl",
+	//         "errorLine",
+	//         "newHistoryUrl",
+	//         "oldHistoryUrl",
+	//         "newHistoryFragment",
+	//         "oldHistoryFragment",
+	//         "newHistoryState",
+	//         "oldHistoryState",
+	//         "historySource",
+	//         "containerVersion",
+	//         "debugMode",
+	//         "randomNumber",
+	//         "containerId",
 	//         "appId",
 	//         "appName",
 	//         "appVersionCode",
 	//         "appVersionName",
-	//         "builtInVariableTypeUnspecified",
-	//         "clickClasses",
-	//         "clickElement",
-	//         "clickId",
-	//         "clickTarget",
-	//         "clickText",
-	//         "clickUrl",
-	//         "containerId",
-	//         "containerVersion",
-	//         "debugMode",
+	//         "language",
+	//         "osVersion",
+	//         "platform",
+	//         "sdkVersion",
 	//         "deviceName",
-	//         "elementVisibilityFirstTime",
-	//         "elementVisibilityRatio",
-	//         "elementVisibilityRecentTime",
-	//         "elementVisibilityTime",
+	//         "resolution",
+	//         "advertiserId",
+	//         "advertisingTrackingEnabled",
+	//         "htmlId",
 	//         "environmentName",
-	//         "errorLine",
-	//         "errorMessage",
-	//         "errorUrl",
-	//         "event",
+	//         "ampBrowserLanguage",
+	//         "ampCanonicalPath",
+	//         "ampCanonicalUrl",
+	//         "ampCanonicalHost",
+	//         "ampReferrer",
+	//         "ampTitle",
+	//         "ampClientId",
+	//         "ampClientTimezone",
+	//         "ampClientTimestamp",
+	//         "ampClientScreenWidth",
+	//         "ampClientScreenHeight",
+	//         "ampClientScrollX",
+	//         "ampClientScrollY",
+	//         "ampClientMaxScrollX",
+	//         "ampClientMaxScrollY",
+	//         "ampTotalEngagedTime",
+	//         "ampPageViewId",
+	//         "ampPageLoadTime",
+	//         "ampPageDownloadTime",
+	//         "ampGtmEvent",
 	//         "eventName",
 	//         "firebaseEventParameterCampaign",
 	//         "firebaseEventParameterCampaignAclid",
@@ -8175,155 +8675,32 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) Do(opts ...goog
 	//         "firebaseEventParameterProductId",
 	//         "firebaseEventParameterQuantity",
 	//         "firebaseEventParameterValue",
-	//         "formClasses",
-	//         "formElement",
-	//         "formId",
-	//         "formTarget",
-	//         "formText",
-	//         "formUrl",
-	//         "historySource",
-	//         "htmlId",
-	//         "language",
-	//         "newHistoryFragment",
-	//         "newHistoryState",
-	//         "newHistoryUrl",
-	//         "oldHistoryFragment",
-	//         "oldHistoryState",
-	//         "oldHistoryUrl",
-	//         "osVersion",
-	//         "pageHostname",
-	//         "pagePath",
-	//         "pageUrl",
-	//         "platform",
-	//         "randomNumber",
-	//         "referrer",
-	//         "resolution",
-	//         "scrollDepthDirection",
-	//         "scrollDepthThreshold",
-	//         "scrollDepthUnits",
-	//         "sdkVersion",
-	//         "videoCurrentTime",
+	//         "videoProvider",
+	//         "videoUrl",
+	//         "videoTitle",
 	//         "videoDuration",
 	//         "videoPercent",
-	//         "videoProvider",
+	//         "videoVisible",
 	//         "videoStatus",
-	//         "videoTitle",
-	//         "videoUrl",
-	//         "videoVisible"
-	//       ],
-	//       "enumDescriptions": [
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         ""
+	//         "videoCurrentTime",
+	//         "scrollDepthThreshold",
+	//         "scrollDepthUnits",
+	//         "scrollDepthDirection",
+	//         "elementVisibilityRatio",
+	//         "elementVisibilityTime",
+	//         "elementVisibilityFirstTime",
+	//         "elementVisibilityRecentTime",
+	//         "requestPath",
+	//         "requestMethod",
+	//         "clientName",
+	//         "queryString"
 	//       ],
 	//       "location": "query",
 	//       "repeated": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/built_in_variables",
+	//   "path": "tagmanager/v2/{+parent}/built_in_variables",
 	//   "response": {
 	//     "$ref": "CreateBuiltInVariableResponse"
 	//   },
@@ -8355,52 +8732,73 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Delete(path string
 // variables to delete.
 //
 // Possible values:
-//   "advertiserId"
-//   "advertisingTrackingEnabled"
-//   "ampBrowserLanguage"
-//   "ampCanonicalHost"
-//   "ampCanonicalPath"
-//   "ampCanonicalUrl"
-//   "ampClientId"
-//   "ampClientMaxScrollX"
-//   "ampClientMaxScrollY"
-//   "ampClientScreenHeight"
-//   "ampClientScreenWidth"
-//   "ampClientScrollX"
-//   "ampClientScrollY"
-//   "ampClientTimestamp"
-//   "ampClientTimezone"
-//   "ampGtmEvent"
-//   "ampPageDownloadTime"
-//   "ampPageLoadTime"
-//   "ampPageViewId"
-//   "ampReferrer"
-//   "ampTitle"
-//   "ampTotalEngagedTime"
+//   "builtInVariableTypeUnspecified"
+//   "pageUrl"
+//   "pageHostname"
+//   "pagePath"
+//   "referrer"
+//   "event"
+//   "clickElement"
+//   "clickClasses"
+//   "clickId"
+//   "clickTarget"
+//   "clickUrl"
+//   "clickText"
+//   "firstPartyServingUrl"
+//   "formElement"
+//   "formClasses"
+//   "formId"
+//   "formTarget"
+//   "formUrl"
+//   "formText"
+//   "errorMessage"
+//   "errorUrl"
+//   "errorLine"
+//   "newHistoryUrl"
+//   "oldHistoryUrl"
+//   "newHistoryFragment"
+//   "oldHistoryFragment"
+//   "newHistoryState"
+//   "oldHistoryState"
+//   "historySource"
+//   "containerVersion"
+//   "debugMode"
+//   "randomNumber"
+//   "containerId"
 //   "appId"
 //   "appName"
 //   "appVersionCode"
 //   "appVersionName"
-//   "builtInVariableTypeUnspecified"
-//   "clickClasses"
-//   "clickElement"
-//   "clickId"
-//   "clickTarget"
-//   "clickText"
-//   "clickUrl"
-//   "containerId"
-//   "containerVersion"
-//   "debugMode"
+//   "language"
+//   "osVersion"
+//   "platform"
+//   "sdkVersion"
 //   "deviceName"
-//   "elementVisibilityFirstTime"
-//   "elementVisibilityRatio"
-//   "elementVisibilityRecentTime"
-//   "elementVisibilityTime"
+//   "resolution"
+//   "advertiserId"
+//   "advertisingTrackingEnabled"
+//   "htmlId"
 //   "environmentName"
-//   "errorLine"
-//   "errorMessage"
-//   "errorUrl"
-//   "event"
+//   "ampBrowserLanguage"
+//   "ampCanonicalPath"
+//   "ampCanonicalUrl"
+//   "ampCanonicalHost"
+//   "ampReferrer"
+//   "ampTitle"
+//   "ampClientId"
+//   "ampClientTimezone"
+//   "ampClientTimestamp"
+//   "ampClientScreenWidth"
+//   "ampClientScreenHeight"
+//   "ampClientScrollX"
+//   "ampClientScrollY"
+//   "ampClientMaxScrollX"
+//   "ampClientMaxScrollY"
+//   "ampTotalEngagedTime"
+//   "ampPageViewId"
+//   "ampPageLoadTime"
+//   "ampPageDownloadTime"
+//   "ampGtmEvent"
 //   "eventName"
 //   "firebaseEventParameterCampaign"
 //   "firebaseEventParameterCampaignAclid"
@@ -8425,41 +8823,25 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Delete(path string
 //   "firebaseEventParameterProductId"
 //   "firebaseEventParameterQuantity"
 //   "firebaseEventParameterValue"
-//   "formClasses"
-//   "formElement"
-//   "formId"
-//   "formTarget"
-//   "formText"
-//   "formUrl"
-//   "historySource"
-//   "htmlId"
-//   "language"
-//   "newHistoryFragment"
-//   "newHistoryState"
-//   "newHistoryUrl"
-//   "oldHistoryFragment"
-//   "oldHistoryState"
-//   "oldHistoryUrl"
-//   "osVersion"
-//   "pageHostname"
-//   "pagePath"
-//   "pageUrl"
-//   "platform"
-//   "randomNumber"
-//   "referrer"
-//   "resolution"
-//   "scrollDepthDirection"
-//   "scrollDepthThreshold"
-//   "scrollDepthUnits"
-//   "sdkVersion"
-//   "videoCurrentTime"
+//   "videoProvider"
+//   "videoUrl"
+//   "videoTitle"
 //   "videoDuration"
 //   "videoPercent"
-//   "videoProvider"
-//   "videoStatus"
-//   "videoTitle"
-//   "videoUrl"
 //   "videoVisible"
+//   "videoStatus"
+//   "videoCurrentTime"
+//   "scrollDepthThreshold"
+//   "scrollDepthUnits"
+//   "scrollDepthDirection"
+//   "elementVisibilityRatio"
+//   "elementVisibilityTime"
+//   "elementVisibilityFirstTime"
+//   "elementVisibilityRecentTime"
+//   "requestPath"
+//   "requestMethod"
+//   "clientName"
+//   "queryString"
 func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) Type(type_ ...string) *AccountsContainersWorkspacesBuiltInVariablesDeleteCall {
 	c.urlParams_.SetMulti("type", append([]string{}, type_...))
 	return c
@@ -8492,7 +8874,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) Header() http.H
 
 func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8500,7 +8882,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) doRequest(alt s
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -8527,6 +8909,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) Do(opts ...goog
 	return nil
 	// {
 	//   "description": "Deletes one or more GTM Built-In Variables.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/built_in_variables",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.workspaces.built_in_variables.delete",
 	//   "parameterOrder": [
@@ -8534,60 +8917,82 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) Do(opts ...goog
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM BuiltInVariable's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/built_in_variables",
+	//       "description": "GTM BuiltInVariable's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/built_in_variables",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/built_in_variables$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "type": {
 	//       "description": "The types of built-in variables to delete.",
 	//       "enum": [
-	//         "advertiserId",
-	//         "advertisingTrackingEnabled",
-	//         "ampBrowserLanguage",
-	//         "ampCanonicalHost",
-	//         "ampCanonicalPath",
-	//         "ampCanonicalUrl",
-	//         "ampClientId",
-	//         "ampClientMaxScrollX",
-	//         "ampClientMaxScrollY",
-	//         "ampClientScreenHeight",
-	//         "ampClientScreenWidth",
-	//         "ampClientScrollX",
-	//         "ampClientScrollY",
-	//         "ampClientTimestamp",
-	//         "ampClientTimezone",
-	//         "ampGtmEvent",
-	//         "ampPageDownloadTime",
-	//         "ampPageLoadTime",
-	//         "ampPageViewId",
-	//         "ampReferrer",
-	//         "ampTitle",
-	//         "ampTotalEngagedTime",
+	//         "builtInVariableTypeUnspecified",
+	//         "pageUrl",
+	//         "pageHostname",
+	//         "pagePath",
+	//         "referrer",
+	//         "event",
+	//         "clickElement",
+	//         "clickClasses",
+	//         "clickId",
+	//         "clickTarget",
+	//         "clickUrl",
+	//         "clickText",
+	//         "firstPartyServingUrl",
+	//         "formElement",
+	//         "formClasses",
+	//         "formId",
+	//         "formTarget",
+	//         "formUrl",
+	//         "formText",
+	//         "errorMessage",
+	//         "errorUrl",
+	//         "errorLine",
+	//         "newHistoryUrl",
+	//         "oldHistoryUrl",
+	//         "newHistoryFragment",
+	//         "oldHistoryFragment",
+	//         "newHistoryState",
+	//         "oldHistoryState",
+	//         "historySource",
+	//         "containerVersion",
+	//         "debugMode",
+	//         "randomNumber",
+	//         "containerId",
 	//         "appId",
 	//         "appName",
 	//         "appVersionCode",
 	//         "appVersionName",
-	//         "builtInVariableTypeUnspecified",
-	//         "clickClasses",
-	//         "clickElement",
-	//         "clickId",
-	//         "clickTarget",
-	//         "clickText",
-	//         "clickUrl",
-	//         "containerId",
-	//         "containerVersion",
-	//         "debugMode",
+	//         "language",
+	//         "osVersion",
+	//         "platform",
+	//         "sdkVersion",
 	//         "deviceName",
-	//         "elementVisibilityFirstTime",
-	//         "elementVisibilityRatio",
-	//         "elementVisibilityRecentTime",
-	//         "elementVisibilityTime",
+	//         "resolution",
+	//         "advertiserId",
+	//         "advertisingTrackingEnabled",
+	//         "htmlId",
 	//         "environmentName",
-	//         "errorLine",
-	//         "errorMessage",
-	//         "errorUrl",
-	//         "event",
+	//         "ampBrowserLanguage",
+	//         "ampCanonicalPath",
+	//         "ampCanonicalUrl",
+	//         "ampCanonicalHost",
+	//         "ampReferrer",
+	//         "ampTitle",
+	//         "ampClientId",
+	//         "ampClientTimezone",
+	//         "ampClientTimestamp",
+	//         "ampClientScreenWidth",
+	//         "ampClientScreenHeight",
+	//         "ampClientScrollX",
+	//         "ampClientScrollY",
+	//         "ampClientMaxScrollX",
+	//         "ampClientMaxScrollY",
+	//         "ampTotalEngagedTime",
+	//         "ampPageViewId",
+	//         "ampPageLoadTime",
+	//         "ampPageDownloadTime",
+	//         "ampGtmEvent",
 	//         "eventName",
 	//         "firebaseEventParameterCampaign",
 	//         "firebaseEventParameterCampaignAclid",
@@ -8612,155 +9017,32 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) Do(opts ...goog
 	//         "firebaseEventParameterProductId",
 	//         "firebaseEventParameterQuantity",
 	//         "firebaseEventParameterValue",
-	//         "formClasses",
-	//         "formElement",
-	//         "formId",
-	//         "formTarget",
-	//         "formText",
-	//         "formUrl",
-	//         "historySource",
-	//         "htmlId",
-	//         "language",
-	//         "newHistoryFragment",
-	//         "newHistoryState",
-	//         "newHistoryUrl",
-	//         "oldHistoryFragment",
-	//         "oldHistoryState",
-	//         "oldHistoryUrl",
-	//         "osVersion",
-	//         "pageHostname",
-	//         "pagePath",
-	//         "pageUrl",
-	//         "platform",
-	//         "randomNumber",
-	//         "referrer",
-	//         "resolution",
-	//         "scrollDepthDirection",
-	//         "scrollDepthThreshold",
-	//         "scrollDepthUnits",
-	//         "sdkVersion",
-	//         "videoCurrentTime",
+	//         "videoProvider",
+	//         "videoUrl",
+	//         "videoTitle",
 	//         "videoDuration",
 	//         "videoPercent",
-	//         "videoProvider",
+	//         "videoVisible",
 	//         "videoStatus",
-	//         "videoTitle",
-	//         "videoUrl",
-	//         "videoVisible"
-	//       ],
-	//       "enumDescriptions": [
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         ""
+	//         "videoCurrentTime",
+	//         "scrollDepthThreshold",
+	//         "scrollDepthUnits",
+	//         "scrollDepthDirection",
+	//         "elementVisibilityRatio",
+	//         "elementVisibilityTime",
+	//         "elementVisibilityFirstTime",
+	//         "elementVisibilityRecentTime",
+	//         "requestPath",
+	//         "requestMethod",
+	//         "clientName",
+	//         "queryString"
 	//       ],
 	//       "location": "query",
 	//       "repeated": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containers"
 	//   ]
@@ -8830,7 +9112,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesListCall) Header() http.Hea
 
 func (c *AccountsContainersWorkspacesBuiltInVariablesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8841,7 +9123,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesListCall) doRequest(alt str
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/built_in_variables")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/built_in_variables")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -8894,6 +9176,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesListCall) Do(opts ...google
 	return ret, nil
 	// {
 	//   "description": "Lists all the enabled Built-In Variables of a GTM Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/built_in_variables",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.built_in_variables.list",
 	//   "parameterOrder": [
@@ -8906,13 +9189,14 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesListCall) Do(opts ...google
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/built_in_variables",
+	//   "path": "tagmanager/v2/{+parent}/built_in_variables",
 	//   "response": {
 	//     "$ref": "ListEnabledBuiltInVariablesResponse"
 	//   },
@@ -8967,52 +9251,73 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Revert(path string
 // variable to revert.
 //
 // Possible values:
-//   "advertiserId"
-//   "advertisingTrackingEnabled"
-//   "ampBrowserLanguage"
-//   "ampCanonicalHost"
-//   "ampCanonicalPath"
-//   "ampCanonicalUrl"
-//   "ampClientId"
-//   "ampClientMaxScrollX"
-//   "ampClientMaxScrollY"
-//   "ampClientScreenHeight"
-//   "ampClientScreenWidth"
-//   "ampClientScrollX"
-//   "ampClientScrollY"
-//   "ampClientTimestamp"
-//   "ampClientTimezone"
-//   "ampGtmEvent"
-//   "ampPageDownloadTime"
-//   "ampPageLoadTime"
-//   "ampPageViewId"
-//   "ampReferrer"
-//   "ampTitle"
-//   "ampTotalEngagedTime"
+//   "builtInVariableTypeUnspecified"
+//   "pageUrl"
+//   "pageHostname"
+//   "pagePath"
+//   "referrer"
+//   "event"
+//   "clickElement"
+//   "clickClasses"
+//   "clickId"
+//   "clickTarget"
+//   "clickUrl"
+//   "clickText"
+//   "firstPartyServingUrl"
+//   "formElement"
+//   "formClasses"
+//   "formId"
+//   "formTarget"
+//   "formUrl"
+//   "formText"
+//   "errorMessage"
+//   "errorUrl"
+//   "errorLine"
+//   "newHistoryUrl"
+//   "oldHistoryUrl"
+//   "newHistoryFragment"
+//   "oldHistoryFragment"
+//   "newHistoryState"
+//   "oldHistoryState"
+//   "historySource"
+//   "containerVersion"
+//   "debugMode"
+//   "randomNumber"
+//   "containerId"
 //   "appId"
 //   "appName"
 //   "appVersionCode"
 //   "appVersionName"
-//   "builtInVariableTypeUnspecified"
-//   "clickClasses"
-//   "clickElement"
-//   "clickId"
-//   "clickTarget"
-//   "clickText"
-//   "clickUrl"
-//   "containerId"
-//   "containerVersion"
-//   "debugMode"
+//   "language"
+//   "osVersion"
+//   "platform"
+//   "sdkVersion"
 //   "deviceName"
-//   "elementVisibilityFirstTime"
-//   "elementVisibilityRatio"
-//   "elementVisibilityRecentTime"
-//   "elementVisibilityTime"
+//   "resolution"
+//   "advertiserId"
+//   "advertisingTrackingEnabled"
+//   "htmlId"
 //   "environmentName"
-//   "errorLine"
-//   "errorMessage"
-//   "errorUrl"
-//   "event"
+//   "ampBrowserLanguage"
+//   "ampCanonicalPath"
+//   "ampCanonicalUrl"
+//   "ampCanonicalHost"
+//   "ampReferrer"
+//   "ampTitle"
+//   "ampClientId"
+//   "ampClientTimezone"
+//   "ampClientTimestamp"
+//   "ampClientScreenWidth"
+//   "ampClientScreenHeight"
+//   "ampClientScrollX"
+//   "ampClientScrollY"
+//   "ampClientMaxScrollX"
+//   "ampClientMaxScrollY"
+//   "ampTotalEngagedTime"
+//   "ampPageViewId"
+//   "ampPageLoadTime"
+//   "ampPageDownloadTime"
+//   "ampGtmEvent"
 //   "eventName"
 //   "firebaseEventParameterCampaign"
 //   "firebaseEventParameterCampaignAclid"
@@ -9037,41 +9342,25 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Revert(path string
 //   "firebaseEventParameterProductId"
 //   "firebaseEventParameterQuantity"
 //   "firebaseEventParameterValue"
-//   "formClasses"
-//   "formElement"
-//   "formId"
-//   "formTarget"
-//   "formText"
-//   "formUrl"
-//   "historySource"
-//   "htmlId"
-//   "language"
-//   "newHistoryFragment"
-//   "newHistoryState"
-//   "newHistoryUrl"
-//   "oldHistoryFragment"
-//   "oldHistoryState"
-//   "oldHistoryUrl"
-//   "osVersion"
-//   "pageHostname"
-//   "pagePath"
-//   "pageUrl"
-//   "platform"
-//   "randomNumber"
-//   "referrer"
-//   "resolution"
-//   "scrollDepthDirection"
-//   "scrollDepthThreshold"
-//   "scrollDepthUnits"
-//   "sdkVersion"
-//   "videoCurrentTime"
+//   "videoProvider"
+//   "videoUrl"
+//   "videoTitle"
 //   "videoDuration"
 //   "videoPercent"
-//   "videoProvider"
-//   "videoStatus"
-//   "videoTitle"
-//   "videoUrl"
 //   "videoVisible"
+//   "videoStatus"
+//   "videoCurrentTime"
+//   "scrollDepthThreshold"
+//   "scrollDepthUnits"
+//   "scrollDepthDirection"
+//   "elementVisibilityRatio"
+//   "elementVisibilityTime"
+//   "elementVisibilityFirstTime"
+//   "elementVisibilityRecentTime"
+//   "requestPath"
+//   "requestMethod"
+//   "clientName"
+//   "queryString"
 func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) Type(type_ string) *AccountsContainersWorkspacesBuiltInVariablesRevertCall {
 	c.urlParams_.Set("type", type_)
 	return c
@@ -9104,7 +9393,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) Header() http.H
 
 func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9112,7 +9401,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) doRequest(alt s
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}/built_in_variables:revert")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}/built_in_variables:revert")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -9164,6 +9453,7 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) Do(opts ...goog
 	return ret, nil
 	// {
 	//   "description": "Reverts changes to a GTM Built-In Variables in a GTM Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/built_in_variables:revert",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.built_in_variables.revert",
 	//   "parameterOrder": [
@@ -9171,60 +9461,82 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) Do(opts ...goog
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM BuiltInVariable's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/built_in_variables",
+	//       "description": "GTM BuiltInVariable's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/built_in_variables",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "type": {
 	//       "description": "The type of built-in variable to revert.",
 	//       "enum": [
-	//         "advertiserId",
-	//         "advertisingTrackingEnabled",
-	//         "ampBrowserLanguage",
-	//         "ampCanonicalHost",
-	//         "ampCanonicalPath",
-	//         "ampCanonicalUrl",
-	//         "ampClientId",
-	//         "ampClientMaxScrollX",
-	//         "ampClientMaxScrollY",
-	//         "ampClientScreenHeight",
-	//         "ampClientScreenWidth",
-	//         "ampClientScrollX",
-	//         "ampClientScrollY",
-	//         "ampClientTimestamp",
-	//         "ampClientTimezone",
-	//         "ampGtmEvent",
-	//         "ampPageDownloadTime",
-	//         "ampPageLoadTime",
-	//         "ampPageViewId",
-	//         "ampReferrer",
-	//         "ampTitle",
-	//         "ampTotalEngagedTime",
+	//         "builtInVariableTypeUnspecified",
+	//         "pageUrl",
+	//         "pageHostname",
+	//         "pagePath",
+	//         "referrer",
+	//         "event",
+	//         "clickElement",
+	//         "clickClasses",
+	//         "clickId",
+	//         "clickTarget",
+	//         "clickUrl",
+	//         "clickText",
+	//         "firstPartyServingUrl",
+	//         "formElement",
+	//         "formClasses",
+	//         "formId",
+	//         "formTarget",
+	//         "formUrl",
+	//         "formText",
+	//         "errorMessage",
+	//         "errorUrl",
+	//         "errorLine",
+	//         "newHistoryUrl",
+	//         "oldHistoryUrl",
+	//         "newHistoryFragment",
+	//         "oldHistoryFragment",
+	//         "newHistoryState",
+	//         "oldHistoryState",
+	//         "historySource",
+	//         "containerVersion",
+	//         "debugMode",
+	//         "randomNumber",
+	//         "containerId",
 	//         "appId",
 	//         "appName",
 	//         "appVersionCode",
 	//         "appVersionName",
-	//         "builtInVariableTypeUnspecified",
-	//         "clickClasses",
-	//         "clickElement",
-	//         "clickId",
-	//         "clickTarget",
-	//         "clickText",
-	//         "clickUrl",
-	//         "containerId",
-	//         "containerVersion",
-	//         "debugMode",
+	//         "language",
+	//         "osVersion",
+	//         "platform",
+	//         "sdkVersion",
 	//         "deviceName",
-	//         "elementVisibilityFirstTime",
-	//         "elementVisibilityRatio",
-	//         "elementVisibilityRecentTime",
-	//         "elementVisibilityTime",
+	//         "resolution",
+	//         "advertiserId",
+	//         "advertisingTrackingEnabled",
+	//         "htmlId",
 	//         "environmentName",
-	//         "errorLine",
-	//         "errorMessage",
-	//         "errorUrl",
-	//         "event",
+	//         "ampBrowserLanguage",
+	//         "ampCanonicalPath",
+	//         "ampCanonicalUrl",
+	//         "ampCanonicalHost",
+	//         "ampReferrer",
+	//         "ampTitle",
+	//         "ampClientId",
+	//         "ampClientTimezone",
+	//         "ampClientTimestamp",
+	//         "ampClientScreenWidth",
+	//         "ampClientScreenHeight",
+	//         "ampClientScrollX",
+	//         "ampClientScrollY",
+	//         "ampClientMaxScrollX",
+	//         "ampClientMaxScrollY",
+	//         "ampTotalEngagedTime",
+	//         "ampPageViewId",
+	//         "ampPageLoadTime",
+	//         "ampPageDownloadTime",
+	//         "ampGtmEvent",
 	//         "eventName",
 	//         "firebaseEventParameterCampaign",
 	//         "firebaseEventParameterCampaignAclid",
@@ -9249,154 +9561,31 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) Do(opts ...goog
 	//         "firebaseEventParameterProductId",
 	//         "firebaseEventParameterQuantity",
 	//         "firebaseEventParameterValue",
-	//         "formClasses",
-	//         "formElement",
-	//         "formId",
-	//         "formTarget",
-	//         "formText",
-	//         "formUrl",
-	//         "historySource",
-	//         "htmlId",
-	//         "language",
-	//         "newHistoryFragment",
-	//         "newHistoryState",
-	//         "newHistoryUrl",
-	//         "oldHistoryFragment",
-	//         "oldHistoryState",
-	//         "oldHistoryUrl",
-	//         "osVersion",
-	//         "pageHostname",
-	//         "pagePath",
-	//         "pageUrl",
-	//         "platform",
-	//         "randomNumber",
-	//         "referrer",
-	//         "resolution",
-	//         "scrollDepthDirection",
-	//         "scrollDepthThreshold",
-	//         "scrollDepthUnits",
-	//         "sdkVersion",
-	//         "videoCurrentTime",
+	//         "videoProvider",
+	//         "videoUrl",
+	//         "videoTitle",
 	//         "videoDuration",
 	//         "videoPercent",
-	//         "videoProvider",
+	//         "videoVisible",
 	//         "videoStatus",
-	//         "videoTitle",
-	//         "videoUrl",
-	//         "videoVisible"
-	//       ],
-	//       "enumDescriptions": [
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         "",
-	//         ""
+	//         "videoCurrentTime",
+	//         "scrollDepthThreshold",
+	//         "scrollDepthUnits",
+	//         "scrollDepthDirection",
+	//         "elementVisibilityRatio",
+	//         "elementVisibilityTime",
+	//         "elementVisibilityFirstTime",
+	//         "elementVisibilityRecentTime",
+	//         "requestPath",
+	//         "requestMethod",
+	//         "clientName",
+	//         "queryString"
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}/built_in_variables:revert",
+	//   "path": "tagmanager/v2/{+path}/built_in_variables:revert",
 	//   "response": {
 	//     "$ref": "RevertBuiltInVariableResponse"
 	//   },
@@ -9453,7 +9642,7 @@ func (c *AccountsContainersWorkspacesFoldersCreateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesFoldersCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9466,7 +9655,7 @@ func (c *AccountsContainersWorkspacesFoldersCreateCall) doRequest(alt string) (*
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/folders")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/folders")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -9518,6 +9707,7 @@ func (c *AccountsContainersWorkspacesFoldersCreateCall) Do(opts ...googleapi.Cal
 	return ret, nil
 	// {
 	//   "description": "Creates a GTM Folder.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/folders",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.folders.create",
 	//   "parameterOrder": [
@@ -9525,13 +9715,14 @@ func (c *AccountsContainersWorkspacesFoldersCreateCall) Do(opts ...googleapi.Cal
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/folders",
+	//   "path": "tagmanager/v2/{+parent}/folders",
 	//   "request": {
 	//     "$ref": "Folder"
 	//   },
@@ -9589,7 +9780,7 @@ func (c *AccountsContainersWorkspacesFoldersDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesFoldersDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9597,7 +9788,7 @@ func (c *AccountsContainersWorkspacesFoldersDeleteCall) doRequest(alt string) (*
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -9624,6 +9815,7 @@ func (c *AccountsContainersWorkspacesFoldersDeleteCall) Do(opts ...googleapi.Cal
 	return nil
 	// {
 	//   "description": "Deletes a GTM Folder.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/folders/{foldersId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.workspaces.folders.delete",
 	//   "parameterOrder": [
@@ -9631,13 +9823,14 @@ func (c *AccountsContainersWorkspacesFoldersDeleteCall) Do(opts ...googleapi.Cal
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Folder's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
+	//       "description": "GTM Folder's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/folders/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containers"
 	//   ]
@@ -9696,7 +9889,7 @@ func (c *AccountsContainersWorkspacesFoldersEntitiesCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesFoldersEntitiesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9704,7 +9897,7 @@ func (c *AccountsContainersWorkspacesFoldersEntitiesCall) doRequest(alt string) 
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:entities")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:entities")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -9756,6 +9949,7 @@ func (c *AccountsContainersWorkspacesFoldersEntitiesCall) Do(opts ...googleapi.C
 	return ret, nil
 	// {
 	//   "description": "List all entities in a GTM Folder.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/folders/{foldersId}:entities",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.folders.entities",
 	//   "parameterOrder": [
@@ -9768,13 +9962,14 @@ func (c *AccountsContainersWorkspacesFoldersEntitiesCall) Do(opts ...googleapi.C
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Folder's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
+	//       "description": "GTM Folder's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/folders/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:entities",
+	//   "path": "tagmanager/v2/{+path}:entities",
 	//   "response": {
 	//     "$ref": "FolderEntities"
 	//   },
@@ -9862,7 +10057,7 @@ func (c *AccountsContainersWorkspacesFoldersGetCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesFoldersGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9873,7 +10068,7 @@ func (c *AccountsContainersWorkspacesFoldersGetCall) doRequest(alt string) (*htt
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -9925,6 +10120,7 @@ func (c *AccountsContainersWorkspacesFoldersGetCall) Do(opts ...googleapi.CallOp
 	return ret, nil
 	// {
 	//   "description": "Gets a GTM Folder.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/folders/{foldersId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.folders.get",
 	//   "parameterOrder": [
@@ -9932,13 +10128,14 @@ func (c *AccountsContainersWorkspacesFoldersGetCall) Do(opts ...googleapi.CallOp
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Folder's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
+	//       "description": "GTM Folder's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/folders/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Folder"
 	//   },
@@ -10012,7 +10209,7 @@ func (c *AccountsContainersWorkspacesFoldersListCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesFoldersListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10023,7 +10220,7 @@ func (c *AccountsContainersWorkspacesFoldersListCall) doRequest(alt string) (*ht
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/folders")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/folders")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -10075,6 +10272,7 @@ func (c *AccountsContainersWorkspacesFoldersListCall) Do(opts ...googleapi.CallO
 	return ret, nil
 	// {
 	//   "description": "Lists all GTM Folders of a Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/folders",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.folders.list",
 	//   "parameterOrder": [
@@ -10087,13 +10285,14 @@ func (c *AccountsContainersWorkspacesFoldersListCall) Do(opts ...googleapi.CallO
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/folders",
+	//   "path": "tagmanager/v2/{+parent}/folders",
 	//   "response": {
 	//     "$ref": "ListFoldersResponse"
 	//   },
@@ -10193,7 +10392,7 @@ func (c *AccountsContainersWorkspacesFoldersMoveEntitiesToFolderCall) Header() h
 
 func (c *AccountsContainersWorkspacesFoldersMoveEntitiesToFolderCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10206,7 +10405,7 @@ func (c *AccountsContainersWorkspacesFoldersMoveEntitiesToFolderCall) doRequest(
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:move_entities_to_folder")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:move_entities_to_folder")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -10233,6 +10432,7 @@ func (c *AccountsContainersWorkspacesFoldersMoveEntitiesToFolderCall) Do(opts ..
 	return nil
 	// {
 	//   "description": "Moves entities to a GTM Folder.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/folders/{foldersId}:move_entities_to_folder",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.folders.move_entities_to_folder",
 	//   "parameterOrder": [
@@ -10240,8 +10440,9 @@ func (c *AccountsContainersWorkspacesFoldersMoveEntitiesToFolderCall) Do(opts ..
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Folder's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
+	//       "description": "GTM Folder's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/folders/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
@@ -10264,7 +10465,7 @@ func (c *AccountsContainersWorkspacesFoldersMoveEntitiesToFolderCall) Do(opts ..
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:move_entities_to_folder",
+	//   "path": "tagmanager/v2/{+path}:move_entities_to_folder",
 	//   "request": {
 	//     "$ref": "Folder"
 	//   },
@@ -10293,7 +10494,8 @@ func (r *AccountsContainersWorkspacesFoldersService) Revert(path string) *Accoun
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the tag in storage.
+// this fingerprint must match the fingerprint of the tag
+// in storage.
 func (c *AccountsContainersWorkspacesFoldersRevertCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesFoldersRevertCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -10326,7 +10528,7 @@ func (c *AccountsContainersWorkspacesFoldersRevertCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesFoldersRevertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10334,7 +10536,7 @@ func (c *AccountsContainersWorkspacesFoldersRevertCall) doRequest(alt string) (*
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:revert")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:revert")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -10386,6 +10588,7 @@ func (c *AccountsContainersWorkspacesFoldersRevertCall) Do(opts ...googleapi.Cal
 	return ret, nil
 	// {
 	//   "description": "Reverts changes to a GTM Folder in a GTM Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/folders/{foldersId}:revert",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.folders.revert",
 	//   "parameterOrder": [
@@ -10393,18 +10596,19 @@ func (c *AccountsContainersWorkspacesFoldersRevertCall) Do(opts ...googleapi.Cal
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the tag in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the tag\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Folder's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
+	//       "description": "GTM Folder's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/folders/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:revert",
+	//   "path": "tagmanager/v2/{+path}:revert",
 	//   "response": {
 	//     "$ref": "RevertFolderResponse"
 	//   },
@@ -10435,7 +10639,8 @@ func (r *AccountsContainersWorkspacesFoldersService) Update(path string, folder 
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the folder in storage.
+// this fingerprint must match the fingerprint of the folder in
+// storage.
 func (c *AccountsContainersWorkspacesFoldersUpdateCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesFoldersUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -10468,7 +10673,7 @@ func (c *AccountsContainersWorkspacesFoldersUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesFoldersUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10481,7 +10686,7 @@ func (c *AccountsContainersWorkspacesFoldersUpdateCall) doRequest(alt string) (*
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -10533,6 +10738,7 @@ func (c *AccountsContainersWorkspacesFoldersUpdateCall) Do(opts ...googleapi.Cal
 	return ret, nil
 	// {
 	//   "description": "Updates a GTM Folder.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/folders/{foldersId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.workspaces.folders.update",
 	//   "parameterOrder": [
@@ -10540,18 +10746,19 @@ func (c *AccountsContainersWorkspacesFoldersUpdateCall) Do(opts ...googleapi.Cal
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the folder in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the folder in\nstorage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Folder's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
+	//       "description": "GTM Folder's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/folders/{folder_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/folders/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Folder"
 	//   },
@@ -10611,7 +10818,7 @@ func (c *AccountsContainersWorkspacesTagsCreateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTagsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10624,7 +10831,7 @@ func (c *AccountsContainersWorkspacesTagsCreateCall) doRequest(alt string) (*htt
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/tags")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/tags")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -10676,6 +10883,7 @@ func (c *AccountsContainersWorkspacesTagsCreateCall) Do(opts ...googleapi.CallOp
 	return ret, nil
 	// {
 	//   "description": "Creates a GTM Tag.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/tags",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.tags.create",
 	//   "parameterOrder": [
@@ -10683,13 +10891,14 @@ func (c *AccountsContainersWorkspacesTagsCreateCall) Do(opts ...googleapi.CallOp
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/tags",
+	//   "path": "tagmanager/v2/{+parent}/tags",
 	//   "request": {
 	//     "$ref": "Tag"
 	//   },
@@ -10747,7 +10956,7 @@ func (c *AccountsContainersWorkspacesTagsDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTagsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10755,7 +10964,7 @@ func (c *AccountsContainersWorkspacesTagsDeleteCall) doRequest(alt string) (*htt
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -10782,6 +10991,7 @@ func (c *AccountsContainersWorkspacesTagsDeleteCall) Do(opts ...googleapi.CallOp
 	return nil
 	// {
 	//   "description": "Deletes a GTM Tag.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/tags/{tagsId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.workspaces.tags.delete",
 	//   "parameterOrder": [
@@ -10789,13 +10999,14 @@ func (c *AccountsContainersWorkspacesTagsDeleteCall) Do(opts ...googleapi.CallOp
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Tag's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/tags/{tag_id}",
+	//       "description": "GTM Tag's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/tags/{tag_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/tags/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containers"
 	//   ]
@@ -10858,7 +11069,7 @@ func (c *AccountsContainersWorkspacesTagsGetCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTagsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10869,7 +11080,7 @@ func (c *AccountsContainersWorkspacesTagsGetCall) doRequest(alt string) (*http.R
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -10921,6 +11132,7 @@ func (c *AccountsContainersWorkspacesTagsGetCall) Do(opts ...googleapi.CallOptio
 	return ret, nil
 	// {
 	//   "description": "Gets a GTM Tag.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/tags/{tagsId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.tags.get",
 	//   "parameterOrder": [
@@ -10928,13 +11140,14 @@ func (c *AccountsContainersWorkspacesTagsGetCall) Do(opts ...googleapi.CallOptio
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Tag's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/tags/{tag_id}",
+	//       "description": "GTM Tag's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/tags/{tag_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/tags/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Tag"
 	//   },
@@ -11008,7 +11221,7 @@ func (c *AccountsContainersWorkspacesTagsListCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTagsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11019,7 +11232,7 @@ func (c *AccountsContainersWorkspacesTagsListCall) doRequest(alt string) (*http.
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/tags")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/tags")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -11071,6 +11284,7 @@ func (c *AccountsContainersWorkspacesTagsListCall) Do(opts ...googleapi.CallOpti
 	return ret, nil
 	// {
 	//   "description": "Lists all GTM Tags of a Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/tags",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.tags.list",
 	//   "parameterOrder": [
@@ -11083,13 +11297,14 @@ func (c *AccountsContainersWorkspacesTagsListCall) Do(opts ...googleapi.CallOpti
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/tags",
+	//   "path": "tagmanager/v2/{+parent}/tags",
 	//   "response": {
 	//     "$ref": "ListTagsResponse"
 	//   },
@@ -11140,7 +11355,8 @@ func (r *AccountsContainersWorkspacesTagsService) Revert(path string) *AccountsC
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of thetag in storage.
+// this fingerprint must match the fingerprint of thetag
+// in storage.
 func (c *AccountsContainersWorkspacesTagsRevertCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesTagsRevertCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -11173,7 +11389,7 @@ func (c *AccountsContainersWorkspacesTagsRevertCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTagsRevertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11181,7 +11397,7 @@ func (c *AccountsContainersWorkspacesTagsRevertCall) doRequest(alt string) (*htt
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:revert")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:revert")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -11233,6 +11449,7 @@ func (c *AccountsContainersWorkspacesTagsRevertCall) Do(opts ...googleapi.CallOp
 	return ret, nil
 	// {
 	//   "description": "Reverts changes to a GTM Tag in a GTM Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/tags/{tagsId}:revert",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.tags.revert",
 	//   "parameterOrder": [
@@ -11240,18 +11457,19 @@ func (c *AccountsContainersWorkspacesTagsRevertCall) Do(opts ...googleapi.CallOp
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of thetag in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of thetag\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Tag's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/tags/{tag_id}",
+	//       "description": "GTM Tag's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/tags/{tag_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/tags/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:revert",
+	//   "path": "tagmanager/v2/{+path}:revert",
 	//   "response": {
 	//     "$ref": "RevertTagResponse"
 	//   },
@@ -11282,7 +11500,8 @@ func (r *AccountsContainersWorkspacesTagsService) Update(path string, tag *Tag) 
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the tag in storage.
+// this fingerprint must match the fingerprint of the tag in
+// storage.
 func (c *AccountsContainersWorkspacesTagsUpdateCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesTagsUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -11315,7 +11534,7 @@ func (c *AccountsContainersWorkspacesTagsUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTagsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11328,7 +11547,7 @@ func (c *AccountsContainersWorkspacesTagsUpdateCall) doRequest(alt string) (*htt
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -11380,6 +11599,7 @@ func (c *AccountsContainersWorkspacesTagsUpdateCall) Do(opts ...googleapi.CallOp
 	return ret, nil
 	// {
 	//   "description": "Updates a GTM Tag.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/tags/{tagsId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.workspaces.tags.update",
 	//   "parameterOrder": [
@@ -11387,18 +11607,19 @@ func (c *AccountsContainersWorkspacesTagsUpdateCall) Do(opts ...googleapi.CallOp
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the tag in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the tag in\nstorage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Tag's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/tags/{tag_id}",
+	//       "description": "GTM Tag's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/tags/{tag_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/tags/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Tag"
 	//   },
@@ -11458,7 +11679,7 @@ func (c *AccountsContainersWorkspacesTemplatesCreateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTemplatesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11471,7 +11692,7 @@ func (c *AccountsContainersWorkspacesTemplatesCreateCall) doRequest(alt string) 
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/templates")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/templates")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -11523,6 +11744,7 @@ func (c *AccountsContainersWorkspacesTemplatesCreateCall) Do(opts ...googleapi.C
 	return ret, nil
 	// {
 	//   "description": "Creates a GTM Custom Template.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/templates",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.templates.create",
 	//   "parameterOrder": [
@@ -11530,13 +11752,14 @@ func (c *AccountsContainersWorkspacesTemplatesCreateCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/templates",
+	//   "path": "tagmanager/v2/{+parent}/templates",
 	//   "request": {
 	//     "$ref": "CustomTemplate"
 	//   },
@@ -11594,7 +11817,7 @@ func (c *AccountsContainersWorkspacesTemplatesDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTemplatesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11602,7 +11825,7 @@ func (c *AccountsContainersWorkspacesTemplatesDeleteCall) doRequest(alt string) 
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -11629,6 +11852,7 @@ func (c *AccountsContainersWorkspacesTemplatesDeleteCall) Do(opts ...googleapi.C
 	return nil
 	// {
 	//   "description": "Deletes a GTM Template.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/templates/{templatesId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.workspaces.templates.delete",
 	//   "parameterOrder": [
@@ -11636,13 +11860,14 @@ func (c *AccountsContainersWorkspacesTemplatesDeleteCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Custom Template's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/templates/{template_id}",
+	//       "description": "GTM Custom Template's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/templates/{template_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/templates/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containers"
 	//   ]
@@ -11705,7 +11930,7 @@ func (c *AccountsContainersWorkspacesTemplatesGetCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTemplatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11716,7 +11941,7 @@ func (c *AccountsContainersWorkspacesTemplatesGetCall) doRequest(alt string) (*h
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -11768,6 +11993,7 @@ func (c *AccountsContainersWorkspacesTemplatesGetCall) Do(opts ...googleapi.Call
 	return ret, nil
 	// {
 	//   "description": "Gets a GTM Template.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/templates/{templatesId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.templates.get",
 	//   "parameterOrder": [
@@ -11775,13 +12001,14 @@ func (c *AccountsContainersWorkspacesTemplatesGetCall) Do(opts ...googleapi.Call
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Custom Template's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/templates/{template_id}",
+	//       "description": "GTM Custom Template's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/templates/{template_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/templates/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "CustomTemplate"
 	//   },
@@ -11855,7 +12082,7 @@ func (c *AccountsContainersWorkspacesTemplatesListCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTemplatesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11866,7 +12093,7 @@ func (c *AccountsContainersWorkspacesTemplatesListCall) doRequest(alt string) (*
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/templates")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/templates")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -11918,6 +12145,7 @@ func (c *AccountsContainersWorkspacesTemplatesListCall) Do(opts ...googleapi.Cal
 	return ret, nil
 	// {
 	//   "description": "Lists all GTM Templates of a GTM container workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/templates",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.templates.list",
 	//   "parameterOrder": [
@@ -11930,13 +12158,14 @@ func (c *AccountsContainersWorkspacesTemplatesListCall) Do(opts ...googleapi.Cal
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/templates",
+	//   "path": "tagmanager/v2/{+parent}/templates",
 	//   "response": {
 	//     "$ref": "ListTemplatesResponse"
 	//   },
@@ -11987,8 +12216,8 @@ func (r *AccountsContainersWorkspacesTemplatesService) Revert(path string) *Acco
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the template in
-// storage.
+// this fingerprint must match the fingerprint of the template
+// in storage.
 func (c *AccountsContainersWorkspacesTemplatesRevertCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesTemplatesRevertCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -12021,7 +12250,7 @@ func (c *AccountsContainersWorkspacesTemplatesRevertCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTemplatesRevertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12029,7 +12258,7 @@ func (c *AccountsContainersWorkspacesTemplatesRevertCall) doRequest(alt string) 
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:revert")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:revert")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -12081,6 +12310,7 @@ func (c *AccountsContainersWorkspacesTemplatesRevertCall) Do(opts ...googleapi.C
 	return ret, nil
 	// {
 	//   "description": "Reverts changes to a GTM Template in a GTM Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/templates/{templatesId}:revert",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.templates.revert",
 	//   "parameterOrder": [
@@ -12088,18 +12318,19 @@ func (c *AccountsContainersWorkspacesTemplatesRevertCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the template in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the template\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Custom Template's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/templates/{template_id}",
+	//       "description": "GTM Custom Template's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/templates/{template_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/templates/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:revert",
+	//   "path": "tagmanager/v2/{+path}:revert",
 	//   "response": {
 	//     "$ref": "RevertTemplateResponse"
 	//   },
@@ -12130,8 +12361,8 @@ func (r *AccountsContainersWorkspacesTemplatesService) Update(path string, custo
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the templates in
-// storage.
+// this fingerprint must match the fingerprint of the templates
+// in storage.
 func (c *AccountsContainersWorkspacesTemplatesUpdateCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesTemplatesUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -12164,7 +12395,7 @@ func (c *AccountsContainersWorkspacesTemplatesUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTemplatesUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12177,7 +12408,7 @@ func (c *AccountsContainersWorkspacesTemplatesUpdateCall) doRequest(alt string) 
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -12229,6 +12460,7 @@ func (c *AccountsContainersWorkspacesTemplatesUpdateCall) Do(opts ...googleapi.C
 	return ret, nil
 	// {
 	//   "description": "Updates a GTM Template.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/templates/{templatesId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.workspaces.templates.update",
 	//   "parameterOrder": [
@@ -12236,18 +12468,19 @@ func (c *AccountsContainersWorkspacesTemplatesUpdateCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the templates in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the templates\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Custom Template's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/templates/{template_id}",
+	//       "description": "GTM Custom Template's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/templates/{template_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/templates/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "CustomTemplate"
 	//   },
@@ -12307,7 +12540,7 @@ func (c *AccountsContainersWorkspacesTriggersCreateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTriggersCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12320,7 +12553,7 @@ func (c *AccountsContainersWorkspacesTriggersCreateCall) doRequest(alt string) (
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/triggers")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/triggers")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -12372,6 +12605,7 @@ func (c *AccountsContainersWorkspacesTriggersCreateCall) Do(opts ...googleapi.Ca
 	return ret, nil
 	// {
 	//   "description": "Creates a GTM Trigger.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/triggers",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.triggers.create",
 	//   "parameterOrder": [
@@ -12379,13 +12613,14 @@ func (c *AccountsContainersWorkspacesTriggersCreateCall) Do(opts ...googleapi.Ca
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Workspaces's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspaces's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/triggers",
+	//   "path": "tagmanager/v2/{+parent}/triggers",
 	//   "request": {
 	//     "$ref": "Trigger"
 	//   },
@@ -12443,7 +12678,7 @@ func (c *AccountsContainersWorkspacesTriggersDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTriggersDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12451,7 +12686,7 @@ func (c *AccountsContainersWorkspacesTriggersDeleteCall) doRequest(alt string) (
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -12478,6 +12713,7 @@ func (c *AccountsContainersWorkspacesTriggersDeleteCall) Do(opts ...googleapi.Ca
 	return nil
 	// {
 	//   "description": "Deletes a GTM Trigger.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/triggers/{triggersId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.workspaces.triggers.delete",
 	//   "parameterOrder": [
@@ -12485,13 +12721,14 @@ func (c *AccountsContainersWorkspacesTriggersDeleteCall) Do(opts ...googleapi.Ca
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Trigger's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/triggers/{trigger_id}",
+	//       "description": "GTM Trigger's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/triggers/{trigger_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/triggers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containers"
 	//   ]
@@ -12554,7 +12791,7 @@ func (c *AccountsContainersWorkspacesTriggersGetCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTriggersGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12565,7 +12802,7 @@ func (c *AccountsContainersWorkspacesTriggersGetCall) doRequest(alt string) (*ht
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -12617,6 +12854,7 @@ func (c *AccountsContainersWorkspacesTriggersGetCall) Do(opts ...googleapi.CallO
 	return ret, nil
 	// {
 	//   "description": "Gets a GTM Trigger.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/triggers/{triggersId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.triggers.get",
 	//   "parameterOrder": [
@@ -12624,13 +12862,14 @@ func (c *AccountsContainersWorkspacesTriggersGetCall) Do(opts ...googleapi.CallO
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Trigger's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/triggers/{trigger_id}",
+	//       "description": "GTM Trigger's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/triggers/{trigger_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/triggers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Trigger"
 	//   },
@@ -12704,7 +12943,7 @@ func (c *AccountsContainersWorkspacesTriggersListCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTriggersListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12715,7 +12954,7 @@ func (c *AccountsContainersWorkspacesTriggersListCall) doRequest(alt string) (*h
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/triggers")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/triggers")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -12767,6 +13006,7 @@ func (c *AccountsContainersWorkspacesTriggersListCall) Do(opts ...googleapi.Call
 	return ret, nil
 	// {
 	//   "description": "Lists all GTM Triggers of a Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/triggers",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.triggers.list",
 	//   "parameterOrder": [
@@ -12779,13 +13019,14 @@ func (c *AccountsContainersWorkspacesTriggersListCall) Do(opts ...googleapi.Call
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Workspaces's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspaces's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/triggers",
+	//   "path": "tagmanager/v2/{+parent}/triggers",
 	//   "response": {
 	//     "$ref": "ListTriggersResponse"
 	//   },
@@ -12836,8 +13077,8 @@ func (r *AccountsContainersWorkspacesTriggersService) Revert(path string) *Accou
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the trigger in
-// storage.
+// this fingerprint must match the fingerprint of the trigger
+// in storage.
 func (c *AccountsContainersWorkspacesTriggersRevertCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesTriggersRevertCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -12870,7 +13111,7 @@ func (c *AccountsContainersWorkspacesTriggersRevertCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTriggersRevertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12878,7 +13119,7 @@ func (c *AccountsContainersWorkspacesTriggersRevertCall) doRequest(alt string) (
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:revert")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:revert")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -12930,6 +13171,7 @@ func (c *AccountsContainersWorkspacesTriggersRevertCall) Do(opts ...googleapi.Ca
 	return ret, nil
 	// {
 	//   "description": "Reverts changes to a GTM Trigger in a GTM Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/triggers/{triggersId}:revert",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.triggers.revert",
 	//   "parameterOrder": [
@@ -12937,18 +13179,19 @@ func (c *AccountsContainersWorkspacesTriggersRevertCall) Do(opts ...googleapi.Ca
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the trigger in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the trigger\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Trigger's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/triggers/{trigger_id}",
+	//       "description": "GTM Trigger's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/triggers/{trigger_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/triggers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:revert",
+	//   "path": "tagmanager/v2/{+path}:revert",
 	//   "response": {
 	//     "$ref": "RevertTriggerResponse"
 	//   },
@@ -12979,8 +13222,8 @@ func (r *AccountsContainersWorkspacesTriggersService) Update(path string, trigge
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the trigger in
-// storage.
+// this fingerprint must match the fingerprint of the trigger
+// in storage.
 func (c *AccountsContainersWorkspacesTriggersUpdateCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesTriggersUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -13013,7 +13256,7 @@ func (c *AccountsContainersWorkspacesTriggersUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesTriggersUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13026,7 +13269,7 @@ func (c *AccountsContainersWorkspacesTriggersUpdateCall) doRequest(alt string) (
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -13078,6 +13321,7 @@ func (c *AccountsContainersWorkspacesTriggersUpdateCall) Do(opts ...googleapi.Ca
 	return ret, nil
 	// {
 	//   "description": "Updates a GTM Trigger.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/triggers/{triggersId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.workspaces.triggers.update",
 	//   "parameterOrder": [
@@ -13085,18 +13329,19 @@ func (c *AccountsContainersWorkspacesTriggersUpdateCall) Do(opts ...googleapi.Ca
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the trigger in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the trigger\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Trigger's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/triggers/{trigger_id}",
+	//       "description": "GTM Trigger's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/triggers/{trigger_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/triggers/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Trigger"
 	//   },
@@ -13156,7 +13401,7 @@ func (c *AccountsContainersWorkspacesVariablesCreateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesVariablesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13169,7 +13414,7 @@ func (c *AccountsContainersWorkspacesVariablesCreateCall) doRequest(alt string) 
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/variables")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/variables")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -13221,6 +13466,7 @@ func (c *AccountsContainersWorkspacesVariablesCreateCall) Do(opts ...googleapi.C
 	return ret, nil
 	// {
 	//   "description": "Creates a GTM Variable.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/variables",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.variables.create",
 	//   "parameterOrder": [
@@ -13228,13 +13474,14 @@ func (c *AccountsContainersWorkspacesVariablesCreateCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/variables",
+	//   "path": "tagmanager/v2/{+parent}/variables",
 	//   "request": {
 	//     "$ref": "Variable"
 	//   },
@@ -13292,7 +13539,7 @@ func (c *AccountsContainersWorkspacesVariablesDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesVariablesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13300,7 +13547,7 @@ func (c *AccountsContainersWorkspacesVariablesDeleteCall) doRequest(alt string) 
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -13327,6 +13574,7 @@ func (c *AccountsContainersWorkspacesVariablesDeleteCall) Do(opts ...googleapi.C
 	return nil
 	// {
 	//   "description": "Deletes a GTM Variable.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/variables/{variablesId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.workspaces.variables.delete",
 	//   "parameterOrder": [
@@ -13334,13 +13582,14 @@ func (c *AccountsContainersWorkspacesVariablesDeleteCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Variable's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/variables/{variable_id}",
+	//       "description": "GTM Variable's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/variables/{variable_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/variables/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containers"
 	//   ]
@@ -13403,7 +13652,7 @@ func (c *AccountsContainersWorkspacesVariablesGetCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesVariablesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13414,7 +13663,7 @@ func (c *AccountsContainersWorkspacesVariablesGetCall) doRequest(alt string) (*h
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -13466,6 +13715,7 @@ func (c *AccountsContainersWorkspacesVariablesGetCall) Do(opts ...googleapi.Call
 	return ret, nil
 	// {
 	//   "description": "Gets a GTM Variable.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/variables/{variablesId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.variables.get",
 	//   "parameterOrder": [
@@ -13473,13 +13723,14 @@ func (c *AccountsContainersWorkspacesVariablesGetCall) Do(opts ...googleapi.Call
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Variable's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/variables/{variable_id}",
+	//       "description": "GTM Variable's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/variables/{variable_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/variables/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Variable"
 	//   },
@@ -13553,7 +13804,7 @@ func (c *AccountsContainersWorkspacesVariablesListCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesVariablesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13564,7 +13815,7 @@ func (c *AccountsContainersWorkspacesVariablesListCall) doRequest(alt string) (*
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/variables")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/variables")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -13616,6 +13867,7 @@ func (c *AccountsContainersWorkspacesVariablesListCall) Do(opts ...googleapi.Cal
 	return ret, nil
 	// {
 	//   "description": "Lists all GTM Variables of a Container.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/variables",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.variables.list",
 	//   "parameterOrder": [
@@ -13628,13 +13880,14 @@ func (c *AccountsContainersWorkspacesVariablesListCall) Do(opts ...googleapi.Cal
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/variables",
+	//   "path": "tagmanager/v2/{+parent}/variables",
 	//   "response": {
 	//     "$ref": "ListVariablesResponse"
 	//   },
@@ -13685,8 +13938,8 @@ func (r *AccountsContainersWorkspacesVariablesService) Revert(path string) *Acco
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the variable in
-// storage.
+// this fingerprint must match the fingerprint of the variable
+// in storage.
 func (c *AccountsContainersWorkspacesVariablesRevertCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesVariablesRevertCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -13719,7 +13972,7 @@ func (c *AccountsContainersWorkspacesVariablesRevertCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesVariablesRevertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13727,7 +13980,7 @@ func (c *AccountsContainersWorkspacesVariablesRevertCall) doRequest(alt string) 
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:revert")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:revert")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -13779,6 +14032,7 @@ func (c *AccountsContainersWorkspacesVariablesRevertCall) Do(opts ...googleapi.C
 	return ret, nil
 	// {
 	//   "description": "Reverts changes to a GTM Variable in a GTM Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/variables/{variablesId}:revert",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.variables.revert",
 	//   "parameterOrder": [
@@ -13786,18 +14040,19 @@ func (c *AccountsContainersWorkspacesVariablesRevertCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the variable in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the variable\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Variable's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/variables/{variable_id}",
+	//       "description": "GTM Variable's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/variables/{variable_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/variables/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:revert",
+	//   "path": "tagmanager/v2/{+path}:revert",
 	//   "response": {
 	//     "$ref": "RevertVariableResponse"
 	//   },
@@ -13828,8 +14083,8 @@ func (r *AccountsContainersWorkspacesVariablesService) Update(path string, varia
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the variable in
-// storage.
+// this fingerprint must match the fingerprint of the variable
+// in storage.
 func (c *AccountsContainersWorkspacesVariablesUpdateCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesVariablesUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -13862,7 +14117,7 @@ func (c *AccountsContainersWorkspacesVariablesUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesVariablesUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13875,7 +14130,7 @@ func (c *AccountsContainersWorkspacesVariablesUpdateCall) doRequest(alt string) 
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -13927,6 +14182,7 @@ func (c *AccountsContainersWorkspacesVariablesUpdateCall) Do(opts ...googleapi.C
 	return ret, nil
 	// {
 	//   "description": "Updates a GTM Variable.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/variables/{variablesId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.workspaces.variables.update",
 	//   "parameterOrder": [
@@ -13934,18 +14190,19 @@ func (c *AccountsContainersWorkspacesVariablesUpdateCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the variable in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the variable\nin storage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Variable's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/variables/{variable_id}",
+	//       "description": "GTM Variable's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/variables/{variable_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/variables/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Variable"
 	//   },
@@ -14005,7 +14262,7 @@ func (c *AccountsContainersWorkspacesZonesCreateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesZonesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14018,7 +14275,7 @@ func (c *AccountsContainersWorkspacesZonesCreateCall) doRequest(alt string) (*ht
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/zones")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/zones")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -14070,6 +14327,7 @@ func (c *AccountsContainersWorkspacesZonesCreateCall) Do(opts ...googleapi.CallO
 	return ret, nil
 	// {
 	//   "description": "Creates a GTM Zone.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/zones",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.zones.create",
 	//   "parameterOrder": [
@@ -14077,13 +14335,14 @@ func (c *AccountsContainersWorkspacesZonesCreateCall) Do(opts ...googleapi.CallO
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/zones",
+	//   "path": "tagmanager/v2/{+parent}/zones",
 	//   "request": {
 	//     "$ref": "Zone"
 	//   },
@@ -14141,7 +14400,7 @@ func (c *AccountsContainersWorkspacesZonesDeleteCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesZonesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14149,7 +14408,7 @@ func (c *AccountsContainersWorkspacesZonesDeleteCall) doRequest(alt string) (*ht
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -14176,6 +14435,7 @@ func (c *AccountsContainersWorkspacesZonesDeleteCall) Do(opts ...googleapi.CallO
 	return nil
 	// {
 	//   "description": "Deletes a GTM Zone.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/zones/{zonesId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.containers.workspaces.zones.delete",
 	//   "parameterOrder": [
@@ -14183,13 +14443,14 @@ func (c *AccountsContainersWorkspacesZonesDeleteCall) Do(opts ...googleapi.CallO
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Zone's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/zones/{zone_id}",
+	//       "description": "GTM Zone's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/zones/{zone_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/zones/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.edit.containers"
 	//   ]
@@ -14252,7 +14513,7 @@ func (c *AccountsContainersWorkspacesZonesGetCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesZonesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14263,7 +14524,7 @@ func (c *AccountsContainersWorkspacesZonesGetCall) doRequest(alt string) (*http.
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -14315,6 +14576,7 @@ func (c *AccountsContainersWorkspacesZonesGetCall) Do(opts ...googleapi.CallOpti
 	return ret, nil
 	// {
 	//   "description": "Gets a GTM Zone.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/zones/{zonesId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.zones.get",
 	//   "parameterOrder": [
@@ -14322,13 +14584,14 @@ func (c *AccountsContainersWorkspacesZonesGetCall) Do(opts ...googleapi.CallOpti
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM Zone's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/zones/{zone_id}",
+	//       "description": "GTM Zone's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/zones/{zone_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/zones/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "Zone"
 	//   },
@@ -14402,7 +14665,7 @@ func (c *AccountsContainersWorkspacesZonesListCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesZonesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14413,7 +14676,7 @@ func (c *AccountsContainersWorkspacesZonesListCall) doRequest(alt string) (*http
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/zones")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/zones")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -14465,6 +14728,7 @@ func (c *AccountsContainersWorkspacesZonesListCall) Do(opts ...googleapi.CallOpt
 	return ret, nil
 	// {
 	//   "description": "Lists all GTM Zones of a GTM container workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/zones",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.containers.workspaces.zones.list",
 	//   "parameterOrder": [
@@ -14477,13 +14741,14 @@ func (c *AccountsContainersWorkspacesZonesListCall) Do(opts ...googleapi.CallOpt
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Workspace's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
+	//       "description": "GTM Workspace's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/zones",
+	//   "path": "tagmanager/v2/{+parent}/zones",
 	//   "response": {
 	//     "$ref": "ListZonesResponse"
 	//   },
@@ -14534,7 +14799,8 @@ func (r *AccountsContainersWorkspacesZonesService) Revert(path string) *Accounts
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the zone in storage.
+// this fingerprint must match the fingerprint of the zone in
+// storage.
 func (c *AccountsContainersWorkspacesZonesRevertCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesZonesRevertCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -14567,7 +14833,7 @@ func (c *AccountsContainersWorkspacesZonesRevertCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesZonesRevertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14575,7 +14841,7 @@ func (c *AccountsContainersWorkspacesZonesRevertCall) doRequest(alt string) (*ht
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}:revert")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}:revert")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -14627,6 +14893,7 @@ func (c *AccountsContainersWorkspacesZonesRevertCall) Do(opts ...googleapi.CallO
 	return ret, nil
 	// {
 	//   "description": "Reverts changes to a GTM Zone in a GTM Workspace.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/zones/{zonesId}:revert",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.containers.workspaces.zones.revert",
 	//   "parameterOrder": [
@@ -14634,18 +14901,19 @@ func (c *AccountsContainersWorkspacesZonesRevertCall) Do(opts ...googleapi.CallO
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the zone in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the zone in\nstorage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Zone's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/zones/{zone_id}",
+	//       "description": "GTM Zone's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/zones/{zone_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/zones/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}:revert",
+	//   "path": "tagmanager/v2/{+path}:revert",
 	//   "response": {
 	//     "$ref": "RevertZoneResponse"
 	//   },
@@ -14676,7 +14944,8 @@ func (r *AccountsContainersWorkspacesZonesService) Update(path string, zone *Zon
 }
 
 // Fingerprint sets the optional parameter "fingerprint": When provided,
-// this fingerprint must match the fingerprint of the zone in storage.
+// this fingerprint must match the fingerprint of the zone in
+// storage.
 func (c *AccountsContainersWorkspacesZonesUpdateCall) Fingerprint(fingerprint string) *AccountsContainersWorkspacesZonesUpdateCall {
 	c.urlParams_.Set("fingerprint", fingerprint)
 	return c
@@ -14709,7 +14978,7 @@ func (c *AccountsContainersWorkspacesZonesUpdateCall) Header() http.Header {
 
 func (c *AccountsContainersWorkspacesZonesUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14722,7 +14991,7 @@ func (c *AccountsContainersWorkspacesZonesUpdateCall) doRequest(alt string) (*ht
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -14774,6 +15043,7 @@ func (c *AccountsContainersWorkspacesZonesUpdateCall) Do(opts ...googleapi.CallO
 	return ret, nil
 	// {
 	//   "description": "Updates a GTM Zone.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/containers/{containersId}/workspaces/{workspacesId}/zones/{zonesId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.containers.workspaces.zones.update",
 	//   "parameterOrder": [
@@ -14781,18 +15051,19 @@ func (c *AccountsContainersWorkspacesZonesUpdateCall) Do(opts ...googleapi.CallO
 	//   ],
 	//   "parameters": {
 	//     "fingerprint": {
-	//       "description": "When provided, this fingerprint must match the fingerprint of the zone in storage.",
+	//       "description": "When provided, this fingerprint must match the fingerprint of the zone in\nstorage.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "path": {
-	//       "description": "GTM Zone's API relative path. Example: accounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/zones/{zone_id}",
+	//       "description": "GTM Zone's API relative path.\nExample:\naccounts/{account_id}/containers/{container_id}/workspaces/{workspace_id}/zones/{zone_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/containers/[^/]+/workspaces/[^/]+/zones/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "Zone"
 	//   },
@@ -14852,7 +15123,7 @@ func (c *AccountsUserPermissionsCreateCall) Header() http.Header {
 
 func (c *AccountsUserPermissionsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14865,7 +15136,7 @@ func (c *AccountsUserPermissionsCreateCall) doRequest(alt string) (*http.Respons
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/user_permissions")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/user_permissions")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -14917,6 +15188,7 @@ func (c *AccountsUserPermissionsCreateCall) Do(opts ...googleapi.CallOption) (*U
 	return ret, nil
 	// {
 	//   "description": "Creates a user's Account \u0026 Container access.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/user_permissions",
 	//   "httpMethod": "POST",
 	//   "id": "tagmanager.accounts.user_permissions.create",
 	//   "parameterOrder": [
@@ -14924,13 +15196,14 @@ func (c *AccountsUserPermissionsCreateCall) Do(opts ...googleapi.CallOption) (*U
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "GTM Account's API relative path. Example: accounts/{account_id}",
+	//       "description": "GTM Account's API relative path.\nExample: accounts/{account_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/user_permissions",
+	//   "path": "tagmanager/v2/{+parent}/user_permissions",
 	//   "request": {
 	//     "$ref": "UserPermission"
 	//   },
@@ -14955,7 +15228,8 @@ type AccountsUserPermissionsDeleteCall struct {
 }
 
 // Delete: Removes a user from the account, revoking access to it and
-// all of its containers.
+// all of its
+// containers.
 func (r *AccountsUserPermissionsService) Delete(path string) *AccountsUserPermissionsDeleteCall {
 	c := &AccountsUserPermissionsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.path = path
@@ -14989,7 +15263,7 @@ func (c *AccountsUserPermissionsDeleteCall) Header() http.Header {
 
 func (c *AccountsUserPermissionsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14997,7 +15271,7 @@ func (c *AccountsUserPermissionsDeleteCall) doRequest(alt string) (*http.Respons
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("DELETE", urls, body)
 	if err != nil {
@@ -15023,7 +15297,8 @@ func (c *AccountsUserPermissionsDeleteCall) Do(opts ...googleapi.CallOption) err
 	}
 	return nil
 	// {
-	//   "description": "Removes a user from the account, revoking access to it and all of its containers.",
+	//   "description": "Removes a user from the account, revoking access to it and all of its\ncontainers.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/user_permissions/{user_permissionsId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "tagmanager.accounts.user_permissions.delete",
 	//   "parameterOrder": [
@@ -15031,13 +15306,14 @@ func (c *AccountsUserPermissionsDeleteCall) Do(opts ...googleapi.CallOption) err
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM UserPermission's API relative path. Example: accounts/{account_id}/user_permissions/{user_permission_id}",
+	//       "description": "GTM UserPermission's API relative path.\nExample: accounts/{account_id}/user_permissions/{user_permission_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/user_permissions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/tagmanager.manage.users"
 	//   ]
@@ -15100,7 +15376,7 @@ func (c *AccountsUserPermissionsGetCall) Header() http.Header {
 
 func (c *AccountsUserPermissionsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -15111,7 +15387,7 @@ func (c *AccountsUserPermissionsGetCall) doRequest(alt string) (*http.Response, 
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -15163,6 +15439,7 @@ func (c *AccountsUserPermissionsGetCall) Do(opts ...googleapi.CallOption) (*User
 	return ret, nil
 	// {
 	//   "description": "Gets a user's Account \u0026 Container access.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/user_permissions/{user_permissionsId}",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.user_permissions.get",
 	//   "parameterOrder": [
@@ -15170,13 +15447,14 @@ func (c *AccountsUserPermissionsGetCall) Do(opts ...googleapi.CallOption) (*User
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM UserPermission's API relative path. Example: accounts/{account_id}/user_permissions/{user_permission_id}",
+	//       "description": "GTM UserPermission's API relative path.\nExample: accounts/{account_id}/user_permissions/{user_permission_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/user_permissions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "response": {
 	//     "$ref": "UserPermission"
 	//   },
@@ -15199,7 +15477,8 @@ type AccountsUserPermissionsListCall struct {
 }
 
 // List: List all users that have access to the account along with
-// Account and Container user access granted to each of them.
+// Account and
+// Container user access granted to each of them.
 func (r *AccountsUserPermissionsService) List(parent string) *AccountsUserPermissionsListCall {
 	c := &AccountsUserPermissionsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -15250,7 +15529,7 @@ func (c *AccountsUserPermissionsListCall) Header() http.Header {
 
 func (c *AccountsUserPermissionsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -15261,7 +15540,7 @@ func (c *AccountsUserPermissionsListCall) doRequest(alt string) (*http.Response,
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+parent}/user_permissions")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+parent}/user_permissions")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -15312,7 +15591,8 @@ func (c *AccountsUserPermissionsListCall) Do(opts ...googleapi.CallOption) (*Lis
 	}
 	return ret, nil
 	// {
-	//   "description": "List all users that have access to the account along with Account and Container user access granted to each of them.",
+	//   "description": "List all users that have access to the account along with Account and\nContainer user access granted to each of them.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/user_permissions",
 	//   "httpMethod": "GET",
 	//   "id": "tagmanager.accounts.user_permissions.list",
 	//   "parameterOrder": [
@@ -15325,13 +15605,14 @@ func (c *AccountsUserPermissionsListCall) Do(opts ...googleapi.CallOption) (*Lis
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "GTM Accounts's API relative path. Example: accounts/{account_id}",
+	//       "description": "GTM Accounts's API relative path.\nExample: accounts/{account_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+parent}/user_permissions",
+	//   "path": "tagmanager/v2/{+parent}/user_permissions",
 	//   "response": {
 	//     "$ref": "ListUserPermissionsResponse"
 	//   },
@@ -15409,7 +15690,7 @@ func (c *AccountsUserPermissionsUpdateCall) Header() http.Header {
 
 func (c *AccountsUserPermissionsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -15422,7 +15703,7 @@ func (c *AccountsUserPermissionsUpdateCall) doRequest(alt string) (*http.Respons
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "{+path}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "tagmanager/v2/{+path}")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("PUT", urls, body)
 	if err != nil {
@@ -15474,6 +15755,7 @@ func (c *AccountsUserPermissionsUpdateCall) Do(opts ...googleapi.CallOption) (*U
 	return ret, nil
 	// {
 	//   "description": "Updates a user's Account \u0026 Container access.",
+	//   "flatPath": "tagmanager/v2/accounts/{accountsId}/user_permissions/{user_permissionsId}",
 	//   "httpMethod": "PUT",
 	//   "id": "tagmanager.accounts.user_permissions.update",
 	//   "parameterOrder": [
@@ -15481,13 +15763,14 @@ func (c *AccountsUserPermissionsUpdateCall) Do(opts ...googleapi.CallOption) (*U
 	//   ],
 	//   "parameters": {
 	//     "path": {
-	//       "description": "GTM UserPermission's API relative path. Example: accounts/{account_id}/user_permissions/{user_permission_id}",
+	//       "description": "GTM UserPermission's API relative path.\nExample: accounts/{account_id}/user_permissions/{user_permission_id}",
 	//       "location": "path",
+	//       "pattern": "^accounts/[^/]+/user_permissions/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "{+path}",
+	//   "path": "tagmanager/v2/{+path}",
 	//   "request": {
 	//     "$ref": "UserPermission"
 	//   },

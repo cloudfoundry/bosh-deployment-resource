@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -24,6 +24,10 @@
 // For information on how to create and obtain Application Default Credentials, see https://developers.google.com/identity/protocols/application-default-credentials.
 //
 // Other authentication options
+//
+// By default, all available scopes (see "Constants") are used to authenticate. To restrict scopes, use option.WithScopes:
+//
+//   monitoringService, err := monitoring.NewService(ctx, option.WithScopes(monitoring.MonitoringWriteScope))
 //
 // To use an API key for authentication (note: some APIs do not support API keys), use option.WithAPIKey:
 //
@@ -54,6 +58,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -70,14 +75,41 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "monitoring:v1"
 const apiName = "monitoring"
 const apiVersion = "v1"
 const basePath = "https://monitoring.googleapis.com/"
 
+// OAuth2 scopes used by this API.
+const (
+	// View and manage your data across Google Cloud Platform services
+	CloudPlatformScope = "https://www.googleapis.com/auth/cloud-platform"
+
+	// View and write monitoring data for all of your Google and third-party
+	// Cloud and API projects
+	MonitoringScope = "https://www.googleapis.com/auth/monitoring"
+
+	// View monitoring data for all of your Google Cloud and third-party
+	// projects
+	MonitoringReadScope = "https://www.googleapis.com/auth/monitoring.read"
+
+	// Publish metric data to your Google Cloud projects
+	MonitoringWriteScope = "https://www.googleapis.com/auth/monitoring.write"
+)
+
 // NewService creates a new Service.
 func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, error) {
+	scopesOption := option.WithScopes(
+		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/monitoring",
+		"https://www.googleapis.com/auth/monitoring.read",
+		"https://www.googleapis.com/auth/monitoring.write",
+	)
+	// NOTE: prepend, so we don't override user-specified scopes.
+	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -102,7 +134,7 @@ func New(client *http.Client) (*Service, error) {
 		return nil, errors.New("client is nil")
 	}
 	s := &Service{client: client, BasePath: basePath}
-	s.Operations = NewOperationsService(s)
+	s.Projects = NewProjectsService(s)
 	return s, nil
 }
 
@@ -111,7 +143,7 @@ type Service struct {
 	BasePath  string // API endpoint base URL
 	UserAgent string // optional additional User-Agent fragment
 
-	Operations *OperationsService
+	Projects *ProjectsService
 }
 
 func (s *Service) userAgent() string {
@@ -121,18 +153,557 @@ func (s *Service) userAgent() string {
 	return googleapi.UserAgent + " " + s.UserAgent
 }
 
-func NewOperationsService(s *Service) *OperationsService {
-	rs := &OperationsService{s: s}
+func NewProjectsService(s *Service) *ProjectsService {
+	rs := &ProjectsService{s: s}
+	rs.Dashboards = NewProjectsDashboardsService(s)
 	return rs
 }
 
-type OperationsService struct {
+type ProjectsService struct {
+	s *Service
+
+	Dashboards *ProjectsDashboardsService
+}
+
+func NewProjectsDashboardsService(s *Service) *ProjectsDashboardsService {
+	rs := &ProjectsDashboardsService{s: s}
+	return rs
+}
+
+type ProjectsDashboardsService struct {
 	s *Service
 }
 
-// CancelOperationRequest: The request message for
-// Operations.CancelOperation.
-type CancelOperationRequest struct {
+// Aggregation: Describes how to combine multiple time series to provide
+// a different view of the data. Aggregation of time series is done in
+// two steps. First, each time series in the set is aligned to the same
+// time interval boundaries, then the set of time series is optionally
+// reduced in number.Alignment consists of applying the
+// per_series_aligner operation to each time series after its data has
+// been divided into regular alignment_period time intervals. This
+// process takes all of the data points in an alignment period, applies
+// a mathematical transformation such as averaging, minimum, maximum,
+// delta, etc., and converts them into a single data point per
+// period.Reduction is when the aligned and transformed time series can
+// optionally be combined, reducing the number of time series through
+// similar mathematical transformations. Reduction involves applying a
+// cross_series_reducer to all the time series, optionally sorting the
+// time series into subsets with group_by_fields, and applying the
+// reducer to each subset.The raw time series data can contain a huge
+// amount of information from multiple sources. Alignment and reduction
+// transforms this mass of data into a more manageable and
+// representative collection of data, for example "the 95% latency
+// across the average of all tasks in a cluster". This representative
+// data can be more easily graphed and comprehended, and the individual
+// time series data is still available for later drilldown. For more
+// details, see Aggregating Time Series.
+type Aggregation struct {
+	// AlignmentPeriod: The alignment_period specifies a time interval, in
+	// seconds, that is used to divide the data in all the time series into
+	// consistent blocks of time. This will be done before the per-series
+	// aligner can be applied to the data.The value must be at least 60
+	// seconds. If a per-series aligner other than ALIGN_NONE is specified,
+	// this field is required or an error is returned. If no per-series
+	// aligner is specified, or the aligner ALIGN_NONE is specified, then
+	// this field is ignored.
+	AlignmentPeriod string `json:"alignmentPeriod,omitempty"`
+
+	// CrossSeriesReducer: The reduction operation to be used to combine
+	// time series into a single time series, where the value of each data
+	// point in the resulting series is a function of all the already
+	// aligned values in the input time series.Not all reducer operations
+	// can be applied to all time series. The valid choices depend on the
+	// metric_kind and the value_type of the original time series. Reduction
+	// can yield a time series with a different metric_kind or value_type
+	// than the input time series.Time series data must first be aligned
+	// (see per_series_aligner) in order to perform cross-time series
+	// reduction. If cross_series_reducer is specified, then
+	// per_series_aligner must be specified, and must not be ALIGN_NONE. An
+	// alignment_period must also be specified; otherwise, an error is
+	// returned.
+	//
+	// Possible values:
+	//   "REDUCE_NONE" - No cross-time series reduction. The output of the
+	// Aligner is returned.
+	//   "REDUCE_MEAN" - Reduce by computing the mean value across time
+	// series for each alignment period. This reducer is valid for DELTA and
+	// GAUGE metrics with numeric or distribution values. The value_type of
+	// the output is DOUBLE.
+	//   "REDUCE_MIN" - Reduce by computing the minimum value across time
+	// series for each alignment period. This reducer is valid for DELTA and
+	// GAUGE metrics with numeric values. The value_type of the output is
+	// the same as the value_type of the input.
+	//   "REDUCE_MAX" - Reduce by computing the maximum value across time
+	// series for each alignment period. This reducer is valid for DELTA and
+	// GAUGE metrics with numeric values. The value_type of the output is
+	// the same as the value_type of the input.
+	//   "REDUCE_SUM" - Reduce by computing the sum across time series for
+	// each alignment period. This reducer is valid for DELTA and GAUGE
+	// metrics with numeric and distribution values. The value_type of the
+	// output is the same as the value_type of the input.
+	//   "REDUCE_STDDEV" - Reduce by computing the standard deviation across
+	// time series for each alignment period. This reducer is valid for
+	// DELTA and GAUGE metrics with numeric or distribution values. The
+	// value_type of the output is DOUBLE.
+	//   "REDUCE_COUNT" - Reduce by computing the number of data points
+	// across time series for each alignment period. This reducer is valid
+	// for DELTA and GAUGE metrics of numeric, Boolean, distribution, and
+	// string value_type. The value_type of the output is INT64.
+	//   "REDUCE_COUNT_TRUE" - Reduce by computing the number of True-valued
+	// data points across time series for each alignment period. This
+	// reducer is valid for DELTA and GAUGE metrics of Boolean value_type.
+	// The value_type of the output is INT64.
+	//   "REDUCE_COUNT_FALSE" - Reduce by computing the number of
+	// False-valued data points across time series for each alignment
+	// period. This reducer is valid for DELTA and GAUGE metrics of Boolean
+	// value_type. The value_type of the output is INT64.
+	//   "REDUCE_FRACTION_TRUE" - Reduce by computing the ratio of the
+	// number of True-valued data points to the total number of data points
+	// for each alignment period. This reducer is valid for DELTA and GAUGE
+	// metrics of Boolean value_type. The output value is in the range 0.0,
+	// 1.0 and has value_type DOUBLE.
+	//   "REDUCE_PERCENTILE_99" - Reduce by computing the 99th percentile
+	// (https://en.wikipedia.org/wiki/Percentile) of data points across time
+	// series for each alignment period. This reducer is valid for GAUGE and
+	// DELTA metrics of numeric and distribution type. The value of the
+	// output is DOUBLE.
+	//   "REDUCE_PERCENTILE_95" - Reduce by computing the 95th percentile
+	// (https://en.wikipedia.org/wiki/Percentile) of data points across time
+	// series for each alignment period. This reducer is valid for GAUGE and
+	// DELTA metrics of numeric and distribution type. The value of the
+	// output is DOUBLE.
+	//   "REDUCE_PERCENTILE_50" - Reduce by computing the 50th percentile
+	// (https://en.wikipedia.org/wiki/Percentile) of data points across time
+	// series for each alignment period. This reducer is valid for GAUGE and
+	// DELTA metrics of numeric and distribution type. The value of the
+	// output is DOUBLE.
+	//   "REDUCE_PERCENTILE_05" - Reduce by computing the 5th percentile
+	// (https://en.wikipedia.org/wiki/Percentile) of data points across time
+	// series for each alignment period. This reducer is valid for GAUGE and
+	// DELTA metrics of numeric and distribution type. The value of the
+	// output is DOUBLE.
+	CrossSeriesReducer string `json:"crossSeriesReducer,omitempty"`
+
+	// GroupByFields: The set of fields to preserve when
+	// cross_series_reducer is specified. The group_by_fields determine how
+	// the time series are partitioned into subsets prior to applying the
+	// aggregation operation. Each subset contains time series that have the
+	// same value for each of the grouping fields. Each individual time
+	// series is a member of exactly one subset. The cross_series_reducer is
+	// applied to each subset of time series. It is not possible to reduce
+	// across different resource types, so this field implicitly contains
+	// resource.type. Fields not specified in group_by_fields are aggregated
+	// away. If group_by_fields is not specified and all the time series
+	// have the same resource type, then the time series are aggregated into
+	// a single output time series. If cross_series_reducer is not defined,
+	// this field is ignored.
+	GroupByFields []string `json:"groupByFields,omitempty"`
+
+	// PerSeriesAligner: An Aligner describes how to bring the data points
+	// in a single time series into temporal alignment. Except for
+	// ALIGN_NONE, all alignments cause all the data points in an
+	// alignment_period to be mathematically grouped together, resulting in
+	// a single data point for each alignment_period with end timestamp at
+	// the end of the period.Not all alignment operations may be applied to
+	// all time series. The valid choices depend on the metric_kind and
+	// value_type of the original time series. Alignment can change the
+	// metric_kind or the value_type of the time series.Time series data
+	// must be aligned in order to perform cross-time series reduction. If
+	// cross_series_reducer is specified, then per_series_aligner must be
+	// specified and not equal to ALIGN_NONE and alignment_period must be
+	// specified; otherwise, an error is returned.
+	//
+	// Possible values:
+	//   "ALIGN_NONE" - No alignment. Raw data is returned. Not valid if
+	// cross-series reduction is requested. The value_type of the result is
+	// the same as the value_type of the input.
+	//   "ALIGN_DELTA" - Align and convert to DELTA. The output is delta =
+	// y1 - y0.This alignment is valid for CUMULATIVE and DELTA metrics. If
+	// the selected alignment period results in periods with no data, then
+	// the aligned value for such a period is created by interpolation. The
+	// value_type of the aligned result is the same as the value_type of the
+	// input.
+	//   "ALIGN_RATE" - Align and convert to a rate. The result is computed
+	// as rate = (y1 - y0)/(t1 - t0), or "delta over time". Think of this
+	// aligner as providing the slope of the line that passes through the
+	// value at the start and at the end of the alignment_period.This
+	// aligner is valid for CUMULATIVE and DELTA metrics with numeric
+	// values. If the selected alignment period results in periods with no
+	// data, then the aligned value for such a period is created by
+	// interpolation. The output is a GAUGE metric with value_type
+	// DOUBLE.If, by "rate", you mean "percentage change", see the
+	// ALIGN_PERCENT_CHANGE aligner instead.
+	//   "ALIGN_INTERPOLATE" - Align by interpolating between adjacent
+	// points around the alignment period boundary. This aligner is valid
+	// for GAUGE metrics with numeric values. The value_type of the aligned
+	// result is the same as the value_type of the input.
+	//   "ALIGN_NEXT_OLDER" - Align by moving the most recent data point
+	// before the end of the alignment period to the boundary at the end of
+	// the alignment period. This aligner is valid for GAUGE metrics. The
+	// value_type of the aligned result is the same as the value_type of the
+	// input.
+	//   "ALIGN_MIN" - Align the time series by returning the minimum value
+	// in each alignment period. This aligner is valid for GAUGE and DELTA
+	// metrics with numeric values. The value_type of the aligned result is
+	// the same as the value_type of the input.
+	//   "ALIGN_MAX" - Align the time series by returning the maximum value
+	// in each alignment period. This aligner is valid for GAUGE and DELTA
+	// metrics with numeric values. The value_type of the aligned result is
+	// the same as the value_type of the input.
+	//   "ALIGN_MEAN" - Align the time series by returning the mean value in
+	// each alignment period. This aligner is valid for GAUGE and DELTA
+	// metrics with numeric values. The value_type of the aligned result is
+	// DOUBLE.
+	//   "ALIGN_COUNT" - Align the time series by returning the number of
+	// values in each alignment period. This aligner is valid for GAUGE and
+	// DELTA metrics with numeric or Boolean values. The value_type of the
+	// aligned result is INT64.
+	//   "ALIGN_SUM" - Align the time series by returning the sum of the
+	// values in each alignment period. This aligner is valid for GAUGE and
+	// DELTA metrics with numeric and distribution values. The value_type of
+	// the aligned result is the same as the value_type of the input.
+	//   "ALIGN_STDDEV" - Align the time series by returning the standard
+	// deviation of the values in each alignment period. This aligner is
+	// valid for GAUGE and DELTA metrics with numeric values. The value_type
+	// of the output is DOUBLE.
+	//   "ALIGN_COUNT_TRUE" - Align the time series by returning the number
+	// of True values in each alignment period. This aligner is valid for
+	// GAUGE metrics with Boolean values. The value_type of the output is
+	// INT64.
+	//   "ALIGN_COUNT_FALSE" - Align the time series by returning the number
+	// of False values in each alignment period. This aligner is valid for
+	// GAUGE metrics with Boolean values. The value_type of the output is
+	// INT64.
+	//   "ALIGN_FRACTION_TRUE" - Align the time series by returning the
+	// ratio of the number of True values to the total number of values in
+	// each alignment period. This aligner is valid for GAUGE metrics with
+	// Boolean values. The output value is in the range 0.0, 1.0 and has
+	// value_type DOUBLE.
+	//   "ALIGN_PERCENTILE_99" - Align the time series by using percentile
+	// aggregation (https://en.wikipedia.org/wiki/Percentile). The resulting
+	// data point in each alignment period is the 99th percentile of all
+	// data points in the period. This aligner is valid for GAUGE and DELTA
+	// metrics with distribution values. The output is a GAUGE metric with
+	// value_type DOUBLE.
+	//   "ALIGN_PERCENTILE_95" - Align the time series by using percentile
+	// aggregation (https://en.wikipedia.org/wiki/Percentile). The resulting
+	// data point in each alignment period is the 95th percentile of all
+	// data points in the period. This aligner is valid for GAUGE and DELTA
+	// metrics with distribution values. The output is a GAUGE metric with
+	// value_type DOUBLE.
+	//   "ALIGN_PERCENTILE_50" - Align the time series by using percentile
+	// aggregation (https://en.wikipedia.org/wiki/Percentile). The resulting
+	// data point in each alignment period is the 50th percentile of all
+	// data points in the period. This aligner is valid for GAUGE and DELTA
+	// metrics with distribution values. The output is a GAUGE metric with
+	// value_type DOUBLE.
+	//   "ALIGN_PERCENTILE_05" - Align the time series by using percentile
+	// aggregation (https://en.wikipedia.org/wiki/Percentile). The resulting
+	// data point in each alignment period is the 5th percentile of all data
+	// points in the period. This aligner is valid for GAUGE and DELTA
+	// metrics with distribution values. The output is a GAUGE metric with
+	// value_type DOUBLE.
+	//   "ALIGN_PERCENT_CHANGE" - Align and convert to a percentage change.
+	// This aligner is valid for GAUGE and DELTA metrics with numeric
+	// values. This alignment returns ((current - previous)/previous) * 100,
+	// where the value of previous is determined based on the
+	// alignment_period.If the values of current and previous are both 0,
+	// then the returned value is 0. If only previous is 0, the returned
+	// value is infinity.A 10-minute moving mean is computed at each point
+	// of the alignment period prior to the above calculation to smooth the
+	// metric and prevent false positives from very short-lived spikes. The
+	// moving mean is only applicable for data whose values are >= 0. Any
+	// values < 0 are treated as a missing datapoint, and are ignored. While
+	// DELTA metrics are accepted by this alignment, special care should be
+	// taken that the values for the metric will always be positive. The
+	// output is a GAUGE metric with value_type DOUBLE.
+	PerSeriesAligner string `json:"perSeriesAligner,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AlignmentPeriod") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AlignmentPeriod") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Aggregation) MarshalJSON() ([]byte, error) {
+	type NoMethod Aggregation
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Axis: A chart axis.
+type Axis struct {
+	// Label: The label of the axis.
+	Label string `json:"label,omitempty"`
+
+	// Scale: The axis scale. By default, a linear scale is used.
+	//
+	// Possible values:
+	//   "SCALE_UNSPECIFIED" - Scale is unspecified. The view will default
+	// to LINEAR.
+	//   "LINEAR" - Linear scale.
+	//   "LOG10" - Logarithmic scale (base 10).
+	Scale string `json:"scale,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Label") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Label") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Axis) MarshalJSON() ([]byte, error) {
+	type NoMethod Axis
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ChartOptions: Options to control visual rendering of a chart.
+type ChartOptions struct {
+	// Mode: The chart mode.
+	//
+	// Possible values:
+	//   "MODE_UNSPECIFIED" - Mode is unspecified. The view will default to
+	// COLOR.
+	//   "COLOR" - The chart distinguishes data series using different
+	// color. Line colors may get reused when there are many lines in the
+	// chart.
+	//   "X_RAY" - The chart uses the Stackdriver x-ray mode, in which each
+	// data set is plotted using the same semi-transparent color.
+	//   "STATS" - The chart displays statistics such as average, median,
+	// 95th percentile, and more.
+	Mode string `json:"mode,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Mode") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Mode") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ChartOptions) MarshalJSON() ([]byte, error) {
+	type NoMethod ChartOptions
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Column: Defines the layout properties and content for a column.
+type Column struct {
+	// Weight: The relative weight of this column. The column weight is used
+	// to adjust the width of columns on the screen (relative to peers).
+	// Greater the weight, greater the width of the column on the screen. If
+	// omitted, a value of 1 is used while rendering.
+	Weight int64 `json:"weight,omitempty,string"`
+
+	// Widgets: The display widgets arranged vertically in this column.
+	Widgets []*Widget `json:"widgets,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Weight") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Weight") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Column) MarshalJSON() ([]byte, error) {
+	type NoMethod Column
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ColumnLayout: A simplified layout that divides the available space
+// into vertical columns and arranges a set of widgets vertically in
+// each column.
+type ColumnLayout struct {
+	// Columns: The columns of content to display.
+	Columns []*Column `json:"columns,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Columns") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Columns") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ColumnLayout) MarshalJSON() ([]byte, error) {
+	type NoMethod ColumnLayout
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Dashboard: A Google Stackdriver dashboard. Dashboards define the
+// content and layout of pages in the Stackdriver web application.
+type Dashboard struct {
+	// ColumnLayout: The content is divided into equally spaced columns and
+	// the widgets are arranged vertically.
+	ColumnLayout *ColumnLayout `json:"columnLayout,omitempty"`
+
+	// DisplayName: The mutable, human-readable name.
+	DisplayName string `json:"displayName,omitempty"`
+
+	// Etag: etag is used for optimistic concurrency control as a way to
+	// help prevent simultaneous updates of a policy from overwriting each
+	// other. An etag is returned in the response to GetDashboard, and users
+	// are expected to put that etag in the request to UpdateDashboard to
+	// ensure that their change will be applied to the same version of the
+	// Dashboard configuration. The field should not be passed during
+	// dashboard creation.
+	Etag string `json:"etag,omitempty"`
+
+	// GridLayout: Content is arranged with a basic layout that re-flows a
+	// simple list of informational elements like widgets or tiles.
+	GridLayout *GridLayout `json:"gridLayout,omitempty"`
+
+	// Name: The resource name of the dashboard.
+	Name string `json:"name,omitempty"`
+
+	// RowLayout: The content is divided into equally spaced rows and the
+	// widgets are arranged horizontally.
+	RowLayout *RowLayout `json:"rowLayout,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ColumnLayout") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ColumnLayout") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Dashboard) MarshalJSON() ([]byte, error) {
+	type NoMethod Dashboard
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// DataSet: Groups a time series query definition with charting options.
+type DataSet struct {
+	// LegendTemplate: A template string for naming TimeSeries in the
+	// resulting data set. This should be a string with interpolations of
+	// the form ${label_name}, which will resolve to the label's value.
+	LegendTemplate string `json:"legendTemplate,omitempty"`
+
+	// MinAlignmentPeriod: Optional. The lower bound on data point frequency
+	// for this data set, implemented by specifying the minimum alignment
+	// period to use in a time series query For example, if the data is
+	// published once every 10 minutes, the min_alignment_period should be
+	// at least 10 minutes. It would not make sense to fetch and align data
+	// at one minute intervals.
+	MinAlignmentPeriod string `json:"minAlignmentPeriod,omitempty"`
+
+	// PlotType: How this data should be plotted on the chart.
+	//
+	// Possible values:
+	//   "PLOT_TYPE_UNSPECIFIED" - Plot type is unspecified. The view will
+	// default to LINE.
+	//   "LINE" - The data is plotted as a set of lines (one line per
+	// series).
+	//   "STACKED_AREA" - The data is plotted as a set of filled areas (one
+	// area per series), with the areas stacked vertically (the base of each
+	// area is the top of its predecessor, and the base of the first area is
+	// the X axis). Since the areas do not overlap, each is filled with a
+	// different opaque color.
+	//   "STACKED_BAR" - The data is plotted as a set of rectangular boxes
+	// (one box per series), with the boxes stacked vertically (the base of
+	// each box is the top of its predecessor, and the base of the first box
+	// is the X axis). Since the boxes do not overlap, each is filled with a
+	// different opaque color.
+	//   "HEATMAP" - The data is plotted as a heatmap. The series being
+	// plotted must have a DISTRIBUTION value type. The value of each bucket
+	// in the distribution is displayed as a color. This type is not
+	// currently available in the Stackdriver Monitoring application.
+	PlotType string `json:"plotType,omitempty"`
+
+	// TimeSeriesQuery: Fields for querying time series data from the
+	// Stackdriver metrics API.
+	TimeSeriesQuery *TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "LegendTemplate") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LegendTemplate") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *DataSet) MarshalJSON() ([]byte, error) {
+	type NoMethod DataSet
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // DroppedLabels: A set of (label, value) pairs which were dropped
@@ -279,21 +850,19 @@ func (s *Field) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ListOperationsResponse: The response message for
-// Operations.ListOperations.
-type ListOperationsResponse struct {
-	// NextPageToken: The standard List next-page token.
-	NextPageToken string `json:"nextPageToken,omitempty"`
+// GaugeView: A gauge chart shows where the current value sits within a
+// pre-defined range. The upper and lower bounds should define the
+// possible range of values for the scorecard's query (inclusive).
+type GaugeView struct {
+	// LowerBound: The lower bound for this gauge chart. The value of the
+	// chart should always be greater than or equal to this.
+	LowerBound float64 `json:"lowerBound,omitempty"`
 
-	// Operations: A list of operations that matches the specified filter in
-	// the request.
-	Operations []*Operation `json:"operations,omitempty"`
+	// UpperBound: The upper bound for this gauge chart. The value of the
+	// chart should always be less than or equal to this.
+	UpperBound float64 `json:"upperBound,omitempty"`
 
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "NextPageToken") to
+	// ForceSendFields is a list of field names (e.g. "LowerBound") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -301,69 +870,8 @@ type ListOperationsResponse struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "NextPageToken") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
-	type NoMethod ListOperationsResponse
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// Operation: This resource represents a long-running operation that is
-// the result of a network API call.
-type Operation struct {
-	// Done: If the value is false, it means the operation is still in
-	// progress. If true, the operation is completed, and either error or
-	// response is available.
-	Done bool `json:"done,omitempty"`
-
-	// Error: The error result of the operation in case of failure or
-	// cancellation.
-	Error *Status `json:"error,omitempty"`
-
-	// Metadata: Service-specific metadata associated with the operation. It
-	// typically contains progress information and common metadata such as
-	// create time. Some services might not provide such metadata. Any
-	// method that returns a long-running operation should document the
-	// metadata type, if any.
-	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
-
-	// Name: The server-assigned name, which is only unique within the same
-	// service that originally returns it. If you use the default HTTP
-	// mapping, the name should have the format of
-	// operations/some/unique/name.
-	Name string `json:"name,omitempty"`
-
-	// Response: The normal response of the operation in case of success. If
-	// the original method returns no data on success, such as Delete, the
-	// response is google.protobuf.Empty. If the original method is standard
-	// Get/Create/Update, the response should be the resource. For other
-	// methods, the response should have the type XxxResponse, where Xxx is
-	// the original method name. For example, if the original method name is
-	// TakeSnapshot(), the inferred response type is TakeSnapshotResponse.
-	Response googleapi.RawMessage `json:"response,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "Done") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Done") to include in API
-	// requests with the JSON null value. By default, fields with empty
+	// NullFields is a list of field names (e.g. "LowerBound") to include in
+	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
@@ -371,8 +879,98 @@ type Operation struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Operation) MarshalJSON() ([]byte, error) {
-	type NoMethod Operation
+func (s *GaugeView) MarshalJSON() ([]byte, error) {
+	type NoMethod GaugeView
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *GaugeView) UnmarshalJSON(data []byte) error {
+	type NoMethod GaugeView
+	var s1 struct {
+		LowerBound gensupport.JSONFloat64 `json:"lowerBound"`
+		UpperBound gensupport.JSONFloat64 `json:"upperBound"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.LowerBound = float64(s1.LowerBound)
+	s.UpperBound = float64(s1.UpperBound)
+	return nil
+}
+
+// GridLayout: A basic layout divides the available space into vertical
+// columns of equal width and arranges a list of widgets using a
+// row-first strategy.
+type GridLayout struct {
+	// Columns: The number of columns into which the view's width is
+	// divided. If omitted or set to zero, a system default will be used
+	// while rendering.
+	Columns int64 `json:"columns,omitempty,string"`
+
+	// Widgets: The informational elements that are arranged into the
+	// columns row-first.
+	Widgets []*Widget `json:"widgets,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Columns") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Columns") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GridLayout) MarshalJSON() ([]byte, error) {
+	type NoMethod GridLayout
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListDashboardsResponse: The ListDashboards request.
+type ListDashboardsResponse struct {
+	// Dashboards: The list of requested dashboards.
+	Dashboards []*Dashboard `json:"dashboards,omitempty"`
+
+	// NextPageToken: If there are more results than have been returned,
+	// then this field is set to a non-empty value. To see the additional
+	// results, use that value as page_token in the next call to this
+	// method.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Dashboards") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Dashboards") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListDashboardsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListDashboardsResponse
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -416,6 +1014,218 @@ func (s *Option) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// PickTimeSeriesFilter: Describes a ranking-based time series filter.
+// Each input time series is ranked with an aligner. The filter will
+// allow up to num_time_series time series to pass through it, selecting
+// them based on the relative ranking.For example, if ranking_method is
+// METHOD_MEAN,direction is BOTTOM, and num_time_series is 3, then the 3
+// times series with the lowest mean values will pass through the
+// filter.
+type PickTimeSeriesFilter struct {
+	// Direction: How to use the ranking to select time series that pass
+	// through the filter.
+	//
+	// Possible values:
+	//   "DIRECTION_UNSPECIFIED" - Not allowed. You must specify a different
+	// Direction if you specify a PickTimeSeriesFilter.
+	//   "TOP" - Pass the highest num_time_series ranking inputs.
+	//   "BOTTOM" - Pass the lowest num_time_series ranking inputs.
+	Direction string `json:"direction,omitempty"`
+
+	// NumTimeSeries: How many time series to allow to pass through the
+	// filter.
+	NumTimeSeries int64 `json:"numTimeSeries,omitempty"`
+
+	// RankingMethod: ranking_method is applied to each time series
+	// independently to produce the value which will be used to compare the
+	// time series to other time series.
+	//
+	// Possible values:
+	//   "METHOD_UNSPECIFIED" - Not allowed. You must specify a different
+	// Method if you specify a PickTimeSeriesFilter.
+	//   "METHOD_MEAN" - Select the mean of all values.
+	//   "METHOD_MAX" - Select the maximum value.
+	//   "METHOD_MIN" - Select the minimum value.
+	//   "METHOD_SUM" - Compute the sum of all values.
+	//   "METHOD_LATEST" - Select the most recent value.
+	RankingMethod string `json:"rankingMethod,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Direction") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Direction") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *PickTimeSeriesFilter) MarshalJSON() ([]byte, error) {
+	type NoMethod PickTimeSeriesFilter
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RatioPart: Describes a query to build the numerator or denominator of
+// a TimeSeriesFilterRatio.
+type RatioPart struct {
+	// Aggregation: By default, the raw time series data is returned. Use
+	// this field to combine multiple time series for different views of the
+	// data.
+	Aggregation *Aggregation `json:"aggregation,omitempty"`
+
+	// Filter: Required. The monitoring filter that identifies the metric
+	// types, resources, and projects to query.
+	Filter string `json:"filter,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Aggregation") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Aggregation") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RatioPart) MarshalJSON() ([]byte, error) {
+	type NoMethod RatioPart
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Row: Defines the layout properties and content for a row.
+type Row struct {
+	// Weight: The relative weight of this row. The row weight is used to
+	// adjust the height of rows on the screen (relative to peers). Greater
+	// the weight, greater the height of the row on the screen. If omitted,
+	// a value of 1 is used while rendering.
+	Weight int64 `json:"weight,omitempty,string"`
+
+	// Widgets: The display widgets arranged horizontally in this row.
+	Widgets []*Widget `json:"widgets,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Weight") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Weight") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Row) MarshalJSON() ([]byte, error) {
+	type NoMethod Row
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RowLayout: A simplified layout that divides the available space into
+// rows and arranges a set of widgets horizontally in each row.
+type RowLayout struct {
+	// Rows: The rows of content to display.
+	Rows []*Row `json:"rows,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Rows") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Rows") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RowLayout) MarshalJSON() ([]byte, error) {
+	type NoMethod RowLayout
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Scorecard: A widget showing the latest value of a metric, and how
+// this value relates to one or more thresholds.
+type Scorecard struct {
+	// GaugeView: Will cause the scorecard to show a gauge chart.
+	GaugeView *GaugeView `json:"gaugeView,omitempty"`
+
+	// SparkChartView: Will cause the scorecard to show a spark chart.
+	SparkChartView *SparkChartView `json:"sparkChartView,omitempty"`
+
+	// Thresholds: The thresholds used to determine the state of the
+	// scorecard given the time series' current value. For an actual value
+	// x, the scorecard is in a danger state if x is less than or equal to a
+	// danger threshold that triggers below, or greater than or equal to a
+	// danger threshold that triggers above. Similarly, if x is above/below
+	// a warning threshold that triggers above/below, then the scorecard is
+	// in a warning state - unless x also puts it in a danger state. (Danger
+	// trumps warning.)As an example, consider a scorecard with the
+	// following four thresholds: {  value: 90,  category: 'DANGER',
+	// trigger: 'ABOVE', }, {  value: 70,  category: 'WARNING',  trigger:
+	// 'ABOVE', }, {  value: 10,  category: 'DANGER',  trigger: 'BELOW', },
+	// {  value: 20,  category: 'WARNING',  trigger: 'BELOW', }Then: values
+	// less than or equal to 10 would put the scorecard in a DANGER state,
+	// values greater than 10 but less than or equal to 20 a WARNING state,
+	// values strictly between 20 and 70 an OK state, values greater than or
+	// equal to 70 but less than 90 a WARNING state, and values greater than
+	// or equal to 90 a DANGER state.
+	Thresholds []*Threshold `json:"thresholds,omitempty"`
+
+	// TimeSeriesQuery: Fields for querying time series data from the
+	// Stackdriver metrics API.
+	TimeSeriesQuery *TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "GaugeView") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "GaugeView") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Scorecard) MarshalJSON() ([]byte, error) {
+	type NoMethod Scorecard
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // SourceContext: SourceContext represents information about the source
 // of a protobuf element, like the file in which it is defined.
 type SourceContext struct {
@@ -447,17 +1257,20 @@ func (s *SourceContext) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// SpanContext: The context of a span, attached to
-// google.api.Distribution.Exemplars in google.api.Distribution values
-// during aggregation.It contains the name of a span with format:
-// projects/PROJECT_ID/traces/TRACE_ID/spans/SPAN_ID
+// SpanContext: The context of a span, attached to Exemplars in
+// Distribution values during aggregation.It contains the name of a span
+// with
+// format:
+// projects/[PROJECT_ID_OR_NUMBER]/traces/[TRACE_ID]/spans/[SPAN_
+// ID]
+//
 type SpanContext struct {
-	// SpanName: The resource name of the span in the following
-	// format:
-	// projects/[PROJECT_ID]/traces/[TRACE_ID]/spans/[SPAN_ID]
-	// TRACE_
-	// ID is a unique identifier for a trace within a project; it is a
-	// 32-character hexadecimal encoding of a 16-byte array.SPAN_ID is a
+	// SpanName: The resource name of the span. The format
+	// is:
+	// projects/[PROJECT_ID_OR_NUMBER]/traces/[TRACE_ID]/spans/[SPAN_ID]
+	//
+	// [TRACE_ID] is a unique identifier for a trace within a project; it is
+	// a 32-character hexadecimal encoding of a 16-byte array.[SPAN_ID] is a
 	// unique identifier for a span within a trace; it is a 16-character
 	// hexadecimal encoding of an 8-byte array.
 	SpanName string `json:"spanName,omitempty"`
@@ -485,60 +1298,67 @@ func (s *SpanContext) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Status: The Status type defines a logical error model that is
-// suitable for different programming environments, including REST APIs
-// and RPC APIs. It is used by gRPC (https://github.com/grpc). The error
-// model is designed to be:
-// Simple to use and understand for most users
-// Flexible enough to meet unexpected needsOverviewThe Status message
-// contains three pieces of data: error code, error message, and error
-// details. The error code should be an enum value of google.rpc.Code,
-// but it may accept additional error codes if needed. The error message
-// should be a developer-facing English message that helps developers
-// understand and resolve the error. If a localized user-facing error
-// message is needed, put the localized message in the error details or
-// localize it in the client. The optional error details may contain
-// arbitrary information about the error. There is a predefined set of
-// error detail types in the package google.rpc that can be used for
-// common error conditions.Language mappingThe Status message is the
-// logical representation of the error model, but it is not necessarily
-// the actual wire format. When the Status message is exposed in
-// different client libraries and different wire protocols, it can be
-// mapped differently. For example, it will likely be mapped to some
-// exceptions in Java, but more likely mapped to some error codes in
-// C.Other usesThe error model and the Status message can be used in a
-// variety of environments, either with or without APIs, to provide a
-// consistent developer experience across different environments.Example
-// uses of this error model include:
-// Partial errors. If a service needs to return partial errors to the
-// client, it may embed the Status in the normal response to indicate
-// the partial errors.
-// Workflow errors. A typical workflow has multiple steps. Each step may
-// have a Status message for error reporting.
-// Batch operations. If a client uses batch request and batch response,
-// the Status message should be used directly inside batch response, one
-// for each error sub-response.
-// Asynchronous operations. If an API call embeds asynchronous operation
-// results in its response, the status of those operations should be
-// represented directly using the Status message.
-// Logging. If some API errors are stored in logs, the message Status
-// could be used directly after any stripping needed for
-// security/privacy reasons.
-type Status struct {
-	// Code: The status code, which should be an enum value of
-	// google.rpc.Code.
-	Code int64 `json:"code,omitempty"`
+// SparkChartView: A sparkChart is a small chart suitable for inclusion
+// in a table-cell or inline in text. This message contains the
+// configuration for a sparkChart to show up on a Scorecard, showing
+// recent trends of the scorecard's timeseries.
+type SparkChartView struct {
+	// MinAlignmentPeriod: The lower bound on data point frequency in the
+	// chart implemented by specifying the minimum alignment period to use
+	// in a time series query. For example, if the data is published once
+	// every 10 minutes it would not make sense to fetch and align data at
+	// one minute intervals. This field is optional and exists only as a
+	// hint.
+	MinAlignmentPeriod string `json:"minAlignmentPeriod,omitempty"`
 
-	// Details: A list of messages that carry the error details. There is a
-	// common set of message types for APIs to use.
-	Details []googleapi.RawMessage `json:"details,omitempty"`
+	// SparkChartType: The type of sparkchart to show in this chartView.
+	//
+	// Possible values:
+	//   "SPARK_CHART_TYPE_UNSPECIFIED" - Not allowed in well-formed
+	// requests.
+	//   "SPARK_LINE" - The sparkline will be rendered as a small line
+	// chart.
+	//   "SPARK_BAR" - The sparkbar will be rendered as a small bar chart.
+	SparkChartType string `json:"sparkChartType,omitempty"`
 
-	// Message: A developer-facing error message, which should be in
-	// English. Any user-facing error message should be localized and sent
-	// in the google.rpc.Status.details field, or localized by the client.
-	Message string `json:"message,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "MinAlignmentPeriod")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "Code") to
+	// NullFields is a list of field names (e.g. "MinAlignmentPeriod") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SparkChartView) MarshalJSON() ([]byte, error) {
+	type NoMethod SparkChartView
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Text: A widget that displays textual content.
+type Text struct {
+	// Content: The text content to be displayed.
+	Content string `json:"content,omitempty"`
+
+	// Format: How the text content is formatted.
+	//
+	// Possible values:
+	//   "FORMAT_UNSPECIFIED" - Format is unspecified. Defaults to MARKDOWN.
+	//   "MARKDOWN" - The text contains Markdown formatting.
+	//   "RAW" - The text contains no special formatting.
+	Format string `json:"format,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Content") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -546,7 +1366,60 @@ type Status struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Code") to include in API
+	// NullFields is a list of field names (e.g. "Content") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Text) MarshalJSON() ([]byte, error) {
+	type NoMethod Text
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Threshold: Defines a threshold for categorizing time series values.
+type Threshold struct {
+	// Color: The state color for this threshold. Color is not allowed in a
+	// XyChart.
+	//
+	// Possible values:
+	//   "COLOR_UNSPECIFIED" - Color is unspecified. Not allowed in
+	// well-formed requests.
+	//   "YELLOW" - Crossing the threshold is "concerning" behavior.
+	//   "RED" - Crossing the threshold is "emergency" behavior.
+	Color string `json:"color,omitempty"`
+
+	// Direction: The direction for the current threshold. Direction is not
+	// allowed in a XyChart.
+	//
+	// Possible values:
+	//   "DIRECTION_UNSPECIFIED" - Not allowed in well-formed requests.
+	//   "ABOVE" - The threshold will be considered crossed if the actual
+	// value is above the threshold value.
+	//   "BELOW" - The threshold will be considered crossed if the actual
+	// value is below the threshold value.
+	Direction string `json:"direction,omitempty"`
+
+	// Label: A label for the threshold.
+	Label string `json:"label,omitempty"`
+
+	// Value: The value of the threshold. The value should be defined in the
+	// native scale of the metric.
+	Value float64 `json:"value,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Color") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Color") to include in API
 	// requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -555,8 +1428,142 @@ type Status struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Status) MarshalJSON() ([]byte, error) {
-	type NoMethod Status
+func (s *Threshold) MarshalJSON() ([]byte, error) {
+	type NoMethod Threshold
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *Threshold) UnmarshalJSON(data []byte) error {
+	type NoMethod Threshold
+	var s1 struct {
+		Value gensupport.JSONFloat64 `json:"value"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Value = float64(s1.Value)
+	return nil
+}
+
+// TimeSeriesFilter: A filter that defines a subset of time series data
+// that is displayed in a widget. Time series data is fetched using the
+// ListTimeSeries method.
+type TimeSeriesFilter struct {
+	// Aggregation: By default, the raw time series data is returned. Use
+	// this field to combine multiple time series for different views of the
+	// data.
+	Aggregation *Aggregation `json:"aggregation,omitempty"`
+
+	// Filter: Required. The monitoring filter that identifies the metric
+	// types, resources, and projects to query.
+	Filter string `json:"filter,omitempty"`
+
+	// PickTimeSeriesFilter: Ranking based time series filter.
+	PickTimeSeriesFilter *PickTimeSeriesFilter `json:"pickTimeSeriesFilter,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Aggregation") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Aggregation") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TimeSeriesFilter) MarshalJSON() ([]byte, error) {
+	type NoMethod TimeSeriesFilter
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// TimeSeriesFilterRatio: A pair of time series filters that define a
+// ratio computation. The output time series is the pair-wise division
+// of each aligned element from the numerator and denominator time
+// series.
+type TimeSeriesFilterRatio struct {
+	// Denominator: The denominator of the ratio.
+	Denominator *RatioPart `json:"denominator,omitempty"`
+
+	// Numerator: The numerator of the ratio.
+	Numerator *RatioPart `json:"numerator,omitempty"`
+
+	// PickTimeSeriesFilter: Ranking based time series filter.
+	PickTimeSeriesFilter *PickTimeSeriesFilter `json:"pickTimeSeriesFilter,omitempty"`
+
+	// SecondaryAggregation: Apply a second aggregation after the ratio is
+	// computed.
+	SecondaryAggregation *Aggregation `json:"secondaryAggregation,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Denominator") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Denominator") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TimeSeriesFilterRatio) MarshalJSON() ([]byte, error) {
+	type NoMethod TimeSeriesFilterRatio
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// TimeSeriesQuery: TimeSeriesQuery collects the set of supported
+// methods for querying time series data from the Stackdriver metrics
+// API.
+type TimeSeriesQuery struct {
+	// TimeSeriesFilter: Filter parameters to fetch time series.
+	TimeSeriesFilter *TimeSeriesFilter `json:"timeSeriesFilter,omitempty"`
+
+	// TimeSeriesFilterRatio: Parameters to fetch a ratio between two time
+	// series filters.
+	TimeSeriesFilterRatio *TimeSeriesFilterRatio `json:"timeSeriesFilterRatio,omitempty"`
+
+	// UnitOverride: The unit of data contained in fetched time series. If
+	// non-empty, this unit will override any unit that accompanies fetched
+	// data. The format is the same as the unit field in MetricDescriptor.
+	UnitOverride string `json:"unitOverride,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TimeSeriesFilter") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TimeSeriesFilter") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TimeSeriesQuery) MarshalJSON() ([]byte, error) {
+	type NoMethod TimeSeriesQuery
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -609,38 +1616,120 @@ func (s *Type) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// method id "monitoring.operations.cancel":
+// Widget: Widget contains a single dashboard component and
+// configuration of how to present the component in the dashboard.
+type Widget struct {
+	// Blank: A blank space.
+	Blank *Empty `json:"blank,omitempty"`
 
-type OperationsCancelCall struct {
-	s                      *Service
-	name                   string
-	canceloperationrequest *CancelOperationRequest
-	urlParams_             gensupport.URLParams
-	ctx_                   context.Context
-	header_                http.Header
+	// Scorecard: A scorecard summarizing time series data.
+	Scorecard *Scorecard `json:"scorecard,omitempty"`
+
+	// Text: A raw string or markdown displaying textual content.
+	Text *Text `json:"text,omitempty"`
+
+	// Title: Optional. The title of the widget.
+	Title string `json:"title,omitempty"`
+
+	// XyChart: A chart of time series data.
+	XyChart *XyChart `json:"xyChart,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Blank") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Blank") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
-// Cancel: Starts asynchronous cancellation on a long-running operation.
-// The server makes a best effort to cancel the operation, but success
-// is not guaranteed. If the server doesn't support this method, it
-// returns google.rpc.Code.UNIMPLEMENTED. Clients can use
-// Operations.GetOperation or other methods to check whether the
-// cancellation succeeded or whether the operation completed despite
-// cancellation. On successful cancellation, the operation is not
-// deleted; instead, it becomes an operation with an Operation.error
-// value with a google.rpc.Status.code of 1, corresponding to
-// Code.CANCELLED.
-func (r *OperationsService) Cancel(name string, canceloperationrequest *CancelOperationRequest) *OperationsCancelCall {
-	c := &OperationsCancelCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.name = name
-	c.canceloperationrequest = canceloperationrequest
+func (s *Widget) MarshalJSON() ([]byte, error) {
+	type NoMethod Widget
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// XyChart: A chart that displays data on a 2D (X and Y axes) plane.
+type XyChart struct {
+	// ChartOptions: Display options for the chart.
+	ChartOptions *ChartOptions `json:"chartOptions,omitempty"`
+
+	// DataSets: The data displayed in this chart.
+	DataSets []*DataSet `json:"dataSets,omitempty"`
+
+	// Thresholds: Threshold lines drawn horizontally across the chart.
+	Thresholds []*Threshold `json:"thresholds,omitempty"`
+
+	// TimeshiftDuration: The duration used to display a comparison chart. A
+	// comparison chart simultaneously shows values from two similar-length
+	// time periods (e.g., week-over-week metrics). The duration must be
+	// positive, and it can only be applied to charts with data sets of LINE
+	// plot type.
+	TimeshiftDuration string `json:"timeshiftDuration,omitempty"`
+
+	// XAxis: The properties applied to the X axis.
+	XAxis *Axis `json:"xAxis,omitempty"`
+
+	// YAxis: The properties applied to the Y axis.
+	YAxis *Axis `json:"yAxis,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ChartOptions") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ChartOptions") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *XyChart) MarshalJSON() ([]byte, error) {
+	type NoMethod XyChart
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// method id "monitoring.projects.dashboards.create":
+
+type ProjectsDashboardsCreateCall struct {
+	s          *Service
+	parent     string
+	dashboard  *Dashboard
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Create: Creates a new custom dashboard.This method requires the
+// monitoring.dashboards.create permission on the specified project. For
+// more information, see Google Cloud IAM
+// (https://cloud.google.com/iam).
+func (r *ProjectsDashboardsService) Create(parent string, dashboard *Dashboard) *ProjectsDashboardsCreateCall {
+	c := &ProjectsDashboardsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.dashboard = dashboard
 	return c
 }
 
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
-func (c *OperationsCancelCall) Fields(s ...googleapi.Field) *OperationsCancelCall {
+func (c *ProjectsDashboardsCreateCall) Fields(s ...googleapi.Field) *ProjectsDashboardsCreateCall {
 	c.urlParams_.Set("fields", googleapi.CombineFields(s))
 	return c
 }
@@ -648,35 +1737,36 @@ func (c *OperationsCancelCall) Fields(s ...googleapi.Field) *OperationsCancelCal
 // Context sets the context to be used in this call's Do method. Any
 // pending HTTP request will be aborted if the provided context is
 // canceled.
-func (c *OperationsCancelCall) Context(ctx context.Context) *OperationsCancelCall {
+func (c *ProjectsDashboardsCreateCall) Context(ctx context.Context) *ProjectsDashboardsCreateCall {
 	c.ctx_ = ctx
 	return c
 }
 
 // Header returns an http.Header that can be modified by the caller to
 // add HTTP headers to the request.
-func (c *OperationsCancelCall) Header() http.Header {
+func (c *ProjectsDashboardsCreateCall) Header() http.Header {
 	if c.header_ == nil {
 		c.header_ = make(http.Header)
 	}
 	return c.header_
 }
 
-func (c *OperationsCancelCall) doRequest(alt string) (*http.Response, error) {
+func (c *ProjectsDashboardsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.canceloperationrequest)
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.dashboard)
 	if err != nil {
 		return nil, err
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:cancel")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/dashboards")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("POST", urls, body)
 	if err != nil {
@@ -684,19 +1774,19 @@ func (c *OperationsCancelCall) doRequest(alt string) (*http.Response, error) {
 	}
 	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
-		"name": c.name,
+		"parent": c.parent,
 	})
 	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
-// Do executes the "monitoring.operations.cancel" call.
-// Exactly one of *Empty or error will be non-nil. Any non-2xx status
-// code is an error. Response headers are in either
-// *Empty.ServerResponse.Header or (if a response was returned at all)
-// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
-// check whether the returned error was because http.StatusNotModified
-// was returned.
-func (c *OperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+// Do executes the "monitoring.projects.dashboards.create" call.
+// Exactly one of *Dashboard or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Dashboard.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsDashboardsCreateCall) Do(opts ...googleapi.CallOption) (*Dashboard, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -715,7 +1805,7 @@ func (c *OperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, error) 
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &Empty{
+	ret := &Dashboard{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -727,36 +1817,41 @@ func (c *OperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, error) 
 	}
 	return ret, nil
 	// {
-	//   "description": "Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns google.rpc.Code.UNIMPLEMENTED. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to Code.CANCELLED.",
-	//   "flatPath": "v1/operations/{operationsId}:cancel",
+	//   "description": "Creates a new custom dashboard.This method requires the monitoring.dashboards.create permission on the specified project. For more information, see Google Cloud IAM (https://cloud.google.com/iam).",
+	//   "flatPath": "v1/projects/{projectsId}/dashboards",
 	//   "httpMethod": "POST",
-	//   "id": "monitoring.operations.cancel",
+	//   "id": "monitoring.projects.dashboards.create",
 	//   "parameterOrder": [
-	//     "name"
+	//     "parent"
 	//   ],
 	//   "parameters": {
-	//     "name": {
-	//       "description": "The name of the operation resource to be cancelled.",
+	//     "parent": {
+	//       "description": "Required. The project on which to execute the request. The format is:\nprojects/[PROJECT_ID_OR_NUMBER]\nThe [PROJECT_ID_OR_NUMBER] must match the dashboard resource name.",
 	//       "location": "path",
-	//       "pattern": "^operations/.+$",
+	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "v1/{+name}:cancel",
+	//   "path": "v1/{+parent}/dashboards",
 	//   "request": {
-	//     "$ref": "CancelOperationRequest"
+	//     "$ref": "Dashboard"
 	//   },
 	//   "response": {
-	//     "$ref": "Empty"
-	//   }
+	//     "$ref": "Dashboard"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/monitoring",
+	//     "https://www.googleapis.com/auth/monitoring.write"
+	//   ]
 	// }
 
 }
 
-// method id "monitoring.operations.delete":
+// method id "monitoring.projects.dashboards.delete":
 
-type OperationsDeleteCall struct {
+type ProjectsDashboardsDeleteCall struct {
 	s          *Service
 	name       string
 	urlParams_ gensupport.URLParams
@@ -764,12 +1859,12 @@ type OperationsDeleteCall struct {
 	header_    http.Header
 }
 
-// Delete: Deletes a long-running operation. This method indicates that
-// the client is no longer interested in the operation result. It does
-// not cancel the operation. If the server doesn't support this method,
-// it returns google.rpc.Code.UNIMPLEMENTED.
-func (r *OperationsService) Delete(name string) *OperationsDeleteCall {
-	c := &OperationsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+// Delete: Deletes an existing custom dashboard.This method requires the
+// monitoring.dashboards.delete permission on the specified dashboard.
+// For more information, see Google Cloud IAM
+// (https://cloud.google.com/iam).
+func (r *ProjectsDashboardsService) Delete(name string) *ProjectsDashboardsDeleteCall {
+	c := &ProjectsDashboardsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
 	return c
 }
@@ -777,7 +1872,7 @@ func (r *OperationsService) Delete(name string) *OperationsDeleteCall {
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
-func (c *OperationsDeleteCall) Fields(s ...googleapi.Field) *OperationsDeleteCall {
+func (c *ProjectsDashboardsDeleteCall) Fields(s ...googleapi.Field) *ProjectsDashboardsDeleteCall {
 	c.urlParams_.Set("fields", googleapi.CombineFields(s))
 	return c
 }
@@ -785,22 +1880,23 @@ func (c *OperationsDeleteCall) Fields(s ...googleapi.Field) *OperationsDeleteCal
 // Context sets the context to be used in this call's Do method. Any
 // pending HTTP request will be aborted if the provided context is
 // canceled.
-func (c *OperationsDeleteCall) Context(ctx context.Context) *OperationsDeleteCall {
+func (c *ProjectsDashboardsDeleteCall) Context(ctx context.Context) *ProjectsDashboardsDeleteCall {
 	c.ctx_ = ctx
 	return c
 }
 
 // Header returns an http.Header that can be modified by the caller to
 // add HTTP headers to the request.
-func (c *OperationsDeleteCall) Header() http.Header {
+func (c *ProjectsDashboardsDeleteCall) Header() http.Header {
 	if c.header_ == nil {
 		c.header_ = make(http.Header)
 	}
 	return c.header_
 }
 
-func (c *OperationsDeleteCall) doRequest(alt string) (*http.Response, error) {
+func (c *ProjectsDashboardsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -821,14 +1917,14 @@ func (c *OperationsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
-// Do executes the "monitoring.operations.delete" call.
+// Do executes the "monitoring.projects.dashboards.delete" call.
 // Exactly one of *Empty or error will be non-nil. Any non-2xx status
 // code is an error. Response headers are in either
 // *Empty.ServerResponse.Header or (if a response was returned at all)
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *OperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+func (c *ProjectsDashboardsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -859,18 +1955,18 @@ func (c *OperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) 
 	}
 	return ret, nil
 	// {
-	//   "description": "Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns google.rpc.Code.UNIMPLEMENTED.",
-	//   "flatPath": "v1/operations/{operationsId}",
+	//   "description": "Deletes an existing custom dashboard.This method requires the monitoring.dashboards.delete permission on the specified dashboard. For more information, see Google Cloud IAM (https://cloud.google.com/iam).",
+	//   "flatPath": "v1/projects/{projectsId}/dashboards/{dashboardsId}",
 	//   "httpMethod": "DELETE",
-	//   "id": "monitoring.operations.delete",
+	//   "id": "monitoring.projects.dashboards.delete",
 	//   "parameterOrder": [
 	//     "name"
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the operation resource to be deleted.",
+	//       "description": "Required. The resource name of the Dashboard. The format is:\nprojects/[PROJECT_ID_OR_NUMBER]/dashboards/[DASHBOARD_ID]\n",
 	//       "location": "path",
-	//       "pattern": "^operations/.+$",
+	//       "pattern": "^projects/[^/]+/dashboards/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
@@ -878,14 +1974,19 @@ func (c *OperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) 
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "Empty"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/monitoring",
+	//     "https://www.googleapis.com/auth/monitoring.write"
+	//   ]
 	// }
 
 }
 
-// method id "monitoring.operations.get":
+// method id "monitoring.projects.dashboards.get":
 
-type OperationsGetCall struct {
+type ProjectsDashboardsGetCall struct {
 	s            *Service
 	name         string
 	urlParams_   gensupport.URLParams
@@ -894,11 +1995,12 @@ type OperationsGetCall struct {
 	header_      http.Header
 }
 
-// Get: Gets the latest state of a long-running operation. Clients can
-// use this method to poll the operation result at intervals as
-// recommended by the API service.
-func (r *OperationsService) Get(name string) *OperationsGetCall {
-	c := &OperationsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+// Get: Fetches a specific dashboard.This method requires the
+// monitoring.dashboards.get permission on the specified dashboard. For
+// more information, see Google Cloud IAM
+// (https://cloud.google.com/iam).
+func (r *ProjectsDashboardsService) Get(name string) *ProjectsDashboardsGetCall {
+	c := &ProjectsDashboardsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
 	return c
 }
@@ -906,7 +2008,7 @@ func (r *OperationsService) Get(name string) *OperationsGetCall {
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
-func (c *OperationsGetCall) Fields(s ...googleapi.Field) *OperationsGetCall {
+func (c *ProjectsDashboardsGetCall) Fields(s ...googleapi.Field) *ProjectsDashboardsGetCall {
 	c.urlParams_.Set("fields", googleapi.CombineFields(s))
 	return c
 }
@@ -916,7 +2018,7 @@ func (c *OperationsGetCall) Fields(s ...googleapi.Field) *OperationsGetCall {
 // getting updates only after the object has changed since the last
 // request. Use googleapi.IsNotModified to check whether the response
 // error from Do is the result of In-None-Match.
-func (c *OperationsGetCall) IfNoneMatch(entityTag string) *OperationsGetCall {
+func (c *ProjectsDashboardsGetCall) IfNoneMatch(entityTag string) *ProjectsDashboardsGetCall {
 	c.ifNoneMatch_ = entityTag
 	return c
 }
@@ -924,22 +2026,23 @@ func (c *OperationsGetCall) IfNoneMatch(entityTag string) *OperationsGetCall {
 // Context sets the context to be used in this call's Do method. Any
 // pending HTTP request will be aborted if the provided context is
 // canceled.
-func (c *OperationsGetCall) Context(ctx context.Context) *OperationsGetCall {
+func (c *ProjectsDashboardsGetCall) Context(ctx context.Context) *ProjectsDashboardsGetCall {
 	c.ctx_ = ctx
 	return c
 }
 
 // Header returns an http.Header that can be modified by the caller to
 // add HTTP headers to the request.
-func (c *OperationsGetCall) Header() http.Header {
+func (c *ProjectsDashboardsGetCall) Header() http.Header {
 	if c.header_ == nil {
 		c.header_ = make(http.Header)
 	}
 	return c.header_
 }
 
-func (c *OperationsGetCall) doRequest(alt string) (*http.Response, error) {
+func (c *ProjectsDashboardsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -963,14 +2066,14 @@ func (c *OperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
-// Do executes the "monitoring.operations.get" call.
-// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// Do executes the "monitoring.projects.dashboards.get" call.
+// Exactly one of *Dashboard or error will be non-nil. Any non-2xx
 // status code is an error. Response headers are in either
-// *Operation.ServerResponse.Header or (if a response was returned at
+// *Dashboard.ServerResponse.Header or (if a response was returned at
 // all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
 // to check whether the returned error was because
 // http.StatusNotModified was returned.
-func (c *OperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+func (c *ProjectsDashboardsGetCall) Do(opts ...googleapi.CallOption) (*Dashboard, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -989,7 +2092,7 @@ func (c *OperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, error)
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &Operation{
+	ret := &Dashboard{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -1001,74 +2104,69 @@ func (c *OperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, error)
 	}
 	return ret, nil
 	// {
-	//   "description": "Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.",
-	//   "flatPath": "v1/operations/{operationsId}",
+	//   "description": "Fetches a specific dashboard.This method requires the monitoring.dashboards.get permission on the specified dashboard. For more information, see Google Cloud IAM (https://cloud.google.com/iam).",
+	//   "flatPath": "v1/projects/{projectsId}/dashboards/{dashboardsId}",
 	//   "httpMethod": "GET",
-	//   "id": "monitoring.operations.get",
+	//   "id": "monitoring.projects.dashboards.get",
 	//   "parameterOrder": [
 	//     "name"
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The name of the operation resource.",
+	//       "description": "Required. The resource name of the Dashboard. The format is one of:\ndashboards/[DASHBOARD_ID] (for system dashboards)\nprojects/[PROJECT_ID_OR_NUMBER]/dashboards/[DASHBOARD_ID]  (for custom dashboards).",
 	//       "location": "path",
-	//       "pattern": "^operations/.+$",
+	//       "pattern": "^projects/[^/]+/dashboards/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
 	//   "path": "v1/{+name}",
 	//   "response": {
-	//     "$ref": "Operation"
-	//   }
+	//     "$ref": "Dashboard"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/monitoring",
+	//     "https://www.googleapis.com/auth/monitoring.read"
+	//   ]
 	// }
 
 }
 
-// method id "monitoring.operations.list":
+// method id "monitoring.projects.dashboards.list":
 
-type OperationsListCall struct {
+type ProjectsDashboardsListCall struct {
 	s            *Service
-	name         string
+	parent       string
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
 	header_      http.Header
 }
 
-// List: Lists operations that match the specified filter in the
-// request. If the server doesn't support this method, it returns
-// UNIMPLEMENTED.NOTE: the name binding allows API services to override
-// the binding to use different resource name schemes, such as
-// users/*/operations. To override the binding, API services can add a
-// binding such as "/v1/{name=users/*}/operations" to their service
-// configuration. For backwards compatibility, the default name includes
-// the operations collection id, however overriding users must ensure
-// the name binding is the parent resource, without the operations
-// collection id.
-func (r *OperationsService) List(name string) *OperationsListCall {
-	c := &OperationsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.name = name
+// List: Lists the existing dashboards.This method requires the
+// monitoring.dashboards.list permission on the specified project. For
+// more information, see Google Cloud IAM
+// (https://cloud.google.com/iam).
+func (r *ProjectsDashboardsService) List(parent string) *ProjectsDashboardsListCall {
+	c := &ProjectsDashboardsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
 	return c
 }
 
-// Filter sets the optional parameter "filter": The standard list
-// filter.
-func (c *OperationsListCall) Filter(filter string) *OperationsListCall {
-	c.urlParams_.Set("filter", filter)
-	return c
-}
-
-// PageSize sets the optional parameter "pageSize": The standard list
-// page size.
-func (c *OperationsListCall) PageSize(pageSize int64) *OperationsListCall {
+// PageSize sets the optional parameter "pageSize": A positive number
+// that is the maximum number of results to return. If unspecified, a
+// default of 1000 is used.
+func (c *ProjectsDashboardsListCall) PageSize(pageSize int64) *ProjectsDashboardsListCall {
 	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
 	return c
 }
 
-// PageToken sets the optional parameter "pageToken": The standard list
-// page token.
-func (c *OperationsListCall) PageToken(pageToken string) *OperationsListCall {
+// PageToken sets the optional parameter "pageToken": If this field is
+// not empty then it must contain the nextPageToken value returned by a
+// previous call to this method. Using this field causes the method to
+// return additional results from the previous method call.
+func (c *ProjectsDashboardsListCall) PageToken(pageToken string) *ProjectsDashboardsListCall {
 	c.urlParams_.Set("pageToken", pageToken)
 	return c
 }
@@ -1076,7 +2174,7 @@ func (c *OperationsListCall) PageToken(pageToken string) *OperationsListCall {
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
-func (c *OperationsListCall) Fields(s ...googleapi.Field) *OperationsListCall {
+func (c *ProjectsDashboardsListCall) Fields(s ...googleapi.Field) *ProjectsDashboardsListCall {
 	c.urlParams_.Set("fields", googleapi.CombineFields(s))
 	return c
 }
@@ -1086,7 +2184,7 @@ func (c *OperationsListCall) Fields(s ...googleapi.Field) *OperationsListCall {
 // getting updates only after the object has changed since the last
 // request. Use googleapi.IsNotModified to check whether the response
 // error from Do is the result of In-None-Match.
-func (c *OperationsListCall) IfNoneMatch(entityTag string) *OperationsListCall {
+func (c *ProjectsDashboardsListCall) IfNoneMatch(entityTag string) *ProjectsDashboardsListCall {
 	c.ifNoneMatch_ = entityTag
 	return c
 }
@@ -1094,22 +2192,23 @@ func (c *OperationsListCall) IfNoneMatch(entityTag string) *OperationsListCall {
 // Context sets the context to be used in this call's Do method. Any
 // pending HTTP request will be aborted if the provided context is
 // canceled.
-func (c *OperationsListCall) Context(ctx context.Context) *OperationsListCall {
+func (c *ProjectsDashboardsListCall) Context(ctx context.Context) *ProjectsDashboardsListCall {
 	c.ctx_ = ctx
 	return c
 }
 
 // Header returns an http.Header that can be modified by the caller to
 // add HTTP headers to the request.
-func (c *OperationsListCall) Header() http.Header {
+func (c *ProjectsDashboardsListCall) Header() http.Header {
 	if c.header_ == nil {
 		c.header_ = make(http.Header)
 	}
 	return c.header_
 }
 
-func (c *OperationsListCall) doRequest(alt string) (*http.Response, error) {
+func (c *ProjectsDashboardsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1120,7 +2219,7 @@ func (c *OperationsListCall) doRequest(alt string) (*http.Response, error) {
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/dashboards")
 	urls += "?" + c.urlParams_.Encode()
 	req, err := http.NewRequest("GET", urls, body)
 	if err != nil {
@@ -1128,19 +2227,19 @@ func (c *OperationsListCall) doRequest(alt string) (*http.Response, error) {
 	}
 	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
-		"name": c.name,
+		"parent": c.parent,
 	})
 	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
-// Do executes the "monitoring.operations.list" call.
-// Exactly one of *ListOperationsResponse or error will be non-nil. Any
+// Do executes the "monitoring.projects.dashboards.list" call.
+// Exactly one of *ListDashboardsResponse or error will be non-nil. Any
 // non-2xx status code is an error. Response headers are in either
-// *ListOperationsResponse.ServerResponse.Header or (if a response was
+// *ListDashboardsResponse.ServerResponse.Header or (if a response was
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *OperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperationsResponse, error) {
+func (c *ProjectsDashboardsListCall) Do(opts ...googleapi.CallOption) (*ListDashboardsResponse, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -1159,7 +2258,7 @@ func (c *OperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperationsRe
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &ListOperationsResponse{
+	ret := &ListDashboardsResponse{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -1171,42 +2270,42 @@ func (c *OperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperationsRe
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as \"/v1/{name=users/*}/operations\" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
-	//   "flatPath": "v1/operations",
+	//   "description": "Lists the existing dashboards.This method requires the monitoring.dashboards.list permission on the specified project. For more information, see Google Cloud IAM (https://cloud.google.com/iam).",
+	//   "flatPath": "v1/projects/{projectsId}/dashboards",
 	//   "httpMethod": "GET",
-	//   "id": "monitoring.operations.list",
+	//   "id": "monitoring.projects.dashboards.list",
 	//   "parameterOrder": [
-	//     "name"
+	//     "parent"
 	//   ],
 	//   "parameters": {
-	//     "filter": {
-	//       "description": "The standard list filter.",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "name": {
-	//       "description": "The name of the operation's parent resource.",
-	//       "location": "path",
-	//       "pattern": "^operations$",
-	//       "required": true,
-	//       "type": "string"
-	//     },
 	//     "pageSize": {
-	//       "description": "The standard list page size.",
+	//       "description": "A positive number that is the maximum number of results to return. If unspecified, a default of 1000 is used.",
 	//       "format": "int32",
 	//       "location": "query",
 	//       "type": "integer"
 	//     },
 	//     "pageToken": {
-	//       "description": "The standard list page token.",
+	//       "description": "If this field is not empty then it must contain the nextPageToken value returned by a previous call to this method. Using this field causes the method to return additional results from the previous method call.",
 	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. The scope of the dashboards to list. The format is:\nprojects/[PROJECT_ID_OR_NUMBER]\n",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+$",
+	//       "required": true,
 	//       "type": "string"
 	//     }
 	//   },
-	//   "path": "v1/{+name}",
+	//   "path": "v1/{+parent}/dashboards",
 	//   "response": {
-	//     "$ref": "ListOperationsResponse"
-	//   }
+	//     "$ref": "ListDashboardsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/monitoring",
+	//     "https://www.googleapis.com/auth/monitoring.read"
+	//   ]
 	// }
 
 }
@@ -1214,7 +2313,7 @@ func (c *OperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperationsRe
 // Pages invokes f for each page of results.
 // A non-nil error returned from f will halt the iteration.
 // The provided context supersedes any context provided to the Context method.
-func (c *OperationsListCall) Pages(ctx context.Context, f func(*ListOperationsResponse) error) error {
+func (c *ProjectsDashboardsListCall) Pages(ctx context.Context, f func(*ListDashboardsResponse) error) error {
 	c.ctx_ = ctx
 	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
 	for {
@@ -1230,4 +2329,149 @@ func (c *OperationsListCall) Pages(ctx context.Context, f func(*ListOperationsRe
 		}
 		c.PageToken(x.NextPageToken)
 	}
+}
+
+// method id "monitoring.projects.dashboards.patch":
+
+type ProjectsDashboardsPatchCall struct {
+	s          *Service
+	name       string
+	dashboard  *Dashboard
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Patch: Replaces an existing custom dashboard with a new
+// definition.This method requires the monitoring.dashboards.update
+// permission on the specified dashboard. For more information, see
+// Google Cloud IAM (https://cloud.google.com/iam).
+func (r *ProjectsDashboardsService) Patch(name string, dashboard *Dashboard) *ProjectsDashboardsPatchCall {
+	c := &ProjectsDashboardsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.dashboard = dashboard
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsDashboardsPatchCall) Fields(s ...googleapi.Field) *ProjectsDashboardsPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsDashboardsPatchCall) Context(ctx context.Context) *ProjectsDashboardsPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsDashboardsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsDashboardsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.dashboard)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PATCH", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "monitoring.projects.dashboards.patch" call.
+// Exactly one of *Dashboard or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Dashboard.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsDashboardsPatchCall) Do(opts ...googleapi.CallOption) (*Dashboard, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Dashboard{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Replaces an existing custom dashboard with a new definition.This method requires the monitoring.dashboards.update permission on the specified dashboard. For more information, see Google Cloud IAM (https://cloud.google.com/iam).",
+	//   "flatPath": "v1/projects/{projectsId}/dashboards/{dashboardsId}",
+	//   "httpMethod": "PATCH",
+	//   "id": "monitoring.projects.dashboards.patch",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "The resource name of the dashboard.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/dashboards/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "request": {
+	//     "$ref": "Dashboard"
+	//   },
+	//   "response": {
+	//     "$ref": "Dashboard"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/monitoring",
+	//     "https://www.googleapis.com/auth/monitoring.write"
+	//   ]
+	// }
+
 }

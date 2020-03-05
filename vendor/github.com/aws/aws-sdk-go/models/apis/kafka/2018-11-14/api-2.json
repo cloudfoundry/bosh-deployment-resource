@@ -396,6 +396,34 @@
         }
       ]
     },
+    "ListKafkaVersions": {
+      "name": "ListKafkaVersions",
+      "http": {
+        "method": "GET",
+        "requestUri": "/v1/kafka-versions",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "ListKafkaVersionsRequest"
+      },
+      "output": {
+        "shape": "ListKafkaVersionsResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "UnauthorizedException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        }
+      ]
+    },
     "ListNodes": {
       "name": "ListNodes",
       "http": {
@@ -588,6 +616,31 @@
           "shape": "ServiceUnavailableException"
         }
       ]
+    },
+    "UpdateMonitoring" : {
+      "name" : "UpdateMonitoring",
+      "http" : {
+        "method" : "PUT",
+        "requestUri" : "/v1/clusters/{clusterArn}/monitoring",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "UpdateMonitoringRequest"
+      },
+      "output" : {
+        "shape" : "UpdateMonitoringResponse"
+      },
+      "errors" : [ {
+        "shape" : "ServiceUnavailableException"
+      }, {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "UnauthorizedException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      } ]
     }
   },
   "shapes": {
@@ -769,6 +822,10 @@
         "NumberOfBrokerNodes": {
           "shape": "__integer",
           "locationName": "numberOfBrokerNodes"
+        },
+        "OpenMonitoring" : {
+          "shape" : "OpenMonitoring",
+          "locationName" : "openMonitoring"
         },
         "State": {
           "shape": "ClusterState",
@@ -965,6 +1022,10 @@
         "NumberOfBrokerNodes": {
           "shape": "__integerMin1Max15",
           "locationName": "numberOfBrokerNodes"
+        },
+        "OpenMonitoring" : {
+          "shape" : "OpenMonitoringInfo",
+          "locationName" : "openMonitoring"
         },
         "Tags": {
           "shape": "__mapOf__string",
@@ -1344,6 +1405,26 @@
         "httpStatusCode": 500
       }
     },
+    "KafkaVersion": {
+      "type": "structure",
+      "members": {
+        "Version": {
+          "shape": "__string",
+          "locationName": "version"
+        },
+        "Status": {
+          "shape": "KafkaVersionStatus",
+          "locationName": "status"
+        }
+      }
+    },
+    "KafkaVersionStatus": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "DEPRECATED"
+      ]
+    },
     "ListClusterOperationsRequest": {
       "type": "structure",
       "members": {
@@ -1477,6 +1558,34 @@
         }
       }
     },
+    "ListKafkaVersionsRequest": {
+      "type": "structure",
+      "members": {
+        "MaxResults": {
+          "shape": "MaxResults",
+          "location": "querystring",
+          "locationName": "maxResults"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "location": "querystring",
+          "locationName": "nextToken"
+        }
+      }
+    },
+    "ListKafkaVersionsResponse": {
+      "type": "structure",
+      "members": {
+        "KafkaVersions": {
+          "shape": "__listOfKafkaVersion",
+          "locationName": "kafkaVersions"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken"
+        }
+      }
+    },
     "ListNodesRequest": {
       "type": "structure",
       "members": {
@@ -1554,6 +1663,14 @@
         "NumberOfBrokerNodes": {
           "shape": "__integer",
           "locationName": "numberOfBrokerNodes"
+        },
+        "OpenMonitoring" : {
+          "shape" : "OpenMonitoring",
+          "locationName" : "openMonitoring"
+        },
+        "EnhancedMonitoring" : {
+          "shape" : "EnhancedMonitoring",
+          "locationName" : "enhancedMonitoring"
         }
       }
     },
@@ -1624,6 +1741,19 @@
       "exception": true,
       "error": {
         "httpStatusCode": 503
+      }
+    },
+    "StateInfo": {
+      "type": "structure",
+      "members": {
+        "Code": {
+          "shape": "__string",
+          "locationName": "code"
+        },
+        "Message": {
+          "shape": "__string",
+          "locationName": "message"
+        }
       }
     },
     "StorageInfo": {
@@ -1823,6 +1953,42 @@
         }
       }
     },
+    "UpdateMonitoringRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ClusterArn" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "clusterArn"
+        },
+        "CurrentVersion" : {
+          "shape" : "__string",
+          "locationName" : "currentVersion"
+        },
+        "EnhancedMonitoring" : {
+          "shape" : "EnhancedMonitoring",
+          "locationName" : "enhancedMonitoring"
+        },
+        "OpenMonitoring" : {
+          "shape" : "OpenMonitoringInfo",
+          "locationName" : "openMonitoring"
+        }
+      },
+      "required" : [ "ClusterArn", "CurrentVersion" ]
+    },
+    "UpdateMonitoringResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ClusterArn" : {
+          "shape" : "__string",
+          "locationName" : "clusterArn"
+        },
+        "ClusterOperationArn" : {
+          "shape" : "__string",
+          "locationName" : "clusterOperationArn"
+        }
+      }
+    },
     "ZookeeperNodeInfo": {
       "type": "structure",
       "members": {
@@ -1847,6 +2013,92 @@
           "locationName": "zookeeperVersion"
         }
       }
+    },
+    "OpenMonitoring" : {
+      "type" : "structure",
+      "members" : {
+        "Prometheus" : {
+          "shape" : "Prometheus",
+          "locationName" : "prometheus"
+        }
+      },
+      "required" : [ "Prometheus" ]
+    },
+    "OpenMonitoringInfo" : {
+      "type" : "structure",
+      "members" : {
+        "Prometheus" : {
+          "shape" : "PrometheusInfo",
+          "locationName" : "prometheus"
+        }
+      },
+      "required" : [ "Prometheus" ]
+    },
+    "Prometheus" : {
+      "type" : "structure",
+      "members" : {
+        "JmxExporter" : {
+          "shape" : "JmxExporter",
+          "locationName" : "jmxExporter"
+        },
+        "NodeExporter" : {
+          "shape" : "NodeExporter",
+          "locationName" : "nodeExporter"
+        }
+      }
+    },
+    "PrometheusInfo" : {
+      "type" : "structure",
+      "members" : {
+        "JmxExporter" : {
+          "shape" : "JmxExporterInfo",
+          "locationName" : "jmxExporter"
+        },
+        "NodeExporter" : {
+          "shape" : "NodeExporterInfo",
+          "locationName" : "nodeExporter"
+        }
+      }
+    },
+    "JmxExporter" : {
+      "type" : "structure",
+      "members" : {
+        "EnabledInBroker" : {
+          "shape" : "__boolean",
+          "locationName" : "enabledInBroker"
+        }
+      },
+      "required" : [ "EnabledInBroker" ]
+    },
+    "JmxExporterInfo" : {
+      "type" : "structure",
+      "members" : {
+        "EnabledInBroker" : {
+          "shape" : "__boolean",
+          "locationName" : "enabledInBroker"
+        }
+      },
+      "required" : [ "EnabledInBroker" ]
+    },
+    "NodeExporter" : {
+      "type" : "structure",
+      "members" : {
+        "EnabledInBroker" : {
+          "shape" : "__boolean",
+          "locationName" : "enabledInBroker"
+        }
+      },
+      "required" : [ "EnabledInBroker" ]
+    },
+    "NodeExporterInfo" : {
+      "type" : "structure",
+      "members" : {
+        "EnabledInBroker" : {
+          "shape" : "__boolean",
+          "locationName" : "enabledInBroker"
+        }
+      },
+      "required" : [ "EnabledInBroker" ]
     },
     "__boolean": {
       "type": "boolean"
@@ -1898,6 +2150,12 @@
       "type": "list",
       "member": {
         "shape": "ConfigurationRevision"
+      }
+    },
+    "__listOfKafkaVersion": {
+      "type": "list",
+      "member": {
+        "shape": "KafkaVersion"
       }
     },
     "__listOfNodeInfo": {

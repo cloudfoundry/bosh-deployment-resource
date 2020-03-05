@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc. All rights reserved.
+// Copyright 2011 Google LLC. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -51,10 +51,11 @@ var (
 	baseURL        = flag.String("base_url", "", "(optional) Override the default service API URL. If empty, the service's root URL will be used.")
 	headerPath     = flag.String("header_path", "", "If non-empty, prepend the contents of this file to generated services.")
 
-	gensupportPkg = flag.String("gensupport_pkg", "google.golang.org/api/internal/gensupport", "Go package path of the 'api/internal/gensupport' support package.")
-	googleapiPkg  = flag.String("googleapi_pkg", "google.golang.org/api/googleapi", "Go package path of the 'api/googleapi' support package.")
-	optionPkg     = flag.String("option_pkg", "google.golang.org/api/option", "Go package path of the 'api/option' support package.")
-	htransportPkg = flag.String("htransport_pkg", "google.golang.org/api/transport/http", "Go package path of the 'api/transport/http' support package.")
+	gensupportPkg     = flag.String("gensupport_pkg", "google.golang.org/api/internal/gensupport", "Go package path of the 'api/internal/gensupport' support package.")
+	googleapiPkg      = flag.String("googleapi_pkg", "google.golang.org/api/googleapi", "Go package path of the 'api/googleapi' support package.")
+	optionPkg         = flag.String("option_pkg", "google.golang.org/api/option", "Go package path of the 'api/option' support package.")
+	internalOptionPkg = flag.String("internaloption_pkg", "google.golang.org/api/option/internaloption", "Go package path of the 'api/option/internaloption' support package.")
+	htransportPkg     = flag.String("htransport_pkg", "google.golang.org/api/transport/http", "Go package path of the 'api/transport/http' support package.")
 
 	copyrightYear = flag.String("copyright_year", fmt.Sprintf("%d", time.Now().Year()), "Year for copyright.")
 
@@ -407,6 +408,12 @@ func (a *API) Target() string {
 // ServiceType returns the name of the type to use for the root API struct
 // (typically "Service").
 func (a *API) ServiceType() string {
+	if a.Name == "monitoring" && a.Version == "v3" {
+		// HACK(deklerk) monitoring:v3 should always use call its overall
+		// service struct "Service", even though there is a "Service" in its
+		// schema (we re-map it to MService later).
+		return "Service"
+	}
 	switch a.Name {
 	case "appengine", "content": // retained for historical compatibility.
 		return "APIService"
@@ -599,7 +606,7 @@ func (a *API) GenerateCode() ([]byte, error) {
 		pn(`// By default, all available scopes (see "Constants") are used to authenticate. To restrict scopes, use option.WithScopes:`)
 		pn("//")
 		// NOTE: the first scope tends to be the broadest. Use the last one to demonstrate restriction.
-		pn("//   %sService, err := %s.NewService(ctx, option.WithScopes(%s.%s))", pkg, pkg, pkg, scopeIdentifierFromURL(a.doc.Auth.OAuth2Scopes[len(a.doc.Auth.OAuth2Scopes)-1].URL))
+		pn("//   %sService, err := %s.NewService(ctx, option.WithScopes(%s.%s))", pkg, pkg, pkg, scopeIdentifier(a.doc.Auth.OAuth2Scopes[len(a.doc.Auth.OAuth2Scopes)-1]))
 		pn("//")
 	}
 	pn("// To use an API key for authentication (note: some APIs do not support API keys), use option.WithAPIKey:")
@@ -639,6 +646,7 @@ func (a *API) GenerateCode() ([]byte, error) {
 		{*gensupportPkg, "gensupport"},
 		{*googleapiPkg, "googleapi"},
 		{*optionPkg, "option"},
+		{*internalOptionPkg, "internaloption"},
 		{*htransportPkg, "htransport"},
 	} {
 		pn("  %s %q", imp.lname, imp.pkg)
@@ -657,6 +665,7 @@ func (a *API) GenerateCode() ([]byte, error) {
 	pn("var _ = errors.New")
 	pn("var _ = strings.Replace")
 	pn("var _ = context.Canceled")
+	pn("var _ = internaloption.WithDefaultEndpoint")
 	pn("")
 	pn("const apiId = %q", a.doc.ID)
 	pn("const apiName = %q", a.doc.Name)
@@ -677,12 +686,13 @@ func (a *API) GenerateCode() ([]byte, error) {
 	if len(a.doc.Auth.OAuth2Scopes) != 0 {
 		pn("scopesOption := option.WithScopes(")
 		for _, scope := range a.doc.Auth.OAuth2Scopes {
-			pn("%q,", scope.URL)
+			pn("%q,", scope.ID)
 		}
 		pn(")")
 		pn("// NOTE: prepend, so we don't override user-specified scopes.")
 		pn("opts = append([]option.ClientOption{scopesOption}, opts...)")
 	}
+	pn("opts = append(opts, internaloption.WithDefaultEndpoint(basePath))")
 	pn("client, endpoint, err := htransport.NewClient(ctx, opts...)")
 	pn("if err != nil { return nil, err }")
 	pn("s, err := New(client)")
@@ -764,16 +774,21 @@ func (a *API) generateScopeConstants() {
 			a.p("\n")
 		}
 		n++
-		ident := scopeIdentifierFromURL(scope.URL)
+		ident := scopeIdentifier(scope)
 		if scope.Description != "" {
 			a.p("%s", asComment("\t", scope.Description))
 		}
-		a.pn("\t%s = %q", ident, scope.URL)
+		a.pn("\t%s = %q", ident, scope.ID)
 	}
 	a.p(")\n\n")
 }
 
-func scopeIdentifierFromURL(urlStr string) string {
+func scopeIdentifier(s disco.Scope) string {
+	if s.ID == "openid" {
+		return "OpenIDScope"
+	}
+
+	urlStr := s.ID
 	const prefix = "https://www.googleapis.com/auth/"
 	if !strings.HasPrefix(urlStr, prefix) {
 		const https = "https://"
@@ -918,6 +933,7 @@ var pointerFields = []fieldName{
 	{api: "storage:v1beta2", schema: "BucketLifecycleRuleCondition", field: "IsLive"},
 	{api: "tasks:v1", schema: "Task", field: "Completed"},
 	{api: "youtube:v3", schema: "ChannelSectionSnippet", field: "Position"},
+	{api: "youtube:v3", schema: "MonitorStreamInfo", field: "EnableMonitorStream"},
 }
 
 // forcePointerType reports whether p should be represented as a pointer type in its parent schema struct.
@@ -1174,6 +1190,15 @@ func (s *Schema) GoName() string {
 			s.goName = s.api.typeAsGo(s.typ, false)
 		} else {
 			base := initialCap(s.apiName)
+
+			// HACK(deklerk) Re-maps monitoring's Service field to MService so
+			// that the overall struct for this API can keep its name "Service".
+			// This takes care of "Service" the initial "goName" for "Service"
+			// refs.
+			if s.api.Name == "monitoring" && base == "Service" {
+				base = "MService"
+			}
+
 			s.goName = s.api.GetName(base)
 			if base == "Service" && s.goName != "Service" {
 				// Detect the case where a resource is going to clash with the
@@ -1949,10 +1974,7 @@ func (meth *Method) generateCode() {
 	pn("urls := googleapi.ResolveRelative(c.s.BasePath, %q)", meth.m.Path)
 	if meth.supportsMediaUpload() {
 		pn("if c.mediaInfo_ != nil {")
-		// Hack guess, since we get a 404 otherwise:
-		//pn("urls = googleapi.ResolveRelative(%q, %q)", a.apiBaseURL(), meth.mediaUploadPath())
-		// Further hack.  Discovery doc is wrong?
-		pn("  urls = strings.Replace(urls, %q, %q, 1)", "https://www.googleapis.com/", "https://www.googleapis.com/upload/")
+		pn("  urls = googleapi.ResolveRelative(c.s.BasePath, %q)", meth.mediaUploadPath())
 		pn(`  c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())`)
 		pn("}")
 

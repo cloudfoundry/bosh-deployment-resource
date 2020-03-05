@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "accesscontextmanager:v1beta"
 const apiName = "accesscontextmanager"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -176,8 +179,9 @@ type OperationsService struct {
 }
 
 // AccessLevel: An `AccessLevel` is a label that can be applied to
-// requests to GCP services,
-// along with a list of requirements necessary for the label to be
+// requests to Google Cloud
+// services, along with a list of requirements necessary for the label
+// to be
 // applied.
 type AccessLevel struct {
 	// Basic: A `BasicLevel` composed of `Conditions`.
@@ -185,6 +189,9 @@ type AccessLevel struct {
 
 	// CreateTime: Output only. Time the `AccessLevel` was created in UTC.
 	CreateTime string `json:"createTime,omitempty"`
+
+	// Custom: A `CustomLevel` written in the Common Expression Language.
+	Custom *CustomLevel `json:"custom,omitempty"`
 
 	// Description: Description of the `AccessLevel` and its use. Does not
 	// affect behavior.
@@ -232,13 +239,14 @@ func (s *AccessLevel) MarshalJSON() ([]byte, error) {
 
 // AccessPolicy: `AccessPolicy` is a container for `AccessLevels` (which
 // define the necessary
-// attributes to use GCP services) and `ServicePerimeters` (which define
-// regions
-// of services able to freely pass data within a perimeter). An access
-// policy is
-// globally visible within an organization, and the restrictions it
-// specifies
-// apply to all projects within an organization.
+// attributes to use Google Cloud services) and `ServicePerimeters`
+// (which
+// define regions of services able to freely pass data within a
+// perimeter). An
+// access policy is globally visible within an organization, and
+// the
+// restrictions it specifies apply to all projects within an
+// organization.
 type AccessPolicy struct {
 	// CreateTime: Output only. Time the `AccessPolicy` was created in UTC.
 	CreateTime string `json:"createTime,omitempty"`
@@ -336,44 +344,6 @@ func (s *BasicLevel) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// BridgeServiceRestriction: Alpha. Specifies which services are granted
-// access via this Bridge Service
-// Perimeter.
-type BridgeServiceRestriction struct {
-	// AllowedServices: The list of APIs usable through the Bridge
-	// Perimeter. Must be empty
-	// unless 'enable_restriction' is True.
-	AllowedServices []string `json:"allowedServices,omitempty"`
-
-	// EnableRestriction: Whether to restrict the set of APIs callable
-	// through the Bridge Service
-	// Perimeter.
-	EnableRestriction bool `json:"enableRestriction,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "AllowedServices") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "AllowedServices") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *BridgeServiceRestriction) MarshalJSON() ([]byte, error) {
-	type NoMethod BridgeServiceRestriction
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // Condition: A condition necessary for an `AccessLevel` to be granted.
 // The Condition is an
 // AND over its fields. So a Condition is true if: 1) the request IP is
@@ -457,6 +427,38 @@ type Condition struct {
 
 func (s *Condition) MarshalJSON() ([]byte, error) {
 	type NoMethod Condition
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CustomLevel: `CustomLevel` is an `AccessLevel` using the Cloud Common
+// Expression Language
+// to represent the necessary conditions for the level to apply to a
+// request.
+// See CEL spec at: https://github.com/google/cel-spec
+type CustomLevel struct {
+	// Expr: Required. A Cloud CEL expression evaluating to a boolean.
+	Expr *Expr `json:"expr,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Expr") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Expr") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CustomLevel) MarshalJSON() ([]byte, error) {
+	type NoMethod CustomLevel
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -550,21 +552,69 @@ func (s *DevicePolicy) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// IngressServiceRestriction: Alpha. Specifies how Access Levels are to
-// be used for accessing the Service
-// Perimeter.
-type IngressServiceRestriction struct {
-	// AllowedServices: The list of APIs usable with a valid Access Level.
-	// Must be empty unless
-	// 'enable_restriction' is True.
-	AllowedServices []string `json:"allowedServices,omitempty"`
+// Expr: Represents a textual expression in the Common Expression
+// Language (CEL)
+// syntax. CEL is a C-like expression language. The syntax and semantics
+// of CEL
+// are documented at https://github.com/google/cel-spec.
+//
+// Example (Comparison):
+//
+//     title: "Summary size limit"
+//     description: "Determines if a summary is less than 100 chars"
+//     expression: "document.summary.size() < 100"
+//
+// Example (Equality):
+//
+//     title: "Requestor is owner"
+//     description: "Determines if requestor is the document owner"
+//     expression: "document.owner ==
+// request.auth.claims.email"
+//
+// Example (Logic):
+//
+//     title: "Public documents"
+//     description: "Determine whether the document should be publicly
+// visible"
+//     expression: "document.type != 'private' && document.type !=
+// 'internal'"
+//
+// Example (Data Manipulation):
+//
+//     title: "Notification string"
+//     description: "Create a notification string with a timestamp."
+//     expression: "'New message received at ' +
+// string(document.create_time)"
+//
+// The exact variables and functions that may be referenced within an
+// expression
+// are determined by the service that evaluates it. See the
+// service
+// documentation for additional information.
+type Expr struct {
+	// Description: Optional. Description of the expression. This is a
+	// longer text which
+	// describes the expression, e.g. when hovered over it in a UI.
+	Description string `json:"description,omitempty"`
 
-	// EnableRestriction: Whether to restrict the set of APIs callable
-	// outside the Service
-	// Perimeter via Access Levels.
-	EnableRestriction bool `json:"enableRestriction,omitempty"`
+	// Expression: Textual representation of an expression in Common
+	// Expression Language
+	// syntax.
+	Expression string `json:"expression,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "AllowedServices") to
+	// Location: Optional. String indicating the location of the expression
+	// for error
+	// reporting, e.g. a file name and a position in the file.
+	Location string `json:"location,omitempty"`
+
+	// Title: Optional. Title for the expression, i.e. a short string
+	// describing
+	// its purpose. This can be used e.g. in UIs which allow to enter
+	// the
+	// expression.
+	Title string `json:"title,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Description") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -572,18 +622,17 @@ type IngressServiceRestriction struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "AllowedServices") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "Description") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
-func (s *IngressServiceRestriction) MarshalJSON() ([]byte, error) {
-	type NoMethod IngressServiceRestriction
+func (s *Expr) MarshalJSON() ([]byte, error) {
+	type NoMethod Expr
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -796,14 +845,16 @@ type OsConstraint struct {
 	//   "DESKTOP_WINDOWS" - A desktop Windows operating system.
 	//   "DESKTOP_LINUX" - A desktop Linux operating system.
 	//   "DESKTOP_CHROME_OS" - A desktop ChromeOS operating system.
+	//   "ANDROID" - An Android operating system.
+	//   "IOS" - An iOS operating system.
 	OsType string `json:"osType,omitempty"`
 
 	// RequireVerifiedChromeOs: Only allows requests from devices with a
 	// verified Chrome OS.
 	// Verifications includes requirements that the device is
 	// enterprise-managed,
-	// conformant to Dasher domain policies, and the caller has permission
-	// to call
+	// conformant to domain policies, and the caller has permission to
+	// call
 	// the API targeted by the request.
 	RequireVerifiedChromeOs bool `json:"requireVerifiedChromeOs,omitempty"`
 
@@ -831,9 +882,9 @@ func (s *OsConstraint) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ServicePerimeter: `ServicePerimeter` describes a set of GCP resources
-// which can freely import
-// and export data amongst themselves, but not export outside of
+// ServicePerimeter: `ServicePerimeter` describes a set of Google Cloud
+// resources which can freely
+// import and export data amongst themselves, but not export outside of
 // the
 // `ServicePerimeter`. If a request with a source within this
 // `ServicePerimeter`
@@ -842,12 +893,14 @@ func (s *OsConstraint) MarshalJSON() ([]byte, error) {
 // Otherwise the request is allowed. There are two types of Service
 // Perimeter -
 // Regular and Bridge. Regular Service Perimeters cannot overlap, a
-// single GCP
-// project can only belong to a single regular Service Perimeter.
-// Service
-// Perimeter Bridges can contain only GCP projects as members, a single
-// GCP
-// project may belong to multiple Service Perimeter Bridges.
+// single
+// Google Cloud project can only belong to a single regular Service
+// Perimeter.
+// Service Perimeter Bridges can contain only Google Cloud projects as
+// members,
+// a single Google Cloud project may belong to multiple Service
+// Perimeter
+// Bridges.
 type ServicePerimeter struct {
 	// CreateTime: Output only. Time the `ServicePerimeter` was created in
 	// UTC.
@@ -923,8 +976,8 @@ func (s *ServicePerimeter) MarshalJSON() ([]byte, error) {
 }
 
 // ServicePerimeterConfig: `ServicePerimeterConfig` specifies a set of
-// GCP resources that describe
-// specific Service Perimeter configuration.
+// Google Cloud resources that
+// describe specific Service Perimeter configuration.
 type ServicePerimeterConfig struct {
 	// AccessLevels: A list of `AccessLevel` resource names that allow
 	// resources within the
@@ -934,39 +987,31 @@ type ServicePerimeterConfig struct {
 	// a
 	// nonexistent `AccessLevel` is a syntax error. If no `AccessLevel`
 	// names are
-	// listed, resources within the perimeter can only be accessed via GCP
-	// calls
-	// with request origins within the perimeter.
+	// listed, resources within the perimeter can only be accessed via
+	// Google
+	// Cloud calls with request origins within the perimeter.
 	// Example:
 	// "accessPolicies/MY_POLICY/accessLevels/MY_LEVEL".
 	// For Service Perimeter Bridge, must be empty.
 	AccessLevels []string `json:"accessLevels,omitempty"`
 
-	// BridgeServiceRestriction: Alpha. Configuration for what services are
-	// accessible via the Bridge
-	// Perimeter. Must be empty for non-Bridge Perimeters.
-	BridgeServiceRestriction *BridgeServiceRestriction `json:"bridgeServiceRestriction,omitempty"`
-
-	// IngressServiceRestriction: Alpha. Configuration for which services
-	// may be used with Access Levels.
-	IngressServiceRestriction *IngressServiceRestriction `json:"ingressServiceRestriction,omitempty"`
-
-	// Resources: A list of GCP resources that are inside of the service
-	// perimeter.
+	// Resources: A list of Google Cloud resources that are inside of the
+	// service perimeter.
 	// Currently only projects are allowed. Format:
 	// `projects/{project_number}`
 	Resources []string `json:"resources,omitempty"`
 
-	// RestrictedServices: GCP services that are subject to the Service
-	// Perimeter restrictions. Must
-	// contain a list of services. For example, if
+	// RestrictedServices: Google Cloud services that are subject to the
+	// Service Perimeter
+	// restrictions. Must contain a list of services. For example,
+	// if
 	// `storage.googleapis.com` is specified, access to the storage
 	// buckets
 	// inside the perimeter must meet the perimeter's access restrictions.
 	RestrictedServices []string `json:"restrictedServices,omitempty"`
 
-	// UnrestrictedServices: GCP services that are not subject to the
-	// Service Perimeter
+	// UnrestrictedServices: Google Cloud services that are not subject to
+	// the Service Perimeter
 	// restrictions. Deprecated. Must be set to a single wildcard "*".
 	//
 	// The wildcard means that unless explicitly specified
@@ -974,8 +1019,13 @@ type ServicePerimeterConfig struct {
 	// "restricted_services" list, any service is treated as unrestricted.
 	UnrestrictedServices []string `json:"unrestrictedServices,omitempty"`
 
+	// VpcAccessibleServices: Beta. Configuration for within Perimeter
+	// allowed APIs.
+	VpcAccessibleServices *VpcAccessibleServices `json:"vpcAccessibleServices,omitempty"`
+
 	// VpcServiceRestriction: Alpha. Configuration for within Perimeter
 	// allowed APIs.
+	// Deprecated. The field had been renamed to vpc_accessible_services
 	VpcServiceRestriction *VpcServiceRestriction `json:"vpcServiceRestriction,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "AccessLevels") to
@@ -1053,9 +1103,49 @@ func (s *Status) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// VpcAccessibleServices: Specifies how APIs are allowed to communicate
+// within the Service
+// Perimeter.
+type VpcAccessibleServices struct {
+	// AllowedServices: The list of APIs usable within the Service
+	// Perimeter. Must be empty
+	// unless 'enable_restriction' is True.
+	AllowedServices []string `json:"allowedServices,omitempty"`
+
+	// EnableRestriction: Whether to restrict API calls within the Service
+	// Perimeter to the list of
+	// APIs specified in 'allowed_services'.
+	EnableRestriction bool `json:"enableRestriction,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AllowedServices") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AllowedServices") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *VpcAccessibleServices) MarshalJSON() ([]byte, error) {
+	type NoMethod VpcAccessibleServices
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // VpcServiceRestriction: Alpha. Specifies how APIs are allowed to
 // communicate within the Service
 // Perimeter.
+// This message is DEPRECATED and had been renamed to
+// VpcAccessibleServices
 type VpcServiceRestriction struct {
 	// AllowedServices: The list of APIs usable within the Service
 	// Perimeter. Must be empty
@@ -1143,7 +1233,7 @@ func (c *AccessPoliciesCreateCall) Header() http.Header {
 
 func (c *AccessPoliciesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1272,7 +1362,7 @@ func (c *AccessPoliciesDeleteCall) Header() http.Header {
 
 func (c *AccessPoliciesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1413,7 +1503,7 @@ func (c *AccessPoliciesGetCall) Header() http.Header {
 
 func (c *AccessPoliciesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1583,7 +1673,7 @@ func (c *AccessPoliciesListCall) Header() http.Header {
 
 func (c *AccessPoliciesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1756,7 +1846,7 @@ func (c *AccessPoliciesPatchCall) Header() http.Header {
 
 func (c *AccessPoliciesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1908,7 +1998,7 @@ func (c *AccessPoliciesAccessLevelsCreateCall) Header() http.Header {
 
 func (c *AccessPoliciesAccessLevelsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2050,7 +2140,7 @@ func (c *AccessPoliciesAccessLevelsDeleteCall) Header() http.Header {
 
 func (c *AccessPoliciesAccessLevelsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2215,7 +2305,7 @@ func (c *AccessPoliciesAccessLevelsGetCall) Header() http.Header {
 
 func (c *AccessPoliciesAccessLevelsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2402,7 +2492,7 @@ func (c *AccessPoliciesAccessLevelsListCall) Header() http.Header {
 
 func (c *AccessPoliciesAccessLevelsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2592,7 +2682,7 @@ func (c *AccessPoliciesAccessLevelsPatchCall) Header() http.Header {
 
 func (c *AccessPoliciesAccessLevelsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2745,7 +2835,7 @@ func (c *AccessPoliciesServicePerimetersCreateCall) Header() http.Header {
 
 func (c *AccessPoliciesServicePerimetersCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2887,7 +2977,7 @@ func (c *AccessPoliciesServicePerimetersDeleteCall) Header() http.Header {
 
 func (c *AccessPoliciesServicePerimetersDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3029,7 +3119,7 @@ func (c *AccessPoliciesServicePerimetersGetCall) Header() http.Header {
 
 func (c *AccessPoliciesServicePerimetersGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3190,7 +3280,7 @@ func (c *AccessPoliciesServicePerimetersListCall) Header() http.Header {
 
 func (c *AccessPoliciesServicePerimetersListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3371,7 +3461,7 @@ func (c *AccessPoliciesServicePerimetersPatchCall) Header() http.Header {
 
 func (c *AccessPoliciesServicePerimetersPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3530,7 +3620,7 @@ func (c *OperationsGetCall) Header() http.Header {
 
 func (c *OperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3603,7 +3693,7 @@ func (c *OperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, error)
 	//     "name": {
 	//       "description": "The name of the operation resource.",
 	//       "location": "path",
-	//       "pattern": "^operations/.+$",
+	//       "pattern": "^operations/.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }

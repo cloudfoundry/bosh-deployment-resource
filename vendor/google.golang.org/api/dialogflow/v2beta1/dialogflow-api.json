@@ -25,6 +25,7 @@
   },
   "id": "dialogflow:v2beta1",
   "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://dialogflow.mtls.googleapis.com/",
   "name": "dialogflow",
   "ownerDomain": "google.com",
   "ownerName": "Google",
@@ -229,6 +230,32 @@
                 "https://www.googleapis.com/auth/dialogflow"
               ]
             },
+            "getFulfillment": {
+              "description": "Retrieves the fulfillment.",
+              "flatPath": "v2beta1/projects/{projectsId}/agent/fulfillment",
+              "httpMethod": "GET",
+              "id": "dialogflow.projects.agent.getFulfillment",
+              "parameterOrder": [
+                "name"
+              ],
+              "parameters": {
+                "name": {
+                  "description": "Required. The name of the fulfillment.\nFormat: `projects/\u003cProject ID\u003e/agent/fulfillment`.",
+                  "location": "path",
+                  "pattern": "^projects/[^/]+/agent/fulfillment$",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "path": "v2beta1/{+name}",
+              "response": {
+                "$ref": "GoogleCloudDialogflowV2beta1Fulfillment"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/dialogflow"
+              ]
+            },
             "getValidationResult": {
               "description": "Gets agent validation result. Agent validation is performed during\ntraining time and is updated automatically when training is completed.",
               "flatPath": "v2beta1/projects/{projectsId}/agent/validationResult",
@@ -378,6 +405,41 @@
               },
               "response": {
                 "$ref": "GoogleLongrunningOperation"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/dialogflow"
+              ]
+            },
+            "updateFulfillment": {
+              "description": "Updates the fulfillment.",
+              "flatPath": "v2beta1/projects/{projectsId}/agent/fulfillment",
+              "httpMethod": "PATCH",
+              "id": "dialogflow.projects.agent.updateFulfillment",
+              "parameterOrder": [
+                "name"
+              ],
+              "parameters": {
+                "name": {
+                  "description": "Required. The unique identifier of the fulfillment.\nFormat: `projects/\u003cProject ID\u003e/agent/fulfillment`.",
+                  "location": "path",
+                  "pattern": "^projects/[^/]+/agent/fulfillment$",
+                  "required": true,
+                  "type": "string"
+                },
+                "updateMask": {
+                  "description": "Required. The mask to control which fields get updated. If the mask is not\npresent, all fields will be updated.",
+                  "format": "google-fieldmask",
+                  "location": "query",
+                  "type": "string"
+                }
+              },
+              "path": "v2beta1/{+name}",
+              "request": {
+                "$ref": "GoogleCloudDialogflowV2beta1Fulfillment"
+              },
+              "response": {
+                "$ref": "GoogleCloudDialogflowV2beta1Fulfillment"
               },
               "scopes": [
                 "https://www.googleapis.com/auth/cloud-platform",
@@ -715,6 +777,203 @@
               }
             },
             "environments": {
+              "methods": {
+                "create": {
+                  "description": "Creates an agent environment.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/environments",
+                  "httpMethod": "POST",
+                  "id": "dialogflow.projects.agent.environments.create",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "environmentId": {
+                      "description": "Required. The unique id of the new environment.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. The agent to create a environment for.\nFormat: `projects/\u003cProject ID\u003e/agent`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+parent}/environments",
+                  "request": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                  },
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "delete": {
+                  "description": "Deletes the specified agent environment.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/environments/{environmentsId}",
+                  "httpMethod": "DELETE",
+                  "id": "dialogflow.projects.agent.environments.delete",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the environment to delete.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent/environments/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+name}",
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "get": {
+                  "description": "Retrieves the specified agent environment.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/environments/{environmentsId}",
+                  "httpMethod": "GET",
+                  "id": "dialogflow.projects.agent.environments.get",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the environment.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent/environments/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+name}",
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "getHistory": {
+                  "description": "Gets the history of the specified environment.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/environments/{environmentsId}/history",
+                  "httpMethod": "GET",
+                  "id": "dialogflow.projects.agent.environments.getHistory",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "pageSize": {
+                      "description": "Optional. The maximum number of items to return in a single page. By default 100 and\nat most 1000.",
+                      "format": "int32",
+                      "location": "query",
+                      "type": "integer"
+                    },
+                    "pageToken": {
+                      "description": "Optional. The next_page_token value returned from a previous list request.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. The name of the environment to retrieve history for.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent/environments/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+parent}/history",
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1EnvironmentHistory"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "list": {
+                  "description": "Returns the list of all environments of the specified agent.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/environments",
+                  "httpMethod": "GET",
+                  "id": "dialogflow.projects.agent.environments.list",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "pageSize": {
+                      "description": "Optional. The maximum number of items to return in a single page. By default 100 and\nat most 1000.",
+                      "format": "int32",
+                      "location": "query",
+                      "type": "integer"
+                    },
+                    "pageToken": {
+                      "description": "Optional. The next_page_token value returned from a previous list request.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. The agent to list all environments from.\nFormat: `projects/\u003cProject ID\u003e/agent`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+parent}/environments",
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1ListEnvironmentsResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "patch": {
+                  "description": "Updates the specified agent environment.\n\nThis method allows you to deploy new agent versions into the environment.\nWhen a environment is pointed to a new agent version by setting\n`environment.agent_version`, the environment is temporarily set to the\n`LOADING` state. During that time, the environment keeps on serving the\nprevious version of the agent. After the new agent version is done\nloading, the environment is set back to the `RUNNING` state.\nYou can use \"-\" as Environment ID in environment name to update version\nin \"draft\" environment.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/environments/{environmentsId}",
+                  "httpMethod": "PATCH",
+                  "id": "dialogflow.projects.agent.environments.patch",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Output only. The unique identifier of this agent environment.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.\nYou can use \"-\" as Environment ID to refer to 'draft' environment.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent/environments/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "updateMask": {
+                      "description": "Required. The mask to control which fields get updated.",
+                      "format": "google-fieldmask",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+name}",
+                  "request": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                  },
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                }
+              },
               "resources": {
                 "users": {
                   "resources": {
@@ -907,7 +1166,7 @@
                               ],
                               "parameters": {
                                 "name": {
-                                  "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.",
+                                  "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.\n\nThe following context names are reserved for internal use by Dialogflow.\nYou should not use these contexts or create contexts with these names:\n\n* `__system_counters__`\n* `*_id_dialog_context`\n* `*_dialog_params_size`",
                                   "location": "path",
                                   "pattern": "^projects/[^/]+/agent/environments/[^/]+/users/[^/]+/sessions/[^/]+/contexts/[^/]+$",
                                   "required": true,
@@ -1907,7 +2166,7 @@
                       ],
                       "parameters": {
                         "name": {
-                          "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.",
+                          "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.\n\nThe following context names are reserved for internal use by Dialogflow.\nYou should not use these contexts or create contexts with these names:\n\n* `__system_counters__`\n* `*_id_dialog_context`\n* `*_dialog_params_size`",
                           "location": "path",
                           "pattern": "^projects/[^/]+/agent/sessions/[^/]+/contexts/[^/]+$",
                           "required": true,
@@ -2090,6 +2349,137 @@
                       ]
                     }
                   }
+                }
+              }
+            },
+            "versions": {
+              "methods": {
+                "create": {
+                  "description": "Creates an agent version.\n\nThe new version points to the agent instance in the \"default\" environment.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/versions",
+                  "httpMethod": "POST",
+                  "id": "dialogflow.projects.agent.versions.create",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The agent to create a version for.\nFormat: `projects/\u003cProject ID\u003e/agent`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+parent}/versions",
+                  "request": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Version"
+                  },
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Version"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "get": {
+                  "description": "Retrieves the specified agent version.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/versions/{versionsId}",
+                  "httpMethod": "GET",
+                  "id": "dialogflow.projects.agent.versions.get",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the version.\nFormat: `projects/\u003cProject ID\u003e/agent/versions/\u003cVersion ID\u003e`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent/versions/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+name}",
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Version"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "list": {
+                  "description": "Returns the list of all versions of the specified agent.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/versions",
+                  "httpMethod": "GET",
+                  "id": "dialogflow.projects.agent.versions.list",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "pageSize": {
+                      "description": "Optional. The maximum number of items to return in a single page. By default 100 and\nat most 1000.",
+                      "format": "int32",
+                      "location": "query",
+                      "type": "integer"
+                    },
+                    "pageToken": {
+                      "description": "Optional. The next_page_token value returned from a previous list request.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. The agent to list all versions from.\nFormat: `projects/\u003cProject ID\u003e/agent`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+parent}/versions",
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1ListVersionsResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "patch": {
+                  "description": "Updates the specified agent version.\n\nNote that this method does not allow you to update the state of the agent\nthe given version points to. It allows you to update only mutable\nproperties of the version resource.",
+                  "flatPath": "v2beta1/projects/{projectsId}/agent/versions/{versionsId}",
+                  "httpMethod": "PATCH",
+                  "id": "dialogflow.projects.agent.versions.patch",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Output only. The unique identifier of this agent version.\nFormat: `projects/\u003cProject ID\u003e/agent/versions/\u003cVersion ID\u003e`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/agent/versions/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "updateMask": {
+                      "description": "Required. The mask to control which fields get updated.",
+                      "format": "google-fieldmask",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+name}",
+                  "request": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Version"
+                  },
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Version"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
                 }
               }
             }
@@ -2567,6 +2957,67 @@
                     "https://www.googleapis.com/auth/dialogflow"
                   ]
                 },
+                "fulfillment": {
+                  "description": "Updates the fulfillment.",
+                  "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/fulfillment",
+                  "httpMethod": "POST",
+                  "id": "dialogflow.projects.locations.agent.fulfillment",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The unique identifier of the fulfillment.\nFormat: `projects/\u003cProject ID\u003e/agent/fulfillment`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/agent/fulfillment$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "updateMask": {
+                      "description": "Required. The mask to control which fields get updated. If the mask is not\npresent, all fields will be updated.",
+                      "format": "google-fieldmask",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+name}",
+                  "request": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Fulfillment"
+                  },
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Fulfillment"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
+                "getFulfillment": {
+                  "description": "Retrieves the fulfillment.",
+                  "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/fulfillment",
+                  "httpMethod": "GET",
+                  "id": "dialogflow.projects.locations.agent.getFulfillment",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the fulfillment.\nFormat: `projects/\u003cProject ID\u003e/agent/fulfillment`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/agent/fulfillment$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v2beta1/{+name}",
+                  "response": {
+                    "$ref": "GoogleCloudDialogflowV2beta1Fulfillment"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/dialogflow"
+                  ]
+                },
                 "import": {
                   "description": "Imports the specified agent from a ZIP file.\n\nUploads new intents and entity types without deleting the existing ones.\nIntents and entity types with the same name are replaced with the new\nversions from ImportAgentRequest.\n\n\nOperation \u003cresponse: google.protobuf.Empty\u003e",
                   "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent:import",
@@ -2985,6 +3436,203 @@
                   }
                 },
                 "environments": {
+                  "methods": {
+                    "create": {
+                      "description": "Creates an agent environment.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/environments",
+                      "httpMethod": "POST",
+                      "id": "dialogflow.projects.locations.agent.environments.create",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "environmentId": {
+                          "description": "Required. The unique id of the new environment.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "parent": {
+                          "description": "Required. The agent to create a environment for.\nFormat: `projects/\u003cProject ID\u003e/agent`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+parent}/environments",
+                      "request": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                      },
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    },
+                    "delete": {
+                      "description": "Deletes the specified agent environment.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/environments/{environmentsId}",
+                      "httpMethod": "DELETE",
+                      "id": "dialogflow.projects.locations.agent.environments.delete",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "name": {
+                          "description": "Required. The name of the environment to delete.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent/environments/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+name}",
+                      "response": {
+                        "$ref": "GoogleProtobufEmpty"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    },
+                    "get": {
+                      "description": "Retrieves the specified agent environment.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/environments/{environmentsId}",
+                      "httpMethod": "GET",
+                      "id": "dialogflow.projects.locations.agent.environments.get",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "name": {
+                          "description": "Required. The name of the environment.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent/environments/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+name}",
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    },
+                    "getHistory": {
+                      "description": "Gets the history of the specified environment.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/environments/{environmentsId}/history",
+                      "httpMethod": "GET",
+                      "id": "dialogflow.projects.locations.agent.environments.getHistory",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "pageSize": {
+                          "description": "Optional. The maximum number of items to return in a single page. By default 100 and\nat most 1000.",
+                          "format": "int32",
+                          "location": "query",
+                          "type": "integer"
+                        },
+                        "pageToken": {
+                          "description": "Optional. The next_page_token value returned from a previous list request.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "parent": {
+                          "description": "Required. The name of the environment to retrieve history for.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent/environments/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+parent}/history",
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1EnvironmentHistory"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    },
+                    "list": {
+                      "description": "Returns the list of all environments of the specified agent.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/environments",
+                      "httpMethod": "GET",
+                      "id": "dialogflow.projects.locations.agent.environments.list",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "pageSize": {
+                          "description": "Optional. The maximum number of items to return in a single page. By default 100 and\nat most 1000.",
+                          "format": "int32",
+                          "location": "query",
+                          "type": "integer"
+                        },
+                        "pageToken": {
+                          "description": "Optional. The next_page_token value returned from a previous list request.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "parent": {
+                          "description": "Required. The agent to list all environments from.\nFormat: `projects/\u003cProject ID\u003e/agent`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+parent}/environments",
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1ListEnvironmentsResponse"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    },
+                    "patch": {
+                      "description": "Updates the specified agent environment.\n\nThis method allows you to deploy new agent versions into the environment.\nWhen a environment is pointed to a new agent version by setting\n`environment.agent_version`, the environment is temporarily set to the\n`LOADING` state. During that time, the environment keeps on serving the\nprevious version of the agent. After the new agent version is done\nloading, the environment is set back to the `RUNNING` state.\nYou can use \"-\" as Environment ID in environment name to update version\nin \"draft\" environment.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/environments/{environmentsId}",
+                      "httpMethod": "PATCH",
+                      "id": "dialogflow.projects.locations.agent.environments.patch",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "name": {
+                          "description": "Output only. The unique identifier of this agent environment.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.\nYou can use \"-\" as Environment ID to refer to 'draft' environment.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent/environments/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        },
+                        "updateMask": {
+                          "description": "Required. The mask to control which fields get updated.",
+                          "format": "google-fieldmask",
+                          "location": "query",
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+name}",
+                      "request": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                      },
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Environment"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    }
+                  },
                   "resources": {
                     "users": {
                       "resources": {
@@ -3177,7 +3825,7 @@
                                   ],
                                   "parameters": {
                                     "name": {
-                                      "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.",
+                                      "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.\n\nThe following context names are reserved for internal use by Dialogflow.\nYou should not use these contexts or create contexts with these names:\n\n* `__system_counters__`\n* `*_id_dialog_context`\n* `*_dialog_params_size`",
                                       "location": "path",
                                       "pattern": "^projects/[^/]+/locations/[^/]+/agent/environments/[^/]+/users/[^/]+/sessions/[^/]+/contexts/[^/]+$",
                                       "required": true,
@@ -3827,7 +4475,7 @@
                           ],
                           "parameters": {
                             "name": {
-                              "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.",
+                              "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.\n\nThe following context names are reserved for internal use by Dialogflow.\nYou should not use these contexts or create contexts with these names:\n\n* `__system_counters__`\n* `*_id_dialog_context`\n* `*_dialog_params_size`",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/agent/sessions/[^/]+/contexts/[^/]+$",
                               "required": true,
@@ -4010,6 +4658,137 @@
                           ]
                         }
                       }
+                    }
+                  }
+                },
+                "versions": {
+                  "methods": {
+                    "create": {
+                      "description": "Creates an agent version.\n\nThe new version points to the agent instance in the \"default\" environment.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/versions",
+                      "httpMethod": "POST",
+                      "id": "dialogflow.projects.locations.agent.versions.create",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "parent": {
+                          "description": "Required. The agent to create a version for.\nFormat: `projects/\u003cProject ID\u003e/agent`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+parent}/versions",
+                      "request": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Version"
+                      },
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Version"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    },
+                    "get": {
+                      "description": "Retrieves the specified agent version.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/versions/{versionsId}",
+                      "httpMethod": "GET",
+                      "id": "dialogflow.projects.locations.agent.versions.get",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "name": {
+                          "description": "Required. The name of the version.\nFormat: `projects/\u003cProject ID\u003e/agent/versions/\u003cVersion ID\u003e`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent/versions/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+name}",
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Version"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    },
+                    "list": {
+                      "description": "Returns the list of all versions of the specified agent.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/versions",
+                      "httpMethod": "GET",
+                      "id": "dialogflow.projects.locations.agent.versions.list",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "pageSize": {
+                          "description": "Optional. The maximum number of items to return in a single page. By default 100 and\nat most 1000.",
+                          "format": "int32",
+                          "location": "query",
+                          "type": "integer"
+                        },
+                        "pageToken": {
+                          "description": "Optional. The next_page_token value returned from a previous list request.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "parent": {
+                          "description": "Required. The agent to list all versions from.\nFormat: `projects/\u003cProject ID\u003e/agent`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+parent}/versions",
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1ListVersionsResponse"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
+                    },
+                    "patch": {
+                      "description": "Updates the specified agent version.\n\nNote that this method does not allow you to update the state of the agent\nthe given version points to. It allows you to update only mutable\nproperties of the version resource.",
+                      "flatPath": "v2beta1/projects/{projectsId}/locations/{locationsId}/agent/versions/{versionsId}",
+                      "httpMethod": "PATCH",
+                      "id": "dialogflow.projects.locations.agent.versions.patch",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "name": {
+                          "description": "Output only. The unique identifier of this agent version.\nFormat: `projects/\u003cProject ID\u003e/agent/versions/\u003cVersion ID\u003e`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/agent/versions/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        },
+                        "updateMask": {
+                          "description": "Required. The mask to control which fields get updated.",
+                          "format": "google-fieldmask",
+                          "location": "query",
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2beta1/{+name}",
+                      "request": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Version"
+                      },
+                      "response": {
+                        "$ref": "GoogleCloudDialogflowV2beta1Version"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform",
+                        "https://www.googleapis.com/auth/dialogflow"
+                      ]
                     }
                   }
                 }
@@ -4216,9 +4995,28 @@
       }
     }
   },
-  "revision": "20190924",
+  "revision": "20200212",
   "rootUrl": "https://dialogflow.googleapis.com/",
   "schemas": {
+    "GoogleCloudDialogflowV2AnnotatedMessagePart": {
+      "description": "Represents a part of a message possibly annotated with an entity. The part\ncan be an entity or purely a part of the message between two entities or\nmessage start/end.",
+      "id": "GoogleCloudDialogflowV2AnnotatedMessagePart",
+      "properties": {
+        "entityType": {
+          "description": "The [Dialogflow system entity\ntype](https://cloud.google.com/dialogflow/docs/reference/system-entities)\nof this message part. If this is empty, Dialogflow could not annotate the\nphrase part with a system entity.",
+          "type": "string"
+        },
+        "formattedValue": {
+          "description": "The [Dialogflow system entity formatted value\n](https://cloud.google.com/dialogflow/docs/reference/system-entities) of\nthis message part. For example for a system entity of type\n`@sys.unit-currency`, this may contain:\n\u003cpre\u003e\n{\n  \"amount\": 5,\n  \"currency\": \"USD\"\n}\n\u003c/pre\u003e",
+          "type": "any"
+        },
+        "text": {
+          "description": "A part of a message possibly annotated with an entity.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "GoogleCloudDialogflowV2BatchUpdateEntityTypesResponse": {
       "description": "The response message for EntityTypes.BatchUpdateEntityTypes.",
       "id": "GoogleCloudDialogflowV2BatchUpdateEntityTypesResponse",
@@ -4257,7 +5055,7 @@
           "type": "integer"
         },
         "name": {
-          "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in [a-zA-Z0-9_-%] and may be at most 250 bytes long.",
+          "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in [a-zA-Z0-9_-%] and may be at most 250 bytes long.\n\nThe following context names are reserved for internal use by Dialogflow.\nYou should not use these contexts or create contexts with these names:\n\n* `__system_counters__`\n* `*_id_dialog_context`\n* `*_dialog_params_size`",
           "type": "string"
         },
         "parameters": {
@@ -4267,6 +5065,45 @@
           },
           "description": "Optional. The collection of parameters associated with this context.\nRefer to [this\ndoc](https://cloud.google.com/dialogflow/docs/intents-actions-parameters)\nfor syntax.",
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2ConversationEvent": {
+      "description": "Represents a notification sent to Cloud Pub/Sub subscribers for conversation\nlifecycle events.",
+      "id": "GoogleCloudDialogflowV2ConversationEvent",
+      "properties": {
+        "conversation": {
+          "description": "The unique identifier of the conversation this notification\nrefers to.\nFormat: `projects/\u003cProject ID\u003e/conversations/\u003cConversation ID\u003e`.",
+          "type": "string"
+        },
+        "errorStatus": {
+          "$ref": "GoogleRpcStatus",
+          "description": "More detailed information about an error. Only set for type\nUNRECOVERABLE_ERROR_IN_PHONE_CALL."
+        },
+        "newMessagePayload": {
+          "$ref": "GoogleCloudDialogflowV2Message",
+          "description": "Payload of NEW_MESSAGE event."
+        },
+        "type": {
+          "description": "The type of the event that this notification refers to.",
+          "enum": [
+            "TYPE_UNSPECIFIED",
+            "CONVERSATION_STARTED",
+            "CONVERSATION_FINISHED",
+            "HUMAN_INTERVENTION_NEEDED",
+            "NEW_MESSAGE",
+            "UNRECOVERABLE_ERROR"
+          ],
+          "enumDescriptions": [
+            "Type not set.",
+            "A new conversation has been opened. This is fired when a telephone call\nis answered, or a conversation is created via the API.",
+            "An existing conversation has closed. This is fired when a telephone call\nis terminated, or a conversation is closed via the API.",
+            "An existing conversation has received notification from Dialogflow that\nhuman intervention is required.",
+            "An existing conversation has received a new message, either from API or\ntelephony. It is configured in\nConversationProfile.new_message_event_notification_config",
+            "Unrecoverable error during a telephone call.\n\nIn general non-recoverable errors only occur if something was\nmisconfigured in the ConversationProfile corresponding to the call. After\na non-recoverable error, Dialogflow may stop responding.\n\nWe don't fire this event:\n* in an API call because we can directly return the error, or,\n* when we can recover from an error."
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -4312,8 +5149,8 @@
           ],
           "enumDescriptions": [
             "Not specified. This value should be never used.",
-            "Map entity types allow mapping of a group of synonyms to a canonical\nvalue.",
-            "List entity types contain a set of entries that do not map to canonical\nvalues. However, list entity types can contain references to other entity\ntypes (with or without aliases).",
+            "Map entity types allow mapping of a group of synonyms to a reference\nvalue.",
+            "List entity types contain a set of entries that do not map to reference\nvalues. However, list entity types can contain references to other entity\ntypes (with or without aliases).",
             "Regexp entity types allow to specify regular expressions in entries\nvalues."
           ],
           "type": "string"
@@ -4337,7 +5174,7 @@
           "type": "array"
         },
         "value": {
-          "description": "Required. The primary value associated with this entity entry.\nFor example, if the entity type is *vegetable*, the value could be\n*scallions*.\n\nFor `KIND_MAP` entity types:\n\n*   A canonical value to be used in place of synonyms.\n\nFor `KIND_LIST` entity types:\n\n*   A string that can contain references to other entity types (with or\n    without aliases).",
+          "description": "Required. The primary value associated with this entity entry.\nFor example, if the entity type is *vegetable*, the value could be\n*scallions*.\n\nFor `KIND_MAP` entity types:\n\n*   A reference value to be used in place of synonyms.\n\nFor `KIND_LIST` entity types:\n\n*   A string that can contain references to other entity types (with or\n    without aliases).",
           "type": "string"
         }
       },
@@ -4458,7 +5295,7 @@
           "type": "array"
         },
         "mlDisabled": {
-          "description": "Optional. Indicates whether Machine Learning is disabled for the intent.\nNote: If `ml_diabled` setting is set to true, then this intent is not\ntaken into account during inference in `ML ONLY` match mode. Also,\nauto-markup in the UI is turned off.",
+          "description": "Optional. Indicates whether Machine Learning is disabled for the intent.\nNote: If `ml_disabled` setting is set to true, then this intent is not\ntaken into account during inference in `ML ONLY` match mode. Also,\nauto-markup in the UI is turned off.",
           "type": "boolean"
         },
         "name": {
@@ -4480,11 +5317,11 @@
           "type": "array"
         },
         "parentFollowupIntentName": {
-          "description": "Read-only after creation. The unique identifier of the parent intent in the\nchain of followup intents. You can set this field when creating an intent,\nfor example with CreateIntent or BatchUpdateIntents, in order to\nmake this intent a followup intent.\n\nIt identifies the parent followup intent.\nFormat: `projects/\u003cProject ID\u003e/agent/intents/\u003cIntent ID\u003e`.",
+          "description": "Read-only after creation. The unique identifier of the parent intent in the\nchain of followup intents. You can set this field when creating an intent,\nfor example with CreateIntent or\nBatchUpdateIntents, in order to make this\nintent a followup intent.\n\nIt identifies the parent followup intent.\nFormat: `projects/\u003cProject ID\u003e/agent/intents/\u003cIntent ID\u003e`.",
           "type": "string"
         },
         "priority": {
-          "description": "Optional. The priority of this intent. Higher numbers represent higher\npriorities. If this is zero or unspecified, we use the default\npriority 500000.\n\nNegative numbers mean that the intent is disabled.",
+          "description": "Optional. The priority of this intent. Higher numbers represent higher\npriorities.\n\n- If the supplied value is unspecified or 0, the service\n  translates the value to 500,000, which corresponds to the\n  `Normal` priority in the console.\n- If the supplied value is negative, the intent is ignored\n  in runtime detect intent requests.",
           "format": "int32",
           "type": "integer"
         },
@@ -4543,6 +5380,10 @@
           "$ref": "GoogleCloudDialogflowV2IntentMessageBasicCard",
           "description": "The basic card response for Actions on Google."
         },
+        "browseCarouselCard": {
+          "$ref": "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCard",
+          "description": "Browse carousel card for Actions on Google."
+        },
         "card": {
           "$ref": "GoogleCloudDialogflowV2IntentMessageCard",
           "description": "The card response."
@@ -4562,6 +5403,10 @@
         "listSelect": {
           "$ref": "GoogleCloudDialogflowV2IntentMessageListSelect",
           "description": "The list card response for Actions on Google."
+        },
+        "mediaContent": {
+          "$ref": "GoogleCloudDialogflowV2IntentMessageMediaContent",
+          "description": "The media content card for Actions on Google."
         },
         "payload": {
           "additionalProperties": {
@@ -4610,6 +5455,10 @@
         "suggestions": {
           "$ref": "GoogleCloudDialogflowV2IntentMessageSuggestions",
           "description": "The suggestion chips for Actions on Google."
+        },
+        "tableCard": {
+          "$ref": "GoogleCloudDialogflowV2IntentMessageTableCard",
+          "description": "Table card for Actions on Google."
         },
         "text": {
           "$ref": "GoogleCloudDialogflowV2IntentMessageText",
@@ -4669,6 +5518,90 @@
       "properties": {
         "uri": {
           "description": "Required. The HTTP or HTTPS scheme URI.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCard": {
+      "description": "Browse Carousel Card for Actions on Google.\nhttps://developers.google.com/actions/assistant/responses#browsing_carousel",
+      "id": "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCard",
+      "properties": {
+        "imageDisplayOptions": {
+          "description": "Optional. Settings for displaying the image. Applies to every image in\nitems.",
+          "enum": [
+            "IMAGE_DISPLAY_OPTIONS_UNSPECIFIED",
+            "GRAY",
+            "WHITE",
+            "CROPPED",
+            "BLURRED_BACKGROUND"
+          ],
+          "enumDescriptions": [
+            "Fill the gaps between the image and the image container with gray\nbars.",
+            "Fill the gaps between the image and the image container with gray\nbars.",
+            "Fill the gaps between the image and the image container with white\nbars.",
+            "Image is scaled such that the image width and height match or exceed\nthe container dimensions. This may crop the top and bottom of the\nimage if the scaled image height is greater than the container\nheight, or crop the left and right of the image if the scaled image\nwidth is greater than the container width. This is similar to \"Zoom\nMode\" on a widescreen TV when playing a 4:3 video.",
+            "Pad the gaps between image and image frame with a blurred copy of the\nsame image."
+          ],
+          "type": "string"
+        },
+        "items": {
+          "description": "Required. List of items in the Browse Carousel Card. Minimum of two\nitems, maximum of ten.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCardBrowseCarouselCardItem"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCardBrowseCarouselCardItem": {
+      "description": "Browsing carousel tile",
+      "id": "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCardBrowseCarouselCardItem",
+      "properties": {
+        "description": {
+          "description": "Optional. Description of the carousel item. Maximum of four lines of\ntext.",
+          "type": "string"
+        },
+        "footer": {
+          "description": "Optional. Text that appears at the bottom of the Browse Carousel\nCard. Maximum of one line of text.",
+          "type": "string"
+        },
+        "image": {
+          "$ref": "GoogleCloudDialogflowV2IntentMessageImage",
+          "description": "Optional. Hero image for the carousel item."
+        },
+        "openUriAction": {
+          "$ref": "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCardBrowseCarouselCardItemOpenUrlAction",
+          "description": "Required. Action to present to the user."
+        },
+        "title": {
+          "description": "Required. Title of the carousel item. Maximum of two lines of text.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCardBrowseCarouselCardItemOpenUrlAction": {
+      "description": "Actions on Google action to open a given url.",
+      "id": "GoogleCloudDialogflowV2IntentMessageBrowseCarouselCardBrowseCarouselCardItemOpenUrlAction",
+      "properties": {
+        "url": {
+          "description": "Required. URL",
+          "type": "string"
+        },
+        "urlTypeHint": {
+          "description": "Optional. Specifies the type of viewer that is used when opening\nthe URL. Defaults to opening via web browser.",
+          "enum": [
+            "URL_TYPE_HINT_UNSPECIFIED",
+            "AMP_ACTION",
+            "AMP_CONTENT"
+          ],
+          "enumDescriptions": [
+            "Unspecified",
+            "Url would be an amp action",
+            "URL that points directly to AMP content, or to a canonical URL\nwhich refers to AMP content via \u003clink rel=\"amphtml\"\u003e."
+          ],
           "type": "string"
         }
       },
@@ -4752,6 +5685,33 @@
       },
       "type": "object"
     },
+    "GoogleCloudDialogflowV2IntentMessageColumnProperties": {
+      "description": "Column properties for TableCard.",
+      "id": "GoogleCloudDialogflowV2IntentMessageColumnProperties",
+      "properties": {
+        "header": {
+          "description": "Required. Column heading.",
+          "type": "string"
+        },
+        "horizontalAlignment": {
+          "description": "Optional. Defines text alignment for all cells in this column.",
+          "enum": [
+            "HORIZONTAL_ALIGNMENT_UNSPECIFIED",
+            "LEADING",
+            "CENTER",
+            "TRAILING"
+          ],
+          "enumDescriptions": [
+            "Text is aligned to the leading edge of the column.",
+            "Text is aligned to the leading edge of the column.",
+            "Text is centered in the column.",
+            "Text is aligned to the trailing edge of the column."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "GoogleCloudDialogflowV2IntentMessageImage": {
       "description": "The image response message.",
       "id": "GoogleCloudDialogflowV2IntentMessageImage",
@@ -4793,6 +5753,10 @@
           },
           "type": "array"
         },
+        "subtitle": {
+          "description": "Optional. Subtitle of the list.",
+          "type": "string"
+        },
         "title": {
           "description": "Optional. The overall title of the list.",
           "type": "string"
@@ -4818,6 +5782,59 @@
         },
         "title": {
           "description": "Required. The title of the list item.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2IntentMessageMediaContent": {
+      "description": "The media content card for Actions on Google.",
+      "id": "GoogleCloudDialogflowV2IntentMessageMediaContent",
+      "properties": {
+        "mediaObjects": {
+          "description": "Required. List of media objects.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2IntentMessageMediaContentResponseMediaObject"
+          },
+          "type": "array"
+        },
+        "mediaType": {
+          "description": "Optional. What type of media is the content (ie \"audio\").",
+          "enum": [
+            "RESPONSE_MEDIA_TYPE_UNSPECIFIED",
+            "AUDIO"
+          ],
+          "enumDescriptions": [
+            "Unspecified.",
+            "Response media type is audio."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2IntentMessageMediaContentResponseMediaObject": {
+      "description": "Response media object for media content card.",
+      "id": "GoogleCloudDialogflowV2IntentMessageMediaContentResponseMediaObject",
+      "properties": {
+        "contentUrl": {
+          "description": "Required. Url where the media is stored.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Optional. Description of media card.",
+          "type": "string"
+        },
+        "icon": {
+          "$ref": "GoogleCloudDialogflowV2IntentMessageImage",
+          "description": "Optional. Icon to display above media content."
+        },
+        "largeImage": {
+          "$ref": "GoogleCloudDialogflowV2IntentMessageImage",
+          "description": "Optional. Image to display above media content."
+        },
+        "name": {
+          "description": "Required. Name of media card.",
           "type": "string"
         }
       },
@@ -4913,6 +5930,75 @@
             "$ref": "GoogleCloudDialogflowV2IntentMessageSuggestion"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2IntentMessageTableCard": {
+      "description": "Table card for Actions on Google.",
+      "id": "GoogleCloudDialogflowV2IntentMessageTableCard",
+      "properties": {
+        "buttons": {
+          "description": "Optional. List of buttons for the card.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2IntentMessageBasicCardButton"
+          },
+          "type": "array"
+        },
+        "columnProperties": {
+          "description": "Optional. Display properties for the columns in this table.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2IntentMessageColumnProperties"
+          },
+          "type": "array"
+        },
+        "image": {
+          "$ref": "GoogleCloudDialogflowV2IntentMessageImage",
+          "description": "Optional. Image which should be displayed on the card."
+        },
+        "rows": {
+          "description": "Optional. Rows in this table of data.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2IntentMessageTableCardRow"
+          },
+          "type": "array"
+        },
+        "subtitle": {
+          "description": "Optional. Subtitle to the title.",
+          "type": "string"
+        },
+        "title": {
+          "description": "Required. Title of the card.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2IntentMessageTableCardCell": {
+      "description": "Cell of TableCardRow.",
+      "id": "GoogleCloudDialogflowV2IntentMessageTableCardCell",
+      "properties": {
+        "text": {
+          "description": "Required. Text in this cell.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2IntentMessageTableCardRow": {
+      "description": "Row of TableCard.",
+      "id": "GoogleCloudDialogflowV2IntentMessageTableCardRow",
+      "properties": {
+        "cells": {
+          "description": "Optional. List of cells that make up this row.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2IntentMessageTableCardCell"
+          },
+          "type": "array"
+        },
+        "dividerAfter": {
+          "description": "Optional. Whether to add a visual divider after this row.",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -5033,6 +6119,72 @@
       },
       "type": "object"
     },
+    "GoogleCloudDialogflowV2Message": {
+      "description": "Represents a message posted into a conversation.",
+      "id": "GoogleCloudDialogflowV2Message",
+      "properties": {
+        "content": {
+          "description": "Required. The message content.",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Output only. The time when the message was created.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "languageCode": {
+          "description": "Optional. The message language.\nThis should be a [BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt)\nlanguage tag. Example: \"en-US\".",
+          "type": "string"
+        },
+        "messageAnnotation": {
+          "$ref": "GoogleCloudDialogflowV2MessageAnnotation",
+          "description": "Output only. The annotation for the message."
+        },
+        "name": {
+          "description": "The unique identifier of the message.\nFormat: `projects/\u003cProject ID\u003e/conversations/\u003cConversation\nID\u003e/messages/\u003cMessage ID\u003e`.",
+          "type": "string"
+        },
+        "participant": {
+          "description": "Output only. The participant that sends this message.",
+          "type": "string"
+        },
+        "participantRole": {
+          "description": "Output only. The role of the participant.",
+          "enum": [
+            "ROLE_UNSPECIFIED",
+            "HUMAN_AGENT",
+            "AUTOMATED_AGENT",
+            "END_USER"
+          ],
+          "enumDescriptions": [
+            "Participant role not set.",
+            "Participant is a human agent.",
+            "Participant is an automated agent, such as a Dialogflow agent.",
+            "Participant is an end user that has called or chatted with\nDialogflow services."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2MessageAnnotation": {
+      "description": "Represents the result of annotation for the message.",
+      "id": "GoogleCloudDialogflowV2MessageAnnotation",
+      "properties": {
+        "containEntities": {
+          "description": "Indicates whether the text message contains entities.",
+          "type": "boolean"
+        },
+        "parts": {
+          "description": "The collection of annotated message parts ordered by their\nposition in the message. You can recover the annotated message by\nconcatenating [AnnotatedMessagePart.text].",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2AnnotatedMessagePart"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "GoogleCloudDialogflowV2OriginalDetectIntentRequest": {
       "description": "Represents the contents of the original request that was passed to\nthe `[Streaming]DetectIntent` call.",
       "id": "GoogleCloudDialogflowV2OriginalDetectIntentRequest",
@@ -5073,7 +6225,7 @@
             "description": "Properties of the object.",
             "type": "any"
           },
-          "description": "The free-form diagnostic info. For example, this field could contain\nwebhook call latency. The string keys of the Struct's fields map can change\nwithout notice.",
+          "description": "Free-form diagnostic information for the associated detect intent request.\nThe fields of this data can change without notice, so you should not write\ncode that depends on its structure.\nThe data may contain:\n\n- webhook call latency\n- webhook errors",
           "type": "object"
         },
         "fulfillmentMessages": {
@@ -5172,7 +6324,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2SessionEntityType": {
-      "description": "Represents a session entity type.\n\nExtends or replaces a developer entity type at the user session level (we\nrefer to the entity types defined at the agent level as \"developer entity\ntypes\").\n\nNote: session entity types apply to all queries, regardless of the language.",
+      "description": "Represents a session entity type.\n\nExtends or replaces a custom entity type at the user session level (we\nrefer to the entity types defined at the agent level as \"custom entity\ntypes\").\n\nNote: session entity types apply to all queries, regardless of the language.",
       "id": "GoogleCloudDialogflowV2SessionEntityType",
       "properties": {
         "entities": {
@@ -5183,7 +6335,7 @@
           "type": "array"
         },
         "entityOverrideMode": {
-          "description": "Required. Indicates whether the additional data should override or\nsupplement the developer entity type definition.",
+          "description": "Required. Indicates whether the additional data should override or\nsupplement the custom entity type definition.",
           "enum": [
             "ENTITY_OVERRIDE_MODE_UNSPECIFIED",
             "ENTITY_OVERRIDE_MODE_OVERRIDE",
@@ -5191,8 +6343,8 @@
           ],
           "enumDescriptions": [
             "Not specified. This value should be never used.",
-            "The collection of session entities overrides the collection of entities\nin the corresponding developer entity type.",
-            "The collection of session entities extends the collection of entities in\nthe corresponding developer entity type.\n\nNote: Even in this override mode calls to `ListSessionEntityTypes`,\n`GetSessionEntityType`, `CreateSessionEntityType` and\n`UpdateSessionEntityType` only return the additional entities added in\nthis session entity type. If you want to get the supplemented list,\nplease call EntityTypes.GetEntityType on the developer entity type\nand merge."
+            "The collection of session entities overrides the collection of entities\nin the corresponding custom entity type.",
+            "The collection of session entities extends the collection of entities in\nthe corresponding custom entity type.\n\nNote: Even in this override mode calls to `ListSessionEntityTypes`,\n`GetSessionEntityType`, `CreateSessionEntityType` and\n`UpdateSessionEntityType` only return the additional entities added in\nthis session entity type. If you want to get the supplemented list,\nplease call EntityTypes.GetEntityType on the custom entity type\nand merge."
           ],
           "type": "string"
         },
@@ -5227,7 +6379,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2WebhookResponse": {
-      "description": "The response message for a webhook call.",
+      "description": "The response message for a webhook call.\n\nThis response is validated by the Dialogflow server. If validation fails,\nan error will be returned in the QueryResult.diagnostic_info field.\nSetting JSON fields to an empty value with the wrong type is a common error.\nTo avoid this error:\n\n- Use `\"\"` for empty strings\n- Use `{}` or `null` for empty objects\n- Use `[]` or `null` for empty arrays\n\nFor more information, see the\n[Protocol Buffers Language\nGuide](https://developers.google.com/protocol-buffers/docs/proto3#json).",
       "id": "GoogleCloudDialogflowV2WebhookResponse",
       "properties": {
         "followupEventInput": {
@@ -5329,7 +6481,7 @@
           "enumDescriptions": [
             "Not specified.",
             "Best for agents with a small number of examples in intents and/or wide\nuse of templates syntax and composite entities.",
-            "Can be used for agents with a large number of examples in intents,\nespecially the ones using @sys.any or very large developer entities."
+            "Can be used for agents with a large number of examples in intents,\nespecially the ones using @sys.any or very large custom entities."
           ],
           "type": "string"
         },
@@ -5428,7 +6580,7 @@
       "id": "GoogleCloudDialogflowV2beta1BatchDeleteEntitiesRequest",
       "properties": {
         "entityValues": {
-          "description": "Required. The canonical `values` of the entities to delete. Note that\nthese are not fully-qualified names, i.e. they don't start with\n`projects/\u003cProject ID\u003e`.",
+          "description": "Required. The reference `values` of the entities to delete. Note that\nthese are not fully-qualified names, i.e. they don't start with\n`projects/\u003cProject ID\u003e`.",
           "items": {
             "type": "string"
           },
@@ -5590,7 +6742,7 @@
           "type": "integer"
         },
         "name": {
-          "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.",
+          "description": "Required. The unique identifier of the context. Format:\n`projects/\u003cProject ID\u003e/agent/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`,\nor `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e/users/\u003cUser\nID\u003e/sessions/\u003cSession ID\u003e/contexts/\u003cContext ID\u003e`.\n\nThe `Context ID` is always converted to lowercase, may only contain\ncharacters in a-zA-Z0-9_-% and may be at most 250 bytes long.\n\nIf `Environment ID` is not specified, we assume default 'draft'\nenvironment. If `User ID` is not specified, we assume default '-' user.\n\nThe following context names are reserved for internal use by Dialogflow.\nYou should not use these contexts or create contexts with these names:\n\n* `__system_counters__`\n* `*_id_dialog_context`\n* `*_dialog_params_size`",
           "type": "string"
         },
         "parameters": {
@@ -5605,7 +6757,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2beta1DetectIntentRequest": {
-      "description": "The request to detect user's intent.",
+      "description": "============================================================================\nRequests and responses for custom methods.\nThe request to detect user's intent.",
       "id": "GoogleCloudDialogflowV2beta1DetectIntentRequest",
       "properties": {
         "inputAudio": {
@@ -5753,8 +6905,8 @@
           ],
           "enumDescriptions": [
             "Not specified. This value should be never used.",
-            "Map entity types allow mapping of a group of synonyms to a canonical\nvalue.",
-            "List entity types contain a set of entries that do not map to canonical\nvalues. However, list entity types can contain references to other entity\ntypes (with or without aliases).",
+            "Map entity types allow mapping of a group of synonyms to a reference\nvalue.",
+            "List entity types contain a set of entries that do not map to reference\nvalues. However, list entity types can contain references to other entity\ntypes (with or without aliases).",
             "Regexp entity types allow to specify regular expressions in entries\nvalues."
           ],
           "type": "string"
@@ -5792,7 +6944,89 @@
           "type": "array"
         },
         "value": {
-          "description": "Required. The primary value associated with this entity entry.\nFor example, if the entity type is *vegetable*, the value could be\n*scallions*.\n\nFor `KIND_MAP` entity types:\n\n*   A canonical value to be used in place of synonyms.\n\nFor `KIND_LIST` entity types:\n\n*   A string that can contain references to other entity types (with or\n    without aliases).",
+          "description": "Required. The primary value associated with this entity entry.\nFor example, if the entity type is *vegetable*, the value could be\n*scallions*.\n\nFor `KIND_MAP` entity types:\n\n*   A reference value to be used in place of synonyms.\n\nFor `KIND_LIST` entity types:\n\n*   A string that can contain references to other entity types (with or\n    without aliases).",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2beta1Environment": {
+      "description": "Represents an agent environment.",
+      "id": "GoogleCloudDialogflowV2beta1Environment",
+      "properties": {
+        "agentVersion": {
+          "description": "Optional. The agent version loaded into this environment.\nFormat: `projects/\u003cProject ID\u003e/agent/versions/\u003cVersion ID\u003e`.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Optional. The developer-provided description for this environment.\nThe maximum length is 500 characters. If exceeded, the request is rejected.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Output only. The unique identifier of this agent environment.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.\nYou can use \"-\" as Environment ID to refer to 'draft' environment.",
+          "type": "string"
+        },
+        "state": {
+          "description": "Output only. The state of this environment. This field is read-only, i.e., it cannot be\nset by create and update methods.",
+          "enum": [
+            "STATE_UNSPECIFIED",
+            "STOPPED",
+            "LOADING",
+            "RUNNING"
+          ],
+          "enumDescriptions": [
+            "Not specified. This value is not used.",
+            "Stopped.",
+            "Loading.",
+            "Running."
+          ],
+          "type": "string"
+        },
+        "updateTime": {
+          "description": "Output only. The last update time of this environment. This field is read-only, i.e., it\ncannot be set by create and update methods.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2beta1EnvironmentHistory": {
+      "description": "The response message for Environments.GetEnvironmentHistory.",
+      "id": "GoogleCloudDialogflowV2beta1EnvironmentHistory",
+      "properties": {
+        "entries": {
+          "description": "Output only. The list of agent environments. There will be a maximum number of items\nreturned based on the page_size field in the request.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2beta1EnvironmentHistoryEntry"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "Output only. Token to retrieve the next page of results, or empty if there are no\nmore results in the list.",
+          "type": "string"
+        },
+        "parent": {
+          "description": "Output only. The name of the environment this history is for.\nFormat: `projects/\u003cProject ID\u003e/agent/environments/\u003cEnvironment ID\u003e`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2beta1EnvironmentHistoryEntry": {
+      "description": "Represents a environment history entry.",
+      "id": "GoogleCloudDialogflowV2beta1EnvironmentHistoryEntry",
+      "properties": {
+        "agentVersion": {
+          "description": "The agent version loaded into this environment history entry.",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "The creation time of this environment history entry.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "description": {
+          "description": "The developer-provided description for this environment history entry.",
           "type": "string"
         }
       },
@@ -5843,6 +7077,85 @@
         },
         "agentUri": {
           "description": "The URI to a file containing the exported agent. This field is populated\nonly if `agent_uri` is specified in `ExportAgentRequest`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2beta1Fulfillment": {
+      "description": "Represents a fulfillment.",
+      "id": "GoogleCloudDialogflowV2beta1Fulfillment",
+      "properties": {
+        "displayName": {
+          "description": "Optional. The human-readable name of the fulfillment, unique within the agent.",
+          "type": "string"
+        },
+        "enabled": {
+          "description": "Optional. Whether fulfillment is enabled.",
+          "type": "boolean"
+        },
+        "features": {
+          "description": "Optional. The field defines whether the fulfillment is enabled for certain features.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2beta1FulfillmentFeature"
+          },
+          "type": "array"
+        },
+        "genericWebService": {
+          "$ref": "GoogleCloudDialogflowV2beta1FulfillmentGenericWebService",
+          "description": "Configuration for a generic web service."
+        },
+        "name": {
+          "description": "Required. The unique identifier of the fulfillment.\nFormat: `projects/\u003cProject ID\u003e/agent/fulfillment`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2beta1FulfillmentFeature": {
+      "description": "Whether fulfillment is enabled for the specific feature.",
+      "id": "GoogleCloudDialogflowV2beta1FulfillmentFeature",
+      "properties": {
+        "type": {
+          "description": "The type of the feature that enabled for fulfillment.",
+          "enum": [
+            "TYPE_UNSPECIFIED",
+            "SMALLTALK"
+          ],
+          "enumDescriptions": [
+            "Feature type not specified.",
+            "Fulfillment is enabled for SmallTalk."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2beta1FulfillmentGenericWebService": {
+      "description": "Represents configuration for a generic web service.\nDialogflow supports two mechanisms for authentications:\n- Basic authentication with username and password.\n- Authentication with additional authentication headers.\nMore information could be found at:\nhttps://cloud.google.com/dialogflow/docs/fulfillment-configure.",
+      "id": "GoogleCloudDialogflowV2beta1FulfillmentGenericWebService",
+      "properties": {
+        "isCloudFunction": {
+          "description": "Optional. Indicates if generic web service is created through Cloud Functions\nintegration. Defaults to false.",
+          "type": "boolean"
+        },
+        "password": {
+          "description": "Optional. The password for HTTP Basic authentication.",
+          "type": "string"
+        },
+        "requestHeaders": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. The HTTP request headers to send together with fulfillment requests.",
+          "type": "object"
+        },
+        "uri": {
+          "description": "Required. The fulfillment URI for receiving POST requests.",
+          "type": "string"
+        },
+        "username": {
+          "description": "Optional. The user name for HTTP Basic authentication.",
           "type": "string"
         }
       },
@@ -5932,7 +7245,7 @@
           "type": "string"
         },
         "phraseHints": {
-          "description": "Optional. A list of strings containing words and phrases that the speech\nrecognizer should recognize with higher likelihood.\n\nSee [the Cloud Speech\ndocumentation](https://cloud.google.com/speech-to-text/docs/basics#phrase-hints)\nfor more details.",
+          "description": "Optional. A list of strings containing words and phrases that the speech\nrecognizer should recognize with higher likelihood.\n\nSee [the Cloud Speech\ndocumentation](https://cloud.google.com/speech-to-text/docs/basics#phrase-hints)\nfor more details.\n\nThis field is deprecated. Please use [speech_contexts]() instead. If you\nspecify both [phrase_hints]() and [speech_contexts](), Dialogflow will\ntreat the [phrase_hints]() as a single additional [SpeechContext]().",
           "items": {
             "type": "string"
           },
@@ -6065,11 +7378,11 @@
           "type": "array"
         },
         "parentFollowupIntentName": {
-          "description": "Read-only after creation. The unique identifier of the parent intent in the\nchain of followup intents. You can set this field when creating an intent,\nfor example with CreateIntent or BatchUpdateIntents, in order to\nmake this intent a followup intent.\n\nIt identifies the parent followup intent.\nFormat: `projects/\u003cProject ID\u003e/agent/intents/\u003cIntent ID\u003e`.",
+          "description": "Read-only after creation. The unique identifier of the parent intent in the\nchain of followup intents. You can set this field when creating an intent,\nfor example with CreateIntent or\nBatchUpdateIntents, in order to make this\nintent a followup intent.\n\nIt identifies the parent followup intent.\nFormat: `projects/\u003cProject ID\u003e/agent/intents/\u003cIntent ID\u003e`.",
           "type": "string"
         },
         "priority": {
-          "description": "Optional. The priority of this intent. Higher numbers represent higher\npriorities. If this is zero or unspecified, we use the default\npriority 500000.\n\nNegative numbers mean that the intent is disabled.",
+          "description": "The priority of this intent. Higher numbers represent higher\npriorities.\n\n- If the supplied value is unspecified or 0, the service\n  translates the value to 500,000, which corresponds to the\n  `Normal` priority in the console.\n- If the supplied value is negative, the intent is ignored\n  in runtime detect intent requests.",
           "format": "int32",
           "type": "integer"
         },
@@ -6540,6 +7853,10 @@
             "$ref": "GoogleCloudDialogflowV2beta1IntentMessageListSelectItem"
           },
           "type": "array"
+        },
+        "subtitle": {
+          "description": "Optional. Subtitle of the list.",
+          "type": "string"
         },
         "title": {
           "description": "Optional. The overall title of the list.",
@@ -7229,6 +8546,10 @@
           "description": "Required. The display name of the knowledge base. The name must be 1024\nbytes or less; otherwise, the creation request fails.",
           "type": "string"
         },
+        "languageCode": {
+          "description": "Language which represents the KnowledgeBase. When the KnowledgeBase is\ncreated/updated, this is populated for all non en-us languages. If not\npopulated, the default language en-us applies.",
+          "type": "string"
+        },
         "name": {
           "description": "The knowledge base resource name.\nThe name must be empty when creating a knowledge base.\nFormat: `projects/\u003cProject ID\u003e/knowledgeBases/\u003cKnowledge Base ID\u003e`.",
           "type": "string"
@@ -7260,7 +8581,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2beta1LabelConversationResponse": {
-      "description": "The response for\nConversationDatasets.LabelConversation",
+      "description": "The response for\nConversationDatasets.LabelConversation.",
       "id": "GoogleCloudDialogflowV2beta1LabelConversationResponse",
       "properties": {
         "annotatedConversationDataset": {
@@ -7314,6 +8635,24 @@
           "description": "The list of agent entity types. There will be a maximum number of items\nreturned based on the page_size field in the request.",
           "items": {
             "$ref": "GoogleCloudDialogflowV2beta1EntityType"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "Token to retrieve the next page of results, or empty if there are no\nmore results in the list.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2beta1ListEnvironmentsResponse": {
+      "description": "The response message for Environments.ListEnvironments.",
+      "id": "GoogleCloudDialogflowV2beta1ListEnvironmentsResponse",
+      "properties": {
+        "environments": {
+          "description": "The list of agent environments. There will be a maximum number of items\nreturned based on the page_size field in the request.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2beta1Environment"
           },
           "type": "array"
         },
@@ -7378,6 +8717,24 @@
       },
       "type": "object"
     },
+    "GoogleCloudDialogflowV2beta1ListVersionsResponse": {
+      "description": "The response message for Versions.ListVersions.",
+      "id": "GoogleCloudDialogflowV2beta1ListVersionsResponse",
+      "properties": {
+        "nextPageToken": {
+          "description": "Token to retrieve the next page of results, or empty if there are no\nmore results in the list.",
+          "type": "string"
+        },
+        "versions": {
+          "description": "The list of agent versions. There will be a maximum number of items\nreturned based on the page_size field in the request.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2beta1Version"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "GoogleCloudDialogflowV2beta1OriginalDetectIntentRequest": {
       "description": "Represents the contents of the original request that was passed to\nthe `[Streaming]DetectIntent` call.",
       "id": "GoogleCloudDialogflowV2beta1OriginalDetectIntentRequest",
@@ -7402,7 +8759,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2beta1OutputAudioConfig": {
-      "description": "Instructs the speech synthesizer how to generate the output audio content.",
+      "description": "Instructs the speech synthesizer how to generate the output audio content.\nIf this audio config is supplied in a request, it overrides all existing\ntext-to-speech settings applied to the agent.",
       "id": "GoogleCloudDialogflowV2beta1OutputAudioConfig",
       "properties": {
         "audioEncoding": {
@@ -7416,7 +8773,7 @@
           "enumDescriptions": [
             "Not specified.",
             "Uncompressed 16-bit signed little-endian samples (Linear PCM).\nAudio content returned as LINEAR16 also contains a WAV header.",
-            "MP3 audio.",
+            "MP3 audio at 32kbps.",
             "Opus encoded audio wrapped in an ogg container. The result will be a\nfile which can be played natively on Android, and in browsers (at least\nChrome and Firefox). The quality of the encoding is considerably higher\nthan MP3 while using approximately the same bitrate."
           ],
           "type": "string"
@@ -7497,9 +8854,23 @@
           },
           "type": "array"
         },
+        "subAgents": {
+          "description": "Optional. For mega agent query, directly specify which sub agents to query.\nIf any specified sub agent is not linked to the mega agent, an error will\nbe returned. If empty, Dialogflow will decide which sub agents to query.\nIf specified for a non-mega-agent query, will be silently ignored.",
+          "items": {
+            "$ref": "GoogleCloudDialogflowV2beta1SubAgent"
+          },
+          "type": "array"
+        },
         "timeZone": {
           "description": "Optional. The time zone of this conversational query from the\n[time zone database](https://www.iana.org/time-zones), e.g.,\nAmerica/New_York, Europe/Paris. If not provided, the time zone specified in\nagent settings is used.",
           "type": "string"
+        },
+        "webhookHeaders": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. This field can be used to pass HTTP headers for a webhook\ncall. These headers will be sent to webhook alone with the headers that\nhave been configured through Dialogflow web console. The headers defined\nwithin this field will overwrite the headers configured through Dialogflow\nconsole if there is a conflict. Header names are case-insensitive.\nGoogle's specified headers are not allowed. Including: \"Host\",\n\"Content-Length\", \"Connection\", \"From\", \"User-Agent\", \"Accept-Encoding\",\n\"If-Modified-Since\", \"If-None-Match\", \"X-Forwarded-For\", etc.",
+          "type": "object"
         }
       },
       "type": "object"
@@ -7521,7 +8892,7 @@
             "description": "Properties of the object.",
             "type": "any"
           },
-          "description": "The free-form diagnostic info. For example, this field could contain\nwebhook call latency. The string keys of the Struct's fields map can change\nwithout notice.",
+          "description": "Free-form diagnostic information for the associated detect intent request.\nThe fields of this data can change without notice, so you should not write\ncode that depends on its structure.\nThe data may contain:\n\n- webhook call latency\n- webhook errors",
           "type": "object"
         },
         "fulfillmentMessages": {
@@ -7680,7 +9051,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2beta1SessionEntityType": {
-      "description": "Represents a session entity type.\n\nExtends or replaces a developer entity type at the user session level (we\nrefer to the entity types defined at the agent level as \"developer entity\ntypes\").\n\nNote: session entity types apply to all queries, regardless of the language.",
+      "description": "Represents a session entity type.\n\nExtends or replaces a custom entity type at the user session level (we\nrefer to the entity types defined at the agent level as \"custom entity\ntypes\").\n\nNote: session entity types apply to all queries, regardless of the language.",
       "id": "GoogleCloudDialogflowV2beta1SessionEntityType",
       "properties": {
         "entities": {
@@ -7691,7 +9062,7 @@
           "type": "array"
         },
         "entityOverrideMode": {
-          "description": "Required. Indicates whether the additional data should override or\nsupplement the developer entity type definition.",
+          "description": "Required. Indicates whether the additional data should override or\nsupplement the custom entity type definition.",
           "enum": [
             "ENTITY_OVERRIDE_MODE_UNSPECIFIED",
             "ENTITY_OVERRIDE_MODE_OVERRIDE",
@@ -7699,8 +9070,8 @@
           ],
           "enumDescriptions": [
             "Not specified. This value should be never used.",
-            "The collection of session entities overrides the collection of entities\nin the corresponding developer entity type.",
-            "The collection of session entities extends the collection of entities in\nthe corresponding developer entity type.\n\nNote: Even in this override mode calls to `ListSessionEntityTypes`,\n`GetSessionEntityType`, `CreateSessionEntityType` and\n`UpdateSessionEntityType` only return the additional entities added in\nthis session entity type. If you want to get the supplemented list,\nplease call EntityTypes.GetEntityType on the developer entity type\nand merge."
+            "The collection of session entities overrides the collection of entities\nin the corresponding custom entity type.",
+            "The collection of session entities extends the collection of entities in\nthe corresponding custom entity type.\n\nNote: Even in this override mode calls to `ListSessionEntityTypes`,\n`GetSessionEntityType`, `CreateSessionEntityType` and\n`UpdateSessionEntityType` only return the additional entities added in\nthis session entity type. If you want to get the supplemented list,\nplease call EntityTypes.GetEntityType on the custom entity type\nand merge."
           ],
           "type": "string"
         },
@@ -7726,6 +9097,21 @@
             "type": "string"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudDialogflowV2beta1SubAgent": {
+      "description": "Contains basic configuration for a sub-agent.",
+      "id": "GoogleCloudDialogflowV2beta1SubAgent",
+      "properties": {
+        "environment": {
+          "description": "Optional. The unique identifier (`environment name` in dialogflow console)\nof this sub-agent environment. Assumes draft environment if `environment`\nis not set.",
+          "type": "string"
+        },
+        "project": {
+          "description": "Required. The project of this agent.\nFormat: `projects/\u003cProject ID\u003e`.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -7834,12 +9220,53 @@
       },
       "type": "object"
     },
+    "GoogleCloudDialogflowV2beta1Version": {
+      "description": "Represents an agent version.",
+      "id": "GoogleCloudDialogflowV2beta1Version",
+      "properties": {
+        "createTime": {
+          "description": "Output only. The creation time of this version. This field is read-only, i.e., it cannot\nbe set by create and update methods.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "description": {
+          "description": "Optional. The developer-provided description of this version.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Output only. The unique identifier of this agent version.\nFormat: `projects/\u003cProject ID\u003e/agent/versions/\u003cVersion ID\u003e`.",
+          "type": "string"
+        },
+        "status": {
+          "description": "Output only. The status of this version. This field is read-only and cannot be set by\ncreate and update methods.",
+          "enum": [
+            "VERSION_STATUS_UNSPECIFIED",
+            "IN_PROGRESS",
+            "READY",
+            "FAILED"
+          ],
+          "enumDescriptions": [
+            "Not specified. This value is not used.",
+            "Version is not ready to serve (e.g. training is in progress).",
+            "Version is ready to serve.",
+            "Version training failed."
+          ],
+          "type": "string"
+        },
+        "versionNumber": {
+          "description": "Output only. The sequential number of this version. This field is read-only which means\nit cannot be set by create and update methods.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "GoogleCloudDialogflowV2beta1VoiceSelectionParams": {
       "description": "Description of which voice to use for speech synthesis.",
       "id": "GoogleCloudDialogflowV2beta1VoiceSelectionParams",
       "properties": {
         "name": {
-          "description": "Optional. The name of the voice. If not set, the service will choose a\nvoice based on the other parameters such as language_code and gender.",
+          "description": "Optional. The name of the voice. If not set, the service will choose a\nvoice based on the other parameters such as language_code and\nssml_gender.",
           "type": "string"
         },
         "ssmlGender": {
@@ -7892,7 +9319,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2beta1WebhookResponse": {
-      "description": "The response message for a webhook call.",
+      "description": "The response message for a webhook call.\n\nThis response is validated by the Dialogflow server. If validation fails,\nan error will be returned in the QueryResult.diagnostic_info field.\nSetting JSON fields to an empty value with the wrong type is a common error.\nTo avoid this error:\n\n- Use `\"\"` for empty strings\n- Use `{}` or `null` for empty objects\n- Use `[]` or `null` for empty arrays\n\nFor more information, see the\n[Protocol Buffers Language\nGuide](https://developers.google.com/protocol-buffers/docs/proto3#json).",
       "id": "GoogleCloudDialogflowV2beta1WebhookResponse",
       "properties": {
         "endInteraction": {

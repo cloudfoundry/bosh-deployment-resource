@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -58,6 +58,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -74,6 +75,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "language:v1beta2"
 const apiName = "language"
@@ -98,6 +100,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -887,6 +890,21 @@ func (s *DependencyEdge) MarshalJSON() ([]byte, error) {
 //
 // Represents the input to API methods.
 type Document struct {
+	// BoilerplateHandling: Indicates how detected boilerplate(e.g.
+	// advertisements, copyright
+	// declarations, banners) should be handled for this document. If
+	// not
+	// specified, boilerplate will be treated the same as content.
+	//
+	// Possible values:
+	//   "BOILERPLATE_HANDLING_UNSPECIFIED" - The boilerplate handling is
+	// not specified.
+	//   "SKIP_BOILERPLATE" - Do not analyze detected boilerplate. Reference
+	// web URI is required for
+	// detecting boilerplate.
+	//   "KEEP_BOILERPLATE" - Treat boilerplate the same as content.
+	BoilerplateHandling string `json:"boilerplateHandling,omitempty"`
+
 	// Content: The content of the input in string format.
 	// Cloud audit logging exempt since it is based on user data.
 	Content string `json:"content,omitempty"`
@@ -914,6 +932,11 @@ type Document struct {
 	// is returned.
 	Language string `json:"language,omitempty"`
 
+	// ReferenceWebUri: The web URI where the document comes from. This URI
+	// is not used for
+	// fetching the content, but as a hint for analyzing the document.
+	ReferenceWebUri string `json:"referenceWebUri,omitempty"`
+
 	// Type: Required. If the type is not set or is
 	// `TYPE_UNSPECIFIED`,
 	// returns an `INVALID_ARGUMENT` error.
@@ -924,20 +947,21 @@ type Document struct {
 	//   "HTML" - HTML
 	Type string `json:"type,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Content") to
-	// unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "BoilerplateHandling")
+	// to unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Content") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "BoilerplateHandling") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -1623,7 +1647,7 @@ func (c *DocumentsAnalyzeEntitiesCall) Header() http.Header {
 
 func (c *DocumentsAnalyzeEntitiesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1751,7 +1775,7 @@ func (c *DocumentsAnalyzeEntitySentimentCall) Header() http.Header {
 
 func (c *DocumentsAnalyzeEntitySentimentCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1877,7 +1901,7 @@ func (c *DocumentsAnalyzeSentimentCall) Header() http.Header {
 
 func (c *DocumentsAnalyzeSentimentCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2007,7 +2031,7 @@ func (c *DocumentsAnalyzeSyntaxCall) Header() http.Header {
 
 func (c *DocumentsAnalyzeSyntaxCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2135,7 +2159,7 @@ func (c *DocumentsAnnotateTextCall) Header() http.Header {
 
 func (c *DocumentsAnnotateTextCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2261,7 +2285,7 @@ func (c *DocumentsClassifyTextCall) Header() http.Header {
 
 func (c *DocumentsClassifyTextCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

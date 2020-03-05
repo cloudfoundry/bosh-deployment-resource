@@ -127,7 +127,7 @@
               ],
               "parameters": {
                 "name": {
-                  "description": "Required. The data source in the form:\n`projects/{project_id}/dataSources/{data_source_id}`",
+                  "description": "Required. The data source in the form:\n`projects/{project_id}/dataSources/{data_source_id}` or\n`projects/{project_id}/locations/{location_id}/dataSources/{data_source_id}`.",
                   "location": "path",
                   "pattern": "^projects/[^/]+/dataSources/[^/]+$",
                   "required": true,
@@ -158,7 +158,7 @@
               ],
               "parameters": {
                 "name": {
-                  "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/dataSources/{data_source_id}`",
+                  "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/dataSources/{data_source_id}` or\n`projects/{project_id}/locations/{location_id}/dataSources/{data_source_id}`",
                   "location": "path",
                   "pattern": "^projects/[^/]+/dataSources/[^/]+$",
                   "required": true,
@@ -197,7 +197,7 @@
                   "type": "string"
                 },
                 "parent": {
-                  "description": "Required. The BigQuery project id for which data sources should be returned.\nMust be in the form: `projects/{project_id}`",
+                  "description": "Required. The BigQuery project id for which data sources should be returned.\nMust be in the form: `projects/{project_id}` or\n`projects/{project_id}/locations/{location_id}",
                   "location": "path",
                   "pattern": "^projects/[^/]+$",
                   "required": true,
@@ -305,7 +305,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. The data source in the form:\n`projects/{project_id}/dataSources/{data_source_id}`",
+                      "description": "Required. The data source in the form:\n`projects/{project_id}/dataSources/{data_source_id}` or\n`projects/{project_id}/locations/{location_id}/dataSources/{data_source_id}`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/dataSources/[^/]+$",
                       "required": true,
@@ -336,7 +336,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/dataSources/{data_source_id}`",
+                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/dataSources/{data_source_id}` or\n`projects/{project_id}/locations/{location_id}/dataSources/{data_source_id}`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/dataSources/[^/]+$",
                       "required": true,
@@ -375,7 +375,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The BigQuery project id for which data sources should be returned.\nMust be in the form: `projects/{project_id}`",
+                      "description": "Required. The BigQuery project id for which data sources should be returned.\nMust be in the form: `projects/{project_id}` or\n`projects/{project_id}/locations/{location_id}",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -412,10 +412,15 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The BigQuery project id where the transfer configuration should be created.\nMust be in the format projects/{project_id}/locations/{location_id}\nIf specified location and location of the destination bigquery dataset\ndo not match - the request will fail.",
+                      "description": "Required. The BigQuery project id where the transfer configuration should be created.\nMust be in the format projects/{project_id}/locations/{location_id} or\nprojects/{project_id}. If specified location and location of the\ndestination bigquery dataset do not match - the request will fail.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
+                      "type": "string"
+                    },
+                    "serviceAccountName": {
+                      "description": "Optional service account name. If this field is set, transfer config will\nbe created with this service account credentials. It requires that\nrequesting user calling this API has permissions to act as this service\naccount.",
+                      "location": "query",
                       "type": "string"
                     },
                     "versionInfo": {
@@ -445,7 +450,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}`",
+                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/transferConfigs/[^/]+$",
                       "required": true,
@@ -471,7 +476,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}`",
+                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/transferConfigs/[^/]+$",
                       "required": true,
@@ -516,7 +521,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The BigQuery project id for which data sources\nshould be returned: `projects/{project_id}`.",
+                      "description": "Required. The BigQuery project id for which data sources\nshould be returned: `projects/{project_id}` or\n`projects/{project_id}/locations/{location_id}`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -555,6 +560,11 @@
                       "required": true,
                       "type": "string"
                     },
+                    "serviceAccountName": {
+                      "description": "Optional service account name. If this field is set and\n\"service_account_name\" is set in update_mask, transfer config will be\nupdated to use this service account credentials. It requires that\nrequesting user calling this API has permissions to act as this service\naccount.",
+                      "location": "query",
+                      "type": "string"
+                    },
                     "updateMask": {
                       "description": "Required. Required list of fields to be updated in this request.",
                       "format": "google-fieldmask",
@@ -588,7 +598,7 @@
                   ],
                   "parameters": {
                     "parent": {
-                      "description": "Required. Transfer configuration name in the form:\n`projects/{project_id}/transferConfigs/{config_id}`.",
+                      "description": "Required. Transfer configuration name in the form:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/transferConfigs/[^/]+$",
                       "required": true,
@@ -617,7 +627,7 @@
                   ],
                   "parameters": {
                     "parent": {
-                      "description": "Transfer configuration name in the form:\n`projects/{project_id}/transferConfigs/{config_id}`.",
+                      "description": "Transfer configuration name in the form:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/transferConfigs/[^/]+$",
                       "required": true,
@@ -650,7 +660,7 @@
                       ],
                       "parameters": {
                         "name": {
-                          "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}`",
+                          "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}/runs/{run_id}`",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/transferConfigs/[^/]+/runs/[^/]+$",
                           "required": true,
@@ -676,7 +686,7 @@
                       ],
                       "parameters": {
                         "name": {
-                          "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}`",
+                          "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}/runs/{run_id}`",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/transferConfigs/[^/]+/runs/[^/]+$",
                           "required": true,
@@ -715,7 +725,7 @@
                           "type": "string"
                         },
                         "parent": {
-                          "description": "Required. Name of transfer configuration for which transfer runs should be retrieved.\nFormat of transfer configuration resource name is:\n`projects/{project_id}/transferConfigs/{config_id}`.",
+                          "description": "Required. Name of transfer configuration for which transfer runs should be retrieved.\nFormat of transfer configuration resource name is:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`.",
                           "location": "path",
                           "pattern": "^projects/[^/]+/locations/[^/]+/transferConfigs/[^/]+$",
                           "required": true,
@@ -793,7 +803,7 @@
                               "type": "string"
                             },
                             "parent": {
-                              "description": "Required. Transfer run name in the form:\n`projects/{project_id}/transferConfigs/{config_Id}/runs/{run_id}`.",
+                              "description": "Required. Transfer run name in the form:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}/runs/{run_id}`",
                               "location": "path",
                               "pattern": "^projects/[^/]+/locations/[^/]+/transferConfigs/[^/]+/runs/[^/]+$",
                               "required": true,
@@ -836,10 +846,15 @@
                   "type": "string"
                 },
                 "parent": {
-                  "description": "Required. The BigQuery project id where the transfer configuration should be created.\nMust be in the format projects/{project_id}/locations/{location_id}\nIf specified location and location of the destination bigquery dataset\ndo not match - the request will fail.",
+                  "description": "Required. The BigQuery project id where the transfer configuration should be created.\nMust be in the format projects/{project_id}/locations/{location_id} or\nprojects/{project_id}. If specified location and location of the\ndestination bigquery dataset do not match - the request will fail.",
                   "location": "path",
                   "pattern": "^projects/[^/]+$",
                   "required": true,
+                  "type": "string"
+                },
+                "serviceAccountName": {
+                  "description": "Optional service account name. If this field is set, transfer config will\nbe created with this service account credentials. It requires that\nrequesting user calling this API has permissions to act as this service\naccount.",
+                  "location": "query",
                   "type": "string"
                 },
                 "versionInfo": {
@@ -869,7 +884,7 @@
               ],
               "parameters": {
                 "name": {
-                  "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}`",
+                  "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`",
                   "location": "path",
                   "pattern": "^projects/[^/]+/transferConfigs/[^/]+$",
                   "required": true,
@@ -895,7 +910,7 @@
               ],
               "parameters": {
                 "name": {
-                  "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}`",
+                  "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`",
                   "location": "path",
                   "pattern": "^projects/[^/]+/transferConfigs/[^/]+$",
                   "required": true,
@@ -940,7 +955,7 @@
                   "type": "string"
                 },
                 "parent": {
-                  "description": "Required. The BigQuery project id for which data sources\nshould be returned: `projects/{project_id}`.",
+                  "description": "Required. The BigQuery project id for which data sources\nshould be returned: `projects/{project_id}` or\n`projects/{project_id}/locations/{location_id}`",
                   "location": "path",
                   "pattern": "^projects/[^/]+$",
                   "required": true,
@@ -979,6 +994,11 @@
                   "required": true,
                   "type": "string"
                 },
+                "serviceAccountName": {
+                  "description": "Optional service account name. If this field is set and\n\"service_account_name\" is set in update_mask, transfer config will be\nupdated to use this service account credentials. It requires that\nrequesting user calling this API has permissions to act as this service\naccount.",
+                  "location": "query",
+                  "type": "string"
+                },
                 "updateMask": {
                   "description": "Required. Required list of fields to be updated in this request.",
                   "format": "google-fieldmask",
@@ -1012,7 +1032,7 @@
               ],
               "parameters": {
                 "parent": {
-                  "description": "Required. Transfer configuration name in the form:\n`projects/{project_id}/transferConfigs/{config_id}`.",
+                  "description": "Required. Transfer configuration name in the form:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`.",
                   "location": "path",
                   "pattern": "^projects/[^/]+/transferConfigs/[^/]+$",
                   "required": true,
@@ -1041,7 +1061,7 @@
               ],
               "parameters": {
                 "parent": {
-                  "description": "Transfer configuration name in the form:\n`projects/{project_id}/transferConfigs/{config_id}`.",
+                  "description": "Transfer configuration name in the form:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`.",
                   "location": "path",
                   "pattern": "^projects/[^/]+/transferConfigs/[^/]+$",
                   "required": true,
@@ -1074,7 +1094,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}`",
+                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}/runs/{run_id}`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/transferConfigs/[^/]+/runs/[^/]+$",
                       "required": true,
@@ -1100,7 +1120,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}`",
+                      "description": "Required. The field will contain name of the resource requested, for example:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}/runs/{run_id}`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/transferConfigs/[^/]+/runs/[^/]+$",
                       "required": true,
@@ -1139,7 +1159,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. Name of transfer configuration for which transfer runs should be retrieved.\nFormat of transfer configuration resource name is:\n`projects/{project_id}/transferConfigs/{config_id}`.",
+                      "description": "Required. Name of transfer configuration for which transfer runs should be retrieved.\nFormat of transfer configuration resource name is:\n`projects/{project_id}/transferConfigs/{config_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/transferConfigs/[^/]+$",
                       "required": true,
@@ -1217,7 +1237,7 @@
                           "type": "string"
                         },
                         "parent": {
-                          "description": "Required. Transfer run name in the form:\n`projects/{project_id}/transferConfigs/{config_Id}/runs/{run_id}`.",
+                          "description": "Required. Transfer run name in the form:\n`projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}` or\n`projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}/runs/{run_id}`",
                           "location": "path",
                           "pattern": "^projects/[^/]+/transferConfigs/[^/]+/runs/[^/]+$",
                           "required": true,
@@ -1244,7 +1264,7 @@
       }
     }
   },
-  "revision": "20190918",
+  "revision": "20200203",
   "rootUrl": "https://bigquerydatatransfer.googleapis.com/",
   "schemas": {
     "CheckValidCredsRequest": {
@@ -1475,6 +1495,17 @@
         "validationRegex": {
           "description": "Regular expression which can be used for parameter validation.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "EmailPreferences": {
+      "description": "Represents preferences for sending email notifications for transfer run\nevents.",
+      "id": "EmailPreferences",
+      "properties": {
+        "enableFailureEmail": {
+          "description": "If true, email notifications will be sent on transfer run failures.",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -1764,6 +1795,10 @@
           "description": "User specified display name for the data transfer.",
           "type": "string"
         },
+        "emailPreferences": {
+          "$ref": "EmailPreferences",
+          "description": "Email notifications will be sent according to these preferences\nto the email address of the user who owns this transfer config."
+        },
         "name": {
           "description": "The resource name of the transfer config.\nTransfer config names have the form of\n`projects/{project_id}/locations/{region}/transferConfigs/{config_id}`.\nThe name is automatically generated based on the config_id specified in\nCreateTransferConfigRequest along with project_id and region. If config_id\nis not provided, usually a uuid, even though it is not guaranteed or\nrequired, will be generated for config_id.",
           "type": "string"
@@ -1771,6 +1806,10 @@
         "nextRunTime": {
           "description": "Output only. Next time when data transfer will run.",
           "format": "google-datetime",
+          "type": "string"
+        },
+        "notificationPubsubTopic": {
+          "description": "Pub/Sub topic where notifications will be sent after transfer runs\nassociated with this transfer config finish.",
           "type": "string"
         },
         "params": {
@@ -1866,6 +1905,10 @@
           "description": "Output only. The BigQuery target dataset id.",
           "type": "string"
         },
+        "emailPreferences": {
+          "$ref": "EmailPreferences",
+          "description": "Output only. Email notifications will be sent according to these\npreferences to the email address of the user who owns the transfer config\nthis run was derived from."
+        },
         "endTime": {
           "description": "Output only. Time when transfer run ended.\nParameter ignored by server for input requests.",
           "format": "google-datetime",
@@ -1877,6 +1920,10 @@
         },
         "name": {
           "description": "The resource name of the transfer run.\nTransfer run names have the form\n`projects/{project_id}/locations/{location}/transferConfigs/{config_id}/runs/{run_id}`.\nThe name is ignored when creating a transfer run.",
+          "type": "string"
+        },
+        "notificationPubsubTopic": {
+          "description": "Output only. Pub/Sub topic where a notification will be sent after this\ntransfer run finishes",
           "type": "string"
         },
         "params": {

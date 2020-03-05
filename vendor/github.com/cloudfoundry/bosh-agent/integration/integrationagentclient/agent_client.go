@@ -72,11 +72,12 @@ func (c *IntegrationAgentClient) Prepare(spec applyspec.V1ApplySpec) error {
 	return err
 }
 
-func (c *IntegrationAgentClient) FetchLogsWithSignedURLAction(signedURL, logType string, filters []string) (action.FetchLogsWithSignedURLResponse, error) {
+func (c *IntegrationAgentClient) FetchLogsWithSignedURLAction(signedURL, logType string, filters []string, headers map[string]string) (action.FetchLogsWithSignedURLResponse, error) {
 	req := action.FetchLogsWithSignedURLRequest{
-		LogType:   logType,
-		Filters:   filters,
-		SignedURL: signedURL,
+		LogType:          logType,
+		Filters:          filters,
+		SignedURL:        signedURL,
+		BlobstoreHeaders: headers,
 	}
 	responseRaw, err := c.SendAsyncTaskMessage("fetch_logs_with_signed_url", []interface{}{req})
 	if err != nil {
@@ -122,26 +123,31 @@ func (c *IntegrationAgentClient) UpdateSettings(settings settings.UpdateSettings
 	return err
 }
 
-func (c *IntegrationAgentClient) CompilePackageWithSignedURL(req action.CompilePackageWithSignedURLRequest) (compiledPackageRef action.CompilePackageWithSignedURLResponse, err error) {
+func (c *IntegrationAgentClient) CompilePackageWithSignedURL(req action.CompilePackageWithSignedURLRequest) (compiledPackageRef map[string]interface{}, err error) {
 	responseRaw, err := c.SendAsyncTaskMessage("compile_package_with_signed_url", []interface{}{req})
 	responseValue, ok := responseRaw.(map[string]interface{})
 	if !ok {
-		return action.CompilePackageWithSignedURLResponse{}, bosherr.WrapErrorf(err, "Unable to parse compile_package response value: %#v", responseValue)
+		return map[string]interface{}{}, bosherr.WrapErrorf(err, "Unable to parse compile_package response value: %#v", responseValue)
 	}
 	if err != nil {
-		return action.CompilePackageWithSignedURLResponse{}, bosherr.WrapError(err, "Sending 'compile_package' to the agent")
+		return map[string]interface{}{}, bosherr.WrapError(err, "Sending 'compile_package' to the agent")
 	}
 
-	sha1, ok := responseValue["sha1_digest"].(string)
+	result, ok := responseValue["result"].(map[string]interface{})
 	if !ok {
-		return action.CompilePackageWithSignedURLResponse{}, bosherr.Errorf("Unable to parse 'compile_package' response from the agent: %#v", responseValue)
+		return map[string]interface{}{}, bosherr.Errorf("Unable to parse 'compile_package' response from the agent: %#v", responseValue)
 	}
 
-	compiledPackageRef = action.CompilePackageWithSignedURLResponse{
-		SHA1Digest: sha1,
+	sha1, ok := result["sha1"].(string)
+	if !ok {
+		return map[string]interface{}{}, bosherr.Errorf("Unable to parse 'compile_package' response from the agent: %#v", responseValue)
 	}
 
-	return compiledPackageRef, nil
+	return map[string]interface{}{
+		"result": map[string]string{
+			"sha1": sha1,
+		},
+	}, nil
 }
 
 func (c *IntegrationAgentClient) ApplyV1Spec(spec applyspec.V1ApplySpec) error {

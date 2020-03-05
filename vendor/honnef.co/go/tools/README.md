@@ -61,12 +61,3 @@ backwards-incompatible changes.
 ## System requirements
 
 We support the last two versions of Go.
-
-## Sponsors
-
-This project is sponsored by the following companies
-
-[<img src="images/sponsors/fastly.png" alt="Fastly" height="55"></img>](https://fastly.com)  
-[<img src="images/sponsors/uber.png" alt="Uber" height="35"></img>](https://uber.com)
-
-as well as many generous people.

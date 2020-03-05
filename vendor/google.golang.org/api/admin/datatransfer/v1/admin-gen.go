@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -56,6 +56,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -72,6 +73,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "admin:datatransfer_v1"
 const apiName = "admin"
@@ -95,6 +97,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -175,7 +178,7 @@ type Application struct {
 
 	// TransferParams: The list of all possible transfer parameters for this
 	// application. These parameters can be used to select the data of the
-	// user in this application to be transfered.
+	// user in this application to be transferred.
 	TransferParams []*ApplicationTransferParam `json:"transferParams,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -213,7 +216,7 @@ type ApplicationDataTransfer struct {
 
 	// ApplicationTransferParams: The transfer parameters for the
 	// application. These parameters are used to select the data which will
-	// get transfered in context of this application.
+	// get transferred in context of this application.
 	ApplicationTransferParams []*ApplicationTransferParam `json:"applicationTransferParams,omitempty"`
 
 	// ApplicationTransferStatus: Current status of transfer for this
@@ -249,7 +252,7 @@ type ApplicationTransferParam struct {
 	// Key: The type of the transfer parameter. eg: 'PRIVACY_LEVEL'
 	Key string `json:"key,omitempty"`
 
-	// Value: The value of the coressponding transfer parameter. eg:
+	// Value: The value of the corresponding transfer parameter. eg:
 	// 'PRIVATE' or 'SHARED'
 	Value []string `json:"value,omitempty"`
 
@@ -337,10 +340,10 @@ type DataTransfer struct {
 	// Kind: Identifies the resource as a DataTransfer request.
 	Kind string `json:"kind,omitempty"`
 
-	// NewOwnerUserId: ID of the user to whom the data is being transfered.
+	// NewOwnerUserId: ID of the user to whom the data is being transferred.
 	NewOwnerUserId string `json:"newOwnerUserId,omitempty"`
 
-	// OldOwnerUserId: ID of the user whose data is being transfered.
+	// OldOwnerUserId: ID of the user whose data is being transferred.
 	OldOwnerUserId string `json:"oldOwnerUserId,omitempty"`
 
 	// OverallTransferStatusCode: Overall transfer status (Read-only).
@@ -479,7 +482,7 @@ func (c *ApplicationsGetCall) Header() http.Header {
 
 func (c *ApplicationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -586,7 +589,7 @@ func (r *ApplicationsService) List() *ApplicationsListCall {
 }
 
 // CustomerId sets the optional parameter "customerId": Immutable ID of
-// the Google Apps account.
+// the G Suite account.
 func (c *ApplicationsListCall) CustomerId(customerId string) *ApplicationsListCall {
 	c.urlParams_.Set("customerId", customerId)
 	return c
@@ -643,7 +646,7 @@ func (c *ApplicationsListCall) Header() http.Header {
 
 func (c *ApplicationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -707,7 +710,7 @@ func (c *ApplicationsListCall) Do(opts ...googleapi.CallOption) (*ApplicationsLi
 	//   "id": "datatransfer.applications.list",
 	//   "parameters": {
 	//     "customerId": {
-	//       "description": "Immutable ID of the Google Apps account.",
+	//       "description": "Immutable ID of the G Suite account.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -813,7 +816,7 @@ func (c *TransfersGetCall) Header() http.Header {
 
 func (c *TransfersGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -945,7 +948,7 @@ func (c *TransfersInsertCall) Header() http.Header {
 
 func (c *TransfersInsertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1041,7 +1044,7 @@ func (r *TransfersService) List() *TransfersListCall {
 }
 
 // CustomerId sets the optional parameter "customerId": Immutable ID of
-// the Google Apps account.
+// the G Suite account.
 func (c *TransfersListCall) CustomerId(customerId string) *TransfersListCall {
 	c.urlParams_.Set("customerId", customerId)
 	return c
@@ -1118,7 +1121,7 @@ func (c *TransfersListCall) Header() http.Header {
 
 func (c *TransfersListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1182,7 +1185,7 @@ func (c *TransfersListCall) Do(opts ...googleapi.CallOption) (*DataTransfersList
 	//   "id": "datatransfer.transfers.list",
 	//   "parameters": {
 	//     "customerId": {
-	//       "description": "Immutable ID of the Google Apps account.",
+	//       "description": "Immutable ID of the G Suite account.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },

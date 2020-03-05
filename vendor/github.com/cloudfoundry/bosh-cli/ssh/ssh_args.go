@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -36,9 +37,9 @@ type cmdExistenceChecker interface {
 func NewSSHArgs(connOpts ConnectionOpts, result boshdir.SSHResult, forceTTY bool, privKeyFile boshsys.File, knownHostsFile boshsys.File) SSHArgs {
 	cmdRunner := boshsys.NewExecCmdRunner(boshlog.NewLogger(boshlog.LevelNone))
 	socks5Proxy := proxy.NewSocks5Proxy(proxy.NewHostKey(), log.New(ioutil.Discard, "", log.LstdFlags), 1*time.Minute)
-	boshhttpDialer := boshhttp.SOCKS5DialFuncFromEnvironment(net.Dial, socks5Proxy)
+	boshhttpDialer := boshhttp.SOCKS5DialContextFuncFromEnvironment(&net.Dialer{}, socks5Proxy)
 	dialer := func(net, addr string) (net.Conn, error) {
-		return boshhttpDialer(net, addr)
+		return boshhttpDialer(context.Background(), net, addr)
 	}
 
 	return SSHArgs{

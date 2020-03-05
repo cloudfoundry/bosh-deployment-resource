@@ -41,7 +41,7 @@ export GOPATH="$HOME/go"
 export GOCLOUD_HOME=$GOPATH/src/cloud.google.com/go/
 export PATH="$GOPATH/bin:$PATH"
 export GO111MODULE=on
-
+export GOPROXY=https://proxy.golang.org
 
 # Move code into $GOPATH and get dependencies
 mkdir -p $GOCLOUD_HOME
@@ -71,6 +71,9 @@ create_junit_xml() {
 trap create_junit_xml EXIT ERR
 
 # Run tests and tee output to log file, to be pushed to GCS as artifact.
-go test -race -v -timeout 30m ./... 2>&1 \
-  | tee $KOKORO_ARTIFACTS_DIR/$KOKORO_GERRIT_CHANGE_NUMBER.txt
-
+for i in `find . -name go.mod`; do
+  pushd `dirname $i`;
+    go test -race -v -timeout 30m ./... 2>&1 \
+      | tee $KOKORO_ARTIFACTS_DIR/$KOKORO_GERRIT_CHANGE_NUMBER.txt
+  popd;
+done

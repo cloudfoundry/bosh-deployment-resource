@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "remotebuildexecution:v2"
 const apiName = "remotebuildexecution"
@@ -87,6 +89,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -2433,10 +2436,20 @@ type GoogleDevtoolsRemotebuildbotCommandDurations struct {
 	// (includes pulling the Docker image, if necessary).
 	DockerPrep string `json:"dockerPrep,omitempty"`
 
+	// DockerPrepStartTime: The timestamp when docker prepartion begins.
+	DockerPrepStartTime string `json:"dockerPrepStartTime,omitempty"`
+
 	// Download: The time spent downloading the input files and constructing
 	// the working
 	// directory.
 	Download string `json:"download,omitempty"`
+
+	// DownloadStartTime: The timestamp when downloading the input files
+	// begins.
+	DownloadStartTime string `json:"downloadStartTime,omitempty"`
+
+	// ExecStartTime: The timestamp when execution begins.
+	ExecStartTime string `json:"execStartTime,omitempty"`
 
 	// Execution: The time spent executing the command (i.e., doing useful
 	// work).
@@ -2454,6 +2467,10 @@ type GoogleDevtoolsRemotebuildbotCommandDurations struct {
 
 	// Upload: The time spent uploading the output files.
 	Upload string `json:"upload,omitempty"`
+
+	// UploadStartTime: The timestamp when uploading the output files
+	// begins.
+	UploadStartTime string `json:"uploadStartTime,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DockerPrep") to
 	// unconditionally include in API requests. By default, fields with
@@ -2569,6 +2586,20 @@ type GoogleDevtoolsRemotebuildbotCommandStatus struct {
 	// base directory
 	//   "DOCKER_UNAVAILABLE" - There are issues with docker
 	// service/runtime.
+	//   "NO_CUDA_CAPABLE_DEVICE" - The command failed with "no cuda-capable
+	// device is detected" error.
+	//   "REMOTE_CAS_DOWNLOAD_ERROR" - The bot encountered errors from
+	// remote CAS when downloading blobs.
+	//   "REMOTE_CAS_UPLOAD_ERROR" - The bot encountered errors from remote
+	// CAS when uploading blobs.
+	//   "LOCAL_CASPROXY_NOT_RUNNING" - The local casproxy is not running.
+	//   "DOCKER_CREATE_CONTAINER_ERROR" - The bot couldn't start the
+	// container.
+	//   "DOCKER_INVALID_ULIMIT" - The docker ulimit is not valid.
+	//   "DOCKER_UNKNOWN_RUNTIME" - The docker runtime is unknown.
+	//   "DOCKER_UNKNOWN_CAPABILITY" - The docker capability is unknown.
+	//   "DOCKER_UNKNOWN_ERROR" - The command failed with unknown docker
+	// errors.
 	Code string `json:"code,omitempty"`
 
 	// Message: The error message.
@@ -2593,6 +2624,81 @@ type GoogleDevtoolsRemotebuildbotCommandStatus struct {
 
 func (s *GoogleDevtoolsRemotebuildbotCommandStatus) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleDevtoolsRemotebuildbotCommandStatus
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleDevtoolsRemotebuildbotResourceUsage: ResourceUsage is the
+// system resource usage of the host machine.
+type GoogleDevtoolsRemotebuildbotResourceUsage struct {
+	CpuUsedPercent float64 `json:"cpuUsedPercent,omitempty"`
+
+	DiskUsage *GoogleDevtoolsRemotebuildbotResourceUsageStat `json:"diskUsage,omitempty"`
+
+	MemoryUsage *GoogleDevtoolsRemotebuildbotResourceUsageStat `json:"memoryUsage,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CpuUsedPercent") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CpuUsedPercent") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleDevtoolsRemotebuildbotResourceUsage) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleDevtoolsRemotebuildbotResourceUsage
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *GoogleDevtoolsRemotebuildbotResourceUsage) UnmarshalJSON(data []byte) error {
+	type NoMethod GoogleDevtoolsRemotebuildbotResourceUsage
+	var s1 struct {
+		CpuUsedPercent gensupport.JSONFloat64 `json:"cpuUsedPercent"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.CpuUsedPercent = float64(s1.CpuUsedPercent)
+	return nil
+}
+
+type GoogleDevtoolsRemotebuildbotResourceUsageStat struct {
+	Total uint64 `json:"total,omitempty,string"`
+
+	Used uint64 `json:"used,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "Total") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Total") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleDevtoolsRemotebuildbotResourceUsageStat) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleDevtoolsRemotebuildbotResourceUsageStat
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3063,6 +3169,44 @@ func (s *GoogleDevtoolsRemotebuildexecutionAdminV1alphaListWorkerPoolsResponse) 
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateInstanceRequest:
+// The request used for `UpdateInstance`.
+type GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateInstanceRequest struct {
+	// LoggingEnabled: Whether to enable Stackdriver logging for this
+	// instance.
+	LoggingEnabled bool `json:"loggingEnabled,omitempty"`
+
+	// Name: Name of the instance to update.
+	// Format: `projects/[PROJECT_ID]/instances/[INSTANCE_ID]`.
+	Name string `json:"name,omitempty"`
+
+	// UpdateMask: The fields to update.
+	UpdateMask string `json:"updateMask,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "LoggingEnabled") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LoggingEnabled") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateInstanceRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateInstanceRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest:
 //  The request used for UpdateWorkerPool.
 type GoogleDevtoolsRemotebuildexecutionAdminV1alphaUpdateWorkerPoolRequest struct {
@@ -3124,7 +3268,7 @@ type GoogleDevtoolsRemotebuildexecutionAdminV1alphaWorkerConfig struct {
 	// [Storage
 	// options](https://cloud.google.com/compute/docs/disks/#introdu
 	// ction).
-	// Currently only `pd-standard` is supported.
+	// Currently only `pd-standard` and `pd-ssd` are supported.
 	DiskType string `json:"diskType,omitempty"`
 
 	// Labels: Labels associated with the workers.
@@ -3146,6 +3290,10 @@ type GoogleDevtoolsRemotebuildexecutionAdminV1alphaWorkerConfig struct {
 	// yet
 	// supported.
 	MachineType string `json:"machineType,omitempty"`
+
+	// MaxConcurrentActions: The maximum number of actions a worker can
+	// execute concurrently.
+	MaxConcurrentActions int64 `json:"maxConcurrentActions,omitempty,string"`
 
 	// MinCpuPlatform: Minimum CPU platform to use when creating the
 	// worker.
@@ -4187,7 +4335,7 @@ func (c *ActionResultsGetCall) Header() http.Header {
 
 func (c *ActionResultsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4287,7 +4435,7 @@ func (c *ActionResultsGetCall) Do(opts ...googleapi.CallOption) (*BuildBazelRemo
 	//     "instanceName": {
 	//       "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
 	//       "location": "path",
-	//       "pattern": "^.+$",
+	//       "pattern": "^.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
@@ -4397,7 +4545,7 @@ func (c *ActionResultsUpdateCall) Header() http.Header {
 
 func (c *ActionResultsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4483,7 +4631,7 @@ func (c *ActionResultsUpdateCall) Do(opts ...googleapi.CallOption) (*BuildBazelR
 	//     "instanceName": {
 	//       "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
 	//       "location": "path",
-	//       "pattern": "^.+$",
+	//       "pattern": "^.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
@@ -4652,7 +4800,7 @@ func (c *ActionsExecuteCall) Header() http.Header {
 
 func (c *ActionsExecuteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4727,7 +4875,7 @@ func (c *ActionsExecuteCall) Do(opts ...googleapi.CallOption) (*GoogleLongrunnin
 	//     "instanceName": {
 	//       "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
 	//       "location": "path",
-	//       "pattern": "^.+$",
+	//       "pattern": "^.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
@@ -4815,7 +4963,7 @@ func (c *BlobsBatchReadCall) Header() http.Header {
 
 func (c *BlobsBatchReadCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4892,7 +5040,7 @@ func (c *BlobsBatchReadCall) Do(opts ...googleapi.CallOption) (*BuildBazelRemote
 	//     "instanceName": {
 	//       "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
 	//       "location": "path",
-	//       "pattern": "^.+$",
+	//       "pattern": "^.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
@@ -4984,7 +5132,7 @@ func (c *BlobsBatchUpdateCall) Header() http.Header {
 
 func (c *BlobsBatchUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5061,7 +5209,7 @@ func (c *BlobsBatchUpdateCall) Do(opts ...googleapi.CallOption) (*BuildBazelRemo
 	//     "instanceName": {
 	//       "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
 	//       "location": "path",
-	//       "pattern": "^.+$",
+	//       "pattern": "^.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
@@ -5133,7 +5281,7 @@ func (c *BlobsFindMissingCall) Header() http.Header {
 
 func (c *BlobsFindMissingCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5210,7 +5358,7 @@ func (c *BlobsFindMissingCall) Do(opts ...googleapi.CallOption) (*BuildBazelRemo
 	//     "instanceName": {
 	//       "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
 	//       "location": "path",
-	//       "pattern": "^.+$",
+	//       "pattern": "^.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
@@ -5337,7 +5485,7 @@ func (c *BlobsGetTreeCall) Header() http.Header {
 
 func (c *BlobsGetTreeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5422,7 +5570,7 @@ func (c *BlobsGetTreeCall) Do(opts ...googleapi.CallOption) (*BuildBazelRemoteEx
 	//     "instanceName": {
 	//       "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
 	//       "location": "path",
-	//       "pattern": "^.+$",
+	//       "pattern": "^.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
@@ -5533,7 +5681,7 @@ func (c *OperationsWaitExecutionCall) Header() http.Header {
 
 func (c *OperationsWaitExecutionCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5608,7 +5756,7 @@ func (c *OperationsWaitExecutionCall) Do(opts ...googleapi.CallOption) (*GoogleL
 	//     "name": {
 	//       "description": "The name of the Operation\nreturned by Execute.",
 	//       "location": "path",
-	//       "pattern": "^operations/.+$",
+	//       "pattern": "^operations/.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }
@@ -5691,7 +5839,7 @@ func (c *V2GetCapabilitiesCall) Header() http.Header {
 
 func (c *V2GetCapabilitiesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5766,7 +5914,7 @@ func (c *V2GetCapabilitiesCall) Do(opts ...googleapi.CallOption) (*BuildBazelRem
 	//     "instanceName": {
 	//       "description": "The instance of the execution system to operate against. A server may\nsupport multiple instances of the execution system (with their own workers,\nstorage, caches, etc.). The server MAY require use of this field to select\nbetween them in an implementation-defined fashion, otherwise it can be\nomitted.",
 	//       "location": "path",
-	//       "pattern": "^.+$",
+	//       "pattern": "^.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     }

@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -56,6 +56,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -72,6 +73,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "clouddebugger:v2"
 const apiName = "clouddebugger"
@@ -95,6 +97,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	)
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -983,7 +986,7 @@ func (s *ProjectRepoId) MarshalJSON() ([]byte, error) {
 
 // RegisterDebuggeeRequest: Request to register a debuggee.
 type RegisterDebuggeeRequest struct {
-	// Debuggee: Debuggee information to register.
+	// Debuggee: Required. Debuggee information to register.
 	// The fields `project`, `uniquifier`, `description` and
 	// `agent_version`
 	// of the debuggee must be set.
@@ -1087,7 +1090,7 @@ func (s *RepoId) MarshalJSON() ([]byte, error) {
 type SetBreakpointResponse struct {
 	// Breakpoint: Breakpoint resource.
 	// The field `id` is guaranteed to be set (in addition to the echoed
-	// fileds).
+	// fields).
 	Breakpoint *Breakpoint `json:"breakpoint,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1295,7 +1298,7 @@ func (s *StatusMessage) MarshalJSON() ([]byte, error) {
 // UpdateActiveBreakpointRequest: Request to update an active
 // breakpoint.
 type UpdateActiveBreakpointRequest struct {
-	// Breakpoint: Updated breakpoint information.
+	// Breakpoint: Required. Updated breakpoint information.
 	// The field `id` must be set.
 	// The agent must echo all Breakpoint specification fields in the
 	// update.
@@ -1592,7 +1595,7 @@ func (c *ControllerDebuggeesRegisterCall) Header() http.Header {
 
 func (c *ControllerDebuggeesRegisterCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1776,7 +1779,7 @@ func (c *ControllerDebuggeesBreakpointsListCall) Header() http.Header {
 
 func (c *ControllerDebuggeesBreakpointsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1847,7 +1850,7 @@ func (c *ControllerDebuggeesBreakpointsListCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "debuggeeId": {
-	//       "description": "Identifies the debuggee.",
+	//       "description": "Required. Identifies the debuggee.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -1935,7 +1938,7 @@ func (c *ControllerDebuggeesBreakpointsUpdateCall) Header() http.Header {
 
 func (c *ControllerDebuggeesBreakpointsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2010,7 +2013,7 @@ func (c *ControllerDebuggeesBreakpointsUpdateCall) Do(opts ...googleapi.CallOpti
 	//   ],
 	//   "parameters": {
 	//     "debuggeeId": {
-	//       "description": "Identifies the debuggee being debugged.",
+	//       "description": "Required. Identifies the debuggee being debugged.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -2053,8 +2056,8 @@ func (r *DebuggerDebuggeesService) List() *DebuggerDebuggeesListCall {
 	return c
 }
 
-// ClientVersion sets the optional parameter "clientVersion": The client
-// version making the call.
+// ClientVersion sets the optional parameter "clientVersion": Required.
+// The client version making the call.
 // Schema: `domain/type/version` (e.g., `google.com/intellij/v1`).
 func (c *DebuggerDebuggeesListCall) ClientVersion(clientVersion string) *DebuggerDebuggeesListCall {
 	c.urlParams_.Set("clientVersion", clientVersion)
@@ -2070,8 +2073,8 @@ func (c *DebuggerDebuggeesListCall) IncludeInactive(includeInactive bool) *Debug
 	return c
 }
 
-// Project sets the optional parameter "project": Project number of a
-// Google Cloud project whose debuggees to list.
+// Project sets the optional parameter "project": Required. Project
+// number of a Google Cloud project whose debuggees to list.
 func (c *DebuggerDebuggeesListCall) Project(project string) *DebuggerDebuggeesListCall {
 	c.urlParams_.Set("project", project)
 	return c
@@ -2114,7 +2117,7 @@ func (c *DebuggerDebuggeesListCall) Header() http.Header {
 
 func (c *DebuggerDebuggeesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2180,7 +2183,7 @@ func (c *DebuggerDebuggeesListCall) Do(opts ...googleapi.CallOption) (*ListDebug
 	//   "parameterOrder": [],
 	//   "parameters": {
 	//     "clientVersion": {
-	//       "description": "The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
+	//       "description": "Required. The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -2190,7 +2193,7 @@ func (c *DebuggerDebuggeesListCall) Do(opts ...googleapi.CallOption) (*ListDebug
 	//       "type": "boolean"
 	//     },
 	//     "project": {
-	//       "description": "Project number of a Google Cloud project whose debuggees to list.",
+	//       "description": "Required. Project number of a Google Cloud project whose debuggees to list.",
 	//       "location": "query",
 	//       "type": "string"
 	//     }
@@ -2226,8 +2229,8 @@ func (r *DebuggerDebuggeesBreakpointsService) Delete(debuggeeId string, breakpoi
 	return c
 }
 
-// ClientVersion sets the optional parameter "clientVersion": The client
-// version making the call.
+// ClientVersion sets the optional parameter "clientVersion": Required.
+// The client version making the call.
 // Schema: `domain/type/version` (e.g., `google.com/intellij/v1`).
 func (c *DebuggerDebuggeesBreakpointsDeleteCall) ClientVersion(clientVersion string) *DebuggerDebuggeesBreakpointsDeleteCall {
 	c.urlParams_.Set("clientVersion", clientVersion)
@@ -2261,7 +2264,7 @@ func (c *DebuggerDebuggeesBreakpointsDeleteCall) Header() http.Header {
 
 func (c *DebuggerDebuggeesBreakpointsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2331,18 +2334,18 @@ func (c *DebuggerDebuggeesBreakpointsDeleteCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "breakpointId": {
-	//       "description": "ID of the breakpoint to delete.",
+	//       "description": "Required. ID of the breakpoint to delete.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "clientVersion": {
-	//       "description": "The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
+	//       "description": "Required. The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "debuggeeId": {
-	//       "description": "ID of the debuggee whose breakpoint to delete.",
+	//       "description": "Required. ID of the debuggee whose breakpoint to delete.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -2380,8 +2383,8 @@ func (r *DebuggerDebuggeesBreakpointsService) Get(debuggeeId string, breakpointI
 	return c
 }
 
-// ClientVersion sets the optional parameter "clientVersion": The client
-// version making the call.
+// ClientVersion sets the optional parameter "clientVersion": Required.
+// The client version making the call.
 // Schema: `domain/type/version` (e.g., `google.com/intellij/v1`).
 func (c *DebuggerDebuggeesBreakpointsGetCall) ClientVersion(clientVersion string) *DebuggerDebuggeesBreakpointsGetCall {
 	c.urlParams_.Set("clientVersion", clientVersion)
@@ -2425,7 +2428,7 @@ func (c *DebuggerDebuggeesBreakpointsGetCall) Header() http.Header {
 
 func (c *DebuggerDebuggeesBreakpointsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2498,18 +2501,18 @@ func (c *DebuggerDebuggeesBreakpointsGetCall) Do(opts ...googleapi.CallOption) (
 	//   ],
 	//   "parameters": {
 	//     "breakpointId": {
-	//       "description": "ID of the breakpoint to get.",
+	//       "description": "Required. ID of the breakpoint to get.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "clientVersion": {
-	//       "description": "The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
+	//       "description": "Required. The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "debuggeeId": {
-	//       "description": "ID of the debuggee whose breakpoint to get.",
+	//       "description": "Required. ID of the debuggee whose breakpoint to get.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -2556,8 +2559,8 @@ func (c *DebuggerDebuggeesBreakpointsListCall) ActionValue(actionValue string) *
 	return c
 }
 
-// ClientVersion sets the optional parameter "clientVersion": The client
-// version making the call.
+// ClientVersion sets the optional parameter "clientVersion": Required.
+// The client version making the call.
 // Schema: `domain/type/version` (e.g., `google.com/intellij/v1`).
 func (c *DebuggerDebuggeesBreakpointsListCall) ClientVersion(clientVersion string) *DebuggerDebuggeesBreakpointsListCall {
 	c.urlParams_.Set("clientVersion", clientVersion)
@@ -2641,7 +2644,7 @@ func (c *DebuggerDebuggeesBreakpointsListCall) Header() http.Header {
 
 func (c *DebuggerDebuggeesBreakpointsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2721,12 +2724,12 @@ func (c *DebuggerDebuggeesBreakpointsListCall) Do(opts ...googleapi.CallOption) 
 	//       "type": "string"
 	//     },
 	//     "clientVersion": {
-	//       "description": "The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
+	//       "description": "Required. The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "debuggeeId": {
-	//       "description": "ID of the debuggee whose breakpoints to list.",
+	//       "description": "Required. ID of the debuggee whose breakpoints to list.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -2783,8 +2786,8 @@ func (r *DebuggerDebuggeesBreakpointsService) Set(debuggeeId string, breakpoint 
 	return c
 }
 
-// ClientVersion sets the optional parameter "clientVersion": The client
-// version making the call.
+// ClientVersion sets the optional parameter "clientVersion": Required.
+// The client version making the call.
 // Schema: `domain/type/version` (e.g., `google.com/intellij/v1`).
 func (c *DebuggerDebuggeesBreakpointsSetCall) ClientVersion(clientVersion string) *DebuggerDebuggeesBreakpointsSetCall {
 	c.urlParams_.Set("clientVersion", clientVersion)
@@ -2818,7 +2821,7 @@ func (c *DebuggerDebuggeesBreakpointsSetCall) Header() http.Header {
 
 func (c *DebuggerDebuggeesBreakpointsSetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2891,12 +2894,12 @@ func (c *DebuggerDebuggeesBreakpointsSetCall) Do(opts ...googleapi.CallOption) (
 	//   ],
 	//   "parameters": {
 	//     "clientVersion": {
-	//       "description": "The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
+	//       "description": "Required. The client version making the call.\nSchema: `domain/type/version` (e.g., `google.com/intellij/v1`).",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "debuggeeId": {
-	//       "description": "ID of the debuggee where the breakpoint is to be set.",
+	//       "description": "Required. ID of the debuggee where the breakpoint is to be set.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"

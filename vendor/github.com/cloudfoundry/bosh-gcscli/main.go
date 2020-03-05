@@ -20,7 +20,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cloudfoundry/bosh-gcscli/client"
@@ -49,10 +51,14 @@ bosh-gcscli -c config.json delete <remote-blob>
 bosh-gcscli -c config.json exists <remote-blob>
 
 # Generate a signed url for an object
+# if an encryption key is present in config, the appropriate header will be sent
+# users of the signed url must include encryption headers in request
+# Where:
+# - <http action> is GET, PUT, or DELETE
+# - <expiry> is a duration string less than 7 days (e.g. "6h")
+# eg bosh-gcscli -c config.json sign blobid PUT 24h
 bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>
-Where:
-- <http action> is GET, PUT, or DELETE
-- <expiry> is a duration string less than 7 days (e.g. "6h")`
+`
 
 var (
 	showVer    = flag.Bool("v", false, "Print CLI version")
@@ -127,7 +133,7 @@ func main() {
 	switch cmd {
 	case "put":
 		if len(nonFlagArgs) != 3 {
-			log.Fatalf("put method expected 3 arguments got %d\n", len(nonFlagArgs))
+			log.Fatalf("put method expected 2 arguments got %d\n", len(nonFlagArgs))
 		}
 		src, dst := nonFlagArgs[1], nonFlagArgs[2]
 
@@ -142,7 +148,7 @@ func main() {
 		fmt.Println(err)
 	case "get":
 		if len(nonFlagArgs) != 3 {
-			log.Fatalf("get method expected 3 arguments got %d\n", len(nonFlagArgs))
+			log.Fatalf("get method expected 2 arguments got %d\n", len(nonFlagArgs))
 		}
 		src, dst := nonFlagArgs[1], nonFlagArgs[2]
 
@@ -180,6 +186,12 @@ func main() {
 
 		id, action, expiry := nonFlagArgs[1], nonFlagArgs[2], nonFlagArgs[3]
 
+		action = strings.ToUpper(action)
+		err = validateAction(action)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		var expiryDuration time.Duration
 		expiryDuration, err = time.ParseDuration(expiry)
 		if err != nil {
@@ -198,4 +210,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("performing operation %s: %s\n", cmd, err)
 	}
+}
+
+func validateAction(action string) error {
+	if action != http.MethodGet && action != http.MethodPut && action != http.MethodDelete {
+		return fmt.Errorf("invalid signing action: %s must be GET, PUT, or DELETE", action)
+	}
+	return nil
 }

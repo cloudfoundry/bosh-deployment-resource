@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC.
+// Copyright 2020 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,6 +52,7 @@ import (
 	googleapi "google.golang.org/api/googleapi"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
+	internaloption "google.golang.org/api/option/internaloption"
 	htransport "google.golang.org/api/transport/http"
 )
 
@@ -68,6 +69,7 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
+var _ = internaloption.WithDefaultEndpoint
 
 const apiId = "homegraph:v1"
 const apiName = "homegraph"
@@ -76,6 +78,7 @@ const basePath = "https://homegraph.googleapis.com/"
 
 // NewService creates a new Service.
 func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, error) {
+	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -209,7 +212,7 @@ type Device struct {
 	// CustomData: Custom JSON data provided by the manufacturer and
 	// attached to QUERY and
 	// EXECUTE requests in AoG.
-	CustomData string `json:"customData,omitempty"`
+	CustomData googleapi.RawMessage `json:"customData,omitempty"`
 
 	// DeviceInfo: Device manufacturer, model, hardware version, and
 	// software version.
@@ -224,6 +227,23 @@ type Device struct {
 	// the
 	// device, etc.
 	Name *DeviceNames `json:"name,omitempty"`
+
+	// NotificationSupportedByAgent: Indicates whether the device is capable
+	// of sending notifications. This
+	// field will be set by the agent (partner) on an incoming SYNC. If a
+	// device
+	// is not capable of generating notifications, the partner should set
+	// this
+	// flag to false. If a partner is not capable of
+	// calling
+	// ReportStateAndNotification to send notifications to Google, the
+	// partner
+	// should set this flag to false. If there is a user setting in the
+	// partner
+	// app to enable notifications and it is turned off, the partner should
+	// set
+	// this flag to false.
+	NotificationSupportedByAgent bool `json:"notificationSupportedByAgent,omitempty"`
 
 	// OtherDeviceIds: IDs of other devices associated with this device.
 	// This is used to
@@ -647,8 +667,8 @@ type ReportStateAndNotificationRequest struct {
 	// response.
 	FollowUpToken string `json:"followUpToken,omitempty"`
 
-	// Payload: State of devices to update and notification metadata for
-	// devices. For
+	// Payload: Required. State of devices to update and notification
+	// metadata for devices. For
 	// example, if a user turns a light on manually, a state update should
 	// be
 	// sent so that the information is always the current status of the
@@ -1042,7 +1062,7 @@ func (c *AgentUsersDeleteCall) Header() http.Header {
 
 func (c *AgentUsersDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1112,7 +1132,7 @@ func (c *AgentUsersDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) 
 	//     "agentUserId": {
 	//       "description": "Required. Third-party user ID.",
 	//       "location": "path",
-	//       "pattern": "^agentUsers/.+$",
+	//       "pattern": "^agentUsers/.*$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
@@ -1179,7 +1199,7 @@ func (c *DevicesQueryCall) Header() http.Header {
 
 func (c *DevicesQueryCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1324,7 +1344,7 @@ func (c *DevicesReportStateAndNotificationCall) Header() http.Header {
 
 func (c *DevicesReportStateAndNotificationCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1456,7 +1476,7 @@ func (c *DevicesRequestSyncCall) Header() http.Header {
 
 func (c *DevicesRequestSyncCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1584,7 +1604,7 @@ func (c *DevicesSyncCall) Header() http.Header {
 
 func (c *DevicesSyncCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20190926")
+	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20200223")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

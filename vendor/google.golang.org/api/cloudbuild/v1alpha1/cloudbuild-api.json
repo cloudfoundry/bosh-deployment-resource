@@ -22,6 +22,7 @@
   },
   "id": "cloudbuild:v1alpha1",
   "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://cloudbuild.mtls.googleapis.com/",
   "name": "cloudbuild",
   "ownerDomain": "google.com",
   "ownerName": "Google",
@@ -244,7 +245,7 @@
       }
     }
   },
-  "revision": "20190824",
+  "revision": "20200220",
   "rootUrl": "https://cloudbuild.googleapis.com/",
   "schemas": {
     "ArtifactObjects": {
@@ -567,7 +568,7 @@
           "type": "array"
         },
         "workerPool": {
-          "description": "Option to specify a `WorkerPool` for the build. User specifies the pool\nwith the format \"[WORKERPOOL_PROJECT_ID]/[WORKERPOOL_NAME]\".\nThis is an experimental field.",
+          "description": "Option to specify a `WorkerPool` for the build.\nFormat: projects/{project}/workerPools/{workerPool}\n\nThis field is experimental.",
           "type": "string"
         }
       },
@@ -787,8 +788,15 @@
           "type": "string"
         },
         "repoName": {
-          "description": "Name of the Cloud Source Repository. If omitted, the name \"default\" is\nassumed.",
+          "description": "Required. Name of the Cloud Source Repository.",
           "type": "string"
+        },
+        "substitutions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Substitutions to use in a triggered build.\nShould only be used with RunBuildTrigger",
+          "type": "object"
         },
         "tagName": {
           "description": "Regex matching tags to build.\n\nThe syntax of the regular expressions accepted is the syntax accepted by\nRE2 and described at https://github.com/google/re2/wiki/Syntax",
@@ -1031,7 +1039,7 @@
             "Status of the `WorkerPool` is unknown.",
             "`WorkerPool` is being created.",
             "`WorkerPool` is running.",
-            "`WorkerPool` is being deleting: cancelling builds and draining workers.",
+            "`WorkerPool` is being deleted: cancelling builds and draining workers.",
             "`WorkerPool` is deleted."
           ],
           "type": "string"
