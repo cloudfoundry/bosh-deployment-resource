@@ -1,4 +1,4 @@
-FROM golang:1.13.4-alpine
+FROM golang:1.15-alpine
 
 RUN apk update && \
     apk add ca-certificates wget git unzip bash
