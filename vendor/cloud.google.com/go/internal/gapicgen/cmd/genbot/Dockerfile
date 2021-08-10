@@ -1,4 +1,4 @@
-FROM docker:stable-dind
+FROM docker:19-dind
 
 RUN apk update && \
     apk add ca-certificates wget git unzip
