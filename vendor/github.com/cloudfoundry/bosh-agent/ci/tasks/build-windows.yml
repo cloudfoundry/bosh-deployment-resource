@@ -1,0 +1,23 @@
+---
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: bosh/agent
+
+inputs:
+- name: bosh-agent
+  path: gopath/src/github.com/cloudfoundry/bosh-agent
+- name: version-semver
+
+outputs:
+- name: compiled-windows-amd64
+
+params:
+  DIRNAME: compiled-windows-amd64
+  GOARCH: amd64
+  GOOS:   windows
+
+run:
+  path: gopath/src/github.com/cloudfoundry/bosh-agent/ci/tasks/build.sh
