@@ -103,6 +103,29 @@ var _ = Describe("NewDynamicSource", func() {
 			}))
 		})
 
+		Context("when the source_file is invalid yaml", func() {
+			BeforeEach(func() {
+				sourceFile, _ := ioutil.TempFile("", "")
+				sourceFile.Write(properYaml(`
+				deployment=fileDeployments
+			`))
+				sourceFile.Close()
+
+				sourcesDir = filepath.Dir(sourceFile.Name())
+				sourceFileName = filepath.Base(sourceFile.Name())
+			})
+
+			It("errors", func() {
+				config := []byte(fmt.Sprintf(
+					requestJsonTemplate,
+					filepath.Base(sourceFileName),
+				))
+
+				_, err := concourse.NewDynamicSource(config, sourcesDir)
+				Expect(err).To(MatchError(MatchRegexp("Invalid dynamic source config: yaml: unmarshal errors.*")))
+			})
+		})
+
 		Context("when the source_file cannot be read", func() {
 			BeforeEach(func() {
 				sourceFileName = "not-a-real-file"

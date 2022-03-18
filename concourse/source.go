@@ -47,7 +47,10 @@ func NewDynamicSource(config []byte, sourcesDir string) (Source, error) {
 		}
 
 		var tempSource Source
-		yaml.Unmarshal(source, &tempSource)
+		err = yaml.Unmarshal(source, &tempSource)
+		if err != nil {
+			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
+		}
 
 		jsonBytes, err := json.Marshal(tempSource)
 		if err != nil {
