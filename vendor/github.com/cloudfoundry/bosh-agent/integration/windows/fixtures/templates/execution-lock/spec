@@ -1,8 +1,0 @@
----
-name: execution-lock
-
-dependencies:
-- go
-
-files:
-- hibernate.go
