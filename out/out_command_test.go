@@ -13,7 +13,7 @@ import (
 
 	"errors"
 
-	boshdir "github.com/cloudfoundry/bosh-cli/director"
+	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"

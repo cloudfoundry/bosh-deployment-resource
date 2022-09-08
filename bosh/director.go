@@ -11,10 +11,10 @@ import (
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
-	boshcmdopts "github.com/cloudfoundry/bosh-cli/cmd/opts"
-	"github.com/cloudfoundry/bosh-cli/director"
-	boshdir "github.com/cloudfoundry/bosh-cli/director"
-	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
+	boshcmdopts "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
+	"github.com/cloudfoundry/bosh-cli/v7/director"
+	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
+	boshtpl "github.com/cloudfoundry/bosh-cli/v7/director/template"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )

@@ -4,17 +4,19 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
-	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
-	cmdconf "github.com/cloudfoundry/bosh-cli/cmd/config"
-	boshcmdopts "github.com/cloudfoundry/bosh-cli/cmd/opts"
-	boshdir "github.com/cloudfoundry/bosh-cli/director"
-	boshui "github.com/cloudfoundry/bosh-cli/ui"
+	boshcmd "github.com/cloudfoundry/bosh-cli/v7/cmd"
+	cmdconf "github.com/cloudfoundry/bosh-cli/v7/cmd/config"
+	boshcmdopts "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
+	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
+	boshui "github.com/cloudfoundry/bosh-cli/v7/ui"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	goflags "github.com/jessevdk/go-flags"
 )
@@ -39,7 +41,7 @@ func NewCLICoordinator(source concourse.Source, out io.Writer, proxy Proxy) CLIC
 	}
 }
 
-func (c CLICoordinator) GlobalOpts(proxyAddr string) boshcmdopts.BoshOpts {
+func (c CLICoordinator) GlobalOpts() boshcmdopts.BoshOpts {
 	globalOpts := &boshcmdopts.BoshOpts{
 		NonInteractiveOpt: true,
 		CACertOpt:         boshcmdopts.CACertArg{Content: c.source.CACert},
@@ -49,8 +51,13 @@ func (c CLICoordinator) GlobalOpts(proxyAddr string) boshcmdopts.BoshOpts {
 		DeploymentOpt:     c.source.Deployment,
 	}
 
-	if proxyAddr != "" {
-		proxyAddr = fmt.Sprintf("socks5://%s", proxyAddr)
+	if c.source.JumpboxSSHKey != "" && c.source.JumpboxURL != "" {
+		sshKeyFile, err := ioutil.TempFile("", "ssh-key-file")
+		if err != nil {
+			log.Fatal(err)
+		}
+		sshKeyFile.Write([]byte(c.source.JumpboxSSHKey))
+		proxyAddr := fmt.Sprintf("ssh+socks5://%s@%s?private-key=%s", c.source.JumpboxUsername, c.source.JumpboxURL, sshKeyFile.Name())
 		os.Setenv("BOSH_ALL_PROXY", proxyAddr)
 		globalOpts.SSH.GatewayFlags.SOCKS5Proxy = proxyAddr
 		globalOpts.SCP.GatewayFlags.SOCKS5Proxy = proxyAddr
@@ -75,15 +82,11 @@ func (c CLICoordinator) BasicDeps(writer io.Writer) boshcmd.BasicDeps {
 }
 
 func (c CLICoordinator) Director() (boshdir.Director, error) {
-	addr, err := c.StartProxy()
-	if err != nil {
-		return nil, fmt.Errorf("start proxy: %s", err) // untested
-	}
-	globalOpts := c.GlobalOpts(addr)
+	globalOpts := c.GlobalOpts()
 	deps := c.BasicDeps(bytes.NewBufferString(""))
 	config, _ := cmdconf.NewFSConfigFromPath(globalOpts.ConfigPathOpt, deps.FS)
 	session := boshcmd.NewSessionFromOpts(globalOpts, config, deps.UI, true, true, deps.FS, deps.Logger)
-
+	httpclient.ResetDialerContext()
 	return session.Director()
 }
 
@@ -118,8 +121,6 @@ func nullLogger() boshlog.Logger {
 }
 
 func setDefaults(obj interface{}) {
-	goflags.FactoryFunc = func(val interface{}) {}
-
 	parser := goflags.NewParser(obj, goflags.None)
 
 	// Intentionally ignoring errors. We are not parsing user-passed options,

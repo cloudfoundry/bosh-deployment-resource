@@ -28,19 +28,49 @@ type Client interface {
 
 func CreateDefaultClient(certPool *x509.CertPool) *http.Client {
 	insecureSkipVerify := false
-	return factory{}.New(insecureSkipVerify, certPool)
+	external := false
+	disableKeepAlives := true
+	return factory{}.New(insecureSkipVerify, external, disableKeepAlives, certPool)
+}
+
+func CreateExternalDefaultClient(certPool *x509.CertPool) *http.Client {
+	insecureSkipVerify := false
+	external := true
+	disableKeepAlives := true
+	return factory{}.New(insecureSkipVerify, external, disableKeepAlives, certPool)
+}
+
+func CreateKeepAliveDefaultClient(certPool *x509.CertPool) *http.Client {
+	insecureSkipVerify := false
+	external := true
+	disableKeepAlives := false
+	return factory{}.New(insecureSkipVerify, external, disableKeepAlives, certPool)
 }
 
 func CreateDefaultClientInsecureSkipVerify() *http.Client {
 	insecureSkipVerify := true
-	return factory{}.New(insecureSkipVerify, nil)
+	external := false
+	disableKeepAlives := true
+	return factory{}.New(insecureSkipVerify, external, disableKeepAlives, nil)
+}
+
+func ResetDialerContext() {
+	defaultDialerContextFunc = SOCKS5DialContextFuncFromEnvironment((&net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}), proxy.NewSocks5Proxy(proxy.NewHostKey(), log.New(ioutil.Discard, "", log.LstdFlags), 1*time.Minute))
 }
 
 type factory struct{}
 
-func (f factory) New(insecureSkipVerify bool, certPool *x509.CertPool) *http.Client {
+func (f factory) New(insecureSkipVerify, externalClient bool, disableKeepAlives bool, certPool *x509.CertPool) *http.Client {
+	serviceDefaults := tlsconfig.WithInternalServiceDefaults()
+	if externalClient {
+		serviceDefaults = tlsconfig.WithExternalServiceDefaults()
+	}
+
 	tlsConfig, err := tlsconfig.Build(
-		tlsconfig.WithInternalServiceDefaults(),
+		serviceDefaults,
 		WithInsecureSkipVerify(insecureSkipVerify),
 		WithClientSessionCache(0),
 	).Client(tlsconfig.WithAuthority(certPool))
@@ -54,6 +84,7 @@ func (f factory) New(insecureSkipVerify bool, certPool *x509.CertPool) *http.Cli
 			Proxy:               http.ProxyFromEnvironment,
 			DialContext:         defaultDialerContextFunc,
 			TLSHandshakeTimeout: 30 * time.Second,
+			DisableKeepAlives:   disableKeepAlives,
 		},
 	}
 
