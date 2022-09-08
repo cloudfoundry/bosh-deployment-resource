@@ -1,7 +1,0 @@
----
-name: go
-
-dependencies: []
-
-files:
-- go1.7.1.windows-amd64.zip

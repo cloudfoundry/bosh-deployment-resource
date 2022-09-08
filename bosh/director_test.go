@@ -17,10 +17,10 @@ import (
 	"github.com/cppforlife/go-patch/patch"
 	"github.com/cppforlife/go-semi-semantic/version"
 
-	boshcmdopts "github.com/cloudfoundry/bosh-cli/cmd/opts"
-	boshdir "github.com/cloudfoundry/bosh-cli/director"
-	boshdirfakes "github.com/cloudfoundry/bosh-cli/director/directorfakes"
-	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
+	boshcmdopts "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
+	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
+	boshdirfakes "github.com/cloudfoundry/bosh-cli/v7/director/directorfakes"
+	boshtpl "github.com/cloudfoundry/bosh-cli/v7/director/template"
 )
 
 var _ = Describe("BoshDirector", func() {

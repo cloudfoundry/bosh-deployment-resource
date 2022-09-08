@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// IniError contains location information on where an error occured.
+// IniError contains location information on where an error occurred.
 type IniError struct {
 	// The error message.
 	Message string
@@ -98,8 +98,6 @@ func IniParse(filename string, data interface{}) error {
 // information on the ini file format. The returned errors can be of the type
 // flags.Error or flags.IniError.
 func (i *IniParser) ParseFile(filename string) error {
-	i.parser.clearIsSet()
-
 	ini, err := readIniFromFile(filename)
 
 	if err != nil {
@@ -134,8 +132,6 @@ func (i *IniParser) ParseFile(filename string) error {
 //
 // The returned errors can be of the type flags.Error or flags.IniError.
 func (i *IniParser) Parse(reader io.Reader) error {
-	i.parser.clearIsSet()
-
 	ini, err := readIni(reader, "")
 
 	if err != nil {
@@ -329,19 +325,19 @@ func writeCommandIni(command *Command, namespace string, writer io.Writer, optio
 	})
 
 	for _, c := range command.commands {
-		var nns string
+		var fqn string
 
 		if c.Hidden {
 			continue
 		}
 
 		if len(namespace) != 0 {
-			nns = c.Name + "." + nns
+			fqn = namespace + "." + c.Name
 		} else {
-			nns = c.Name
+			fqn = c.Name
 		}
 
-		writeCommandIni(c, nns, writer, options)
+		writeCommandIni(c, fqn, writer, options)
 	}
 }
 
@@ -503,13 +499,21 @@ func (i *IniParser) matchingGroups(name string) []*Group {
 func (i *IniParser) parse(ini *ini) error {
 	p := i.parser
 
+	p.eachOption(func(cmd *Command, group *Group, option *Option) {
+		option.clearReferenceBeforeSet = true
+	})
+
 	var quotesLookup = make(map[*Option]bool)
 
 	for name, section := range ini.Sections {
 		groups := i.matchingGroups(name)
 
 		if len(groups) == 0 {
-			return newErrorf(ErrUnknownGroup, "could not find option group `%s'", name)
+			if (p.Options & IgnoreUnknown) == None {
+				return newErrorf(ErrUnknownGroup, "could not find option group `%s'", name)
+			}
+
+			continue
 		}
 
 		for _, inival := range section {
@@ -541,9 +545,8 @@ func (i *IniParser) parse(ini *ini) error {
 				continue
 			}
 
-			// ini value is ignored if override is set and
-			// value was previously set from non default
-			if i.ParseAsDefaults && !opt.isSetDefault {
+			// ini value is ignored if parsed as default but defaults are prevented
+			if i.ParseAsDefaults && opt.preventDefault {
 				continue
 			}
 
@@ -576,13 +579,24 @@ func (i *IniParser) parse(ini *ini) error {
 				}
 			}
 
-			if err := opt.set(pval); err != nil {
+			var err error
+
+			if i.ParseAsDefaults {
+				err = opt.setDefault(pval)
+			} else {
+				err = opt.set(pval)
+			}
+
+			if err != nil {
 				return &IniError{
 					Message:    err.Error(),
 					File:       ini.File,
 					LineNumber: inival.LineNumber,
 				}
 			}
+
+			// Defaults from ini files take precendence over defaults from parser
+			opt.preventDefault = true
 
 			// either all INI values are quoted or only values who need quoting
 			if _, ok := quotesLookup[opt]; !inival.Quoted || !ok {

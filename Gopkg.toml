@@ -1,8 +1,0 @@
-[[constraint]]
-  branch = "cli-patches"
-  name = "github.com/jessevdk/go-flags"
-  source = "github.com/cppforlife/go-flags"
-
-[[override]]
-  name = "gopkg.in/fsnotify.v1"
-  source = "gopkg.in/fsnotify/fsnotify.v1"
