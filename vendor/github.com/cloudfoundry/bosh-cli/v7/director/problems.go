@@ -12,8 +12,9 @@ import (
 type Problem struct {
 	ID int // e.g. 4
 
-	Type        string // e.g. "unresponsive_agent"
-	Description string // e.g. "api/1 (5efd2cb8-d73b-4e45-6df4-58f5dd5ec2ec) is not responding"
+	Type          string // e.g. "unresponsive_agent"
+	Description   string // e.g. "api/1 (5efd2cb8-d73b-4e45-6df4-58f5dd5ec2ec) is not responding"
+	InstanceGroup string `json:"instance_group"` // e.g. "database"
 
 	Data        interface{}
 	Resolutions []ProblemResolution
@@ -33,8 +34,8 @@ type ProblemResolution struct {
 }
 
 type ProblemAnswer struct {
-	ProblemID  int
-	Resolution ProblemResolution
+	ProblemID  int               `yaml:"problem_id"`
+	Resolution ProblemResolution `yaml:"resolution"`
 }
 
 func (d DeploymentImpl) ScanForProblems() ([]Problem, error) {
@@ -46,8 +47,8 @@ func (d DeploymentImpl) ScanForProblems() ([]Problem, error) {
 	return d.client.ListProblems(d.name)
 }
 
-func (d DeploymentImpl) ResolveProblems(answers []ProblemAnswer) error {
-	return d.client.ResolveProblems(d.name, answers)
+func (d DeploymentImpl) ResolveProblems(answers []ProblemAnswer, overrides map[string]string) error {
+	return d.client.ResolveProblems(d.name, answers, overrides)
 }
 
 func (c Client) ScanForProblems(deploymentName string) error {
@@ -88,19 +89,25 @@ func (c Client) ListProblems(deploymentName string) ([]Problem, error) {
 	return probs, nil
 }
 
-func (c Client) ResolveProblems(deploymentName string, answers []ProblemAnswer) error {
+type problemResolutionBody struct {
+	Resolutions          map[string]*string `json:"resolutions"`
+	MaxInFlightOverrides map[string]string  `json:"max_in_flight_overrides,omitempty"`
+}
+
+func (c Client) ResolveProblems(deploymentName string, answers []ProblemAnswer, overrides map[string]string) error {
 	if len(deploymentName) == 0 {
 		return bosherr.Error("Expected non-empty deployment name")
 	}
 
 	path := fmt.Sprintf("/deployments/%s/problems", deploymentName)
 
-	body := map[string]map[string]*string{
-		"resolutions": {},
+	body := &problemResolutionBody{
+		Resolutions:          make(map[string]*string),
+		MaxInFlightOverrides: overrides,
 	}
 
 	for _, ans := range answers {
-		body["resolutions"][strconv.Itoa(ans.ProblemID)] = ans.Resolution.Name
+		body.Resolutions[strconv.Itoa(ans.ProblemID)] = ans.Resolution.Name
 	}
 
 	reqBody, err := json.Marshal(body)

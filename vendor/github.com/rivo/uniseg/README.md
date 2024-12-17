@@ -3,13 +3,13 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/rivo/uniseg.svg)](https://pkg.go.dev/github.com/rivo/uniseg)
 [![Go Report](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](https://goreportcard.com/report/github.com/rivo/uniseg)
 
-This Go package implements Unicode Text Segmentation according to [Unicode Standard Annex #29](https://unicode.org/reports/tr29/) and Unicode Line Breaking according to [Unicode Standard Annex #14](https://unicode.org/reports/tr14/) (Unicode version 14.0.0).
+This Go package implements Unicode Text Segmentation according to [Unicode Standard Annex #29](https://unicode.org/reports/tr29/), Unicode Line Breaking according to [Unicode Standard Annex #14](https://unicode.org/reports/tr14/) (Unicode version 15.0.0), and monospace font string width calculation similar to [wcwidth](https://man7.org/linux/man-pages/man3/wcwidth.3.html).
 
 ## Background
 
 ### Grapheme Clusters
 
-In Go, [strings are read-only slices of bytes](https://blog.golang.org/strings). They can be turned into Unicode code points using the `for` loop or by casting: `[]rune(str)`. However, multiple code points may be combined into one user-perceived character or what the Unicode specification calls "grapheme cluster". Here are some examples:
+In Go, [strings are read-only slices of bytes](https://go.dev/blog/strings). They can be turned into Unicode code points using the `for` loop or by casting: `[]rune(str)`. However, multiple code points may be combined into one user-perceived character or what the Unicode specification calls "grapheme cluster". Here are some examples:
 
 |String|Bytes (UTF-8)|Code points (runes)|Grapheme clusters|
 |-|-|-|-|
@@ -31,6 +31,10 @@ Sentence boundaries are often used for triple-click or some other method of sele
 
 Line breaking, also known as word wrapping, is the process of breaking a section of text into lines such that it will fit in the available width of a page, window or other display area. This package provides tools to determine where a string may or may not be broken and where it must be broken (for example after newline characters).
 
+### Monospace Width
+
+Most terminals or text displays / text editors using a monospace font (for example source code editors) use a fixed width for each character. Some characters such as emojis or characters found in Asian and other languages may take up more than one character cell. This package provides tools to determine the number of cells a string will take up when displayed in a monospace font. See [here](https://pkg.go.dev/github.com/rivo/uniseg#hdr-Monospace_Width) for more information.
+
 ## Installation
 
 ```bash
@@ -47,6 +51,14 @@ fmt.Println(n)
 // 2
 ```
 
+### Calculating the Monospace String Width
+
+```go
+width := uniseg.StringWidth("🇩🇪🏳️‍🌈!")
+fmt.Println(width)
+// 5
+```
+
 ### Using the [`Graphemes`](https://pkg.go.dev/github.com/rivo/uniseg#Graphemes) Class
 
 This is the most convenient method of iterating over grapheme clusters:
@@ -61,7 +73,7 @@ for gr.Next() {
 
 ### Using the [`Step`](https://pkg.go.dev/github.com/rivo/uniseg#Step) or [`StepString`](https://pkg.go.dev/github.com/rivo/uniseg#StepString) Function
 
-This is orders of magnitude faster than the `Graphemes` class, but it requires the handling of states and boundaries:
+This avoids allocating a new `Graphemes` object but it requires the handling of states and boundaries:
 
 ```go
 str := "🇩🇪🏳️‍🌈"
@@ -76,29 +88,7 @@ for len(str) > 0 {
 
 ### Advanced Examples
 
-Breaking into grapheme clusters and evaluating line breaks:
-
-```go
-str := "First line.\nSecond line."
-state := -1
-var (
-	c          string
-	boundaries int
-)
-for len(str) > 0 {
-	c, str, boundaries, state = uniseg.StepString(str, state)
-	fmt.Print(c)
-	if boundaries&uniseg.MaskLine == uniseg.LineCanBreak {
-		fmt.Print("|")
-	} else if boundaries&uniseg.MaskLine == uniseg.LineMustBreak {
-		fmt.Print("‖")
-	}
-}
-// First |line.
-// ‖Second |line.‖
-```
-
-If you're only interested in word segmentation, use [`FirstWord`](https://pkg.go.dev/github.com/rivo/uniseg#FirstWord) or [`FirstWordInString`](https://pkg.go.dev/github.com/rivo/uniseg#FirstWordInString):
+The [`Graphemes`](https://pkg.go.dev/github.com/rivo/uniseg#Graphemes) class offers the most convenient way to access all functionality of this package. But in some cases, it may be better to use the specialized functions directly. For example, if you're only interested in word segmentation, use [`FirstWord`](https://pkg.go.dev/github.com/rivo/uniseg#FirstWord) or [`FirstWordInString`](https://pkg.go.dev/github.com/rivo/uniseg#FirstWordInString):
 
 ```go
 str := "Hello, world!"
@@ -120,6 +110,15 @@ Similarly, use
 - [`FirstGraphemeCluster`](https://pkg.go.dev/github.com/rivo/uniseg#FirstGraphemeCluster) or [`FirstGraphemeClusterInString`](https://pkg.go.dev/github.com/rivo/uniseg#FirstGraphemeClusterInString) for grapheme cluster determination only,
 - [`FirstSentence`](https://pkg.go.dev/github.com/rivo/uniseg#FirstSentence) or [`FirstSentenceInString`](https://pkg.go.dev/github.com/rivo/uniseg#FirstSentenceInString) for sentence segmentation only, and
 - [`FirstLineSegment`](https://pkg.go.dev/github.com/rivo/uniseg#FirstLineSegment) or [`FirstLineSegmentInString`](https://pkg.go.dev/github.com/rivo/uniseg#FirstLineSegmentInString) for line breaking / word wrapping (although using [`Step`](https://pkg.go.dev/github.com/rivo/uniseg#Step) or [`StepString`](https://pkg.go.dev/github.com/rivo/uniseg#StepString) is preferred as it will observe grapheme cluster boundaries).
+
+If you're only interested in the width of characters, use [`FirstGraphemeCluster`](https://pkg.go.dev/github.com/rivo/uniseg#FirstGraphemeCluster) or [`FirstGraphemeClusterInString`](https://pkg.go.dev/github.com/rivo/uniseg#FirstGraphemeClusterInString). It is much faster than using [`Step`](https://pkg.go.dev/github.com/rivo/uniseg#Step), [`StepString`](https://pkg.go.dev/github.com/rivo/uniseg#StepString), or the [`Graphemes`](https://pkg.go.dev/github.com/rivo/uniseg#Graphemes) class because it does not include the logic for word / sentence / line boundaries.
+
+Finally, if you need to reverse a string while preserving grapheme clusters, use [`ReverseString`](https://pkg.go.dev/github.com/rivo/uniseg#ReverseString):
+
+```go
+fmt.Println(uniseg.ReverseString("🇩🇪🏳️‍🌈"))
+// 🏳️‍🌈🇩🇪
+```
 
 ## Documentation
 

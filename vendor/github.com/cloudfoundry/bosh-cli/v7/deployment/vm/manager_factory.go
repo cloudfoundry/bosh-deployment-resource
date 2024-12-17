@@ -2,12 +2,13 @@ package vm
 
 import (
 	"code.cloudfoundry.org/clock"
-	biagentclient "github.com/cloudfoundry/bosh-agent/agentclient"
-	bicloud "github.com/cloudfoundry/bosh-cli/v7/cloud"
-	biconfig "github.com/cloudfoundry/bosh-cli/v7/config"
+	biagentclient "github.com/cloudfoundry/bosh-agent/v2/agentclient"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
+
+	bicloud "github.com/cloudfoundry/bosh-cli/v7/cloud"
+	biconfig "github.com/cloudfoundry/bosh-cli/v7/config"
 )
 
 type ManagerFactory interface {

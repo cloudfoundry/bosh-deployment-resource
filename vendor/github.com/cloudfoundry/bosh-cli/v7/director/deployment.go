@@ -117,8 +117,8 @@ func (d DeploymentImpl) Manifest() (string, error) {
 	return resp.Manifest, nil
 }
 
-func (d DeploymentImpl) FetchLogs(slug AllOrInstanceGroupOrInstanceSlug, filters []string, agent bool) (LogsResult, error) {
-	blobID, sha1, err := d.client.FetchLogs(d.name, slug.Name(), slug.IndexOrID(), filters, agent)
+func (d DeploymentImpl) FetchLogs(slug AllOrInstanceGroupOrInstanceSlug, filters []string, logTypes string) (LogsResult, error) {
+	blobID, sha1, err := d.client.FetchLogs(d.name, slug.Name(), slug.IndexOrID(), filters, logTypes)
 	if err != nil {
 		return LogsResult{}, err
 	}
@@ -254,13 +254,13 @@ func (d DeploymentImpl) Variables() ([]VariableResult, error) {
 	return response, nil
 }
 
-func (c Client) FetchLogs(deploymentName, job, indexOrID string, filters []string, agent bool) (string, string, error) {
+func (c Client) FetchLogs(deploymentName, instance, indexOrID string, filters []string, logTypes string) (string, string, error) {
 	if len(deploymentName) == 0 {
 		return "", "", bosherr.Error("Expected non-empty deployment name")
 	}
 
-	if len(job) == 0 {
-		job = "*"
+	if len(instance) == 0 {
+		instance = "*"
 	}
 
 	if len(indexOrID) == 0 {
@@ -273,14 +273,10 @@ func (c Client) FetchLogs(deploymentName, job, indexOrID string, filters []strin
 		query.Add("filters", strings.Join(filters, ","))
 	}
 
-	if agent {
-		query.Add("type", "agent")
-	} else {
-		query.Add("type", "job")
-	}
+	query.Add("type", logTypes)
 
 	path := fmt.Sprintf("/deployments/%s/jobs/%s/%s/logs?%s",
-		deploymentName, job, indexOrID, query.Encode())
+		deploymentName, instance, indexOrID, query.Encode())
 
 	taskID, _, err := c.taskClientRequest.GetResult(path)
 	if err != nil {
@@ -547,6 +543,10 @@ func (c Client) UpdateDeployment(manifest []byte, opts UpdateOpts) error {
 
 	if opts.DryRun {
 		query.Add("dry_run", "true")
+	}
+
+	if opts.ForceLatestVariables {
+		query.Add("force_latest_variables", "true")
 	}
 
 	if len(opts.Diff.context) != 0 {

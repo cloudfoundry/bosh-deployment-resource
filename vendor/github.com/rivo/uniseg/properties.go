@@ -3,9 +3,9 @@ package uniseg
 // The Unicode properties as used in the various parsers. Only the ones needed
 // in the context of this package are included.
 const (
-	prXX  = 0    // Same as prAny.
-	prAny = iota // prAny must be 0.
-	prPrepend
+	prXX      = 0    // Same as prAny.
+	prAny     = iota // prAny must be 0.
+	prPrepend        // Grapheme properties must come first, to reduce the number of bits stored in the state vector.
 	prCR
 	prLF
 	prControl
@@ -86,6 +86,7 @@ const (
 	prW
 	prH
 	prF
+	prEmojiPresentation
 )
 
 // Unicode General Categories. Only the ones needed in the context of this
@@ -124,6 +125,12 @@ const (
 	gcCo
 )
 
+// Special code points.
+const (
+	vs15 = 0xfe0e // Variation Selector-15 (text presentation)
+	vs16 = 0xfe0f // Variation Selector-16 (emoji presentation)
+)
+
 // propertySearch performs a binary search on a property slice and returns the
 // entry whose range (start = first array element, end = second array element)
 // includes r, or an array of 0's if no such entry was found.
@@ -153,9 +160,49 @@ func property(dictionary [][3]int, r rune) int {
 	return propertySearch(dictionary, r)[2]
 }
 
-// propertyWithGenCat returns the Unicode property value and General Category
-// (see constants above) of the given code point.
-func propertyWithGenCat(dictionary [][4]int, r rune) (property, generalCategory int) {
-	entry := propertySearch(dictionary, r)
+// propertyLineBreak returns the Unicode property value and General Category
+// (see constants above) of the given code point, as listed in the line break
+// code points table, while fast tracking ASCII digits and letters.
+func propertyLineBreak(r rune) (property, generalCategory int) {
+	if r >= 'a' && r <= 'z' {
+		return prAL, gcLl
+	}
+	if r >= 'A' && r <= 'Z' {
+		return prAL, gcLu
+	}
+	if r >= '0' && r <= '9' {
+		return prNU, gcNd
+	}
+	entry := propertySearch(lineBreakCodePoints, r)
 	return entry[2], entry[3]
+}
+
+// propertyGraphemes returns the Unicode grapheme cluster property value of the
+// given code point while fast tracking ASCII characters.
+func propertyGraphemes(r rune) int {
+	if r >= 0x20 && r <= 0x7e {
+		return prAny
+	}
+	if r == 0x0a {
+		return prLF
+	}
+	if r == 0x0d {
+		return prCR
+	}
+	if r >= 0 && r <= 0x1f || r == 0x7f {
+		return prControl
+	}
+	return property(graphemeCodePoints, r)
+}
+
+// propertyEastAsianWidth returns the Unicode East Asian Width property value of
+// the given code point while fast tracking ASCII characters.
+func propertyEastAsianWidth(r rune) int {
+	if r >= 0x20 && r <= 0x7e {
+		return prNa
+	}
+	if r >= 0 && r <= 0x1f || r == 0x7f {
+		return prN
+	}
+	return property(eastAsianWidth, r)
 }

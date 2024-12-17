@@ -3,12 +3,12 @@ package releasedir
 import (
 	"io"
 
+	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
 	semver "github.com/cppforlife/go-semi-semantic/version"
 
 	boshrel "github.com/cloudfoundry/bosh-cli/v7/release"
 	boshrelman "github.com/cloudfoundry/bosh-cli/v7/release/manifest"
 	boshpkg "github.com/cloudfoundry/bosh-cli/v7/release/pkg"
-	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
 )
 
 // You only need **one** of these per package!
@@ -38,7 +38,7 @@ type ReleaseDir interface {
 	// BuildRelease builds a new version of the Release
 	// from the release directory by looking at jobs, packages, etc. directories.
 	BuildRelease(name string, version semver.Version, force bool) (boshrel.Release, error)
-	VendorPackage(*boshpkg.Package) error
+	VendorPackage(pkg *boshpkg.Package, prefix string) error
 
 	// FinalizeRelease adds the Release to the final list so that it's consumable by others.
 	FinalizeRelease(release boshrel.Release, force bool) error

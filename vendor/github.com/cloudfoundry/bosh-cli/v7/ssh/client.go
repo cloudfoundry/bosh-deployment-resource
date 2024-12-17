@@ -3,7 +3,7 @@ package ssh
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"strings"
@@ -23,6 +23,7 @@ type Client interface {
 
 	Dial(net, addr string) (net.Conn, error)
 	Listen(net, addr string) (net.Listener, error)
+	NewSession() (*ssh.Session, error)
 }
 
 type ClientImpl struct {
@@ -114,12 +115,16 @@ func (s *ClientImpl) Stop() error {
 	return nil
 }
 
+func (s *ClientImpl) NewSession() (*ssh.Session, error) {
+	return s.client.NewSession()
+}
+
 func (s *ClientImpl) newClient(network, addr string, config *ssh.ClientConfig) (*ssh.Client, error) {
 	dialer := net.Dialer{}
 	dialContextFunc := dialer.DialContext
 
 	if !s.opts.DisableSOCKS {
-		socksProxy := proxy.NewSocks5Proxy(proxy.NewHostKey(), log.New(ioutil.Discard, "", log.LstdFlags), 1*time.Minute)
+		socksProxy := proxy.NewSocks5Proxy(proxy.NewHostKey(), log.New(io.Discard, "", log.LstdFlags), 1*time.Minute)
 		dialContextFunc = boshhttp.SOCKS5DialContextFuncFromEnvironment(&net.Dialer{}, socksProxy)
 	}
 

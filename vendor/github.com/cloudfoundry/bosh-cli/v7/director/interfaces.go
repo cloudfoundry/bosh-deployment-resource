@@ -5,9 +5,10 @@ import (
 	"os"
 	"time"
 
-	bio "github.com/cloudfoundry/bosh-cli/v7/io"
 	biproperty "github.com/cloudfoundry/bosh-utils/property"
 	semver "github.com/cppforlife/go-semi-semantic/version"
+
+	bio "github.com/cloudfoundry/bosh-cli/v7/io"
 )
 
 // You only need **one** of these per package!
@@ -60,9 +61,9 @@ type Director interface {
 	DiffConfig(configType string, name string, manifest []byte) (ConfigDiff, error)
 	DiffConfigByIDOrContent(fromID string, fromContent []byte, toID string, toContent []byte) (ConfigDiff, error)
 
-	LatestCloudConfig() (CloudConfig, error)
-	UpdateCloudConfig([]byte) error
-	DiffCloudConfig(manifest []byte) (ConfigDiff, error)
+	LatestCloudConfig(name string) (CloudConfig, error)
+	UpdateCloudConfig(name string, manifest []byte) error
+	DiffCloudConfig(name string, manifest []byte) (ConfigDiff, error)
 
 	LatestCPIConfig() (CPIConfig, error)
 	UpdateCPIConfig([]byte) error
@@ -152,7 +153,7 @@ type Deployment interface {
 	RunErrand(string, bool, bool, []InstanceGroupOrInstanceSlug) ([]ErrandResult, error)
 
 	ScanForProblems() ([]Problem, error)
-	ResolveProblems([]ProblemAnswer) error
+	ResolveProblems([]ProblemAnswer, map[string]string) error
 
 	Snapshots() ([]Snapshot, error)
 	TakeSnapshots() error
@@ -172,7 +173,7 @@ type Deployment interface {
 	CleanUpSSH(AllOrInstanceGroupOrInstanceSlug, SSHOpts) error
 
 	// Instance specifics
-	FetchLogs(AllOrInstanceGroupOrInstanceSlug, []string, bool) (LogsResult, error)
+	FetchLogs(AllOrInstanceGroupOrInstanceSlug, []string, string) (LogsResult, error)
 	TakeSnapshot(InstanceSlug) error
 	Ignore(InstanceSlug, bool) error
 	EnableResurrection(InstanceSlug, bool) error
@@ -225,6 +226,7 @@ type UpdateOpts struct {
 	MaxInFlight             string
 	DryRun                  bool
 	Diff                    DeploymentDiff
+	ForceLatestVariables    bool
 }
 
 //counterfeiter:generate . ReleaseSeries

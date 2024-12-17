@@ -3,16 +3,17 @@ package client
 import (
 	"net/http"
 
-	boshhttp "github.com/cloudfoundry/bosh-utils/httpclient"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	boshhttp "github.com/cloudfoundry/bosh-utils/httpclient"
+
 	"github.com/cloudfoundry/bosh-s3cli/config"
 )
 
-func NewSDK(c config.S3Cli) (*s3.S3, error) {
+func NewAwsS3Client(c *config.S3Cli) (*s3.S3, error) {
 	var httpClient *http.Client
 
 	if c.SSLVerifyPeer {
@@ -21,28 +22,36 @@ func NewSDK(c config.S3Cli) (*s3.S3, error) {
 		httpClient = boshhttp.CreateDefaultClientInsecureSkipVerify()
 	}
 
-	s3Config := aws.NewConfig().
+	awsConfig := aws.NewConfig().
 		WithLogLevel(aws.LogOff).
 		WithS3ForcePathStyle(!c.HostStyle).
 		WithDisableSSL(!c.UseSSL).
 		WithHTTPClient(httpClient)
 
 	if c.UseRegion() {
-		s3Config = s3Config.WithRegion(c.Region).WithEndpoint(c.S3Endpoint())
+		awsConfig = awsConfig.WithRegion(c.Region).WithEndpoint(c.S3Endpoint())
 	} else {
-		s3Config = s3Config.WithRegion(config.EmptyRegion).WithEndpoint(c.S3Endpoint())
+		awsConfig = awsConfig.WithRegion(config.EmptyRegion).WithEndpoint(c.S3Endpoint())
 	}
 
 	if c.CredentialsSource == config.StaticCredentialsSource {
-		s3Config = s3Config.WithCredentials(credentials.NewStaticCredentials(c.AccessKeyID, c.SecretAccessKey, ""))
+		awsConfig = awsConfig.WithCredentials(credentials.NewStaticCredentials(c.AccessKeyID, c.SecretAccessKey, ""))
 	}
 
 	if c.CredentialsSource == config.NoneCredentialsSource {
-		s3Config = s3Config.WithCredentials(credentials.AnonymousCredentials)
+		awsConfig = awsConfig.WithCredentials(credentials.AnonymousCredentials)
 	}
 
-	s3Session := session.New(s3Config) //nolint:staticcheck
-	s3Client := s3.New(s3Session)
+	s3Session, err := session.NewSession(awsConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.AssumeRoleArn != "" {
+		awsConfig = awsConfig.WithCredentials(stscreds.NewCredentials(s3Session, c.AssumeRoleArn))
+	}
+
+	s3Client := s3.New(s3Session, awsConfig)
 
 	if c.UseV2SigningMethod {
 		setv2Handlers(s3Client)

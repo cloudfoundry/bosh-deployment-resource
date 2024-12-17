@@ -84,7 +84,7 @@ func (ui *ConfUI) PrintTable(table Table) {
 	if len(ui.showColumns) > 0 {
 		err := table.SetColumnVisibility(ui.showColumns)
 		if err != nil {
-			panic(err)
+			ui.parent.PrintErrorBlock(err.Error())
 		}
 	}
 
@@ -95,7 +95,7 @@ func (ui *ConfUI) PrintTableFiltered(table Table, filterHeader []Header) {
 	if len(ui.showColumns) > 0 {
 		err := table.SetColumnVisibilityFiltered(ui.showColumns, filterHeader)
 		if err != nil {
-			panic(err)
+			ui.parent.PrintErrorBlock(err.Error())
 		}
 	}
 
@@ -104,6 +104,10 @@ func (ui *ConfUI) PrintTableFiltered(table Table, filterHeader []Header) {
 
 func (ui *ConfUI) AskForText(label string) (string, error) {
 	return ui.parent.AskForText(label)
+}
+
+func (ui *ConfUI) AskForTextWithDefaultValue(label, defaultValue string) (string, error) {
+	return ui.parent.AskForTextWithDefaultValue(label, defaultValue)
 }
 
 func (ui *ConfUI) AskForChoice(label string, options []string) (int, error) {
@@ -116,6 +120,10 @@ func (ui *ConfUI) AskForPassword(label string) (string, error) {
 
 func (ui *ConfUI) AskForConfirmation() error {
 	return ui.parent.AskForConfirmation()
+}
+
+func (ui *ConfUI) AskForConfirmationWithLabel(label string) error {
+	return ui.parent.AskForConfirmationWithLabel(label)
 }
 
 func (ui *ConfUI) IsInteractive() bool {

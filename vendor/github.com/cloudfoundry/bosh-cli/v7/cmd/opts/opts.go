@@ -1,6 +1,8 @@
 package opts
 
 import (
+	"time"
+
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
 	"github.com/cppforlife/go-patch/patch"
 
@@ -27,13 +29,14 @@ type BoshOpts struct {
 	DeploymentOpt string `long:"deployment" short:"d" description:"Deployment name" env:"BOSH_DEPLOYMENT"`
 
 	// Output formatting
-	ColumnOpt         []ColumnOpt `long:"column"                    description:"Filter to show only given column(s)"`
+	ColumnOpt         []ColumnOpt `long:"column"                    description:"Filter to show only given column(s), use the --column flag for each column you wish to include"`
 	JSONOpt           bool        `long:"json"                      description:"Output as JSON"`
-	TTYOpt            bool        `long:"tty"                       description:"Force TTY-like output"`
+	TTYOpt            bool        `long:"tty"                       description:"Force TTY-like output" env:"BOSH_TTY"`
 	NoColorOpt        bool        `long:"no-color"                  description:"Toggle colorized output"`
 	NonInteractiveOpt bool        `long:"non-interactive" short:"n" description:"Don't ask for user input" env:"BOSH_NON_INTERACTIVE"`
 
-	Help HelpOpts `command:"help" description:"Show this help message"`
+	Help       HelpOpts `command:"help" description:"Show this help message"`
+	Completion NoOpts   `command:"completion" description:"Generate the autocompletion script for bosh for the specified shell."`
 
 	// -----> Director management
 
@@ -137,6 +140,8 @@ type BoshOpts struct {
 	Ignore             IgnoreOpts             `command:"ignore"                                         description:"Ignore an instance"`
 	Unignore           UnignoreOpts           `command:"unignore"                                       description:"Unignore an instance"`
 	CloudCheck         CloudCheckOpts         `command:"cloud-check"     alias:"cck" alias:"cloudcheck" description:"Cloud consistency check and interactive repair"` //nolint:staticcheck
+	CreateRecoveryPlan CreateRecoveryPlanOpts `command:"create-recovery-plan"                           description:"Interactively generate a recovery plan for disaster repair"`
+	Recover            RecoverOpts            `command:"recover"                           description:"Apply a recovery plan for disaster repair"`
 	OrphanedVMs        OrphanedVMsOpts        `command:"orphaned-vms"                                   description:"List all the orphaned VMs in all deployments"`
 
 	// Instance management
@@ -146,6 +151,7 @@ type BoshOpts struct {
 	Restart  RestartOpts  `command:"restart"   description:"Restart instance(s)"`
 	Recreate RecreateOpts `command:"recreate"  description:"Recreate instance(s)"`
 	DeleteVM DeleteVMOpts `command:"delete-vm" description:"Delete VM"`
+	Pcap     PcapOpts     `command:"pcap"      description:"Capture network packets on instance(s)"`
 
 	// SSH instance
 	SSH SSHOpts `command:"ssh" description:"SSH into instance(s)"`
@@ -179,6 +185,7 @@ type BoshOpts struct {
 type HelpOpts struct {
 	cmd
 }
+type NoOpts struct{}
 
 // Original bosh-init
 
@@ -190,6 +197,7 @@ type CreateEnvOpts struct {
 	StatePath               string `long:"state" value-name:"PATH" description:"State file path"`
 	Recreate                bool   `long:"recreate" description:"Recreate VM in deployment"`
 	RecreatePersistentDisks bool   `long:"recreate-persistent-disks" description:"Recreate persistent disks in the deployment"`
+	PackageDir              string `long:"package-dir" value-name:"DIR" description:"Package cache location override"`
 	cmd
 }
 
@@ -201,8 +209,9 @@ type DeleteEnvOpts struct {
 	Args DeleteEnvArgs `positional-args:"true" required:"true"`
 	VarFlags
 	OpsFlags
-	SkipDrain bool   `long:"skip-drain" description:"Skip running drain and pre-stop scripts"`
-	StatePath string `long:"state" value-name:"PATH" description:"State file path"`
+	SkipDrain  bool   `long:"skip-drain" description:"Skip running drain and pre-stop scripts"`
+	StatePath  string `long:"state" value-name:"PATH" description:"State file path"`
+	PackageDir string `long:"package-dir" value-name:"DIR" description:"Package cache location override"`
 	cmd
 }
 
@@ -417,6 +426,7 @@ type DeleteConfigArgs struct {
 // Cloud config
 
 type CloudConfigOpts struct {
+	Name string `long:"name" description:"Cloud-Config name (default: '')" default:""`
 	cmd
 }
 
@@ -424,6 +434,9 @@ type UpdateCloudConfigOpts struct {
 	Args UpdateCloudConfigArgs `positional-args:"true" required:"true"`
 	VarFlags
 	OpsFlags
+
+	Name string `long:"name" description:"Cloud-Config name (default: '')" default:""`
+
 	cmd
 }
 
@@ -499,7 +512,8 @@ type DeployOpts struct {
 	Canaries    string `long:"canaries" description:"Override manifest values for canaries"`
 	MaxInFlight string `long:"max-in-flight" description:"Override manifest values for max_in_flight"`
 
-	DryRun bool `long:"dry-run" description:"Renders job templates without altering deployment"`
+	DryRun               bool `long:"dry-run" description:"Renders job templates without altering deployment"`
+	ForceLatestVariables bool `long:"force-latest-variables" description:"Retrieve the latest variable values from the config server regardless of their update strategy"`
 
 	cmd
 }
@@ -789,7 +803,6 @@ type InstanceSlugArgs struct {
 
 type InstancesOpts struct {
 	Details    bool `long:"details" short:"i" description:"Show details including VM CID, persistent disk CID, etc."`
-	DNS        bool `long:"dns"               description:"Show DNS A records"`
 	Vitals     bool `long:"vitals"            description:"Show vitals"`
 	Processes  bool `long:"ps"      short:"p" description:"Show processes"`
 	Failing    bool `long:"failing" short:"f" description:"Only show failing instances"`
@@ -798,7 +811,6 @@ type InstancesOpts struct {
 }
 
 type VMsOpts struct {
-	DNS             bool `long:"dns"               description:"Show DNS A records"`
 	Vitals          bool `long:"vitals"            description:"Show vitals"`
 	CloudProperties bool `long:"cloud-properties"  description:"Show cloud properties"`
 	Deployment      string
@@ -807,9 +819,27 @@ type VMsOpts struct {
 
 type CloudCheckOpts struct {
 	Auto        bool     `long:"auto"       short:"a" description:"Resolve problems automatically"`
-	Resolutions []string `long:"resolution"           description:"Apply resolution of given type"`
+	Resolutions []string `long:"resolution"           description:"Apply resolution of given type (e.g.: 'recreate_vm'). Can be used multiple times."`
 	Report      bool     `long:"report"     short:"r" description:"Only generate report; don't attempt to resolve problems"`
 	cmd
+}
+
+type CreateRecoveryPlanOpts struct {
+	Args CreateRecoveryPlanArgs `positional-args:"true" required:"true"`
+	cmd
+}
+
+type CreateRecoveryPlanArgs struct {
+	RecoveryPlan FileArg `positional-arg-name:"PATH" description:"Create recovery plan file at path"`
+}
+
+type RecoverOpts struct {
+	Args RecoverArgs `positional-args:"true" required:"true"`
+	cmd
+}
+
+type RecoverArgs struct {
+	RecoveryPlan FileArg `positional-arg-name:"PATH" description:"Path to a recovery plan file"`
 }
 
 type OrphanedVMsOpts struct {
@@ -849,10 +879,20 @@ type LogsOpts struct {
 	Jobs    []string `long:"job"   description:"Limit to only specific jobs"`
 	Filters []string `long:"only"  description:"Filter logs (comma-separated)"`
 	Agent   bool     `long:"agent" description:"Include only agent logs"`
+	System  bool     `long:"system" description:"Include only system logs"`
+	All     bool     `long:"all-logs" description:"Include all logs (agent, system, and job logs)"`
 
 	GatewayFlags
 
+	CreateEnvAuthFlags
+
 	cmd
+}
+
+type CreateEnvAuthFlags struct {
+	TargetDirector bool   `long:"director"             description:"Target the command at the BOSH director (or other type of VM deployed via create-env)"`
+	Endpoint       string `long:"agent-endpoint"       description:"Address to connect to the agent's HTTPS endpoint (used with --director)"      env:"BOSH_AGENT_ENDPOINT"`
+	Certificate    string `long:"agent-certificate"    description:"CA certificate to validate the agent's HTTPS endpoint (used with --director)" env:"BOSH_AGENT_CERTIFICATE"`
 }
 
 type StartOpts struct {
@@ -914,6 +954,24 @@ type RecreateOpts struct {
 	cmd
 }
 
+type PcapOpts struct {
+	Args MultiAllOrInstanceGroupOrInstanceSlugArgs `positional-args:"true"`
+
+	Interface   string        `long:"interface" short:"i" description:"Specifies the network interface to listen on." default:"eth0" required:"false"`
+	Filter      string        `long:"filter" short:"f" description:"Filter to apply when running tcpdump."`
+	SnapLength  uint32        `long:"snaplen" short:"s" description:"Snarf snaplen bytes of data from each packet rather than the default of 65535 bytes." default:"65535"`
+	Output      string        `long:"output" short:"o" description:"File to write pcap to." required:"true"`
+	StopTimeout time.Duration `long:"stop-timeout" description:"Timeout to wait for data to flush before session stop." default:"5s"`
+
+	GatewayFlags
+
+	cmd
+}
+
+type MultiAllOrInstanceGroupOrInstanceSlugArgs struct {
+	Slugs []boshdir.AllOrInstanceGroupOrInstanceSlug `positional-arg-name:"INSTANCE-GROUP[/INSTANCE-ID]"`
+}
+
 type AllOrInstanceGroupOrInstanceSlugArgs struct {
 	Slug boshdir.AllOrInstanceGroupOrInstanceSlug `positional-arg-name:"INSTANCE-GROUP[/INSTANCE-ID]"`
 }
@@ -938,6 +996,8 @@ type SSHOpts struct {
 
 	GatewayFlags
 
+	CreateEnvAuthFlags
+
 	cmd
 }
 
@@ -951,6 +1011,8 @@ type SCPOpts struct {
 	Username string `long:"username" short:"l" description:"Login name for authorized key" default:"vcap"`
 
 	GatewayFlags
+
+	CreateEnvAuthFlags
 
 	cmd
 }
@@ -1015,6 +1077,7 @@ type VendorPackageOpts struct {
 	Args VendorPackageArgs `positional-args:"true" required:"true"`
 
 	Directory DirOrCWDArg `long:"dir" description:"Release directory path if not current working directory" default:"."`
+	Prefix    string      `long:"prefix" description:"Prefix to add to the package name" default:""`
 
 	cmd
 }
