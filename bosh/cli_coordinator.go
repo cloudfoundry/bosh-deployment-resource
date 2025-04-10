@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/cloudfoundry/bosh-utils/httpclient"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/cloudfoundry/bosh-utils/httpclient"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
@@ -52,16 +52,16 @@ func (c CLICoordinator) GlobalOpts() boshcmdopts.BoshOpts {
 	}
 
 	if c.source.JumpboxSSHKey != "" && c.source.JumpboxURL != "" {
-		sshKeyFile, err := ioutil.TempFile("", "ssh-key-file")
+		sshKeyFile, err := os.CreateTemp("", "ssh-key-file")
 		if err != nil {
 			log.Fatal(err)
 		}
-		sshKeyFile.Write([]byte(c.source.JumpboxSSHKey))
+		sshKeyFile.Write([]byte(c.source.JumpboxSSHKey)) //nolint:errcheck
 		proxyAddr := fmt.Sprintf("ssh+socks5://%s@%s?private-key=%s", c.source.JumpboxUsername, c.source.JumpboxURL, sshKeyFile.Name())
-		os.Setenv("BOSH_ALL_PROXY", proxyAddr)
-		globalOpts.SSH.GatewayFlags.SOCKS5Proxy = proxyAddr
-		globalOpts.SCP.GatewayFlags.SOCKS5Proxy = proxyAddr
-		globalOpts.Logs.GatewayFlags.SOCKS5Proxy = proxyAddr
+		os.Setenv("BOSH_ALL_PROXY", proxyAddr)               //nolint:errcheck
+		globalOpts.SSH.GatewayFlags.SOCKS5Proxy = proxyAddr  //nolint:staticcheck
+		globalOpts.SCP.GatewayFlags.SOCKS5Proxy = proxyAddr  //nolint:staticcheck
+		globalOpts.Logs.GatewayFlags.SOCKS5Proxy = proxyAddr //nolint:staticcheck
 	}
 
 	setDefaults(globalOpts)
@@ -84,7 +84,7 @@ func (c CLICoordinator) BasicDeps(writer io.Writer) boshcmd.BasicDeps {
 func (c CLICoordinator) Director() (boshdir.Director, error) {
 	globalOpts := c.GlobalOpts()
 	deps := c.BasicDeps(bytes.NewBufferString(""))
-	config, _ := cmdconf.NewFSConfigFromPath(globalOpts.ConfigPathOpt, deps.FS)
+	config, _ := cmdconf.NewFSConfigFromPath(globalOpts.ConfigPathOpt, deps.FS) //nolint:errcheck
 	session := boshcmd.NewSessionFromOpts(globalOpts, config, deps.UI, true, true, deps.FS, deps.Logger)
 	httpclient.ResetDialerContext()
 	return session.Director()
@@ -113,11 +113,11 @@ func (c CLICoordinator) StartProxy() (string, error) {
 		return addr, nil
 	}
 
-	return "", errors.New("Jumpbox URL and Jumpbox SSH Key are both required to use a jumpbox")
+	return "", errors.New("Jumpbox URL and Jumpbox SSH Key are both required to use a jumpbox") //nolint:staticcheck
 }
 
 func nullLogger() boshlog.Logger {
-	return boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard)
+	return boshlog.NewWriterLogger(boshlog.LevelInfo, io.Discard)
 }
 
 func setDefaults(obj interface{}) {
@@ -125,5 +125,5 @@ func setDefaults(obj interface{}) {
 
 	// Intentionally ignoring errors. We are not parsing user-passed options,
 	// we are just doing this to populate defaults.
-	parser.ParseArgs([]string{})
+	parser.ParseArgs([]string{}) //nolint:errcheck
 }

@@ -1,12 +1,12 @@
 package tools_test
 
 import (
-	"io/ioutil"
 	"os"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 )
 
 var _ = Describe("GlobUnfurler", func() {
@@ -16,16 +16,16 @@ var _ = Describe("GlobUnfurler", func() {
 	)
 
 	BeforeEach(func() {
-		releaseDir, _ = ioutil.TempDir("", "primary-releases")
+		releaseDir, _ = os.MkdirTemp("", "primary-releases") //nolint:errcheck
 
-		releaseOne, _ = ioutil.TempFile(releaseDir, "release-one")
-		releaseOne.Close()
+		releaseOne, _ = os.CreateTemp(releaseDir, "release-one") //nolint:errcheck
+		releaseOne.Close()                                       //nolint:errcheck
 
-		releaseTwo, _ = ioutil.TempFile(releaseDir, "release-two")
-		releaseTwo.Close()
+		releaseTwo, _ = os.CreateTemp(releaseDir, "release-two") //nolint:errcheck
+		releaseTwo.Close()                                       //nolint:errcheck
 
-		releaseThree, _ = ioutil.TempFile(releaseDir, "coolio-three")
-		releaseThree.Close()
+		releaseThree, _ = os.CreateTemp(releaseDir, "coolio-three") //nolint:errcheck
+		releaseThree.Close()                                        //nolint:errcheck
 	})
 
 	It("returns all filepaths matching the globs", func() {

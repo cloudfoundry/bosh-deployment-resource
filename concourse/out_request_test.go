@@ -2,12 +2,13 @@ package concourse_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 )
 
 var _ = Describe("NewOutRequest", func() {
@@ -173,8 +174,9 @@ var _ = Describe("NewOutRequest", func() {
 
 	Context("when source_file param is passed", func() {
 		It("overrides source with the values in the source_file", func() {
-			sourceFile, _ := ioutil.TempFile("", "")
-			sourceFile.WriteString(`{
+			sourceFile, _ := os.CreateTemp("", "") //nolint:errcheck
+			sourceFile.WriteString(                //nolint:errcheck
+				`{
 				"deployment": "fileDeployment",
 				"target": "fileDirector.com",
 				"client_secret": "fileSecret",
@@ -185,7 +187,7 @@ var _ = Describe("NewOutRequest", func() {
 					}
 				}
 			}`)
-			sourceFile.Close()
+			sourceFile.Close() //nolint:errcheck
 
 			configTemplate := `{
 				"params": {

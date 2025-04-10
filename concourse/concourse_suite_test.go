@@ -1,11 +1,11 @@
 package concourse_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"strings"
 	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 func TestOut(t *testing.T) {
@@ -14,5 +14,5 @@ func TestOut(t *testing.T) {
 }
 
 func properYaml(improperYaml string) []byte {
-	return []byte(strings.Replace(improperYaml, "\t", "  ", -1))
+	return []byte(strings.Replace(improperYaml, "\t", "  ", -1)) //nolint:staticcheck
 }

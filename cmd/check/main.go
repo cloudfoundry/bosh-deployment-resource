@@ -3,28 +3,28 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
 
-	"io/ioutil"
+	proxy "github.com/cloudfoundry/socks5-proxy"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/check"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
-	"github.com/cloudfoundry/socks5-proxy"
 )
 
 func main() {
-	stdin, err := ioutil.ReadAll(os.Stdin)
+	stdin, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
 	checkRequest, err := concourse.NewCheckRequest(stdin)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
@@ -35,12 +35,12 @@ func main() {
 	} else {
 
 		hostKeyGetter := proxy.NewHostKey()
-		socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(ioutil.Discard, "", log.LstdFlags), 1*time.Minute)
+		socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(io.Discard, "", log.LstdFlags), 1*time.Minute)
 		cliCoordinator := bosh.NewCLICoordinator(checkRequest.Source, os.Stderr, socks5Proxy)
 		commandRunner := bosh.NewCommandRunner(cliCoordinator)
 		cliDirector, err := cliCoordinator.Director()
 		if err != nil {
-			fmt.Fprint(os.Stderr, err)
+			fmt.Fprint(os.Stderr, err) //nolint:errcheck
 			os.Exit(1)
 		}
 
@@ -54,16 +54,16 @@ func main() {
 		checkCommand := check.NewCheckCommand(director)
 		checkResponse, err = checkCommand.Run(checkRequest)
 		if err != nil {
-			fmt.Fprint(os.Stderr, err)
+			fmt.Fprint(os.Stderr, err) //nolint:errcheck
 			os.Exit(1)
 		}
 	}
 
 	concourseOutputFormatted, err := json.MarshalIndent(checkResponse, "", "  ")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not generate version: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Could not generate version: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stdout, "%s", concourseOutputFormatted)
+	fmt.Fprintf(os.Stdout, "%s", concourseOutputFormatted) //nolint:errcheck
 }

@@ -3,8 +3,9 @@ package bosh
 import (
 	"fmt"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	"gopkg.in/yaml.v2"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 )
 
 type Stemcell struct {
@@ -17,7 +18,7 @@ type Stemcell struct {
 func NewStemcells(basePath string, stemcellPathGlobs []string) ([]Stemcell, error) {
 	stemcellPaths, err := tools.UnfurlGlobs(basePath, stemcellPathGlobs)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid stemcell name: %s", err)
+		return nil, fmt.Errorf("Invalid stemcell name: %s", err) //nolint:staticcheck
 	}
 
 	stemcells := []Stemcell{}
@@ -37,12 +38,12 @@ func newStemcell(filePath string) (Stemcell, error) {
 
 	stemcellFileContents, err := tools.ReadTgzFile(filePath, "stemcell.MF")
 	if err != nil {
-		return Stemcell{}, fmt.Errorf("Could not read stemcell: %s", err)
+		return Stemcell{}, fmt.Errorf("Could not read stemcell: %s", err) //nolint:staticcheck
 	}
 
 	err = yaml.Unmarshal(stemcellFileContents, &stemcell)
 	if err != nil {
-		return Stemcell{}, fmt.Errorf("Stemcell %s is not a valid stemcell", filePath)
+		return Stemcell{}, fmt.Errorf("Stemcell %s is not a valid stemcell", filePath) //nolint:staticcheck
 	}
 
 	stemcell.FilePath = filePath

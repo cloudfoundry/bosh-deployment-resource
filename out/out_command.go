@@ -2,7 +2,6 @@ package out
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -48,19 +47,19 @@ func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
 }
 
 func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error) {
-	manifestBytes, err := ioutil.ReadFile(path.Join(c.resourcesDirectory, outRequest.Params.Manifest))
+	manifestBytes, err := os.ReadFile(path.Join(c.resourcesDirectory, outRequest.Params.Manifest))
 	if err != nil {
 		return OutResponse{}, err
 	}
 
 	varsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.VarsFiles)
 	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid vars_file name: %s", err)
+		return OutResponse{}, fmt.Errorf("Invalid vars_file name: %s", err) //nolint:staticcheck
 	}
 
 	opsFilePaths, err := tools.UnfurlGlobs(c.resourcesDirectory, outRequest.Params.OpsFiles)
 	if err != nil {
-		return OutResponse{}, fmt.Errorf("Invalid ops_file name: %s", err)
+		return OutResponse{}, fmt.Errorf("Invalid ops_file name: %s", err) //nolint:staticcheck
 	}
 
 	interpolateParams := bosh.InterpolateParams{
@@ -110,11 +109,11 @@ func (c OutCommand) deploy(outRequest concourse.OutRequest) (OutResponse, error)
 
 	var varsStoreFile *os.File
 	if c.storageClient != nil {
-		varsStoreFile, err = ioutil.TempFile("", "vars-store")
+		varsStoreFile, err = os.CreateTemp("", "vars-store")
 		if err != nil {
 			return OutResponse{}, err
 		}
-		defer varsStoreFile.Close()
+		defer varsStoreFile.Close() //nolint:errcheck
 
 		if err = c.storageClient.Download(varsStoreFile.Name()); err != nil {
 			return OutResponse{}, err

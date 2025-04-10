@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 )
@@ -14,7 +13,7 @@ func ReadTgzFile(tgzFilePath, tarredFile string) ([]byte, error) {
 	// Open the tar archive for reading.
 	file, err := os.Open(tgzFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("Could not read archive %s", tgzFilePath)
+		return nil, fmt.Errorf("Could not read archive %s", tgzFilePath) //nolint:staticcheck
 	}
 
 	gzf, err := gzip.NewReader(file)
@@ -41,7 +40,7 @@ func ReadTgzFile(tgzFilePath, tarredFile string) ([]byte, error) {
 		}
 
 		if tarredFileRegex.Match([]byte(hdr.Name)) {
-			stemcellFileContents, err := ioutil.ReadAll(tr)
+			stemcellFileContents, err := io.ReadAll(tr)
 			if err != nil {
 				return nil, fmt.Errorf("%s does not contain a valid file %s", tgzFilePath, tarredFile)
 			}

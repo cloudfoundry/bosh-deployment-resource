@@ -18,7 +18,8 @@ var _ = Describe("DeploymentManifest", func() {
 
 	Describe("UseRelease", func() {
 		It("updates the requested release version to match the provided release", func() {
-			d, _ := bosh.NewDeploymentManifest(properYaml(`
+			d, _ := bosh.NewDeploymentManifest( //nolint:errcheck
+				properYaml(`
 				releases:
 				- name: cool-release
 			`))
@@ -35,7 +36,8 @@ var _ = Describe("DeploymentManifest", func() {
 
 		Context("when the release is not found", func() {
 			It("returns an error", func() {
-				d, _ := bosh.NewDeploymentManifest(properYaml(`
+				d, _ := bosh.NewDeploymentManifest( //nolint:errcheck
+					properYaml(`
 					releases:
 					- cool-release:
 						version: 5
@@ -49,7 +51,8 @@ var _ = Describe("DeploymentManifest", func() {
 
 		Context("when there is no releases section", func() {
 			It("returns an error", func() {
-				d, _ := bosh.NewDeploymentManifest([]byte(`
+				d, _ := bosh.NewDeploymentManifest( //nolint:errcheck
+					[]byte(`
 					jobs:
 					- my_job: 5
 				`))
@@ -63,7 +66,8 @@ var _ = Describe("DeploymentManifest", func() {
 
 	Describe("UseStemcell", func() {
 		It("updates the requested stemcell version to match the provided stemcell", func() {
-			d, _ := bosh.NewDeploymentManifest(properYaml(`
+			d, _ := bosh.NewDeploymentManifest( //nolint:errcheck
+				properYaml(`
 				stemcells:
 				- name: bosh-best-iaas-light-stemcell
 				  version: latest
@@ -86,7 +90,8 @@ var _ = Describe("DeploymentManifest", func() {
 		})
 
 		It("does not update stemcells when the version is not latest", func() {
-			d, _ := bosh.NewDeploymentManifest(properYaml(`
+			d, _ := bosh.NewDeploymentManifest( //nolint:errcheck
+				properYaml(`
 				stemcells:
 				- name: bosh-best-iaas-light-stemcell
 				  version: 1
@@ -104,7 +109,8 @@ var _ = Describe("DeploymentManifest", func() {
 
 		Context("when the stemcell is not found", func() {
 			It("returns an error", func() {
-				d, _ := bosh.NewDeploymentManifest(properYaml(`
+				d, _ := bosh.NewDeploymentManifest( //nolint:errcheck
+					properYaml(`
 					stemcells:
 					- name: bosh-best-iaas-light-stemcell
 					  version: 1
@@ -117,7 +123,8 @@ var _ = Describe("DeploymentManifest", func() {
 
 			Context("when there is no stemcells section", func() {
 				It("returns an error", func() {
-					d, _ := bosh.NewDeploymentManifest([]byte(`
+					d, _ := bosh.NewDeploymentManifest( //nolint:errcheck
+						[]byte(`
 						jobs:
 						- my_job: 5
 					`))
@@ -131,7 +138,8 @@ var _ = Describe("DeploymentManifest", func() {
 
 		Context("when more than one stemcell matches", func() {
 			It("returns an error", func() {
-				d, _ := bosh.NewDeploymentManifest(properYaml(`
+				d, _ := bosh.NewDeploymentManifest( //nolint:errcheck
+					properYaml(`
 					stemcells:
 					- name: bosh-best-iaas-light-stemcell
 					  version: latest

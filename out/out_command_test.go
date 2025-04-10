@@ -2,18 +2,16 @@ package out_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"errors"
-
-	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
@@ -33,7 +31,7 @@ var _ = Describe("OutCommand", func() {
 	BeforeEach(func() {
 		director = new(boshfakes.FakeDirector)
 		boshIOClient = new(boshfakes.FakeBoshIO)
-		resourcesDir, _ = ioutil.TempDir("", "resources-dir")
+		resourcesDir, _ = os.MkdirTemp("", "resources-dir") //nolint:errcheck
 		manifestYaml = properYaml(`
 			releases:
 			- name: small-release
@@ -45,7 +43,7 @@ var _ = Describe("OutCommand", func() {
 			  alias: super-awesome-stemcell
 			  version: latest
 		`)
-		Expect(ioutil.WriteFile(filepath.Join(resourcesDir, "manifest"), manifestYaml, 0600)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(resourcesDir, "manifest"), manifestYaml, 0600)).To(Succeed())
 		director.InterpolateReturns(manifestYaml, nil)
 		outCommand = out.NewOutCommand(director, boshIOClient, nil, resourcesDir)
 	})
@@ -238,18 +236,18 @@ var _ = Describe("OutCommand", func() {
 
 			BeforeEach(func() {
 				// Update varFile generation to yield expected bosh varFile format
-				primaryVarFileDir, _ := ioutil.TempDir(resourcesDir, "")
+				primaryVarFileDir, _ := os.MkdirTemp(resourcesDir, "") //nolint:errcheck
 
-				varsFileOne, _ = ioutil.TempFile(primaryVarFileDir, "varFile-one")
-				varsFileOne.Close()
+				varsFileOne, _ = os.CreateTemp(primaryVarFileDir, "varFile-one") //nolint:errcheck
+				varsFileOne.Close()                                              //nolint:errcheck
 
-				varsFileTwo, _ = ioutil.TempFile(primaryVarFileDir, "varFile-two")
-				varsFileTwo.Close()
+				varsFileTwo, _ = os.CreateTemp(primaryVarFileDir, "varFile-two") //nolint:errcheck
+				varsFileTwo.Close()                                              //nolint:errcheck
 
-				varsFileThree, _ = ioutil.TempFile(resourcesDir, "varFile-three")
-				varsFileThree.Close()
+				varsFileThree, _ = os.CreateTemp(resourcesDir, "varFile-three") //nolint:errcheck
+				varsFileThree.Close()                                           //nolint:errcheck
 
-				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/varFile-*", primaryVarFileDir))
+				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/varFile-*", primaryVarFileDir)) //nolint:errcheck
 				varsFiles = []string{
 					filepath.Base(varsFileThree.Name()),
 					primaryDirWithoutResourcesDir,
@@ -306,18 +304,18 @@ var _ = Describe("OutCommand", func() {
 
 			BeforeEach(func() {
 				// Update opsFile generation to yield expected bosh opsFile format
-				primaryopsFileDir, _ := ioutil.TempDir(resourcesDir, "")
+				primaryopsFileDir, _ := os.MkdirTemp(resourcesDir, "") //nolint:errcheck
 
-				opsFileOne, _ = ioutil.TempFile(primaryopsFileDir, "opsFile-one")
-				opsFileOne.Close()
+				opsFileOne, _ = os.CreateTemp(primaryopsFileDir, "opsFile-one") //nolint:errcheck
+				opsFileOne.Close()                                              //nolint:errcheck
 
-				opsFileTwo, _ = ioutil.TempFile(primaryopsFileDir, "opsFile-two")
-				opsFileTwo.Close()
+				opsFileTwo, _ = os.CreateTemp(primaryopsFileDir, "opsFile-two") //nolint:errcheck
+				opsFileTwo.Close()                                              //nolint:errcheck
 
-				opsFileThree, _ = ioutil.TempFile(resourcesDir, "opsFile-three")
-				opsFileThree.Close()
+				opsFileThree, _ = os.CreateTemp(resourcesDir, "opsFile-three") //nolint:errcheck
+				opsFileThree.Close()                                           //nolint:errcheck
 
-				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/opsFile-*", primaryopsFileDir))
+				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/opsFile-*", primaryopsFileDir)) //nolint:errcheck
 				opsFiles = []string{
 					filepath.Base(opsFileThree.Name()),
 					primaryDirWithoutResourcesDir,
@@ -359,23 +357,23 @@ var _ = Describe("OutCommand", func() {
 
 			BeforeEach(func() {
 				// Update release generation to yield expected bosh release format
-				primaryReleaseDir, _ := ioutil.TempDir(resourcesDir, "")
+				primaryReleaseDir, _ := os.MkdirTemp(resourcesDir, "") //nolint:errcheck
 
-				smallRelease, _ := ioutil.ReadFile("fixtures/small-release.tgz")
+				smallRelease, _ := os.ReadFile("fixtures/small-release.tgz") //nolint:errcheck
 
-				releaseOne, _ = ioutil.TempFile(primaryReleaseDir, "release-one")
-				io.Copy(releaseOne, bytes.NewReader(smallRelease))
-				releaseOne.Close()
+				releaseOne, _ = os.CreateTemp(primaryReleaseDir, "release-one") //nolint:errcheck
+				io.Copy(releaseOne, bytes.NewReader(smallRelease))              //nolint:errcheck
+				releaseOne.Close()                                              //nolint:errcheck
 
-				releaseTwo, _ = ioutil.TempFile(primaryReleaseDir, "release-two")
-				io.Copy(releaseTwo, bytes.NewReader(smallRelease))
-				releaseTwo.Close()
+				releaseTwo, _ = os.CreateTemp(primaryReleaseDir, "release-two") //nolint:errcheck
+				io.Copy(releaseTwo, bytes.NewReader(smallRelease))              //nolint:errcheck
+				releaseTwo.Close()                                              //nolint:errcheck
 
-				releaseThree, _ = ioutil.TempFile(resourcesDir, "release-three")
-				io.Copy(releaseThree, bytes.NewReader(smallRelease))
-				releaseThree.Close()
+				releaseThree, _ = os.CreateTemp(resourcesDir, "release-three") //nolint:errcheck
+				io.Copy(releaseThree, bytes.NewReader(smallRelease))           //nolint:errcheck
+				releaseThree.Close()                                           //nolint:errcheck
 
-				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/release-*", primaryReleaseDir))
+				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/release-*", primaryReleaseDir)) //nolint:errcheck
 				outRequest.Params.Releases = []string{
 					primaryDirWithoutResourcesDir,
 					filepath.Base(releaseThree.Name()),
@@ -403,7 +401,7 @@ var _ = Describe("OutCommand", func() {
 				_, err := outCommand.Run(outRequest)
 				Expect(err).ToNot(HaveOccurred())
 
-				updatedManifest, _ := director.DeployArgsForCall(0)
+				updatedManifest, _ := director.DeployArgsForCall(0) //nolint:errcheck
 
 				Expect(updatedManifest).To(MatchYAML(properYaml(`
 					releases:
@@ -446,23 +444,23 @@ var _ = Describe("OutCommand", func() {
 			)
 
 			BeforeEach(func() {
-				primaryStemcellDir, _ := ioutil.TempDir(resourcesDir, "")
+				primaryStemcellDir, _ := os.MkdirTemp(resourcesDir, "") //nolint:errcheck
 
-				smallStemcell, _ := ioutil.ReadFile("fixtures/small-stemcell.tgz")
+				smallStemcell, _ := os.ReadFile("fixtures/small-stemcell.tgz") //nolint:errcheck
 
-				stemcellOne, _ = ioutil.TempFile(primaryStemcellDir, "stemcell-one")
-				io.Copy(stemcellOne, bytes.NewReader(smallStemcell))
-				stemcellOne.Close()
+				stemcellOne, _ = os.CreateTemp(primaryStemcellDir, "stemcell-one") //nolint:errcheck
+				io.Copy(stemcellOne, bytes.NewReader(smallStemcell))               //nolint:errcheck
+				stemcellOne.Close()                                                //nolint:errcheck
 
-				stemcellTwo, _ = ioutil.TempFile(primaryStemcellDir, "stemcell-two")
-				io.Copy(stemcellTwo, bytes.NewReader(smallStemcell))
-				stemcellTwo.Close()
+				stemcellTwo, _ = os.CreateTemp(primaryStemcellDir, "stemcell-two") //nolint:errcheck
+				io.Copy(stemcellTwo, bytes.NewReader(smallStemcell))               //nolint:errcheck
+				stemcellTwo.Close()                                                //nolint:errcheck
 
-				stemcellThree, _ = ioutil.TempFile(resourcesDir, "stemcell-three")
-				io.Copy(stemcellThree, bytes.NewReader(smallStemcell))
-				stemcellThree.Close()
+				stemcellThree, _ = os.CreateTemp(resourcesDir, "stemcell-three") //nolint:errcheck
+				io.Copy(stemcellThree, bytes.NewReader(smallStemcell))           //nolint:errcheck
+				stemcellThree.Close()                                            //nolint:errcheck
 
-				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/stemcell-*", primaryStemcellDir))
+				primaryDirWithoutResourcesDir, _ := filepath.Rel(resourcesDir, fmt.Sprintf("%s/stemcell-*", primaryStemcellDir)) //nolint:errcheck
 				outRequest.Params.Stemcells = []string{
 					primaryDirWithoutResourcesDir,
 					filepath.Base(stemcellThree.Name()),

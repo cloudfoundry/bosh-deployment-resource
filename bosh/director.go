@@ -5,14 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strconv"
 	"time"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 
 	boshcmdopts "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
-	"github.com/cloudfoundry/bosh-cli/v7/director"
 	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	boshtpl "github.com/cloudfoundry/bosh-cli/v7/director/template"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -56,7 +54,7 @@ type Director interface {
 	UploadRelease(releaseURL string) error
 	UploadStemcell(stemcellURL string) error
 	UploadRemoteStemcell(stemcellURL, name, version, sha string) error
-	Info() (director.Info, error)
+	Info() (boshdir.Info, error)
 	WaitForDeployLock() error
 }
 
@@ -122,17 +120,17 @@ func (d BoshDirector) Deploy(manifestBytes []byte, deployParams DeployParams) er
 	if deployParams.VarsStore != "" {
 		varsFSStore := boshcmdopts.VarsFSStore{}
 		varsFSStore.FS = boshFileSystem()
-		varsFSStore.UnmarshalFlag(deployParams.VarsStore)
+		varsFSStore.UnmarshalFlag(deployParams.VarsStore) //nolint:errcheck
 		deployOpts.VarsFSStore = varsFSStore
 	}
 
 	err = d.commandRunner.Execute(&deployOpts)
 	if err != nil {
-		return fmt.Errorf("Could not deploy: %s\n", err)
+		return fmt.Errorf("Could not deploy: %s\n", err) //nolint:staticcheck
 	}
 
 	if deployParams.Cleanup {
-		d.commandRunner.Execute(&boshcmdopts.CleanUpOpts{})
+		d.commandRunner.Execute(&boshcmdopts.CleanUpOpts{}) //nolint:errcheck
 	}
 
 	return nil
@@ -163,7 +161,7 @@ func (d BoshDirector) Interpolate(manifestBytes []byte, interpolateParams Interp
 	writer := new(bytes.Buffer)
 	err = d.commandRunner.ExecuteWithWriter(&interpolateOpts, writer)
 	if err != nil {
-		return nil, fmt.Errorf("Could not interpolate: %s\n", err)
+		return nil, fmt.Errorf("Could not interpolate: %s\n", err) //nolint:staticcheck
 	}
 
 	return writer.Bytes(), nil
@@ -172,7 +170,7 @@ func (d BoshDirector) Interpolate(manifestBytes []byte, interpolateParams Interp
 func (d BoshDirector) DownloadManifest() ([]byte, error) {
 	desiredDeployment, err := d.cliDirector.FindDeployment(d.source.Deployment)
 	if err != nil {
-		return nil, fmt.Errorf("Could not get deployment manifest: %s\n", err)
+		return nil, fmt.Errorf("Could not get deployment manifest: %s\n", err) //nolint:staticcheck
 	}
 
 	manifest, err := desiredDeployment.Manifest()
@@ -185,14 +183,14 @@ func (d BoshDirector) UploadRelease(URL string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("Could not upload release %s: %s\n", URL, err)
+		return fmt.Errorf("Could not upload release %s: %s\n", URL, err) //nolint:staticcheck
 	}
 
 	return nil
 }
 
 func (d BoshDirector) WaitForDeployLock() error {
-	fmt.Fprint(d.writer, "Waiting for deployment lock")
+	fmt.Fprint(d.writer, "Waiting for deployment lock") //nolint:errcheck
 
 	locked, err := d.deploymentIsLocked()
 	if err != nil {
@@ -206,21 +204,21 @@ func (d BoshDirector) WaitForDeployLock() error {
 			}
 		}
 	}
-	fmt.Fprintln(d.writer, " Done")
+	fmt.Fprintln(d.writer, " Done") //nolint:errcheck
 	return nil
 }
 
 func (d BoshDirector) deploymentIsLocked() (bool, error) {
 	locks, err := d.cliDirector.Locks()
 	if err != nil {
-		return true, fmt.Errorf("Could not check if deployment was locked: %s\n", err)
+		return true, fmt.Errorf("Could not check if deployment was locked: %s\n", err) //nolint:staticcheck
 	}
 
 	for _, lock := range locks {
 		resources := lock.Resource
 		for _, resource := range resources {
 			if resource == d.source.Deployment {
-				fmt.Fprint(d.writer, ".")
+				fmt.Fprint(d.writer, ".") //nolint:errcheck
 				return true, nil
 			}
 		}
@@ -283,7 +281,7 @@ func (d BoshDirector) UploadStemcell(URL string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("Could not upload stemcell %s: %s\n", URL, err)
+		return fmt.Errorf("Could not upload stemcell %s: %s\n", URL, err) //nolint:staticcheck
 	}
 
 	return nil
@@ -293,7 +291,7 @@ func (d BoshDirector) UploadRemoteStemcell(URL, name, version, sha string) error
 	var v boshcmdopts.VersionArg
 	err := (&v).UnmarshalFlag(version)
 	if err != nil {
-		return fmt.Errorf("Could parse stemcell version %s: %s\n", version, err)
+		return fmt.Errorf("Could parse stemcell version %s: %s\n", version, err) //nolint:staticcheck
 	}
 	err = d.commandRunner.Execute(&boshcmdopts.UploadStemcellOpts{
 		Name:    name,
@@ -305,13 +303,13 @@ func (d BoshDirector) UploadRemoteStemcell(URL, name, version, sha string) error
 	})
 
 	if err != nil {
-		return fmt.Errorf("Could not upload stemcell %s: %s\n", URL, err)
+		return fmt.Errorf("Could not upload stemcell %s: %s\n", URL, err) //nolint:staticcheck
 	}
 
 	return nil
 }
 
-func (d BoshDirector) Info() (director.Info, error) {
+func (d BoshDirector) Info() (boshdir.Info, error) {
 	return d.cliDirector.Info()
 }
 
@@ -391,7 +389,7 @@ func parsedVarFiles(varFiles map[string]string) ([]boshtpl.VarFileArg, error) {
 }
 
 func parsedOpsFiles(opsFiles []string) ([]boshcmdopts.OpsFileArg, error) {
-	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard)
+	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, io.Discard)
 	boshFS := boshsys.NewOsFileSystemWithStrictTempRoot(nullLogger)
 
 	opsFileArgs := []boshcmdopts.OpsFileArg{}
@@ -426,6 +424,6 @@ func convertMaxInFlight(maxInFlight int) string {
 }
 
 func boshFileSystem() boshsys.FileSystem {
-	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, ioutil.Discard)
+	nullLogger := boshlog.NewWriterLogger(boshlog.LevelInfo, io.Discard)
 	return boshsys.NewOsFileSystemWithStrictTempRoot(nullLogger)
 }

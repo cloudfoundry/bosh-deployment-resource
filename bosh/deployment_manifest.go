@@ -16,7 +16,7 @@ func NewDeploymentManifest(manifest []byte) (DeploymentManifest, error) {
 
 	err := yaml.Unmarshal(manifest, &d.manifest)
 	if err != nil {
-		return d, fmt.Errorf("Failed to unmarshal manifest: %s", err)
+		return d, fmt.Errorf("Failed to unmarshal manifest: %s", err) //nolint:staticcheck
 	}
 
 	return d, nil
@@ -25,7 +25,7 @@ func NewDeploymentManifest(manifest []byte) (DeploymentManifest, error) {
 func (d DeploymentManifest) UseReleaseVersion(releaseName, version string) error {
 	releases, ok := d.manifest["releases"].([]interface{})
 	if !ok {
-		return errors.New("No releases section in deployment manifest")
+		return errors.New("No releases section in deployment manifest") //nolint:staticcheck
 	}
 
 	for i := range releases {
@@ -36,13 +36,13 @@ func (d DeploymentManifest) UseReleaseVersion(releaseName, version string) error
 		}
 	}
 
-	return fmt.Errorf("Release %s not defined in deployment manifest", releaseName)
+	return fmt.Errorf("Release %s not defined in deployment manifest", releaseName) //nolint:staticcheck
 }
 
 func (d DeploymentManifest) UseStemcellVersion(stemcellName, os, version string) error {
 	stemcells, ok := d.manifest["stemcells"].([]interface{})
 	if !ok {
-		return errors.New("No stemcells section in deployment manifest")
+		return errors.New("No stemcells section in deployment manifest") //nolint:staticcheck
 	}
 
 	matchingStemcells := []map[interface{}]interface{}{}
@@ -54,7 +54,7 @@ func (d DeploymentManifest) UseStemcellVersion(stemcellName, os, version string)
 	}
 
 	if len(matchingStemcells) == 0 {
-		return fmt.Errorf("Stemcell %s not defined in deployment manifest", stemcellName)
+		return fmt.Errorf("Stemcell %s not defined in deployment manifest", stemcellName) //nolint:staticcheck
 	}
 
 	foundMatch := false
@@ -64,7 +64,7 @@ func (d DeploymentManifest) UseStemcellVersion(stemcellName, os, version string)
 				stemcell["version"] = version
 				foundMatch = true
 			} else {
-				return fmt.Errorf("Multiple matches for stemcell %s", stemcellName)
+				return fmt.Errorf("Multiple matches for stemcell %s", stemcellName) //nolint:staticcheck
 			}
 		}
 	}
@@ -73,7 +73,7 @@ func (d DeploymentManifest) UseStemcellVersion(stemcellName, os, version string)
 }
 
 func (d DeploymentManifest) Manifest() []byte {
-	bytes, _ := yaml.Marshal(d.manifest)
+	bytes, _ := yaml.Marshal(d.manifest) //nolint:errcheck
 
 	return bytes
 }
@@ -81,7 +81,7 @@ func (d DeploymentManifest) Manifest() []byte {
 func (d DeploymentManifest) Stemcells() ([]Stemcell, error) {
 	stemcells, ok := d.manifest["stemcells"].([]interface{})
 	if !ok {
-		return nil, errors.New("No stemcells section in deployment manifest")
+		return nil, errors.New("No stemcells section in deployment manifest") //nolint:staticcheck
 	}
 
 	out := make([]Stemcell, 0)

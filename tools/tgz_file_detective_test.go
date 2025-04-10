@@ -3,11 +3,12 @@ package tools_test
 import (
 	"compress/gzip"
 	"fmt"
-	"io/ioutil"
+	"os"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 )
 
 var _ = Describe("ReadTgzFile", func() {
@@ -28,8 +29,8 @@ var _ = Describe("ReadTgzFile", func() {
 
 	Describe("when the archive is not a valid gzip", func() {
 		It("returns an error", func() {
-			notArchive, _ := ioutil.TempFile("", "release-one")
-			notArchive.Close()
+			notArchive, _ := os.CreateTemp("", "release-one") //nolint:errcheck
+			notArchive.Close()                                //nolint:errcheck
 
 			_, err := tools.ReadTgzFile(notArchive.Name(), "release.MF")
 			Expect(err).To(HaveOccurred())
@@ -41,11 +42,11 @@ var _ = Describe("ReadTgzFile", func() {
 
 	Describe("when the gzip archive does not contain a valid tar", func() {
 		It("returns an error", func() {
-			notArchive, _ := ioutil.TempFile("", "release-one")
+			notArchive, _ := os.CreateTemp("", "release-one") //nolint:errcheck
 			gzipWriter := gzip.NewWriter(notArchive)
-			gzipWriter.Write([]byte("hello"))
-			gzipWriter.Close()
-			notArchive.Close()
+			gzipWriter.Write([]byte("hello")) //nolint:errcheck
+			gzipWriter.Close()                //nolint:errcheck
+			notArchive.Close()                //nolint:errcheck
 
 			_, err := tools.ReadTgzFile(notArchive.Name(), "release.MF")
 			Expect(err).To(HaveOccurred())

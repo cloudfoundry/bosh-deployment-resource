@@ -3,17 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
 
-	"io/ioutil"
+	proxy "github.com/cloudfoundry/socks5-proxy"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/out"
 	"github.com/cloudfoundry/bosh-deployment-resource/storage"
-	proxy "github.com/cloudfoundry/socks5-proxy"
 )
 
 func main() {
@@ -27,25 +27,25 @@ func main() {
 
 	sourcesDir := os.Args[1]
 
-	stdin, err := ioutil.ReadAll(os.Stdin)
+	stdin, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
 	outRequest, err := concourse.NewOutRequest(stdin, sourcesDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
 	hostKeyGetter := proxy.NewHostKey()
-	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(ioutil.Discard, "", log.LstdFlags), 1*time.Minute)
+	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(io.Discard, "", log.LstdFlags), 1*time.Minute)
 	cliCoordinator := bosh.NewCLICoordinator(outRequest.Source, os.Stderr, socks5Proxy)
 	commandRunner := bosh.NewCommandRunner(cliCoordinator)
 	cliDirector, err := cliCoordinator.Director()
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprint(os.Stderr, err) //nolint:errcheck
 		os.Exit(1)
 	}
 	director := bosh.NewBoshDirector(
@@ -64,15 +64,15 @@ func main() {
 	outCommand := out.NewOutCommand(director, bosh.BoshIOClient{}, storageClient, sourcesDir)
 	outResponse, err := outCommand.Run(outRequest)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprint(os.Stderr, err) //nolint:errcheck
 		os.Exit(1)
 	}
 
 	concourseOutputFormatted, err := json.MarshalIndent(outResponse, "", "  ")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not generate version: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Could not generate version: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stdout, "%s", concourseOutputFormatted)
+	fmt.Fprintf(os.Stdout, "%s", concourseOutputFormatted) //nolint:errcheck
 }

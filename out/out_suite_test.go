@@ -14,5 +14,5 @@ func TestOut(t *testing.T) {
 }
 
 func properYaml(improperYaml string) []byte {
-	return []byte(strings.Replace(improperYaml, "\t", "  ", -1))
+	return []byte(strings.Replace(improperYaml, "\t", "  ", -1)) //nolint:staticcheck
 }

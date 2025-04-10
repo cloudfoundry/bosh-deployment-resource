@@ -3,35 +3,36 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"time"
 
+	proxy "github.com/cloudfoundry/socks5-proxy"
+
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cloudfoundry/bosh-deployment-resource/in"
-	"github.com/cloudfoundry/socks5-proxy"
 )
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr,
+		fmt.Fprintf(os.Stderr, //nolint:errcheck
 			"not enough args - usage: %s <target directory>\n",
 			os.Args[0],
 		)
 		os.Exit(1)
 	}
 
-	stdin, err := ioutil.ReadAll(os.Stdin)
+	stdin, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Cannot read configuration: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
 	inRequest, err := concourse.NewInRequest(stdin)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Invalid parameters: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
@@ -44,12 +45,12 @@ func main() {
 	}
 
 	hostKeyGetter := proxy.NewHostKey()
-	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(ioutil.Discard, "", log.LstdFlags), 1*time.Minute)
+	socks5Proxy := proxy.NewSocks5Proxy(hostKeyGetter, log.New(io.Discard, "", log.LstdFlags), 1*time.Minute)
 	cliCoordinator := bosh.NewCLICoordinator(inRequest.Source, os.Stderr, socks5Proxy)
 	commandRunner := bosh.NewCommandRunner(cliCoordinator)
 	cliDirector, err := cliCoordinator.Director()
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprint(os.Stderr, err) //nolint:errcheck
 		os.Exit(1)
 	}
 	director := bosh.NewBoshDirector(
@@ -62,7 +63,7 @@ func main() {
 	inCommand := in.NewInCommand(director)
 	inResponse, err := inCommand.Run(inRequest, targetDir)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprint(os.Stderr, err) //nolint:errcheck
 		os.Exit(1)
 	}
 
@@ -72,9 +73,9 @@ func main() {
 func printResponse(inResponse in.InResponse) {
 	concourseInputFormatted, err := json.MarshalIndent(inResponse, "", "  ")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not generate version: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Could not generate version: %s\n", err) //nolint:errcheck
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stdout, "%s", concourseInputFormatted)
+	fmt.Fprintf(os.Stdout, "%s", concourseInputFormatted) //nolint:errcheck
 }

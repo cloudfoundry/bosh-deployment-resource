@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -48,14 +48,14 @@ func (c BoshIOClient) Stemcells(name string) ([]byte, error) {
 		return nil, err
 	}
 
-	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close() //nolint:errcheck
+	return io.ReadAll(resp.Body)
 }
 
 func LookupBoshIOStemcell(c BoshIO, cpi, os, version string, light bool) (BoshIOStemcell, error) {
 	if version == "latest" {
 		return BoshIOStemcell{},
-			errors.New("Auto upload of \"latest\" stemcell is not support, please use bosh-io-stemcell-resource")
+			errors.New("Auto upload of \"latest\" stemcell is not support, please use bosh-io-stemcell-resource") //nolint:staticcheck
 	}
 	name, err := stemcellName(cpi, os)
 	if err != nil {
@@ -111,7 +111,7 @@ func filterStemcells(raw []byte, version string, light bool) (BoshIOStemcell, er
 func stemcellName(cpi, os string) (string, error) {
 	name, ok := cpiStemcellMap[cpi]
 	if !ok {
-		return "", fmt.Errorf("Failed to determine stemcell name for cpi: %s", cpi)
+		return "", fmt.Errorf("Failed to determine stemcell name for cpi: %s", cpi) //nolint:staticcheck
 	}
 	return fmt.Sprintf("bosh-%s-%s-go_agent", name, os), nil
 }
