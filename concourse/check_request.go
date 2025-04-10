@@ -14,7 +14,7 @@ type CheckRequest struct {
 func NewCheckRequest(request []byte) (CheckRequest, error) {
 	var checkRequest CheckRequest
 	if err := json.NewDecoder(bytes.NewReader(request)).Decode(&checkRequest); err != nil {
-		return CheckRequest{}, fmt.Errorf("Invalid parameters: %s\n", err)
+		return CheckRequest{}, fmt.Errorf("Invalid parameters: %s\n", err) //nolint:staticcheck
 	}
 
 	return checkRequest, nil

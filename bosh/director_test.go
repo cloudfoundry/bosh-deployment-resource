@@ -5,15 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
-	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	"github.com/cppforlife/go-patch/patch"
 	"github.com/cppforlife/go-semi-semantic/version"
 
@@ -21,6 +18,10 @@ import (
 	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	boshdirfakes "github.com/cloudfoundry/bosh-cli/v7/director/directorfakes"
 	boshtpl "github.com/cloudfoundry/bosh-cli/v7/director/template"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
+	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 )
 
 var _ = Describe("BoshDirector", func() {
@@ -56,19 +57,19 @@ var _ = Describe("BoshDirector", func() {
 			varsFileContents := properYaml(`
 				baz: "best-bar"
 			`)
-			varsFile, _ := ioutil.TempFile("", "var-file-1")
-			varsFile.Write(varsFileContents)
+			varsFile, _ := os.CreateTemp("", "var-file-1") //nolint:errcheck
+			varsFile.Write(varsFileContents)               //nolint:errcheck
 
-			varFile, _ := ioutil.TempFile("", "var-file-key2")
-			varFile.Write([]byte("val2"))
+			varFile, _ := os.CreateTemp("", "var-file-key2") //nolint:errcheck
+			varFile.Write([]byte("val2"))                    //nolint:errcheck
 
 			opsFileContents := properYaml(`
 				- type: replace
 				  path: /my?/new_key
 				  value: awesome
 			`)
-			opsFile, _ := ioutil.TempFile("", "ops-file-1")
-			opsFile.Write(opsFileContents)
+			opsFile, _ := os.CreateTemp("", "ops-file-1") //nolint:errcheck
+			opsFile.Write(opsFileContents)                //nolint:errcheck
 
 			noRedact := true
 			dryRun := false
@@ -119,7 +120,7 @@ var _ = Describe("BoshDirector", func() {
 		Describe("VarsStore", func() {
 			Context("when one is provided", func() {
 				It("is used", func() {
-					varsStore, _ := ioutil.TempFile("", "vars-store")
+					varsStore, _ := os.CreateTemp("", "vars-store") //nolint:errcheck
 					err := director.Deploy(sillyBytes, bosh.DeployParams{
 						VarsStore: varsStore.Name(),
 					})
@@ -263,16 +264,16 @@ var _ = Describe("BoshDirector", func() {
 			varFileContents := properYaml(`
 				baz: "best-bar"
 			`)
-			varFile, _ := ioutil.TempFile("", "var-file-1")
-			varFile.Write(varFileContents)
+			varFile, _ := os.CreateTemp("", "var-file-1") //nolint:errcheck
+			varFile.Write(varFileContents)                //nolint:errcheck
 
 			opsFileContents := properYaml(`
 				- type: replace
 				  path: /my?/new_key
 				  value: awesome
 			`)
-			opsFile, _ := ioutil.TempFile("", "ops-file-1")
-			opsFile.Write(opsFileContents)
+			opsFile, _ := os.CreateTemp("", "ops-file-1") //nolint:errcheck
+			opsFile.Write(opsFileContents)                //nolint:errcheck
 
 			manifest, err := director.Interpolate(sillyBytes, bosh.InterpolateParams{
 				Vars:      vars,
@@ -438,21 +439,21 @@ var _ = Describe("BoshDirector", func() {
 
 			opts, optFunc, _ := commandRunner.ExecuteWithDefaultOverrideArgsForCall(0)
 			exportReleaseOpts, _ := opts.(*boshcmdopts.ExportReleaseOpts)
-			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("cool-release"))
-			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("123.45"))
-			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
-			Expect(string(exportReleaseOpts.Args.OSVersionSlug.Version())).To(Equal("3.4.0"))
+			Expect(exportReleaseOpts.Args.ReleaseSlug.Name()).To(Equal("cool-release"))
+			Expect(exportReleaseOpts.Args.ReleaseSlug.Version()).To(Equal("123.45"))
+			Expect(exportReleaseOpts.Args.OSVersionSlug.OS()).To(Equal("minix"))
+			Expect(exportReleaseOpts.Args.OSVersionSlug.Version()).To(Equal("3.4.0"))
 
 			fixedOpts, err := optFunc(&boshcmdopts.ExportReleaseOpts{Directory: boshcmdopts.DirOrCWDArg{Path: "wrong-path"}})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(fixedOpts.(*boshcmdopts.ExportReleaseOpts).Directory.Path).To(Equal("/tmp/foo"))
 
-			opts, optFunc, _ = commandRunner.ExecuteWithDefaultOverrideArgsForCall(1)
+			opts, optFunc, _ = commandRunner.ExecuteWithDefaultOverrideArgsForCall(1) //nolint:errcheck,ineffassign,staticcheck
 			exportReleaseOpts, _ = opts.(*boshcmdopts.ExportReleaseOpts)
-			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Name())).To(Equal("awesome-release"))
-			Expect(string(exportReleaseOpts.Args.ReleaseSlug.Version())).To(Equal("987.65"))
-			Expect(string(exportReleaseOpts.Args.OSVersionSlug.OS())).To(Equal("minix"))
-			Expect(string(exportReleaseOpts.Args.OSVersionSlug.Version())).To(Equal("3.4.0"))
+			Expect(exportReleaseOpts.Args.ReleaseSlug.Name()).To(Equal("awesome-release"))
+			Expect(exportReleaseOpts.Args.ReleaseSlug.Version()).To(Equal("987.65"))
+			Expect(exportReleaseOpts.Args.OSVersionSlug.OS()).To(Equal("minix"))
+			Expect(exportReleaseOpts.Args.OSVersionSlug.Version()).To(Equal("3.4.0"))
 			Expect(exportReleaseOpts.Jobs).To(Equal([]string{
 				"nice-job",
 				"well-done",

@@ -1,14 +1,14 @@
 package in_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"crypto/sha1"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh"
 	"github.com/cloudfoundry/bosh-deployment-resource/bosh/boshfakes"
@@ -46,7 +46,7 @@ var _ = Describe("InCommand", func() {
 			}
 
 			var err error
-			targetDir, err = ioutil.TempDir("", "")
+			targetDir, err = os.MkdirTemp("", "")
 			Expect(err).ToNot(HaveOccurred())
 
 			director.DownloadManifestReturns(sillyBytes, nil)
@@ -56,12 +56,12 @@ var _ = Describe("InCommand", func() {
 			inResponse, err := inCommand.Run(inRequest, targetDir)
 			Expect(err).ToNot(HaveOccurred())
 
-			manifestBytes, err := ioutil.ReadFile(filepath.Join(targetDir, "manifest.yml"))
+			manifestBytes, err := os.ReadFile(filepath.Join(targetDir, "manifest.yml"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(manifestBytes).To(Equal(sillyBytes))
 			Expect(director.DownloadManifestCallCount()).To(Equal(1))
 
-			targetBytes, err := ioutil.ReadFile(filepath.Join(targetDir, "target"))
+			targetBytes, err := os.ReadFile(filepath.Join(targetDir, "target"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(targetBytes)).To(Equal("director.example.com"))
 

@@ -2,12 +2,13 @@ package concourse_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/concourse"
 )
 
 var _ = Describe("NewDynamicSource", func() {
@@ -36,7 +37,7 @@ var _ = Describe("NewDynamicSource", func() {
 		var (
 			sourcesDir          string
 			sourceFileName      string
-			requestJsonTemplate string = `{
+			requestJsonTemplate = `{
 				"params": {
 					"source_file": "%s"
 				},
@@ -59,8 +60,9 @@ var _ = Describe("NewDynamicSource", func() {
 		)
 
 		BeforeEach(func() {
-			sourceFile, _ := ioutil.TempFile("", "")
-			sourceFile.Write(properYaml(`
+			sourceFile, _ := os.CreateTemp("", "") //nolint:errcheck
+			sourceFile.Write(properYaml(           //nolint:errcheck
+				`
 				deployment: fileDeployment
 				target: fileDirector.com
 				client_secret: fileSecret
@@ -70,7 +72,7 @@ var _ = Describe("NewDynamicSource", func() {
 						file: vars
 						keys: dynamic-keys
 			`))
-			sourceFile.Close()
+			sourceFile.Close() //nolint:errcheck
 
 			sourcesDir = filepath.Dir(sourceFile.Name())
 			sourceFileName = filepath.Base(sourceFile.Name())
@@ -105,11 +107,12 @@ var _ = Describe("NewDynamicSource", func() {
 
 		Context("when the source_file is invalid yaml", func() {
 			BeforeEach(func() {
-				sourceFile, _ := ioutil.TempFile("", "")
-				sourceFile.Write(properYaml(`
+				sourceFile, _ := os.CreateTemp("", "") //nolint:errcheck
+				sourceFile.Write(                      //nolint:errcheck
+					properYaml(`
 				deployment=fileDeployments
 			`))
-				sourceFile.Close()
+				sourceFile.Close() //nolint:errcheck
 
 				sourcesDir = filepath.Dir(sourceFile.Name())
 				sourceFileName = filepath.Base(sourceFile.Name())

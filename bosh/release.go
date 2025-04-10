@@ -3,8 +3,9 @@ package bosh
 import (
 	"fmt"
 
-	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 	"gopkg.in/yaml.v2"
+
+	"github.com/cloudfoundry/bosh-deployment-resource/tools"
 )
 
 type Release struct {
@@ -17,7 +18,7 @@ type Release struct {
 func NewReleases(basePath string, releasePathGlobs []string) ([]Release, error) {
 	releasePaths, err := tools.UnfurlGlobs(basePath, releasePathGlobs)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid release name: %s", err)
+		return nil, fmt.Errorf("Invalid release name: %s", err) //nolint:staticcheck
 	}
 
 	releases := []Release{}
@@ -37,12 +38,12 @@ func newRelease(filePath string) (Release, error) {
 
 	releaseFileContents, err := tools.ReadTgzFile(filePath, "release.MF")
 	if err != nil {
-		return Release{}, fmt.Errorf("Could not read release: %s", err)
+		return Release{}, fmt.Errorf("Could not read release: %s", err) //nolint:staticcheck
 	}
 
 	err = yaml.Unmarshal(releaseFileContents, &release)
 	if err != nil {
-		return Release{}, fmt.Errorf("Release %s is not a valid release", filePath)
+		return Release{}, fmt.Errorf("Release %s is not a valid release", filePath) //nolint:staticcheck
 	}
 
 	release.FilePath = filePath

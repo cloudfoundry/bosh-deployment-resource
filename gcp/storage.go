@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -8,9 +10,6 @@ import (
 	oauthgoogle "golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
-
-	"fmt"
-	"io/ioutil"
 )
 
 type Storage struct {
@@ -28,9 +27,9 @@ func NewStorage(jsonKey, bucket, objectPath string) (Storage, error) {
 	if err != nil {
 		return Storage{}, err
 	}
-	storageClient = storageJwtConf.Client(oauth2.NoContext)
+	storageClient = storageJwtConf.Client(oauth2.NoContext) //nolint:staticcheck
 
-	storageService, err := storage.New(storageClient)
+	storageService, err := storage.New(storageClient) //nolint:staticcheck
 	if err != nil {
 		return Storage{}, err
 	}
@@ -48,9 +47,9 @@ func (s Storage) Download(filePath string) error {
 
 	_, err := getCall.Do()
 	if err != nil {
-		switch err.(type) {
+		switch err.(type) { //nolint:staticcheck
 		case *googleapi.Error:
-			if err.(*googleapi.Error).Code == 404 {
+			if err.(*googleapi.Error).Code == 404 { //nolint:staticcheck
 				return s.Upload(filePath)
 			}
 		}
@@ -62,14 +61,14 @@ func (s Storage) Download(filePath string) error {
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer response.Body.Close() //nolint:errcheck
 
-	responseBytes, err := ioutil.ReadAll(response.Body)
+	responseBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filePath, responseBytes, 0600)
+	err = os.WriteFile(filePath, responseBytes, 0600)
 	if err != nil {
 		return err
 	}
@@ -89,7 +88,7 @@ func (s Storage) Upload(filePath string) error {
 	}
 
 	if _, err = s.storageService.Objects.Insert(s.bucket, object).Media(f).Do(); err != nil {
-		return fmt.Errorf("Can not write to %s in bucket %s", s.objectPath, s.bucket)
+		return fmt.Errorf("Can not write to %s in bucket %s", s.objectPath, s.bucket) //nolint:staticcheck
 	}
 
 	return nil

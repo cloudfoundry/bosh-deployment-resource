@@ -1,0 +1,22 @@
+name: go
+on:
+  push:
+  pull_request:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v7
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      # TODO: update to Ginkgo v2
+      - run: go run github.com/onsi/ginkgo/ginkgo@latest -r -race -p -randomizeAllSpecs -randomizeSuites .

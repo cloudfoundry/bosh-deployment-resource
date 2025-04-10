@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -37,28 +37,28 @@ type dynamicSourceParams struct {
 func NewDynamicSource(config []byte, sourcesDir string) (Source, error) {
 	var sourceRequest sourceRequest
 	if err := json.NewDecoder(bytes.NewReader(config)).Decode(&sourceRequest); err != nil {
-		return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
+		return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err) //nolint:staticcheck
 	}
 
 	if sourceRequest.Params.SourceFile != "" {
-		source, err := ioutil.ReadFile(filepath.Join(sourcesDir, sourceRequest.Params.SourceFile))
+		source, err := os.ReadFile(filepath.Join(sourcesDir, sourceRequest.Params.SourceFile))
 		if err != nil {
-			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
+			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err) //nolint:staticcheck
 		}
 
 		var tempSource Source
 		err = yaml.Unmarshal(source, &tempSource)
 		if err != nil {
-			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
+			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err) //nolint:staticcheck
 		}
 
 		jsonBytes, err := json.Marshal(tempSource)
 		if err != nil {
-			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
+			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err) //nolint:staticcheck
 		}
 
 		if err := json.Unmarshal(jsonBytes, &sourceRequest.Source); err != nil {
-			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err)
+			return Source{}, fmt.Errorf("Invalid dynamic source config: %s", err) //nolint:staticcheck
 		}
 	}
 
