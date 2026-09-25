@@ -5,3 +5,20 @@ updates:
   directory: "/"
   schedule:
     interval: "daily"
+- package-ecosystem: "gomod"
+  directory: "/"
+  schedule:
+    interval: "daily"
+  allow:
+  # Allow both direct and indirect updates for all packages
+  - dependency-type: "all"
+  # group all minor and patch dependency updates together
+  groups:
+    go-modules:
+      patterns:
+      - "*"
+      update-types:
+      - "minor"
+      - "patch"
+  cooldown:
+    default-days: 7
