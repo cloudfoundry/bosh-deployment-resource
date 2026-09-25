@@ -18,5 +18,4 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      # TODO: update to Ginkgo v2
-      - run: go run github.com/onsi/ginkgo/ginkgo@latest -r -race -p -randomizeAllSpecs -randomizeSuites .
+      - run: go run github.com/onsi/ginkgo/v2/ginkgo -r -race -p -randomize-all -randomize-suites .
