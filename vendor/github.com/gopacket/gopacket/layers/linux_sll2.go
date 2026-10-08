@@ -105,7 +105,15 @@ func (sll *LinuxSLL2) CanDecode() gopacket.LayerClass {
 }
 
 func (sll *LinuxSLL2) LinkFlow() gopacket.Flow {
-	return gopacket.NewFlow(EndpointMAC, sll.Addr, nil)
+	// Truncate address to MaxEndpointSize to prevent panics
+	// Linux SLL2 addresses should normally be 6-8 bytes, but malformed
+	// packets may claim larger sizes. This gracefully handles such cases
+	// by truncating oversized addresses instead of panicking.
+	addr := sll.Addr
+	if len(addr) > gopacket.MaxEndpointSize {
+		addr = addr[:gopacket.MaxEndpointSize]
+	}
+	return gopacket.NewFlow(EndpointMAC, addr, nil)
 }
 
 func (sll *LinuxSLL2) NextLayerType() gopacket.LayerType {
@@ -158,6 +166,11 @@ func (sll *LinuxSLL2) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) e
 	sll.ARPHardwareType = ARPHardwareType(binary.BigEndian.Uint16(data[8:10]))
 	sll.PacketType = LinuxSLL2PacketType(data[10])
 	sll.AddrLength = data[11]
+	// The address field is a fixed 8-byte window at offset 12, so a larger
+	// declared length would reslice past its capacity.
+	if sll.AddrLength > 8 {
+		return fmt.Errorf("Linux SLL2 invalid address length %d", sll.AddrLength)
+	}
 	sll.Addr = data[12:20]
 	sll.Addr = sll.Addr[:sll.AddrLength]
 	sll.BaseLayer = BaseLayer{data[:20], data[20:]}

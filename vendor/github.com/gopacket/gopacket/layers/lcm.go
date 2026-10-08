@@ -136,6 +136,13 @@ func (lcm *LCM) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 	if lcm.Magic == LCMFragmentedHeaderMagic {
 		lcm.Fragmented = true
 
+		// The fragmented header adds size(4) + fragOffset(4) + fragNumber(2) +
+		// totalFragments(2) = 12 bytes on top of the 8 already consumed.
+		if len(data) < offset+12 {
+			df.SetTruncated()
+			return errors.New("LCM fragmented header truncated")
+		}
+
 		lcm.PayloadSize = binary.BigEndian.Uint32(data[offset : offset+4])
 		offset += 4
 
@@ -166,8 +173,10 @@ func (lcm *LCM) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 		lcm.ChannelName = string(buffer)
 	}
 
-	lcm.fingerprint = LCMFingerprint(
-		binary.BigEndian.Uint64(data[offset : offset+8]))
+	if len(data)-offset >= 8 {
+		lcm.fingerprint = LCMFingerprint(
+			binary.BigEndian.Uint64(data[offset : offset+8]))
+	}
 
 	lcm.contents = data[:offset]
 	lcm.payload = data[offset:]

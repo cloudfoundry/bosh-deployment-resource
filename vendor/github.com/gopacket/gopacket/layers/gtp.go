@@ -80,6 +80,9 @@ func (g *GTPv1U) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error 
 		if g.ExtensionHeaderFlag {
 			extensionFlag := true
 			for extensionFlag {
+				if int(cIndex) >= dLen {
+					return fmt.Errorf("GTP packet too small: %d bytes", dLen)
+				}
 				extensionType := uint8(data[cIndex-1])
 				extensionLength := uint(data[cIndex])
 				if extensionLength == 0 {
@@ -149,7 +152,7 @@ func (g *GTPv1U) SerializeTo(b gopacket.SerializeBuffer, opts gopacket.Serialize
 	if err != nil {
 		return err
 	}
-	data[0] |= (g.Version << 5)
+	data[0] = (g.Version << 5)
 	data[0] |= (1 << 4)
 	if g.ExtensionHeaderFlag {
 		data[0] |= 0x04
@@ -175,6 +178,9 @@ func (g *GTPv1U) CanDecode() gopacket.LayerClass {
 func (g *GTPv1U) NextLayerType() gopacket.LayerType {
 	if len(g.LayerPayload()) == 0 {
 		return gopacket.LayerTypeZero
+	}
+	if g.MessageType != 255 {
+		return gopacket.LayerTypePayload
 	}
 	version := uint8(g.LayerPayload()[0]) >> 4
 	if version == 4 {

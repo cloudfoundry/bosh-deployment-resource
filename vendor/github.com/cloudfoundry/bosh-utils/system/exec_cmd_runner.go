@@ -3,7 +3,6 @@ package system
 import (
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
@@ -25,6 +24,10 @@ func (r execCmdRunner) RunComplexCommand(cmd Command) (string, string, int, erro
 		return "", "", -1, err
 	}
 
+	if cmd.SpawnWithLowerPriority {
+		r.lowerProcessPriority(cmd.Name, process.cmd.Process.Pid) //nolint:errcheck
+	}
+
 	result := <-process.Wait()
 
 	return result.Stdout, result.Stderr, result.ExitStatus, result.Error
@@ -36,6 +39,10 @@ func (r execCmdRunner) RunComplexCommandAsync(cmd Command) (Process, error) {
 	err := process.Start()
 	if err != nil {
 		return nil, err
+	}
+
+	if cmd.SpawnWithLowerPriority {
+		r.lowerProcessPriority(cmd.Name, process.cmd.Process.Pid) //nolint:errcheck
 	}
 
 	return process, nil
@@ -80,15 +87,7 @@ func (r execCmdRunner) buildComplexCommand(cmd Command) *exec.Cmd {
 
 	execCmd.Dir = cmd.WorkingDir
 
-	var env []string
-	if !cmd.UseIsolatedEnv {
-		env = os.Environ()
-	}
-	if cmd.UseIsolatedEnv && runtime.GOOS == "windows" {
-		panic("UseIsolatedEnv is not supported on Windows")
-	}
-
-	execCmd.Env = mergeEnv(env, cmd.Env)
+	execCmd.Env = mergeEnv(os.Environ(), cmd.Env)
 
 	return execCmd
 }

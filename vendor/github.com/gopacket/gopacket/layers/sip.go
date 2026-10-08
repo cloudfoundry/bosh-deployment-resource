@@ -250,6 +250,7 @@ func (s *SIP) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 	var line []byte
 	var err error
 	var offset int
+	var eoh = false // track End Of Headers
 
 	// Iterate on all lines of the SIP Headers
 	// and stop when we reach the SDP (aka when the new line
@@ -277,6 +278,10 @@ func (s *SIP) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 
 		// Empty line, we hit Body
 		if len(line) == 0 {
+			if countLines == 0 {
+				return fmt.Errorf("invalid first SIP line, empty")
+			}
+			eoh = true
 			break
 		}
 
@@ -296,6 +301,9 @@ func (s *SIP) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 		}
 
 		countLines++
+	}
+	if !eoh {
+		df.SetTruncated()
 	}
 	s.setBaseLayer(data, offset, df)
 
@@ -418,6 +426,13 @@ func (s *SIP) ParseHeader(header []byte) (err error) {
 	// RFC 3261 - 7.3.1 - Header Field Format specify that following lines of
 	// multiline headers must begin by SP or TAB
 	if header[0] == '\t' || header[0] == ' ' {
+
+		// A continuation line is only meaningful if a header has already been
+		// parsed. Without this check lastHeaderParsed is still "", the map
+		// lookup yields a nil slice, and the index below evaluates to [-1].
+		if len(s.Headers[s.lastHeaderParsed]) == 0 {
+			return fmt.Errorf("SIP header continuation line with no preceding header")
+		}
 
 		header = bytes.TrimSpace(header)
 		s.Headers[s.lastHeaderParsed][len(s.Headers[s.lastHeaderParsed])-1] += fmt.Sprintf(" %s", string(header))

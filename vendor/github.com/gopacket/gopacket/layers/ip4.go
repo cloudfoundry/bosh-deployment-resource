@@ -139,6 +139,14 @@ func (ip *IPv4) SerializeTo(b gopacket.SerializeBuffer, opts gopacket.SerializeO
 			bytes[curLocation] = opt.OptionType
 			bytes[curLocation+1] = opt.OptionLength
 
+			// the type and length bytes occupy two octets, so a non-trivial
+			// option must declare a length of at least 2. without this guard
+			// opt.OptionLength-2 underflows below and the copy slices a
+			// reversed range, panicking with "slice bounds out of range".
+			if opt.OptionLength < 2 {
+				return fmt.Errorf("invalid IP option type %v length %d, must be greater than 2", opt.OptionType, opt.OptionLength)
+			}
+
 			// sanity checking to protect us from buffer overrun
 			if len(opt.OptionData) > int(opt.OptionLength-2) {
 				return errors.New("option length is smaller than length of option data")
@@ -208,6 +216,7 @@ func (ip *IPv4) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 	// From here on, data contains the header options.
 	headerOptionsData := data[20 : ip.IHL*4]
 	// Pull out IP options
+pullOutOptions:
 	for len(headerOptionsData) > 0 {
 		if ip.Options == nil {
 			// Pre-allocate to avoid growing the slice too much.
@@ -220,8 +229,8 @@ func (ip *IPv4) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 			opt.OptionLength = 1
 			ip.Options = append(ip.Options, opt)
 			ip.Padding = headerOptionsData[1:]
-
-			return nil
+			headerOptionsData = headerOptionsData[1:]
+			break pullOutOptions
 		case 1: // 1 byte padding
 			opt.OptionLength = 1
 			headerOptionsData = headerOptionsData[1:]
@@ -257,7 +266,6 @@ func (ip *IPv4) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 	ip.Checksum = binary.BigEndian.Uint16(data[10:12])
 	ip.SrcIP = data[12:16]
 	ip.DstIP = data[16:20]
-	ip.Padding = nil
 
 	return nil
 }
