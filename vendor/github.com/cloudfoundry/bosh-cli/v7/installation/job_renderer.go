@@ -12,6 +12,8 @@ import (
 	biui "github.com/cloudfoundry/bosh-cli/v7/ui"
 )
 
+//counterfeiter:generate . JobRenderer
+
 type JobRenderer interface {
 	RenderAndUploadFrom(biinstallmanifest.Manifest, []bireljob.Job, biui.Stage) ([]RenderedJobRef, error)
 }
@@ -98,13 +100,13 @@ func (b *jobRenderer) renderJobTemplates(
 }
 
 func (b *jobRenderer) compressAndUpload(renderedJob bitemplate.RenderedJob) (RenderedJobRef, error) {
-	tarballPath, err := b.compressor.CompressFilesInDir(renderedJob.Path())
+	tarballPath, err := b.compressor.CompressFilesInDir(renderedJob.Path(), boshcmd.CompressorOptions{})
 	if err != nil {
 		return RenderedJobRef{}, bosherr.WrapError(err, "Compressing rendered job templates")
 	}
 
 	defer func() {
-		_ = b.compressor.CleanUp(tarballPath)
+		_ = b.compressor.CleanUp(tarballPath) //nolint:errcheck
 	}()
 
 	blobID, digest, err := b.blobstore.Create(tarballPath)

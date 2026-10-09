@@ -14,7 +14,6 @@ import (
 	"net"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"cloud.google.com/go/auth"
@@ -22,7 +21,6 @@ import (
 	"cloud.google.com/go/auth/grpctransport"
 	"cloud.google.com/go/auth/oauth2adapt"
 	"cloud.google.com/go/compute/metadata"
-	"go.opencensus.io/plugin/ocgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/oauth2"
 	"golang.org/x/time/rate"
@@ -32,7 +30,6 @@ import (
 	grpcgoogle "google.golang.org/grpc/credentials/google"
 	grpcinsecure "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/credentials/oauth"
-	"google.golang.org/grpc/stats"
 
 	// Install grpclb, which is required for direct path.
 	_ "google.golang.org/grpc/balancer/grpclb"
@@ -55,26 +52,6 @@ var dialContext = grpc.DialContext
 
 // Assign to var for unit test replacement
 var dialContextNewAuth = grpctransport.Dial
-
-// otelStatsHandler is a singleton otelgrpc.clientHandler to be used across
-// all dial connections to avoid the memory leak documented in
-// https://github.com/open-telemetry/opentelemetry-go-contrib/issues/4226
-//
-// TODO: If 4226 has been fixed in opentelemetry-go-contrib, replace this
-// singleton with inline usage for simplicity.
-var (
-	initOtelStatsHandlerOnce sync.Once
-	otelStatsHandler         stats.Handler
-)
-
-// otelGRPCStatsHandler returns singleton otelStatsHandler for reuse across all
-// dial connections.
-func otelGRPCStatsHandler() stats.Handler {
-	initOtelStatsHandlerOnce.Do(func() {
-		otelStatsHandler = otelgrpc.NewClientHandler()
-	})
-	return otelStatsHandler
-}
 
 // Dial returns a GRPC connection for use communicating with a Google cloud
 // service, configured with the given ClientOptions.
@@ -221,6 +198,8 @@ func dialPoolNewAuth(ctx context.Context, secure bool, poolSize int, ds *interna
 		defaultEndpointTemplate = ds.DefaultEndpoint
 	}
 
+	credsJSON, _ := ds.GetAuthCredentialsJSON()
+	credsFile, _ := ds.GetAuthCredentialsFile()
 	pool, err := dialContextNewAuth(ctx, secure, &grpctransport.Options{
 		DisableTelemetry:      ds.TelemetryDisabled,
 		DisableAuthentication: ds.NoAuth,
@@ -234,21 +213,25 @@ func dialPoolNewAuth(ctx context.Context, secure bool, poolSize int, ds *interna
 		DetectOpts: &credentials.DetectOptions{
 			Scopes:          ds.Scopes,
 			Audience:        aud,
-			CredentialsFile: ds.CredentialsFile,
-			CredentialsJSON: ds.CredentialsJSON,
+			CredentialsFile: credsFile,
+			CredentialsJSON: credsJSON,
+			Logger:          ds.Logger,
 		},
 		InternalOptions: &grpctransport.InternalOptions{
 			EnableNonDefaultSAForDirectPath: ds.AllowNonDefaultServiceAccount,
 			EnableDirectPath:                ds.EnableDirectPath,
 			EnableDirectPathXds:             ds.EnableDirectPathXds,
 			EnableJWTWithScope:              ds.EnableJwtWithScope,
+			AllowHardBoundTokens:            ds.AllowHardBoundTokens,
 			DefaultAudience:                 ds.DefaultAudience,
 			DefaultEndpointTemplate:         defaultEndpointTemplate,
 			DefaultMTLSEndpoint:             ds.DefaultMTLSEndpoint,
 			DefaultScopes:                   ds.DefaultScopes,
 			SkipValidation:                  skipValidation,
+			TelemetryAttributes:             ds.TelemetryAttributes,
 		},
-		UniverseDomain: ds.UniverseDomain,
+		UniverseDomain: ds.GetUniverseDomain(),
+		Logger:         ds.Logger,
 	})
 	return pool, err
 }
@@ -385,7 +368,6 @@ func dial(ctx context.Context, insecure bool, o *internal.DialSettings) (*grpc.C
 	// Add tracing, but before the other options, so that clients can override the
 	// gRPC stats handler.
 	// This assumes that gRPC options are processed in order, left to right.
-	grpcOpts = addOCStatsHandler(grpcOpts, o)
 	grpcOpts = addOpenTelemetryStatsHandler(grpcOpts, o)
 	grpcOpts = append(grpcOpts, o.GRPCDialOpts...)
 	if o.UserAgent != "" {
@@ -395,18 +377,11 @@ func dial(ctx context.Context, insecure bool, o *internal.DialSettings) (*grpc.C
 	return dialContext(ctx, endpoint, grpcOpts...)
 }
 
-func addOCStatsHandler(opts []grpc.DialOption, settings *internal.DialSettings) []grpc.DialOption {
-	if settings.TelemetryDisabled {
-		return opts
-	}
-	return append(opts, grpc.WithStatsHandler(&ocgrpc.ClientHandler{}))
-}
-
 func addOpenTelemetryStatsHandler(opts []grpc.DialOption, settings *internal.DialSettings) []grpc.DialOption {
 	if settings.TelemetryDisabled {
 		return opts
 	}
-	return append(opts, grpc.WithStatsHandler(otelGRPCStatsHandler()))
+	return append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 }
 
 // grpcTokenSource supplies PerRPCCredentials from an oauth.TokenSource.

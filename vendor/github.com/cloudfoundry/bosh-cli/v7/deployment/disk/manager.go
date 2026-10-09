@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"errors"
 	"fmt"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
@@ -11,6 +12,8 @@ import (
 	bideplmanifest "github.com/cloudfoundry/bosh-cli/v7/deployment/manifest"
 	biui "github.com/cloudfoundry/bosh-cli/v7/ui"
 )
+
+//counterfeiter:generate . Manager
 
 type Manager interface {
 	FindCurrent() ([]Disk, error)
@@ -110,7 +113,8 @@ func (m *manager) DeleteUnused(eventLoggerStage biui.Stage) error {
 		stepName := fmt.Sprintf("Deleting unused disk '%s'", disk.CID())
 		err = eventLoggerStage.Perform(stepName, func() error {
 			err := disk.Delete()
-			cloudErr, ok := err.(bicloud.Error)
+			var cloudErr bicloud.Error
+			ok := errors.As(err, &cloudErr)
 			if ok && cloudErr.Type() == bicloud.DiskNotFoundError {
 				return biui.NewSkipStageError(cloudErr, "Disk Not Found")
 			}

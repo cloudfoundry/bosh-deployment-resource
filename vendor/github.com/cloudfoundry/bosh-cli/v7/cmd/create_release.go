@@ -8,7 +8,7 @@ import (
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	semver "github.com/cppforlife/go-semi-semantic/version"
 
-	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
+	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts" //nolint:staticcheck
 	boshrel "github.com/cloudfoundry/bosh-cli/v7/release"
 	boshreldir "github.com/cloudfoundry/bosh-cli/v7/releasedir"
 	boshui "github.com/cloudfoundry/bosh-cli/v7/ui"
@@ -64,8 +64,8 @@ func (c CreateReleaseCmd) Run(opts CreateReleaseOpts) (boshrel.Release, error) {
 			return nil, err
 		}
 
-		dstPath = strings.Replace(dstPath, "((name))", release.Name(), -1)
-		dstPath = strings.Replace(dstPath, "((version))", release.Version(), -1)
+		dstPath = strings.Replace(dstPath, "((name))", release.Name(), -1)       //nolint:staticcheck
+		dstPath = strings.Replace(dstPath, "((version))", release.Version(), -1) //nolint:staticcheck
 
 		err = boshfu.NewFileMover(c.fs).Move(path, dstPath)
 		if err != nil {
@@ -99,7 +99,19 @@ func (c CreateReleaseCmd) buildRelease(releaseDir boshreldir.ReleaseDir, opts Cr
 		}
 	}
 
-	return releaseDir.BuildRelease(name, version, opts.Force)
+	release, err := releaseDir.BuildRelease(name, version, opts.Force)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check for no_compression mismatch and warn if found
+	hasMismatch, packages, err := releaseDir.CheckNoCompressionMismatch()
+	if err == nil && hasMismatch {
+		packageList := strings.Join(packages, ", ")
+		c.ui.ErrorLinef("Warning: The following packages have no_compression: true in their spec files, but final.yml does not have no_compression: true. Consider setting no_compression: true in final.yml to avoid compression on the outer release tarball: %s", packageList)
+	}
+
+	return release, nil
 }
 
 func (c CreateReleaseCmd) finalizeRelease(releaseDir boshreldir.ReleaseDir, release boshrel.Release, opts CreateReleaseOpts) error {

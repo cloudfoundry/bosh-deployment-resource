@@ -1,4 +1,13 @@
+> [!CAUTION]
+> This repository has been in-lined (using git-subtree) into diego-release. Please make any
+> future contributions directly to diego-release.
+
 # Workpool
+
+[![Go Report
+Card](https://goreportcard.com/badge/code.cloudfoundry.org/workpool)](https://goreportcard.com/report/code.cloudfoundry.org/workpool)
+[![Go
+Reference](https://pkg.go.dev/badge/code.cloudfoundry.org/workpool.svg)](https://pkg.go.dev/code.cloudfoundry.org/workpool)
 
 Use a `WorkPool` to perform units of work concurrently at a maximum
 rate. The worker goroutines will increase to the maximum number of

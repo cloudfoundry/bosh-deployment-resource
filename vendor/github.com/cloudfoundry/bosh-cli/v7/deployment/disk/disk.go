@@ -2,6 +2,7 @@ package disk
 
 import (
 	"encoding/json"
+	"errors"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	biproperty "github.com/cloudfoundry/bosh-utils/property"
@@ -9,6 +10,10 @@ import (
 	bicloud "github.com/cloudfoundry/bosh-cli/v7/cloud"
 	biconfig "github.com/cloudfoundry/bosh-cli/v7/config"
 )
+
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . Disk
 
 type Disk interface {
 	CID() string
@@ -64,7 +69,8 @@ func (d *disk) Delete() error {
 	deleteErr := d.cloud.DeleteDisk(d.cid)
 	if deleteErr != nil {
 		// allow DiskNotFoundError for idempotency
-		cloudErr, ok := deleteErr.(bicloud.Error)
+		var cloudErr bicloud.Error
+		ok := errors.As(deleteErr, &cloudErr)
 		if !ok || cloudErr.Type() != bicloud.DiskNotFoundError {
 			return bosherr.WrapError(deleteErr, "Deleting disk in the cloud")
 		}

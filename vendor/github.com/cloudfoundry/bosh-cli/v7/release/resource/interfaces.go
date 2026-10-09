@@ -6,7 +6,6 @@ import (
 	"github.com/cloudfoundry/bosh-cli/v7/crypto"
 )
 
-// You only need **one** of these per package!
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 //counterfeiter:generate . Archive
@@ -24,6 +23,7 @@ type ArchiveFactoryArgs struct {
 	PrepFiles      []File
 	Chunks         []string
 	FollowSymlinks bool
+	NoCompression  bool
 }
 
 //counterfeiter:generate . ArchiveIndex

@@ -11,7 +11,6 @@ import (
 	bio "github.com/cloudfoundry/bosh-cli/v7/io"
 )
 
-// You only need **one** of these per package!
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 //counterfeiter:generate . Director
@@ -76,6 +75,10 @@ type Director interface {
 	FindOrphanDisk(string) (OrphanDisk, error)
 	OrphanDisks() ([]OrphanDisk, error)
 	OrphanDisk(string) error
+
+	// Dynamic disk operations (TNZ-99509, TNZ-109499)
+	DeleteDynamicDisk(diskName string) error
+	DynamicDisks() ([]DynamicDisk, error)
 
 	FindOrphanNetwork(string) (OrphanNetwork, error)
 	OrphanNetworks() ([]OrphanNetwork, error)
@@ -208,25 +211,27 @@ type RestartOpts struct {
 }
 
 type RecreateOpts struct {
-	Canaries    string
-	MaxInFlight string
-	Force       bool
-	Fix         bool
-	SkipDrain   bool
-	DryRun      bool
-	Converge    bool
+	Canaries         string
+	MaxInFlight      string
+	Force            bool
+	Fix              bool
+	SkipDrain        bool
+	DryRun           bool
+	Converge         bool
+	VMsCreatedBefore time.Time
 }
 
 type UpdateOpts struct {
-	Recreate                bool
-	RecreatePersistentDisks bool
-	Fix                     bool
-	SkipDrain               SkipDrains
-	Canaries                string
-	MaxInFlight             string
-	DryRun                  bool
-	Diff                    DeploymentDiff
-	ForceLatestVariables    bool
+	Recreate                 bool
+	RecreatePersistentDisks  bool
+	RecreateVMsCreatedBefore time.Time
+	Fix                      bool
+	SkipDrain                SkipDrains
+	Canaries                 string
+	MaxInFlight              string
+	DryRun                   bool
+	Diff                     DeploymentDiff
+	ForceLatestVariables     bool
 }
 
 //counterfeiter:generate . ReleaseSeries
@@ -302,6 +307,7 @@ type TaskReporter interface {
 	TaskStarted(int)
 	TaskFinished(int, string)
 	TaskOutputChunk(int, []byte)
+	TaskHeartbeat(id int, state string, startedAt int64)
 }
 
 //counterfeiter:generate . OrphanDisk
@@ -317,6 +323,19 @@ type OrphanDisk interface {
 	OrphanedAt() time.Time
 
 	Delete() error
+}
+
+//counterfeiter:generate . DynamicDisk
+
+type DynamicDisk interface {
+	Name() string
+	DiskCID() string
+	DeploymentName() string
+	InstanceName() string
+	AvailabilityZone() string
+	Size() uint64
+	DiskPoolName() string
+	CPI() string
 }
 
 //counterfeiter:generate . OrphanNetwork

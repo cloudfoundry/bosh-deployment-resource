@@ -10,34 +10,37 @@ import (
 
 // The S3Cli represents configuration for the s3cli
 type S3Cli struct {
-	AccessKeyID          string `json:"access_key_id"`
-	SecretAccessKey      string `json:"secret_access_key"`
-	BucketName           string `json:"bucket_name"`
-	FolderName           string `json:"folder_name"`
-	CredentialsSource    string `json:"credentials_source"`
-	Host                 string `json:"host"`
-	Port                 int    `json:"port"` // 0 means no custom port
-	Region               string `json:"region"`
-	SSLVerifyPeer        bool   `json:"ssl_verify_peer"`
-	UseSSL               bool   `json:"use_ssl"`
-	SignatureVersion     int    `json:"signature_version,string"`
-	ServerSideEncryption string `json:"server_side_encryption"`
-	SSEKMSKeyID          string `json:"sse_kms_key_id"`
-	AssumeRoleArn        string `json:"assume_role_arn"`
-	MultipartUpload      bool   `json:"multipart_upload"`
-	UseV2SigningMethod   bool
-	HostStyle            bool   `json:"host_style"`
-	SwiftAuthAccount     string `json:"swift_auth_account"`
-	SwiftTempURLKey      string `json:"swift_temp_url_key"`
+	AccessKeyID                               string `json:"access_key_id"`
+	SecretAccessKey                           string `json:"secret_access_key"`
+	BucketName                                string `json:"bucket_name"`
+	FolderName                                string `json:"folder_name"`
+	CredentialsSource                         string `json:"credentials_source"`
+	Host                                      string `json:"host"`
+	Port                                      int    `json:"port"` // 0 means no custom port
+	Region                                    string `json:"region"`
+	SSLVerifyPeer                             bool   `json:"ssl_verify_peer"`
+	UseSSL                                    bool   `json:"use_ssl"`
+	ServerSideEncryption                      string `json:"server_side_encryption"`
+	SSEKMSKeyID                               string `json:"sse_kms_key_id"`
+	AssumeRoleArn                             string `json:"assume_role_arn"`
+	MultipartUpload                           bool   `json:"multipart_upload"`
+	HostStyle                                 bool   `json:"host_style"`
+	SwiftAuthAccount                          string `json:"swift_auth_account"`
+	SwiftTempURLKey                           string `json:"swift_temp_url_key"`
+	RequestChecksumCalculationEnabled         bool   `json:"request_checksum_calculation_enabled"`
+	ResponseChecksumCalculationEnabled        bool   `json:"response_checksum_calculation_enabled"`
+	UploaderRequestChecksumCalculationEnabled bool   `json:"uploader_request_checksum_calculation_enabled"`
+	// Optional knobs to tune transfer performance.
+	// If zero, the client will apply sensible defaults (handled by the S3 client layer).
+	// Part size values are provided in bytes.
+	DownloadConcurrency int   `json:"download_concurrency"`
+	DownloadPartSize    int64 `json:"download_part_size"`
+	UploadConcurrency   int   `json:"upload_concurrency"`
+	UploadPartSize      int64 `json:"upload_part_size"`
 }
 
-// EmptyRegion is required to allow us to use the AWS SDK against S3 compatible blobstores which do not have
-// the concept of a region
-const EmptyRegion = " "
-
-const (
-	defaultRegion = "us-east-1" //nolint:unused
-)
+const defaultAWSRegion = "us-east-1"
+const defaultGoogleRegion = "us-east-1"
 
 // StaticCredentialsSource specifies that credentials will be supplied using access_key_id and secret_access_key
 const StaticCredentialsSource = "static"
@@ -73,9 +76,12 @@ func NewFromReader(reader io.Reader) (S3Cli, error) {
 	}
 
 	c := S3Cli{
-		SSLVerifyPeer:   true,
-		UseSSL:          true,
-		MultipartUpload: true,
+		SSLVerifyPeer:                      true,
+		UseSSL:                             true,
+		MultipartUpload:                    true,
+		RequestChecksumCalculationEnabled:  true,
+		ResponseChecksumCalculationEnabled: true,
+		UploaderRequestChecksumCalculationEnabled: true,
 	}
 
 	err = json.Unmarshal(bytes, &c)
@@ -83,8 +89,14 @@ func NewFromReader(reader io.Reader) (S3Cli, error) {
 		return S3Cli{}, err
 	}
 
+	// Validate bucket presence
 	if c.BucketName == "" {
 		return S3Cli{}, errors.New("bucket_name must be set")
+	}
+
+	// Validate numeric fields: disallow negative values (zero means "use defaults")
+	if c.DownloadConcurrency < 0 || c.UploadConcurrency < 0 || c.DownloadPartSize < 0 || c.UploadPartSize < 0 {
+		return S3Cli{}, errors.New("download/upload concurrency and part sizes must be non-negative")
 	}
 
 	switch c.CredentialsSource {
@@ -143,53 +155,38 @@ func (c *S3Cli) configureAWS() {
 	c.MultipartUpload = true
 
 	if c.Region == "" {
-		c.Region = AWSHostToRegion(c.Host)
-	}
-
-	switch c.SignatureVersion {
-	case 2:
-		c.UseV2SigningMethod = true
-	case 4:
-		c.UseV2SigningMethod = false
-	default:
-		c.UseV2SigningMethod = false
+		if region := AWSHostToRegion(c.Host); region != "" {
+			c.Region = region
+		} else {
+			c.Region = defaultAWSRegion
+		}
 	}
 }
 
 func (c *S3Cli) configureAlicloud() {
 	c.MultipartUpload = true
-	c.configureDefaultSigningMethod()
 	c.HostStyle = true
 
 	c.Host = strings.Split(c.Host, ":")[0]
 	if c.Region == "" {
 		c.Region = AlicloudHostToRegion(c.Host)
 	}
+	c.RequestChecksumCalculationEnabled = false
+	c.UploaderRequestChecksumCalculationEnabled = false
 }
 
 func (c *S3Cli) configureGoogle() {
 	c.MultipartUpload = false
-	c.configureDefaultSigningMethod()
-}
-
-func (c *S3Cli) configureDefault() {
-	c.configureDefaultSigningMethod()
-}
-
-func (c *S3Cli) configureDefaultSigningMethod() {
-	switch c.SignatureVersion {
-	case 2:
-		c.UseV2SigningMethod = true
-	case 4:
-		c.UseV2SigningMethod = false
-	default:
-		c.UseV2SigningMethod = true
+	c.RequestChecksumCalculationEnabled = false
+	if c.Region == "" {
+		c.Region = defaultGoogleRegion
 	}
 }
 
-// UseRegion signals to users of the S3Cli whether to use Region information
-func (c *S3Cli) UseRegion() bool {
-	return c.Region != ""
+func (c *S3Cli) configureDefault() {
+	if c.Region == "" {
+		c.Region = defaultAWSRegion
+	}
 }
 
 // S3Endpoint returns the S3 URI to use if custom host information has been provided
@@ -207,4 +204,20 @@ func (c *S3Cli) S3Endpoint() string {
 		return fmt.Sprintf("%s:%d", c.Host, c.Port)
 	}
 	return c.Host
+}
+
+func (c *S3Cli) IsGoogle() bool {
+	return Provider(c.Host) == "google"
+}
+
+func (c *S3Cli) ShouldDisableRequestChecksumCalculation() bool {
+	return !c.RequestChecksumCalculationEnabled
+}
+
+func (c *S3Cli) ShouldDisableResponseChecksumCalculation() bool {
+	return !c.ResponseChecksumCalculationEnabled
+}
+
+func (c *S3Cli) ShouldDisableUploaderRequestChecksumCalculation() bool {
+	return !c.UploaderRequestChecksumCalculationEnabled
 }

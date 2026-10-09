@@ -56,7 +56,7 @@ func NewSSHArgs(connOpts ConnectionOpts, result boshdir.SSHResult, forceTTY bool
 }
 
 func (a SSHArgs) LoginForHost(host boshdir.Host) []string {
-	return []string{host.Host, "-l", host.Username}
+	return []string{"-l", host.Username, "--", host.Host}
 }
 
 func formProxyOpt(existenceChecker cmdExistenceChecker, proxyHostString string) string {
@@ -69,6 +69,12 @@ func formProxyOpt(existenceChecker cmdExistenceChecker, proxyHostString string) 
 
 func fmtAsProxyCommandOpt(command, proxyHost string) string {
 	return fmt.Sprintf("ProxyCommand=%s", fmt.Sprintf(command, proxyHost))
+}
+
+// shellQuote wraps s in POSIX single-quotes, escaping any embedded single-quote
+// with the standard '\” idiom.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 func (a SSHArgs) OptsForHost(host boshdir.Host) []string {
@@ -94,7 +100,7 @@ func (a SSHArgs) OptsForHost(host boshdir.Host) []string {
 		proxyString := a.ConnOpts.SOCKS5Proxy
 		if strings.HasPrefix(proxyString, "ssh+") {
 			a.Socks5Proxy.StartWithDialer(a.dialer) //nolint:errcheck
-			proxyString, _ = a.Socks5Proxy.Addr()
+			proxyString, _ = a.Socks5Proxy.Addr()   //nolint:errcheck
 		}
 
 		proxyOpt := formProxyOpt(a.CmdExistenceChecker, strings.TrimPrefix(proxyString, "socks5://"))
@@ -132,8 +138,8 @@ func (a SSHArgs) OptsForHost(host boshdir.Host) []string {
 			// Always force TTY for gateway ssh
 			"ProxyCommand=ssh -tt -W %s -l %s %s %s",
 			proxyHostPortTmpl,
-			gwUsername,
-			gwHost,
+			shellQuote(gwUsername),
+			shellQuote(gwHost),
 			strings.Join(gwCmdOpts, " "),
 		)
 

@@ -30,12 +30,19 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/internal"
 	internalgrpclog "google.golang.org/grpc/internal/grpclog"
+	"google.golang.org/grpc/internal/grpcsync"
 	"google.golang.org/grpc/internal/pretty"
 	rlsgrpc "google.golang.org/grpc/internal/proto/grpc_lookup_v1"
 	rlspb "google.golang.org/grpc/internal/proto/grpc_lookup_v1"
 )
 
 var newAdaptiveThrottler = func() adaptiveThrottler { return adaptive.New() }
+
+// newConnectivityStateSubscriber is a variable that can be overridden in tests
+// to wrap the connectivity state subscriber for testing purposes.
+var newConnectivityStateSubscriber = func(sub grpcsync.Subscriber) grpcsync.Subscriber {
+	return sub
+}
 
 type adaptiveThrottler interface {
 	ShouldThrottle() bool
@@ -55,9 +62,11 @@ type controlChannel struct {
 	// hammering the RLS service while it is overloaded or down.
 	throttler adaptiveThrottler
 
-	cc     *grpc.ClientConn
-	client rlsgrpc.RouteLookupServiceClient
-	logger *internalgrpclog.PrefixLogger
+	cc                      *grpc.ClientConn
+	client                  rlsgrpc.RouteLookupServiceClient
+	logger                  *internalgrpclog.PrefixLogger
+	dropConnStateSubscriber func()
+	seenTransientFailure    bool
 }
 
 // newControlChannel creates a controlChannel to rlsServerName and uses
@@ -75,15 +84,56 @@ func newControlChannel(rlsServerName, serviceConfig string, rpcTimeout time.Dura
 	if err != nil {
 		return nil, err
 	}
-	ctrlCh.cc, err = grpc.Dial(rlsServerName, dopts...)
+	ctrlCh.cc, err = grpc.NewClient(rlsServerName, dopts...)
 	if err != nil {
 		return nil, err
 	}
+	// Subscribe to connectivity state before connecting to avoid missing initial
+	// updates, which are only delivered to active subscribers.
+	subscribe := internal.SubscribeToConnectivityStateChanges.(func(cc *grpc.ClientConn, s grpcsync.Subscriber) func())
+	ctrlCh.dropConnStateSubscriber = subscribe(ctrlCh.cc, newConnectivityStateSubscriber(ctrlCh))
+	ctrlCh.cc.Connect()
 	ctrlCh.client = rlsgrpc.NewRouteLookupServiceClient(ctrlCh.cc)
 	ctrlCh.logger.Infof("Control channel created to RLS server at: %v", rlsServerName)
-
-	go ctrlCh.monitorConnectivityState()
 	return ctrlCh, nil
+}
+
+func (cc *controlChannel) OnMessage(msg any) {
+	st, ok := msg.(connectivity.State)
+	if !ok {
+		panic(fmt.Sprintf("Unexpected message type %T , wanted connectectivity.State type", msg))
+	}
+
+	switch st {
+	case connectivity.Ready:
+		// Only reset backoff when transitioning from TRANSIENT_FAILURE to READY.
+		// This indicates the RLS server has recovered from being unreachable, so
+		// we reset backoff state in all cache entries to allow pending RPCs to
+		// proceed immediately. We skip benign transitions like READY → IDLE → READY
+		// since those don't represent actual failures.
+		if cc.seenTransientFailure {
+			if cc.logger.V(2) {
+				cc.logger.Infof("Control channel back to READY after TRANSIENT_FAILURE")
+			}
+			cc.seenTransientFailure = false
+			if cc.backToReadyFunc != nil {
+				cc.backToReadyFunc()
+			}
+		} else {
+			if cc.logger.V(2) {
+				cc.logger.Infof("Control channel is READY")
+			}
+		}
+	case connectivity.TransientFailure:
+		// Track that we've entered TRANSIENT_FAILURE state so we know to reset
+		// backoffs when we recover to READY.
+		cc.logger.Warningf("Control channel is TRANSIENT_FAILURE")
+		cc.seenTransientFailure = true
+	default:
+		if cc.logger.V(2) {
+			cc.logger.Infof("Control channel connectivity state is %s", st)
+		}
+	}
 }
 
 // dialOpts constructs the dial options for the control plane channel.
@@ -97,7 +147,6 @@ func (cc *controlChannel) dialOpts(bOpts balancer.BuildOptions, serviceConfig st
 	if bOpts.Dialer != nil {
 		dopts = append(dopts, grpc.WithContextDialer(bOpts.Dialer))
 	}
-
 	// The control channel will use the channel credentials from the parent
 	// channel, including any call creds associated with the channel creds.
 	var credsOpt grpc.DialOption
@@ -131,62 +180,10 @@ func (cc *controlChannel) dialOpts(bOpts balancer.BuildOptions, serviceConfig st
 	return dopts, nil
 }
 
-func (cc *controlChannel) monitorConnectivityState() {
-	cc.logger.Infof("Starting connectivity state monitoring goroutine")
-	// Since we use two mechanisms to deal with RLS server being down:
-	//   - adaptive throttling for the channel as a whole
-	//   - exponential backoff on a per-request basis
-	// we need a way to avoid double-penalizing requests by counting failures
-	// toward both mechanisms when the RLS server is unreachable.
-	//
-	// To accomplish this, we monitor the state of the control plane channel. If
-	// the state has been TRANSIENT_FAILURE since the last time it was in state
-	// READY, and it then transitions into state READY, we push on a channel
-	// which is being read by the LB policy.
-	//
-	// The LB the policy will iterate through the cache to reset the backoff
-	// timeouts in all cache entries. Specifically, this means that it will
-	// reset the backoff state and cancel the pending backoff timer. Note that
-	// when cancelling the backoff timer, just like when the backoff timer fires
-	// normally, a new picker is returned to the channel, to force it to
-	// re-process any wait-for-ready RPCs that may still be queued if we failed
-	// them while we were in backoff. However, we should optimize this case by
-	// returning only one new picker, regardless of how many backoff timers are
-	// cancelled.
-
-	// Using the background context is fine here since we check for the ClientConn
-	// entering SHUTDOWN and return early in that case.
-	ctx := context.Background()
-
-	first := true
-	for {
-		// Wait for the control channel to become READY.
-		for s := cc.cc.GetState(); s != connectivity.Ready; s = cc.cc.GetState() {
-			if s == connectivity.Shutdown {
-				return
-			}
-			cc.cc.WaitForStateChange(ctx, s)
-		}
-		cc.logger.Infof("Connectivity state is READY")
-
-		if !first {
-			cc.logger.Infof("Control channel back to READY")
-			cc.backToReadyFunc()
-		}
-		first = false
-
-		// Wait for the control channel to move out of READY.
-		cc.cc.WaitForStateChange(ctx, connectivity.Ready)
-		if cc.cc.GetState() == connectivity.Shutdown {
-			return
-		}
-		cc.logger.Infof("Connectivity state is %s", cc.cc.GetState())
-	}
-}
-
 func (cc *controlChannel) close() {
-	cc.logger.Infof("Closing control channel")
+	cc.dropConnStateSubscriber()
 	cc.cc.Close()
+	cc.logger.Infof("Shutdown")
 }
 
 type lookupCallback func(targets []string, headerData string, err error)
@@ -209,7 +206,9 @@ func (cc *controlChannel) lookup(reqKeys map[string]string, reason rlspb.RouteLo
 			Reason:          reason,
 			StaleHeaderData: staleHeaders,
 		}
-		cc.logger.Infof("Sending RLS request %+v", pretty.ToJSON(req))
+		if cc.logger.V(2) {
+			cc.logger.Infof("Sending RLS request %+v", pretty.ToJSON(req))
+		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), cc.rpcTimeout)
 		defer cancel()

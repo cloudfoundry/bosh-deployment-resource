@@ -10,9 +10,14 @@ import (
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 	boshuuid "github.com/cloudfoundry/bosh-utils/uuid"
 
+	util "github.com/cloudfoundry/bosh-cli/v7/common/util"
 	bireljob "github.com/cloudfoundry/bosh-cli/v7/release/job"
 	bierbrenderer "github.com/cloudfoundry/bosh-cli/v7/templatescompiler/erbrenderer"
 )
+
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . JobRenderer
 
 type JobRenderer interface {
 	Render(releaseJob bireljob.Job, releaseJobProperties *biproperty.Map, jobProperties biproperty.Map, globalProperties biproperty.Map, deploymentName string, address string) (RenderedJob, error)
@@ -54,11 +59,17 @@ func (r *jobRenderer) Render(releaseJob bireljob.Job, releaseJobProperties *bipr
 	renderedJob := NewRenderedJob(releaseJob, destinationPath, r.fs, r.logger)
 
 	for src, dst := range releaseJob.Templates {
-		err := r.renderFile(
-			filepath.Join(sourcePath, "templates", src),
-			filepath.Join(destinationPath, dst),
-			context,
-		)
+		safeSrcPath, err := util.SafeJoinPath(filepath.Join(sourcePath, "templates"), src)
+		if err != nil {
+			defer renderedJob.DeleteSilently()
+			return nil, bosherr.Errorf("Invalid template source '%s': must be a safe local path", src)
+		}
+		safeDstPath, err := util.SafeJoinPath(destinationPath, dst)
+		if err != nil {
+			defer renderedJob.DeleteSilently()
+			return nil, bosherr.Errorf("Invalid template destination '%s': must be a safe local path", dst)
+		}
+		err = r.renderFile(safeSrcPath, safeDstPath, context)
 		if err != nil {
 			defer renderedJob.DeleteSilently()
 			return nil, bosherr.WrapErrorf(err, "Rendering template src: %s, dst: %s", src, dst)

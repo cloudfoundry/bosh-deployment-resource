@@ -11,6 +11,8 @@ import (
 	bicrypto "github.com/cloudfoundry/bosh-cli/v7/crypto"
 )
 
+//counterfeiter:generate . RenderedJobListCompressor
+
 type RenderedJobListCompressor interface {
 	Compress(RenderedJobList) (RenderedJobListArchive, error)
 }
@@ -63,7 +65,7 @@ func (c *renderedJobListCompressor) Compress(list RenderedJobList) (RenderedJobL
 		}
 	}
 
-	archivePath, err := c.compressor.CompressFilesInDir(renderedJobListDir)
+	archivePath, err := c.compressor.CompressFilesInDir(renderedJobListDir, boshcmd.CompressorOptions{})
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Compressing rendered job templates")
 	}

@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@ package monitoring
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"net/url"
 	"time"
 
 	monitoringpb "cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
 	gax "github.com/googleapis/gax-go/v2"
+	"github.com/googleapis/gax-go/v2/callctx"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
@@ -60,6 +62,7 @@ func defaultMetricGRPCClientOptions() []option.ClientOption {
 		internaloption.WithDefaultAudience("https://monitoring.googleapis.com/"),
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
 		internaloption.EnableJwtWithScope(),
+		internaloption.AllowHardBoundTokens("MTLS_S2A"),
 		internaloption.EnableNewAuthLibrary(),
 		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(math.MaxInt32))),
@@ -181,7 +184,7 @@ type MetricClient struct {
 
 // Wrapper methods routed to the internal client.
 
-// Close closes the connection to the API service. The user should invoke this when
+// Close closes the connection to the API service. **Always** call Close() when
 // the client is no longer required.
 func (c *MetricClient) Close() error {
 	return c.internalClient.Close()
@@ -283,6 +286,8 @@ type metricGRPCClient struct {
 
 	// The x-goog-* metadata to be sent with each request.
 	xGoogHeaders []string
+
+	logger *slog.Logger
 }
 
 // NewMetricClient creates a new metric service client based on gRPC.
@@ -292,6 +297,16 @@ type metricGRPCClient struct {
 // time series data.
 func NewMetricClient(ctx context.Context, opts ...option.ClientOption) (*MetricClient, error) {
 	clientOpts := defaultMetricGRPCClientOptions()
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		clientOpts = append(clientOpts, internaloption.WithTelemetryAttributes(map[string]string{
+			"gcp.client.service":  "monitoring",
+			"gcp.client.version":  getVersionClient(),
+			"gcp.client.repo":     "googleapis/google-cloud-go",
+			"gcp.client.artifact": "cloud.google.com/go/monitoring/apiv3/v2",
+			"gcp.client.language": "go",
+			"url.domain":          "monitoring.googleapis.com",
+		}))
+	}
 	if newMetricClientHook != nil {
 		hookOpts, err := newMetricClientHook(ctx, clientHookParams{})
 		if err != nil {
@@ -310,8 +325,31 @@ func NewMetricClient(ctx context.Context, opts ...option.ClientOption) (*MetricC
 		connPool:     connPool,
 		metricClient: monitoringpb.NewMetricServiceClient(connPool),
 		CallOptions:  &client.CallOptions,
+		logger:       internaloption.GetLogger(opts),
 	}
 	c.setGoogleClientInfo()
+	if gax.IsFeatureEnabled("METRICS") {
+		metrics := gax.NewClientMetrics(
+			gax.WithTelemetryLogger(c.logger),
+			gax.WithTelemetryAttributes(map[string]string{
+				gax.ClientService:  "monitoring",
+				gax.ClientVersion:  getVersionClient(),
+				gax.ClientArtifact: "cloud.google.com/go/monitoring/apiv3/v2",
+				gax.RPCSystem:      "grpc",
+				gax.URLDomain:      "monitoring.googleapis.com",
+			}),
+		)
+
+		client.CallOptions.ListMonitoredResourceDescriptors = append(client.CallOptions.ListMonitoredResourceDescriptors, gax.WithClientMetrics(metrics))
+		client.CallOptions.GetMonitoredResourceDescriptor = append(client.CallOptions.GetMonitoredResourceDescriptor, gax.WithClientMetrics(metrics))
+		client.CallOptions.ListMetricDescriptors = append(client.CallOptions.ListMetricDescriptors, gax.WithClientMetrics(metrics))
+		client.CallOptions.GetMetricDescriptor = append(client.CallOptions.GetMetricDescriptor, gax.WithClientMetrics(metrics))
+		client.CallOptions.CreateMetricDescriptor = append(client.CallOptions.CreateMetricDescriptor, gax.WithClientMetrics(metrics))
+		client.CallOptions.DeleteMetricDescriptor = append(client.CallOptions.DeleteMetricDescriptor, gax.WithClientMetrics(metrics))
+		client.CallOptions.ListTimeSeries = append(client.CallOptions.ListTimeSeries, gax.WithClientMetrics(metrics))
+		client.CallOptions.CreateTimeSeries = append(client.CallOptions.CreateTimeSeries, gax.WithClientMetrics(metrics))
+		client.CallOptions.CreateServiceTimeSeries = append(client.CallOptions.CreateServiceTimeSeries, gax.WithClientMetrics(metrics))
+	}
 
 	client.internalClient = c
 
@@ -331,13 +369,13 @@ func (c *metricGRPCClient) Connection() *grpc.ClientConn {
 // use by Google-written clients.
 func (c *metricGRPCClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", gax.GoVersion}, keyval...)
-	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "grpc", grpc.Version)
+	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "grpc", grpc.Version, "pb", protoVersion)
 	c.xGoogHeaders = []string{
 		"x-goog-api-client", gax.XGoogHeader(kv...),
 	}
 }
 
-// Close closes the connection to the API service. The user should invoke this when
+// Close closes the connection to the API service. **Always** call Close() when
 // the client is no longer required.
 func (c *metricGRPCClient) Close() error {
 	return c.connPool.Close()
@@ -348,9 +386,15 @@ func (c *metricGRPCClient) ListMonitoredResourceDescriptors(ctx context.Context,
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/ListMonitoredResourceDescriptors")
+	}
 	opts = append((*c.CallOptions).ListMonitoredResourceDescriptors[0:len((*c.CallOptions).ListMonitoredResourceDescriptors):len((*c.CallOptions).ListMonitoredResourceDescriptors)], opts...)
 	it := &MonitoredResourceDescriptorIterator{}
-	req = proto.Clone(req).(*monitoringpb.ListMonitoredResourceDescriptorsRequest)
+	req = proto.CloneOf(req)
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*monitoredrespb.MonitoredResourceDescriptor, string, error) {
 		resp := &monitoringpb.ListMonitoredResourceDescriptorsResponse{}
 		if pageToken != "" {
@@ -363,7 +407,7 @@ func (c *metricGRPCClient) ListMonitoredResourceDescriptors(ctx context.Context,
 		}
 		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 			var err error
-			resp, err = c.metricClient.ListMonitoredResourceDescriptors(ctx, req, settings.GRPC...)
+			resp, err = executeRPC(ctx, c.metricClient.ListMonitoredResourceDescriptors, req, settings.GRPC, c.logger, "ListMonitoredResourceDescriptors")
 			return err
 		}, opts...)
 		if err != nil {
@@ -394,11 +438,17 @@ func (c *metricGRPCClient) GetMonitoredResourceDescriptor(ctx context.Context, r
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/GetMonitoredResourceDescriptor")
+	}
 	opts = append((*c.CallOptions).GetMonitoredResourceDescriptor[0:len((*c.CallOptions).GetMonitoredResourceDescriptor):len((*c.CallOptions).GetMonitoredResourceDescriptor)], opts...)
 	var resp *monitoredrespb.MonitoredResourceDescriptor
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.metricClient.GetMonitoredResourceDescriptor(ctx, req, settings.GRPC...)
+		resp, err = executeRPC(ctx, c.metricClient.GetMonitoredResourceDescriptor, req, settings.GRPC, c.logger, "GetMonitoredResourceDescriptor")
 		return err
 	}, opts...)
 	if err != nil {
@@ -412,9 +462,15 @@ func (c *metricGRPCClient) ListMetricDescriptors(ctx context.Context, req *monit
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/ListMetricDescriptors")
+	}
 	opts = append((*c.CallOptions).ListMetricDescriptors[0:len((*c.CallOptions).ListMetricDescriptors):len((*c.CallOptions).ListMetricDescriptors)], opts...)
 	it := &MetricDescriptorIterator{}
-	req = proto.Clone(req).(*monitoringpb.ListMetricDescriptorsRequest)
+	req = proto.CloneOf(req)
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*metricpb.MetricDescriptor, string, error) {
 		resp := &monitoringpb.ListMetricDescriptorsResponse{}
 		if pageToken != "" {
@@ -427,7 +483,7 @@ func (c *metricGRPCClient) ListMetricDescriptors(ctx context.Context, req *monit
 		}
 		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 			var err error
-			resp, err = c.metricClient.ListMetricDescriptors(ctx, req, settings.GRPC...)
+			resp, err = executeRPC(ctx, c.metricClient.ListMetricDescriptors, req, settings.GRPC, c.logger, "ListMetricDescriptors")
 			return err
 		}, opts...)
 		if err != nil {
@@ -458,11 +514,17 @@ func (c *metricGRPCClient) GetMetricDescriptor(ctx context.Context, req *monitor
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/GetMetricDescriptor")
+	}
 	opts = append((*c.CallOptions).GetMetricDescriptor[0:len((*c.CallOptions).GetMetricDescriptor):len((*c.CallOptions).GetMetricDescriptor)], opts...)
 	var resp *metricpb.MetricDescriptor
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.metricClient.GetMetricDescriptor(ctx, req, settings.GRPC...)
+		resp, err = executeRPC(ctx, c.metricClient.GetMetricDescriptor, req, settings.GRPC, c.logger, "GetMetricDescriptor")
 		return err
 	}, opts...)
 	if err != nil {
@@ -476,11 +538,17 @@ func (c *metricGRPCClient) CreateMetricDescriptor(ctx context.Context, req *moni
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/CreateMetricDescriptor")
+	}
 	opts = append((*c.CallOptions).CreateMetricDescriptor[0:len((*c.CallOptions).CreateMetricDescriptor):len((*c.CallOptions).CreateMetricDescriptor)], opts...)
 	var resp *metricpb.MetricDescriptor
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.metricClient.CreateMetricDescriptor(ctx, req, settings.GRPC...)
+		resp, err = executeRPC(ctx, c.metricClient.CreateMetricDescriptor, req, settings.GRPC, c.logger, "CreateMetricDescriptor")
 		return err
 	}, opts...)
 	if err != nil {
@@ -494,10 +562,16 @@ func (c *metricGRPCClient) DeleteMetricDescriptor(ctx context.Context, req *moni
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/DeleteMetricDescriptor")
+	}
 	opts = append((*c.CallOptions).DeleteMetricDescriptor[0:len((*c.CallOptions).DeleteMetricDescriptor):len((*c.CallOptions).DeleteMetricDescriptor)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		_, err = c.metricClient.DeleteMetricDescriptor(ctx, req, settings.GRPC...)
+		_, err = executeRPC(ctx, c.metricClient.DeleteMetricDescriptor, req, settings.GRPC, c.logger, "DeleteMetricDescriptor")
 		return err
 	}, opts...)
 	return err
@@ -508,9 +582,15 @@ func (c *metricGRPCClient) ListTimeSeries(ctx context.Context, req *monitoringpb
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/ListTimeSeries")
+	}
 	opts = append((*c.CallOptions).ListTimeSeries[0:len((*c.CallOptions).ListTimeSeries):len((*c.CallOptions).ListTimeSeries)], opts...)
 	it := &TimeSeriesIterator{}
-	req = proto.Clone(req).(*monitoringpb.ListTimeSeriesRequest)
+	req = proto.CloneOf(req)
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*monitoringpb.TimeSeries, string, error) {
 		resp := &monitoringpb.ListTimeSeriesResponse{}
 		if pageToken != "" {
@@ -523,7 +603,7 @@ func (c *metricGRPCClient) ListTimeSeries(ctx context.Context, req *monitoringpb
 		}
 		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 			var err error
-			resp, err = c.metricClient.ListTimeSeries(ctx, req, settings.GRPC...)
+			resp, err = executeRPC(ctx, c.metricClient.ListTimeSeries, req, settings.GRPC, c.logger, "ListTimeSeries")
 			return err
 		}, opts...)
 		if err != nil {
@@ -554,10 +634,16 @@ func (c *metricGRPCClient) CreateTimeSeries(ctx context.Context, req *monitoring
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/CreateTimeSeries")
+	}
 	opts = append((*c.CallOptions).CreateTimeSeries[0:len((*c.CallOptions).CreateTimeSeries):len((*c.CallOptions).CreateTimeSeries)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		_, err = c.metricClient.CreateTimeSeries(ctx, req, settings.GRPC...)
+		_, err = executeRPC(ctx, c.metricClient.CreateTimeSeries, req, settings.GRPC, c.logger, "CreateTimeSeries")
 		return err
 	}, opts...)
 	return err
@@ -568,10 +654,16 @@ func (c *metricGRPCClient) CreateServiceTimeSeries(ctx context.Context, req *mon
 
 	hds = append(c.xGoogHeaders, hds...)
 	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//monitoring.googleapis.com/%v", req.GetName()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.monitoring.v3.MetricService/CreateServiceTimeSeries")
+	}
 	opts = append((*c.CallOptions).CreateServiceTimeSeries[0:len((*c.CallOptions).CreateServiceTimeSeries):len((*c.CallOptions).CreateServiceTimeSeries)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		_, err = c.metricClient.CreateServiceTimeSeries(ctx, req, settings.GRPC...)
+		_, err = executeRPC(ctx, c.metricClient.CreateServiceTimeSeries, req, settings.GRPC, c.logger, "CreateServiceTimeSeries")
 		return err
 	}, opts...)
 	return err

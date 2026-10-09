@@ -17,6 +17,7 @@ type ArchiveImpl struct {
 	additionalChunks []string
 	releaseDirPath   string
 	followSymlinks   bool
+	noCompression    bool
 
 	fingerprinter    Fingerprinter
 	compressor       boshcmd.Compressor
@@ -40,7 +41,7 @@ func NewArchiveImpl(
 		additionalChunks: args.Chunks,
 		followSymlinks:   args.FollowSymlinks,
 		releaseDirPath:   releaseDirPath,
-
+		noCompression:    args.NoCompression,
 		fingerprinter:    fingerprinter,
 		compressor:       compressor,
 		digestCalculator: digestCalculator,
@@ -65,7 +66,7 @@ func (a ArchiveImpl) Build(expectedFp string) (string, string, error) {
 	}
 
 	defer func() {
-		_ = a.fs.RemoveAll(stagingDir)
+		_ = a.fs.RemoveAll(stagingDir) //nolint:errcheck
 	}()
 
 	for _, file := range a.files {
@@ -90,7 +91,7 @@ func (a ArchiveImpl) Build(expectedFp string) (string, string, error) {
 		return "", "", bosherr.WrapError(err, "Running prep scripts")
 	}
 
-	archivePath, err := a.compressor.CompressFilesInDir(stagingDir)
+	archivePath, err := a.compressor.CompressFilesInDir(stagingDir, boshcmd.CompressorOptions{NoCompression: a.noCompression})
 	if err != nil {
 		return "", "", bosherr.WrapError(err, "Compressing staging directory")
 	}
@@ -117,8 +118,7 @@ func (a ArchiveImpl) runPrepScripts(stagingDir string) error {
 			Name: "bash",
 			Args: []string{"-x", prepFile.Path},
 
-			WorkingDir:     stagingDir,
-			UseIsolatedEnv: false,
+			WorkingDir: stagingDir,
 
 			Env: map[string]string{
 				"BUILD_DIR":   stagingDir,

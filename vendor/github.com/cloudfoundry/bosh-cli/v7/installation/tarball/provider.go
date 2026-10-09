@@ -24,6 +24,10 @@ type Source interface {
 	Description() string
 }
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . Provider
+
 type Provider interface {
 	Get(Source, biui.Stage) (path string, err error)
 }
@@ -116,7 +120,7 @@ func (p *provider) downloadRetryable(source Source) boshretry.Retryable {
 		}
 
 		defer func() {
-			downloadedFile.Close()
+			downloadedFile.Close() //nolint:errcheck
 
 			if err = p.fs.RemoveAll(downloadedFile.Name()); err != nil {
 				p.logger.Warn(p.logTag, "Failed to remove downloaded file: %s", err.Error())
@@ -149,7 +153,7 @@ func (p *provider) downloadRetryable(source Source) boshretry.Retryable {
 			return true, bosherr.WrapError(err, "Verifying digest for downloaded file")
 		}
 
-		downloadedFile.Close()
+		downloadedFile.Close() //nolint:errcheck
 
 		err = p.cache.Save(downloadedFile.Name(), source)
 		if err != nil {

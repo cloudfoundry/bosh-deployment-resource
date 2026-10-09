@@ -98,6 +98,10 @@ func (m *UpstreamTlsContext) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for AutoHostSni
+
+	// no validation rules for AutoSniSanValidation
+
 	// no validation rules for AllowRenegotiation
 
 	if all {
@@ -172,7 +176,7 @@ type UpstreamTlsContextMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m UpstreamTlsContextMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -535,7 +539,7 @@ type DownstreamTlsContextMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m DownstreamTlsContextMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -715,7 +719,7 @@ type TlsKeyLogMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m TlsKeyLogMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1296,7 +1300,7 @@ type CommonTlsContextMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m CommonTlsContextMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1467,7 +1471,7 @@ type CommonTlsContext_CertificateProviderMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m CommonTlsContext_CertificateProviderMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1577,7 +1581,7 @@ type CommonTlsContext_CertificateProviderInstanceMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m CommonTlsContext_CertificateProviderInstanceMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1823,7 +1827,7 @@ type CommonTlsContext_CombinedCertificateValidationContextMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m CommonTlsContext_CombinedCertificateValidationContextMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}

@@ -2,16 +2,19 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
 	bihttpagent "github.com/cloudfoundry/bosh-agent/v2/agentclient/http"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
+	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts" //nolint:staticcheck
 	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	boshssh "github.com/cloudfoundry/bosh-cli/v7/ssh"
 	boshui "github.com/cloudfoundry/bosh-cli/v7/ui"
-
-	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
 )
+
+const logTag = "ssh"
 
 type SSHCmd struct {
 	deployment       boshdir.Deployment
@@ -45,7 +48,7 @@ func (c SSHCmd) Run(opts SSHOpts, deploymentFetcher boshssh.DeploymentFetcher) e
 		}
 	}
 
-	sshOpts, connOpts, err := opts.GatewayFlags.AsSSHOpts()
+	sshOpts, connOpts, err := opts.GatewayFlags.AsSSHOpts() //nolint:staticcheck
 	if err != nil {
 		return err
 	}
@@ -68,7 +71,7 @@ func (c SSHCmd) Run(opts SSHOpts, deploymentFetcher boshssh.DeploymentFetcher) e
 		}
 
 		defer func() {
-			_ = c.deployment.CleanUpSSH(opts.Args.Slug, sshOpts)
+			_ = c.deployment.CleanUpSSH(opts.Args.Slug, sshOpts) //nolint:errcheck
 		}()
 	} else {
 		// no automatic source of host key
@@ -114,6 +117,7 @@ type EnvSSHCmd struct {
 	nonIntSSHRunner    boshssh.Runner
 	resultsSSHRunner   boshssh.Runner
 	ui                 boshui.UI
+	logger             boshlog.Logger
 }
 
 func NewEnvSSHCmd(
@@ -122,6 +126,7 @@ func NewEnvSSHCmd(
 	nonIntSSHRunner boshssh.Runner,
 	resultsSSHRunner boshssh.Runner,
 	ui boshui.UI,
+	logger boshlog.Logger,
 ) EnvSSHCmd {
 	return EnvSSHCmd{
 		agentClientFactory: agentClientFactory,
@@ -129,6 +134,7 @@ func NewEnvSSHCmd(
 		nonIntSSHRunner:    nonIntSSHRunner,
 		resultsSSHRunner:   resultsSSHRunner,
 		ui:                 ui,
+		logger:             logger,
 	}
 }
 
@@ -145,7 +151,7 @@ func (c EnvSSHCmd) Run(opts SSHOpts) error {
 		return err
 	}
 
-	sshOpts, connOpts, err := opts.GatewayFlags.AsSSHOpts()
+	sshOpts, connOpts, err := opts.GatewayFlags.AsSSHOpts() //nolint:staticcheck
 	if err != nil {
 		return err
 	}
@@ -168,7 +174,10 @@ func (c EnvSSHCmd) Run(opts SSHOpts) error {
 	}
 
 	defer func() {
-		_, _ = agentClient.CleanUpSSH(sshOpts.Username)
+		_, cleanupErr := agentClient.CleanUpSSH(sshOpts.Username)
+		if cleanupErr != nil {
+			c.logger.Warn(logTag, fmt.Sprintf("SSH cleanup failed for user %s. Artifacts may be left over on the VM: %v", sshOpts.Username, cleanupErr))
+		}
 	}()
 
 	// host key will be returned by agent over HTTPS
