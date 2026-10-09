@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"errors"
 	"math"
 	"strings"
 	"time"
@@ -24,8 +25,9 @@ type Clock interface {
 	Now() time.Time
 }
 
-// You only need **one** of these per package!
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . VM
 
 type VM interface {
 	CID() string
@@ -51,7 +53,6 @@ type VM interface {
 type vm struct {
 	cid          string
 	vmRepo       biconfig.VMRepo
-	stemcellRepo biconfig.StemcellRepo
 	diskDeployer DiskDeployer
 	agentClient  biagentclient.AgentClient
 	cloud        bicloud.Cloud
@@ -65,7 +66,6 @@ type vm struct {
 func NewVM(
 	cid string,
 	vmRepo biconfig.VMRepo,
-	stemcellRepo biconfig.StemcellRepo,
 	diskDeployer DiskDeployer,
 	agentClient biagentclient.AgentClient,
 	cloud bicloud.Cloud,
@@ -76,7 +76,6 @@ func NewVM(
 	return &vm{
 		cid:          cid,
 		vmRepo:       vmRepo,
-		stemcellRepo: stemcellRepo,
 		diskDeployer: diskDeployer,
 		agentClient:  agentClient,
 		cloud:        cloud,
@@ -90,7 +89,6 @@ func NewVM(
 func NewVMWithMetadata(
 	cid string,
 	vmRepo biconfig.VMRepo,
-	stemcellRepo biconfig.StemcellRepo,
 	diskDeployer DiskDeployer,
 	agentClient biagentclient.AgentClient,
 	cloud bicloud.Cloud,
@@ -102,7 +100,6 @@ func NewVMWithMetadata(
 	return &vm{
 		cid:          cid,
 		vmRepo:       vmRepo,
-		stemcellRepo: stemcellRepo,
 		diskDeployer: diskDeployer,
 		agentClient:  agentClient,
 		cloud:        cloud,
@@ -207,7 +204,8 @@ func (vm *vm) AttachDisk(disk bidisk.Disk) error {
 
 	err = vm.cloud.SetDiskMetadata(disk.CID(), vm.createDiskMetadata())
 	if err != nil {
-		cloudErr, ok := err.(bicloud.Error)
+		var cloudErr bicloud.Error
+		ok := errors.As(err, &cloudErr)
 		if ok && cloudErr.Type() == bicloud.NotImplementedError {
 			vm.logger.Warn(vm.logTag, "'SetDiskMetadata' not implemented by CPI")
 		} else {
@@ -287,7 +285,8 @@ func (vm *vm) Delete() error {
 	deleteErr := vm.cloud.DeleteVM(vm.cid)
 	if deleteErr != nil {
 		// allow VMNotFoundError for idempotency
-		cloudErr, ok := deleteErr.(bicloud.Error)
+		var cloudErr bicloud.Error
+		ok := errors.As(deleteErr, &cloudErr)
 		if !ok || cloudErr.Type() != bicloud.VMNotFoundError {
 			return bosherr.WrapError(deleteErr, "Deleting vm in the cloud")
 		}
@@ -296,11 +295,6 @@ func (vm *vm) Delete() error {
 	err := vm.vmRepo.ClearCurrent()
 	if err != nil {
 		return bosherr.WrapError(err, "Deleting vm from vm repo")
-	}
-
-	err = vm.stemcellRepo.ClearCurrent()
-	if err != nil {
-		return bosherr.WrapError(err, "Clearing current stemcell from stemcell repo")
 	}
 
 	// returns bicloud.Error only if it is a VMNotFoundError

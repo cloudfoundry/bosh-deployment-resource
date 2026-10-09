@@ -4,7 +4,7 @@ import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	"gopkg.in/yaml.v3"
 
-	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
+	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts" //nolint:staticcheck
 	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	boshtpl "github.com/cloudfoundry/bosh-cli/v7/director/template"
 	boshui "github.com/cloudfoundry/bosh-cli/v7/ui"
@@ -40,7 +40,7 @@ func NewDeployCmd(
 func (c DeployCmd) Run(opts DeployOpts) error {
 	tpl := boshtpl.NewTemplate(opts.Args.Manifest.Bytes)
 
-	configs, _ := c.director.ListConfigs(1, boshdir.ConfigsFilter{Type: "deploy"})
+	configs, _ := c.director.ListConfigs(1, boshdir.ConfigsFilter{Type: "deploy"}) //nolint:errcheck
 
 	for _, config := range configs {
 		var conf Conf
@@ -67,7 +67,7 @@ func (c DeployCmd) Run(opts DeployOpts) error {
 		}
 	}
 
-	bytes, err := tpl.Evaluate(opts.VarFlags.AsVariables(), opts.OpsFlags.AsOp(), boshtpl.EvaluateOpts{})
+	bytes, err := tpl.Evaluate(opts.VarFlags.AsVariables(), opts.OpsFlags.AsOp(), boshtpl.EvaluateOpts{}) //nolint:staticcheck
 	if err != nil {
 		return bosherr.WrapErrorf(err, "Evaluating manifest")
 	}
@@ -79,6 +79,8 @@ func (c DeployCmd) Run(opts DeployOpts) error {
 
 	if opts.FixReleases {
 		bytes, err = c.releaseUploader.UploadReleasesWithFix(bytes)
+	} else if opts.SkipUploadReleases {
+		c.ui.PrintLinef("Release-Check skipped.")
 	} else {
 		bytes, err = c.releaseUploader.UploadReleases(bytes)
 	}
@@ -99,16 +101,21 @@ func (c DeployCmd) Run(opts DeployOpts) error {
 		return err
 	}
 
+	if opts.RecreateVMsCreatedBefore.IsSet() {
+		opts.Recreate = true
+	}
+
 	updateOpts := boshdir.UpdateOpts{
-		RecreatePersistentDisks: opts.RecreatePersistentDisks,
-		Recreate:                opts.Recreate,
-		Fix:                     opts.Fix,
-		SkipDrain:               opts.SkipDrain,
-		DryRun:                  opts.DryRun,
-		Canaries:                opts.Canaries,
-		MaxInFlight:             opts.MaxInFlight,
-		Diff:                    deploymentDiff,
-		ForceLatestVariables:    opts.ForceLatestVariables,
+		RecreatePersistentDisks:  opts.RecreatePersistentDisks,
+		Recreate:                 opts.Recreate,
+		RecreateVMsCreatedBefore: opts.RecreateVMsCreatedBefore.Time,
+		Fix:                      opts.Fix,
+		SkipDrain:                opts.SkipDrain,
+		DryRun:                   opts.DryRun,
+		Canaries:                 opts.Canaries,
+		MaxInFlight:              opts.MaxInFlight,
+		Diff:                     deploymentDiff,
+		ForceLatestVariables:     opts.ForceLatestVariables,
 	}
 
 	return c.deployment.Update(bytes, updateOpts)
@@ -125,6 +132,8 @@ func setFlags(flags []string, opts DeployOpts) DeployOpts {
 			opts.Recreate = true
 		case "recreate-persistent-disks":
 			opts.RecreatePersistentDisks = true
+		case "skip-upload-releases":
+			opts.SkipUploadReleases = true
 		}
 	}
 

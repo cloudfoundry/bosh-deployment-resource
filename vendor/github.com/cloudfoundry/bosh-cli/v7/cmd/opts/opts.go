@@ -197,6 +197,7 @@ type CreateEnvOpts struct {
 	StatePath               string `long:"state" value-name:"PATH" description:"State file path"`
 	Recreate                bool   `long:"recreate" description:"Recreate VM in deployment"`
 	RecreatePersistentDisks bool   `long:"recreate-persistent-disks" description:"Recreate persistent disks in the deployment"`
+	FixStemcell             bool   `long:"fix-stemcell" description:"Forces re-upload of the stemcell; any existing stemcell image is orphaned and the VM is recreated"`
 	PackageDir              string `long:"package-dir" value-name:"DIR" description:"Package cache location override"`
 	cmd
 }
@@ -503,11 +504,13 @@ type DeployOpts struct {
 
 	NoRedact bool `long:"no-redact" description:"Show non-redacted manifest diff"`
 
-	Recreate                bool                `long:"recreate"                                description:"Recreate all VMs in deployment"`
-	RecreatePersistentDisks bool                `long:"recreate-persistent-disks"               description:"Recreate all persistent disks in deployment"`
-	Fix                     bool                `long:"fix"                                     description:"Recreate an instance with an unresponsive agent instead of erroring"`
-	FixReleases             bool                `long:"fix-releases"                            description:"Reupload releases in manifest and replace corrupt or missing jobs/packages"`
-	SkipDrain               []boshdir.SkipDrain `long:"skip-drain" value-name:"[INSTANCE-GROUP[/INSTANCE-ID]]"  description:"Skip running drain and pre-stop scripts for specific instance groups" optional:"true" optional-value:"*"`
+	Recreate                 bool                `long:"recreate"                                description:"Recreate all VMs in deployment"`
+	RecreatePersistentDisks  bool                `long:"recreate-persistent-disks"               description:"Recreate all persistent disks in deployment"`
+	RecreateVMsCreatedBefore TimeArg             `long:"recreate-vms-created-before"             description:"Only recreate VMs created before the given RFC 3339 timestamp"`
+	Fix                      bool                `long:"fix"                                     description:"Recreate an instance with an unresponsive agent instead of erroring"`
+	FixReleases              bool                `long:"fix-releases"                            description:"Reupload releases in manifest and replace corrupt or missing jobs/packages"`
+	SkipDrain                []boshdir.SkipDrain `long:"skip-drain" value-name:"[INSTANCE-GROUP[/INSTANCE-ID]]"  description:"Skip running drain and pre-stop scripts for specific instance groups" optional:"true" optional-value:"*"`
+	SkipUploadReleases       bool                `long:"skip-upload-releases"                  description:"Skips the upload procedure for releases"`
 
 	Canaries    string `long:"canaries" description:"Override manifest values for canaries"`
 	MaxInFlight string `long:"max-in-flight" description:"Override manifest values for max_in_flight"`
@@ -711,6 +714,8 @@ type RunErrandOpts struct {
 	KeepAlive   bool `long:"keep-alive" description:"Use existing VM to run an errand and keep it after completion"`
 	WhenChanged bool `long:"when-changed" description:"Run errand only if errand configuration has changed or if the previous run was unsuccessful"`
 
+	WithHeartbeat *int `long:"with-heartbeat" description:"Print task state every N seconds while waiting. Use '=' to specify interval" optional:"true" optional-value:"30"`
+
 	DownloadLogs  bool        `long:"download-logs" description:"Download logs"`
 	LogsDirectory DirOrCWDArg `long:"logs-dir" description:"Destination directory for logs" default:"."`
 
@@ -741,16 +746,18 @@ type DeleteNetworkArgs struct {
 
 type DisksOpts struct {
 	Orphaned bool `long:"orphaned" short:"o" description:"List orphaned disks"`
+	Dynamic  bool `long:"dynamic" description:"List dynamic disks"`
 	cmd
 }
 
 type DeleteDiskOpts struct {
-	Args DeleteDiskArgs `positional-args:"true" required:"true"`
+	Args    DeleteDiskArgs `positional-args:"true" required:"true"`
+	Dynamic bool           `long:"dynamic" description:"Delete a dynamic disk by name"`
 	cmd
 }
 
 type DeleteDiskArgs struct {
-	CID string `positional-arg-name:"CID"`
+	CID string `positional-arg-name:"CID-OR-NAME"`
 }
 
 type OrphanDiskOpts struct {
@@ -876,8 +883,8 @@ type LogsOpts struct {
 	Num    int  `long:"num"              description:"Last number of lines"`
 	Quiet  bool `long:"quiet"  short:"q" description:"Suppresses printing of headers when multiple files are being examined"`
 
-	Jobs    []string `long:"job"   description:"Limit to only specific jobs"`
-	Filters []string `long:"only"  description:"Filter logs (comma-separated)"`
+	Jobs    []string `long:"job"   description:"Limit to only specific jobs (can only be used in combination with --follow)"`
+	Filters []string `long:"only"  description:"Filter logs to specific jobs (comma-separated). Like --jobs, but for when --follow is not being used"`
 	Agent   bool     `long:"agent" description:"Include only agent logs"`
 	System  bool     `long:"system" description:"Include only system logs"`
 	All     bool     `long:"all-logs" description:"Include all logs (agent, system, and job logs)"`
@@ -940,8 +947,9 @@ type RestartOpts struct {
 type RecreateOpts struct {
 	Args AllOrInstanceGroupOrInstanceSlugArgs `positional-args:"true"`
 
-	SkipDrain bool `long:"skip-drain" description:"Skip running drain and pre-stop scripts"`
-	Fix       bool `long:"fix"        description:"Recreate an instance with an unresponsive agent instead of erroring"`
+	SkipDrain        bool    `long:"skip-drain" description:"Skip running drain and pre-stop scripts"`
+	Fix              bool    `long:"fix"        description:"Recreate an instance with an unresponsive agent instead of erroring"`
+	VMsCreatedBefore TimeArg `long:"vms-created-before" description:"Only recreate VMs created before the given RFC 3339 timestamp"`
 
 	Canaries    string `long:"canaries" description:"Override manifest values for canaries"`
 	MaxInFlight string `long:"max-in-flight" description:"Override manifest values for max_in_flight"`
@@ -1018,7 +1026,7 @@ type SCPOpts struct {
 }
 
 type SCPArgs struct {
-	Paths []string `positional-arg-name:"PATH"`
+	Paths []string `positional-arg-name:"PATH" description:"Strings referencing remote (e.g. \":/some/remote/path\" -- \"user@host\" may be omitted) or local paths (e.g. \"./some/local/path\"). To target specific instances, a bosh instance selector (instance-group/id, e.g. router/1) can be used in place of host, e.g. 'bosh scp router/1:/path/on/instance /tmp/local/path'. See CLI documentation for more examples."`
 }
 
 type GatewayFlags struct {

@@ -49,6 +49,13 @@ func (m *SPIFFECertValidatorConfig_TrustDomain) MarshalToSizedBufferVTStrict(dAt
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.WorkloadTrustDomain) > 0 {
+		i -= len(m.WorkloadTrustDomain)
+		copy(dAtA[i:], m.WorkloadTrustDomain)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.WorkloadTrustDomain)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if m.TrustBundle != nil {
 		if vtmsg, ok := interface{}(m.TrustBundle).(interface {
 			MarshalToSizedBufferVTStrict([]byte) (int, error)
@@ -111,6 +118,28 @@ func (m *SPIFFECertValidatorConfig) MarshalToSizedBufferVTStrict(dAtA []byte) (i
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.TrustBundles != nil {
+		if vtmsg, ok := interface{}(m.TrustBundles).(interface {
+			MarshalToSizedBufferVTStrict([]byte) (int, error)
+		}); ok {
+			size, err := vtmsg.MarshalToSizedBufferVTStrict(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.TrustBundles)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
 	if len(m.TrustDomains) > 0 {
 		for iNdEx := len(m.TrustDomains) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.TrustDomains[iNdEx].MarshalToSizedBufferVTStrict(dAtA[:i])
@@ -146,6 +175,10 @@ func (m *SPIFFECertValidatorConfig_TrustDomain) SizeVT() (n int) {
 		}
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	l = len(m.WorkloadTrustDomain)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -161,6 +194,16 @@ func (m *SPIFFECertValidatorConfig) SizeVT() (n int) {
 			l = e.SizeVT()
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.TrustBundles != nil {
+		if size, ok := interface{}(m.TrustBundles).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.TrustBundles)
+		}
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n

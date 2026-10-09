@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -15,6 +16,8 @@ type CompiledPackageRecord struct {
 	BlobID   string
 	BlobSHA1 string
 }
+
+//counterfeiter:generate . CompiledPackageRepo
 
 type CompiledPackageRepo interface {
 	Save(birelpkg.Compilable, CompiledPackageRecord) error
@@ -44,7 +47,7 @@ func (cpr *compiledPackageRepo) Find(pkg birelpkg.Compilable) (CompiledPackageRe
 
 	err := cpr.index.Find(cpr.pkgKey(pkg), &record)
 	if err != nil {
-		if err == biindex.ErrNotFound {
+		if errors.Is(err, biindex.ErrNotFound) {
 			return record, false, nil
 		}
 

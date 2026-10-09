@@ -9,22 +9,21 @@ import (
 	"github.com/cppforlife/go-patch/patch"
 
 	cmdconf "github.com/cloudfoundry/bosh-cli/v7/cmd/config"
+	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts" //nolint:staticcheck
 	"github.com/cloudfoundry/bosh-cli/v7/crypto"
 	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	boshtpl "github.com/cloudfoundry/bosh-cli/v7/director/template"
+	"github.com/cloudfoundry/bosh-cli/v7/pcap"
 	boshrel "github.com/cloudfoundry/bosh-cli/v7/release"
 	boshreldir "github.com/cloudfoundry/bosh-cli/v7/releasedir"
 	boshssh "github.com/cloudfoundry/bosh-cli/v7/ssh"
 	bistemcell "github.com/cloudfoundry/bosh-cli/v7/stemcell"
 	boshui "github.com/cloudfoundry/bosh-cli/v7/ui"
+	boshtbl "github.com/cloudfoundry/bosh-cli/v7/ui/table"
 	boshuit "github.com/cloudfoundry/bosh-cli/v7/ui/task"
 
 	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
 	boshfu "github.com/cloudfoundry/bosh-utils/fileutil"
-
-	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
-	"github.com/cloudfoundry/bosh-cli/v7/pcap"
-	boshtbl "github.com/cloudfoundry/bosh-cli/v7/ui/table"
 )
 
 type Cmd struct {
@@ -225,7 +224,19 @@ func (c Cmd) Execute() (cmdErr error) {
 		return NewErrandsCmd(deps.UI, c.deployment()).Run()
 
 	case *RunErrandOpts:
-		director, deployment := c.directorAndDeployment()
+		sess, ok := c.session().(*SessionImpl)
+		if !ok {
+			return fmt.Errorf("internal error: expected *SessionImpl")
+		}
+		director, err := sess.Director()
+		c.panicIfErr(err)
+		deployment, err := sess.Deployment()
+		c.panicIfErr(err)
+
+		if opts.WithHeartbeat != nil && sess.taskReporter != nil {
+			sess.taskReporter.EnableWithHeartbeat(time.Duration(*opts.WithHeartbeat) * time.Second)
+		}
+
 		downloader := NewUIDownloader(director, deps.Time, deps.FS, deps.UI)
 		return NewRunErrandCmd(deployment, downloader, deps.UI).Run(*opts)
 
@@ -392,7 +403,7 @@ func (c Cmd) Execute() (cmdErr error) {
 
 		if opts.TargetDirector {
 			agentClientFactory := bihttpagent.NewAgentClientFactory(1*time.Second, deps.Logger)
-			return NewEnvSSHCmd(agentClientFactory, intSSHRunner, nonIntSSHRunner, resultsSSHRunner, deps.UI).Run(*opts)
+			return NewEnvSSHCmd(agentClientFactory, intSSHRunner, nonIntSSHRunner, resultsSSHRunner, deps.UI, deps.Logger).Run(*opts)
 		} else {
 			sshHostBuilder := boshssh.NewHostBuilder()
 			return NewSSHCmd(intSSHRunner, nonIntSSHRunner, resultsSSHRunner, deps.UI, sshHostBuilder).Run(*opts, c.getDeployment)
@@ -503,7 +514,7 @@ func (c Cmd) Execute() (cmdErr error) {
 		return NewVariablesCmd(deps.UI, c.deployment()).Run(*opts)
 
 	default:
-		return fmt.Errorf("Unhandled command: %#v", c.Opts)
+		return fmt.Errorf("Unhandled command: %#v", c.Opts) //nolint:staticcheck
 	}
 }
 func (c Cmd) configureUI() {
@@ -547,7 +558,10 @@ func (c Cmd) config() cmdconf.Config {
 }
 
 func (c Cmd) session() Session {
-	return NewSessionFromOpts(c.BoshOpts, c.config(), c.deps.UI, true, true, c.deps.FS, c.deps.Logger)
+	return NewSessionImpl(
+		NewSessionContextImpl(c.BoshOpts, c.config(), c.deps.FS),
+		c.deps.UI, true, true, c.deps.Logger,
+	)
 }
 
 func (c Cmd) director() boshdir.Director {

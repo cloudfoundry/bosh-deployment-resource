@@ -11,7 +11,6 @@ import (
 	boshpkg "github.com/cloudfoundry/bosh-cli/v7/release/pkg"
 )
 
-// You only need **one** of these per package!
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 //counterfeiter:generate . ReleaseDir
@@ -25,6 +24,9 @@ type ReleaseDir interface {
 
 	// DefaultName returns a string for the release.
 	DefaultName() (string, error)
+
+	// NoCompression returns a boolean indicating whether the release should be built with compression disabled.
+	NoCompression() bool
 
 	// NextDevVersion and NextFinalVersion returns a next version for the that name.
 	// It does not account for gaps and just plainly increments.
@@ -42,6 +44,11 @@ type ReleaseDir interface {
 
 	// FinalizeRelease adds the Release to the final list so that it's consumable by others.
 	FinalizeRelease(release boshrel.Release, force bool) error
+
+	// CheckNoCompressionMismatch checks if any packages have no_compression: true in their spec files
+	// but final.yml does not have no_compression: true. Returns true if there's a mismatch,
+	// along with a list of package names that have no_compression: true.
+	CheckNoCompressionMismatch() (bool, []string, error)
 }
 
 //counterfeiter:generate . Config
@@ -51,6 +58,7 @@ type Config interface {
 	SaveName(string) error
 
 	Blobstore() (string, map[string]interface{}, error)
+	NoCompression() bool
 }
 
 //counterfeiter:generate . Generator

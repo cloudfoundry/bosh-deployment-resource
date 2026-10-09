@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,6 +19,8 @@ import (
 	bistemcell "github.com/cloudfoundry/bosh-cli/v7/stemcell"
 )
 
+//counterfeiter:generate . Manager
+
 type Manager interface {
 	FindCurrent() (VM, bool, error)
 	Create(stemcell bistemcell.CloudStemcell, deploymentManifest bideplmanifest.Manifest, diskCIDs []string) (VM, error)
@@ -25,7 +28,6 @@ type Manager interface {
 
 type manager struct {
 	vmRepo        biconfig.VMRepo
-	stemcellRepo  biconfig.StemcellRepo
 	diskDeployer  DiskDeployer
 	agentClient   biagentclient.AgentClient
 	cloud         bicloud.Cloud
@@ -38,7 +40,6 @@ type manager struct {
 
 func NewManager(
 	vmRepo biconfig.VMRepo,
-	stemcellRepo biconfig.StemcellRepo,
 	diskDeployer DiskDeployer,
 	agentClient biagentclient.AgentClient,
 	cloud bicloud.Cloud,
@@ -51,7 +52,6 @@ func NewManager(
 		cloud:         cloud,
 		agentClient:   agentClient,
 		vmRepo:        vmRepo,
-		stemcellRepo:  stemcellRepo,
 		diskDeployer:  diskDeployer,
 		uuidGenerator: uuidGenerator,
 		fs:            fs,
@@ -74,7 +74,6 @@ func (m *manager) FindCurrent() (VM, bool, error) {
 	vm := NewVM(
 		vmCID,
 		m.vmRepo,
-		m.stemcellRepo,
 		m.diskDeployer,
 		m.agentClient,
 		m.cloud,
@@ -134,7 +133,8 @@ func (m *manager) Create(stemcell bistemcell.CloudStemcell, deploymentManifest b
 
 	err = m.cloud.SetVMMetadata(cid, metadata)
 	if err != nil {
-		cloudErr, ok := err.(bicloud.Error)
+		var cloudErr bicloud.Error
+		ok := errors.As(err, &cloudErr)
 		if ok && cloudErr.Type() == bicloud.NotImplementedError {
 			// ignore it
 		} else {
@@ -145,7 +145,6 @@ func (m *manager) Create(stemcell bistemcell.CloudStemcell, deploymentManifest b
 	vm := NewVMWithMetadata(
 		cid,
 		m.vmRepo,
-		m.stemcellRepo,
 		m.diskDeployer,
 		m.agentClient,
 		m.cloud,

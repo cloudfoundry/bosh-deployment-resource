@@ -38,23 +38,23 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"cloud.google.com/go/auth"
 	"cloud.google.com/go/internal/optional"
-	"cloud.google.com/go/internal/trace"
 	"cloud.google.com/go/storage/internal"
 	"cloud.google.com/go/storage/internal/apiv2/storagepb"
 	"github.com/googleapis/gax-go/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
 	raw "google.golang.org/api/storage/v1"
-	"google.golang.org/api/transport"
 	htransport "google.golang.org/api/transport/http"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/experimental/stats"
 	"google.golang.org/grpc/stats/opentelemetry"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -65,15 +65,17 @@ import (
 var signedURLMethods = map[string]bool{"DELETE": true, "GET": true, "HEAD": true, "POST": true, "PUT": true}
 
 var (
-	// ErrBucketNotExist indicates that the bucket does not exist.
+	// ErrBucketNotExist indicates that the bucket does not exist. It should be
+	// checked for using [errors.Is] instead of direct equality.
 	ErrBucketNotExist = errors.New("storage: bucket doesn't exist")
-	// ErrObjectNotExist indicates that the object does not exist.
+	// ErrObjectNotExist indicates that the object does not exist. It should be
+	// checked for using [errors.Is] instead of direct equality.
 	ErrObjectNotExist = errors.New("storage: object doesn't exist")
 	// errMethodNotSupported indicates that the method called is not currently supported by the client.
 	// TODO: Export this error when launching the transport-agnostic client.
 	errMethodNotSupported = errors.New("storage: method is not currently supported")
-	// errMethodNotValid indicates that given HTTP method is not valid.
-	errMethodNotValid = fmt.Errorf("storage: HTTP method should be one of %v", reflect.ValueOf(signedURLMethods).MapKeys())
+	// errSignedURLMethodNotValid indicates that given HTTP method is not valid.
+	errSignedURLMethodNotValid = fmt.Errorf("storage: HTTP method should be one of %v", reflect.ValueOf(signedURLMethods).MapKeys())
 )
 
 var userAgent = fmt.Sprintf("gcloud-golang-storage/%s", internal.Version)
@@ -117,11 +119,25 @@ type Client struct {
 	// xmlHost is the default host used for XML requests.
 	xmlHost string
 	// May be nil.
-	creds *google.Credentials
+	creds *auth.Credentials
 	retry *retryConfig
 
 	// tc is the transport-agnostic client implemented with either gRPC or HTTP.
 	tc storageClient
+
+	// Option to use gRRPC appendable upload API was set.
+	grpcAppendableUploads bool
+
+	bucketMetadataCache *bucketMetadataCache
+}
+
+// credsJSON returns the raw JSON of the Client's creds and true, or an empty slice
+// and false if no credentials JSON is available.
+func (c Client) credsJSON() ([]byte, bool) {
+	if c.creds != nil && len(c.creds.JSON()) > 0 {
+		return c.creds.JSON(), true
+	}
+	return []byte{}, false
 }
 
 // NewClient creates a new Google Cloud Storage client using the HTTP transport.
@@ -134,7 +150,7 @@ type Client struct {
 // You may configure the client by passing in options from the [google.golang.org/api/option]
 // package. You may also use options defined in this package, such as [WithJSONReads].
 func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error) {
-	var creds *google.Credentials
+	var creds *auth.Credentials
 
 	// In general, it is recommended to use raw.NewService instead of htransport.NewClient
 	// since raw.NewService configures the correct default endpoints when initializing the
@@ -150,14 +166,15 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 		opts = append(opts, internaloption.WithDefaultEndpointTemplate("https://storage.UNIVERSE_DOMAIN/storage/v1/"),
 			internaloption.WithDefaultMTLSEndpoint("https://storage.mtls.googleapis.com/storage/v1/"),
 			internaloption.WithDefaultUniverseDomain("googleapis.com"),
+			internaloption.EnableNewAuthLibrary(),
 		)
 
 		// Don't error out here. The user may have passed in their own HTTP
 		// client which does not auth with ADC or other common conventions.
-		c, err := transport.Creds(ctx, opts...)
+		c, err := internaloption.AuthCreds(ctx, opts)
 		if err == nil {
 			creds = c
-			opts = append(opts, internaloption.WithCredentials(creds))
+			opts = append(opts, option.WithAuthCredentials(creds))
 		}
 	} else {
 		var hostURL *url.URL
@@ -192,7 +209,9 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 		return nil, fmt.Errorf("dialing: %w", err)
 	}
 	// RawService should be created with the chosen endpoint to take account of user override.
-	rawService, err := raw.NewService(ctx, option.WithEndpoint(ep), option.WithHTTPClient(hc))
+	// Preserve other user-supplied options as well.
+	opts = append(opts, option.WithEndpoint(ep), option.WithHTTPClient(hc))
+	rawService, err := raw.NewService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("storage client: %w", err)
 	}
@@ -207,14 +226,27 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 		return nil, fmt.Errorf("storage: %w", err)
 	}
 
-	return &Client{
+	var tcWrapped storageClient = tc
+	if httpClient, ok := tc.(*httpStorageClient); ok && httpClient.metrics != nil {
+		tcWrapped = &metricsStorageClient{
+			storageClient: tc,
+			metrics:       httpClient.metrics,
+			isHTTP:        true,
+		}
+	}
+
+	c := &Client{
 		hc:      hc,
 		raw:     rawService,
 		scheme:  u.Scheme,
 		xmlHost: u.Host,
 		creds:   creds,
-		tc:      tc,
-	}, nil
+		tc:      tcWrapped,
+	}
+	if isACOEnabled() {
+		c.bucketMetadataCache = newBucketMetadataCache(defaultBucketMetadataCacheLimit, c.tc)
+	}
+	return c, nil
 }
 
 // NewGRPCClient creates a new Storage client using the gRPC transport and API.
@@ -234,8 +266,22 @@ func NewGRPCClient(ctx context.Context, opts ...option.ClientOption) (*Client, e
 	if err != nil {
 		return nil, err
 	}
-
-	return &Client{tc: tc}, nil
+	var tcWrapped storageClient = tc
+	if tc.metrics != nil {
+		tcWrapped = &metricsStorageClient{
+			storageClient: tc,
+			metrics:       tc.metrics,
+			isHTTP:        false,
+		}
+	}
+	c := &Client{
+		tc:                    tcWrapped,
+		grpcAppendableUploads: tc.config.grpcAppendableUploads,
+	}
+	if isACOEnabled() {
+		c.bucketMetadataCache = newBucketMetadataCache(defaultBucketMetadataCacheLimit, c.tc)
+	}
+	return c, nil
 }
 
 // CheckDirectConnectivitySupported checks if gRPC direct connectivity
@@ -302,6 +348,7 @@ func (c *Client) Close() error {
 	c.hc = nil
 	c.raw = nil
 	c.creds = nil
+	c.bucketMetadataCache = nil
 	if c.tc != nil {
 		return c.tc.Close()
 	}
@@ -389,7 +436,7 @@ func (s bucketBoundHostname) path(bucket, object string) string {
 }
 
 // PathStyle is the default style, and will generate a URL of the form
-// "<host-name>/<bucket-name>/<object-name>". By default, <host-name> is
+// "{host-name}/{bucket-name}/{object-name}". By default, {host-name} is
 // storage.googleapis.com, but setting an endpoint on the storage Client or
 // through STORAGE_EMULATOR_HOST overrides this. Setting Hostname on
 // SignedURLOptions or PostPolicyV4Options overrides everything else.
@@ -398,7 +445,7 @@ func PathStyle() URLStyle {
 }
 
 // VirtualHostedStyle generates a URL relative to the bucket's virtual
-// hostname, e.g. "<bucket-name>.storage.googleapis.com/<object-name>".
+// hostname, e.g. "{bucket-name}.storage.googleapis.com/{object-name}".
 func VirtualHostedStyle() URLStyle {
 	return virtualHostedStyle{}
 }
@@ -406,7 +453,7 @@ func VirtualHostedStyle() URLStyle {
 // BucketBoundHostname generates a URL with a custom hostname tied to a
 // specific GCS bucket. The desired hostname should be passed in using the
 // hostname argument. Generated urls will be of the form
-// "<bucket-bound-hostname>/<object-name>". See
+// "{bucket-bound-hostname}/{object-name}". See
 // https://cloud.google.com/storage/docs/request-endpoints#cname and
 // https://cloud.google.com/load-balancing/docs/https/adding-backend-buckets-to-load-balancers
 // for details. Note that for CNAMEs, only HTTP is supported, so Insecure must
@@ -433,7 +480,7 @@ type SignedURLOptions struct {
 
 	// PrivateKey is the Google service account private key. It is obtainable
 	// from the Google Developers Console.
-	// At https://console.developers.google.com/project/<your-project-id>/apiui/credential,
+	// At https://console.developers.google.com/project/{your-project-id}/apiui/credential,
 	// create a service account client ID or reuse one of your existing service account
 	// credentials. Click on the "Generate new P12 key" to generate and download
 	// a new private key. Once you download the P12 file, use the following command
@@ -689,7 +736,7 @@ func validateOptions(opts *SignedURLOptions, now time.Time) error {
 	}
 	opts.Method = strings.ToUpper(opts.Method)
 	if _, ok := signedURLMethods[opts.Method]; !ok {
-		return errMethodNotValid
+		return errSignedURLMethodNotValid
 	}
 	if opts.Expires.IsZero() {
 		return errors.New("storage: missing required expires option")
@@ -937,6 +984,9 @@ func signedURLV2(bucket, name string, opts *SignedURLOptions) (string, error) {
 	return u.String(), nil
 }
 
+// ReadHandle associated with the object. This is periodically refreshed.
+type ReadHandle []byte
+
 // ObjectHandle provides operations on an object in a Google Cloud Storage bucket.
 // Use BucketHandle.Object to get a handle.
 type ObjectHandle struct {
@@ -952,6 +1002,23 @@ type ObjectHandle struct {
 	retry             *retryConfig
 	overrideRetention *bool
 	softDeleted       bool
+	readHandle        ReadHandle
+}
+
+// ReadHandle returns a new ObjectHandle that uses the ReadHandle to open the objects.
+//
+// Objects that have already been opened can be opened an additional time,
+// using a read handle returned in the response, at lower latency.
+// This produces the exact same object and generation and does not check if
+// the generation is still the newest one.
+// Note that this will be a noop unless it's set on a gRPC client on buckets with
+// bi-directional read API access.
+// Also note that you can get a ReadHandle only via calling reader.ReadHandle() on a
+// previous read of the same object.
+func (o *ObjectHandle) ReadHandle(r ReadHandle) *ObjectHandle {
+	o2 := *o
+	o2.readHandle = r
+	return &o2
 }
 
 // ACL provides access to the object's access control list.
@@ -999,8 +1066,8 @@ func (o *ObjectHandle) Key(encryptionKey []byte) *ObjectHandle {
 // Attrs returns meta information about the object.
 // ErrObjectNotExist will be returned if the object is not found.
 func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *ObjectAttrs, err error) {
-	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Attrs")
-	defer func() { trace.EndSpan(ctx, err) }()
+	ctx, _ = startSpanWithBucket(ctx, o.c, o.bucket, "Object.Attrs")
+	defer func() { endSpan(ctx, err) }()
 
 	if err := o.validate(); err != nil {
 		return nil, err
@@ -1013,8 +1080,8 @@ func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *ObjectAttrs, err error
 // ObjectAttrsToUpdate docs for details on treatment of zero values.
 // ErrObjectNotExist will be returned if the object is not found.
 func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (oa *ObjectAttrs, err error) {
-	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Update")
-	defer func() { trace.EndSpan(ctx, err) }()
+	ctx, _ = startSpanWithBucket(ctx, o.c, o.bucket, "Object.Update")
+	defer func() { endSpan(ctx, err) }()
 
 	if err := o.validate(); err != nil {
 		return nil, err
@@ -1080,10 +1147,19 @@ type ObjectAttrsToUpdate struct {
 	// extending the RetainUntil time on the object retention must be done
 	// on an ObjectHandle with OverrideUnlockedRetention set to true.
 	Retention *ObjectRetention
+
+	// Contexts allows adding, modifying, or deleting individual object contexts.
+	// To add or modify a context, set the value field in ObjectCustomContextPayload.
+	// To delete a context, set the Delete field in ObjectCustomContextPayload to true.
+	// To remove all contexts, pass Custom as an empty map in Contexts. Passing nil Custom
+	// map will be no-op.
+	Contexts *ObjectContexts
 }
 
 // Delete deletes the single specified object.
-func (o *ObjectHandle) Delete(ctx context.Context) error {
+func (o *ObjectHandle) Delete(ctx context.Context) (err error) {
+	ctx, _ = startSpanWithBucket(ctx, o.c, o.bucket, "Object.Delete")
+	defer func() { endSpan(ctx, err) }()
 	if err := o.validate(); err != nil {
 		return err
 	}
@@ -1156,6 +1232,35 @@ func (o *ObjectHandle) Restore(ctx context.Context, opts *RestoreOptions) (*Obje
 	}, sOpts...)
 }
 
+// Move changes the name of the object to the destination name.
+// It can only be used to rename an object within the same bucket.
+//
+// Any preconditions set on the ObjectHandle will be applied for the source
+// object. Set preconditions on the destination object using
+// [MoveObjectDestination.Conditions].
+func (o *ObjectHandle) Move(ctx context.Context, destination MoveObjectDestination) (*ObjectAttrs, error) {
+	if err := o.validate(); err != nil {
+		return nil, err
+	}
+
+	sOpts := makeStorageOpts(true, o.retry, o.userProject)
+	return o.c.tc.MoveObject(ctx, &moveObjectParams{
+		bucket:        o.bucket,
+		srcObject:     o.object,
+		dstObject:     destination.Object,
+		srcConds:      o.conds,
+		dstConds:      destination.Conditions,
+		encryptionKey: o.encryptionKey,
+	}, sOpts...)
+}
+
+// MoveObjectDestination provides the destination object name and (optional) preconditions
+// for [ObjectHandle.Move].
+type MoveObjectDestination struct {
+	Object     string
+	Conditions *Conditions
+}
+
 // NewWriter returns a storage Writer that writes to the GCS object
 // associated with this ObjectHandle.
 //
@@ -1175,14 +1280,114 @@ func (o *ObjectHandle) Restore(ctx context.Context, opts *RestoreOptions) (*Obje
 // It is the caller's responsibility to call Close when writing is done. To
 // stop writing without saving the data, cancel the context.
 func (o *ObjectHandle) NewWriter(ctx context.Context) *Writer {
-	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Writer")
+	ctx, _ = startSpanWithBucket(ctx, o.c, o.bucket, "Object.Writer")
 	return &Writer{
 		ctx:         ctx,
 		o:           o,
 		donec:       make(chan struct{}),
 		ObjectAttrs: ObjectAttrs{Name: o.object},
 		ChunkSize:   googleapi.DefaultUploadChunkSize,
+		Append:      o.c.grpcAppendableUploads,
 	}
+}
+
+// NewWriterFromAppendableObject opens a new Writer to an object which has been
+// partially flushed to GCS, but not finalized. It returns the Writer as well
+// as the current end offset of the object. All bytes written will be appended
+// continuing from the offset.
+//
+// Generation must be set on the ObjectHandle or an error will be returned.
+//
+// Writer fields such as ChunkSize or ChunkRetryDuration can be set only
+// by setting the equivalent field in [AppendableWriterOpts]. Attributes set
+// on the returned Writer will not be honored since the stream to GCS has
+// already been opened. Some fields such as ObjectAttrs and checksums cannot
+// be set on a takeover for append.
+//
+// It is the caller's responsibility to call Close when writing is complete to
+// close the stream.
+// Calling Close or Flush is necessary to sync any data in the pipe to GCS.
+//
+// The returned Writer is not safe to use across multiple go routines. In
+// addition, if you attempt to append to the same object from multiple
+// Writers at the same time, an error will be returned on Flush or Close.
+//
+// NewWriterFromAppendableObject is supported only for gRPC clients and only for
+// objects which were created append semantics and not finalized.
+func (o *ObjectHandle) NewWriterFromAppendableObject(ctx context.Context, opts *AppendableWriterOpts) (*Writer, int64, error) {
+	ctx, _ = startSpanWithBucket(ctx, o.c, o.bucket, "Object.WriterFromAppendableObject")
+	if o.gen < 0 {
+		return nil, 0, errors.New("storage: ObjectHandle.Generation must be set to use NewWriterFromAppendableObject")
+	}
+	toc := make(chan int64)
+	w := &Writer{
+		ctx:               ctx,
+		o:                 o,
+		donec:             make(chan struct{}),
+		ObjectAttrs:       ObjectAttrs{Name: o.object},
+		Append:            true,
+		setTakeoverOffset: func(to int64) { toc <- to },
+	}
+	opts.apply(w)
+	if w.ChunkSize == 0 {
+		w.ChunkSize = googleapi.DefaultUploadChunkSize
+	}
+	if w.ChunkRetryDeadline == 0 {
+		w.ChunkRetryDeadline = defaultWriteChunkRetryDeadline
+	}
+	err := w.openWriter()
+	if err != nil {
+		return nil, 0, err
+	}
+	// Block until we discover the takeover offset, or the stream fails
+	select {
+	case to, ok := <-toc:
+		if !ok {
+			return nil, 0, errors.New("storage: unexpectedly did not discover takeover offset")
+		}
+		return w, to, nil
+	case <-w.donec:
+		return nil, 0, w.err
+	}
+}
+
+// AppendableWriterOpts provides options to set on a Writer initialized
+// by [NewWriterFromAppendableObject]. Writer options must be set via this
+// struct rather than being modified on the returned Writer. All Writer
+// fields not present in this struct cannot be set when taking over an
+// appendable object.
+//
+// AppendableWriterOpts is supported only for gRPC clients and only for
+// objects which were created append semantics and not finalized.
+type AppendableWriterOpts struct {
+	// ChunkSize: See Writer.ChunkSize.
+	ChunkSize int
+	// ChunkRetryDeadline: See Writer.ChunkRetryDeadline.
+	ChunkRetryDeadline time.Duration
+	// ProgressFunc: See Writer.ProgressFunc.
+	ProgressFunc func(int64)
+	// FinalizeOnClose: See Writer.FinalizeOnClose.
+	FinalizeOnClose bool
+	// DisableAutoChecksum: See Writer.DisableAutoChecksum.
+	DisableAutoChecksum bool
+	// SendCRC32C: See Writer.SendCRC32C.
+	SendCRC32C bool
+	// CRC32C of the whole object.
+	// See Writer.CRC32C.
+	CRC32C uint32
+}
+
+func (opts *AppendableWriterOpts) apply(w *Writer) {
+	if opts == nil {
+		return
+	}
+	w.ChunkRetryDeadline = opts.ChunkRetryDeadline
+	w.ProgressFunc = opts.ProgressFunc
+	w.ChunkSize = opts.ChunkSize
+	w.FinalizeOnClose = opts.FinalizeOnClose
+	w.DisableAutoChecksum = opts.DisableAutoChecksum
+	w.CRC32C = opts.CRC32C
+	w.SendCRC32C = opts.SendCRC32C
 }
 
 func (o *ObjectHandle) validate() error {
@@ -1250,6 +1455,7 @@ func (o *ObjectAttrs) toRawObject(bucket string) *raw.Object {
 		Metadata:                o.Metadata,
 		CustomTime:              ct,
 		Retention:               o.Retention.toRawObjectRetention(),
+		Contexts:                toRawObjectContexts(o.Contexts),
 	}
 }
 
@@ -1276,6 +1482,7 @@ func (o *ObjectAttrs) toProtoObject(b string) *storagepb.Object {
 		Acl:                 toProtoObjectACL(o.ACL),
 		Metadata:            o.Metadata,
 		CreateTime:          toProtoTimestamp(o.Created),
+		FinalizeTime:        toProtoTimestamp(o.Finalized),
 		CustomTime:          toProtoTimestamp(o.CustomTime),
 		DeleteTime:          toProtoTimestamp(o.Deleted),
 		RetentionExpireTime: toProtoTimestamp(o.RetentionExpirationTime),
@@ -1283,6 +1490,7 @@ func (o *ObjectAttrs) toProtoObject(b string) *storagepb.Object {
 		KmsKey:              o.KMSKeyName,
 		Generation:          o.Generation,
 		Size:                o.Size,
+		Contexts:            toProtoObjectContexts(o.Contexts),
 	}
 }
 
@@ -1325,6 +1533,10 @@ func (uattrs *ObjectAttrsToUpdate) toProtoObject(bucket, object string) *storage
 	}
 
 	o.Metadata = uattrs.Metadata
+
+	if uattrs.Contexts != nil {
+		o.Contexts = toProtoObjectContexts(uattrs.Contexts)
+	}
 
 	return o
 }
@@ -1377,7 +1589,7 @@ type ObjectAttrs struct {
 
 	// Owner is the owner of the object. This field is read-only.
 	//
-	// If non-zero, it is in the form of "user-<userId>".
+	// If non-zero, it is in the form of "user-{userId}".
 	Owner string
 
 	// Size is the length of the object's content. This field is read-only.
@@ -1393,6 +1605,7 @@ type ObjectAttrs struct {
 	// MD5 is the MD5 hash of the object's content. This field is read-only,
 	// except when used from a Writer. If set on a Writer, the uploaded
 	// data is rejected if its MD5 hash does not match this field.
+	// Note: MD5 validation is not supported for appendable writes.
 	MD5 []byte
 
 	// CRC32C is the CRC32 checksum of the object's content using the Castagnoli93
@@ -1437,6 +1650,10 @@ type ObjectAttrs struct {
 
 	// Created is the time the object was created. This field is read-only.
 	Created time.Time
+
+	// Finalized is the time the object contents were finalized. This may differ
+	// from Created for appendable objects. This field is read-only.
+	Finalized time.Time
 
 	// Deleted is the time the object was deleted.
 	// If not deleted, it is the zero value. This field is read-only.
@@ -1504,6 +1721,18 @@ type ObjectAttrs struct {
 	// ObjectHandle.Attrs will return ErrObjectNotExist if the object is soft-deleted.
 	// This field is read-only.
 	HardDeleteTime time.Time
+
+	// Contexts store custom key-value metadata that the user could
+	// annotate object with. These key-value pairs can be used to filter objects
+	// during list calls. See https://cloud.google.com/storage/docs/object-contexts
+	// for more details.
+	Contexts *ObjectContexts
+}
+
+// isZero reports whether the ObjectAttrs struct is empty (i.e. all the
+// fields are their zero value).
+func (o *ObjectAttrs) isZero() bool {
+	return reflect.DeepEqual(o, &ObjectAttrs{})
 }
 
 // ObjectRetention contains the retention configuration for this object.
@@ -1602,6 +1831,7 @@ func newObject(o *raw.Object) *ObjectAttrs {
 		CustomerKeySHA256:       sha256,
 		KMSKeyName:              o.KmsKeyName,
 		Created:                 convertTime(o.TimeCreated),
+		Finalized:               convertTime(o.TimeFinalized),
 		Deleted:                 convertTime(o.TimeDeleted),
 		Updated:                 convertTime(o.Updated),
 		Etag:                    o.Etag,
@@ -1610,6 +1840,7 @@ func newObject(o *raw.Object) *ObjectAttrs {
 		Retention:               toObjectRetention(o.Retention),
 		SoftDeleteTime:          convertTime(o.SoftDeleteTime),
 		HardDeleteTime:          convertTime(o.HardDeleteTime),
+		Contexts:                toObjectContexts(o.Contexts),
 	}
 }
 
@@ -1641,12 +1872,14 @@ func newObjectFromProto(o *storagepb.Object) *ObjectAttrs {
 		CustomerKeySHA256: base64.StdEncoding.EncodeToString(o.GetCustomerEncryption().GetKeySha256Bytes()),
 		KMSKeyName:        o.GetKmsKey(),
 		Created:           convertProtoTime(o.GetCreateTime()),
+		Finalized:         convertProtoTime(o.GetFinalizeTime()),
 		Deleted:           convertProtoTime(o.GetDeleteTime()),
 		Updated:           convertProtoTime(o.GetUpdateTime()),
 		CustomTime:        convertProtoTime(o.GetCustomTime()),
 		ComponentCount:    int64(o.ComponentCount),
 		SoftDeleteTime:    convertProtoTime(o.GetSoftDeleteTime()),
 		HardDeleteTime:    convertProtoTime(o.GetHardDeleteTime()),
+		Contexts:          toObjectContextsFromProto(o.GetContexts()),
 	}
 }
 
@@ -1759,6 +1992,11 @@ type Query struct {
 	// If true, only objects that have been soft-deleted will be listed.
 	// By default, soft-deleted objects are not listed.
 	SoftDeleted bool
+
+	// Filters objects based on object attributes like custom contexts.
+	// See https://docs.cloud.google.com/storage/docs/listing-objects#filter-by-object-contexts
+	// for more details.
+	Filter string
 }
 
 // attrToFieldMap maps the field names of ObjectAttrs to the underlying field
@@ -1788,6 +2026,7 @@ var attrToFieldMap = map[string]string{
 	"CustomerKeySHA256":       "customerEncryption",
 	"KMSKeyName":              "kmsKeyName",
 	"Created":                 "timeCreated",
+	"Finalized":               "timeFinalized",
 	"Deleted":                 "timeDeleted",
 	"Updated":                 "updated",
 	"Etag":                    "etag",
@@ -1796,6 +2035,7 @@ var attrToFieldMap = map[string]string{
 	"Retention":               "retention",
 	"HardDeleteTime":          "hardDeleteTime",
 	"SoftDeleteTime":          "softDeleteTime",
+	"Contexts":                "contexts",
 }
 
 // attrToProtoFieldMap maps the field names of ObjectAttrs to the underlying field
@@ -1816,6 +2056,7 @@ var attrToProtoFieldMap = map[string]string{
 	"Deleted":                 "delete_time",
 	"ContentType":             "content_type",
 	"Created":                 "create_time",
+	"Finalized":               "finalize_time",
 	"CRC32C":                  "checksums.crc32c",
 	"MD5":                     "checksums.md5_hash",
 	"Updated":                 "update_time",
@@ -1830,6 +2071,7 @@ var attrToProtoFieldMap = map[string]string{
 	"ComponentCount":          "component_count",
 	"HardDeleteTime":          "hard_delete_time",
 	"SoftDeleteTime":          "soft_delete_time",
+	"Contexts":                "contexts",
 	// MediaLink was explicitly excluded from the proto as it is an HTTP-ism.
 	// "MediaLink":               "mediaLink",
 	// TODO: add object retention - b/308194853
@@ -2055,56 +2297,91 @@ func applyConds(method string, gen int64, conds *Conditions, call interface{}) e
 	return nil
 }
 
-func applySourceConds(gen int64, conds *Conditions, call *raw.ObjectsRewriteCall) error {
+// applySourceConds modifies the provided call using the conditions in conds.
+// call is something that quacks like a *raw.WhateverCall.
+// This is specifically for calls like Rewrite and Move which have a source and destination
+// object.
+func applySourceConds(method string, gen int64, conds *Conditions, call interface{}) error {
+	cval := reflect.ValueOf(call)
 	if gen >= 0 {
-		call.SourceGeneration(gen)
+		if !setSourceGeneration(cval, gen) {
+			return fmt.Errorf("storage: %s: source generation not supported", method)
+		}
 	}
 	if conds == nil {
 		return nil
 	}
-	if err := conds.validate("CopyTo source"); err != nil {
+	if err := conds.validate(method); err != nil {
 		return err
 	}
 	switch {
 	case conds.GenerationMatch != 0:
-		call.IfSourceGenerationMatch(conds.GenerationMatch)
+		if !setIfSourceGenerationMatch(cval, conds.GenerationMatch) {
+			return fmt.Errorf("storage: %s: ifSourceGenerationMatch not supported", method)
+		}
 	case conds.GenerationNotMatch != 0:
-		call.IfSourceGenerationNotMatch(conds.GenerationNotMatch)
+		if !setIfSourceGenerationNotMatch(cval, conds.GenerationNotMatch) {
+			return fmt.Errorf("storage: %s: ifSourceGenerationNotMatch not supported", method)
+		}
 	case conds.DoesNotExist:
-		call.IfSourceGenerationMatch(0)
+		if !setIfSourceGenerationMatch(cval, int64(0)) {
+			return fmt.Errorf("storage: %s: DoesNotExist not supported", method)
+		}
 	}
 	switch {
 	case conds.MetagenerationMatch != 0:
-		call.IfSourceMetagenerationMatch(conds.MetagenerationMatch)
+		if !setIfSourceMetagenerationMatch(cval, conds.MetagenerationMatch) {
+			return fmt.Errorf("storage: %s: ifSourceMetagenerationMatch not supported", method)
+		}
 	case conds.MetagenerationNotMatch != 0:
-		call.IfSourceMetagenerationNotMatch(conds.MetagenerationNotMatch)
+		if !setIfSourceMetagenerationNotMatch(cval, conds.MetagenerationNotMatch) {
+			return fmt.Errorf("storage: %s: ifSourceMetagenerationNotMatch not supported", method)
+		}
 	}
 	return nil
 }
 
-func applySourceCondsProto(gen int64, conds *Conditions, call *storagepb.RewriteObjectRequest) error {
+// applySourceCondsProto validates and attempts to set the conditions on a protobuf
+// message using protobuf reflection. This is specifically for RPCs which have separate
+// preconditions for source and destination objects (e.g. Rewrite and Move).
+func applySourceCondsProto(method string, gen int64, conds *Conditions, msg proto.Message) error {
+	rmsg := msg.ProtoReflect()
+
 	if gen >= 0 {
-		call.SourceGeneration = gen
+		if !setConditionProtoField(rmsg, "source_generation", gen) {
+			return fmt.Errorf("storage: %s: generation not supported", method)
+		}
 	}
 	if conds == nil {
 		return nil
 	}
-	if err := conds.validate("CopyTo source"); err != nil {
+	if err := conds.validate(method); err != nil {
 		return err
 	}
+
 	switch {
 	case conds.GenerationMatch != 0:
-		call.IfSourceGenerationMatch = proto.Int64(conds.GenerationMatch)
+		if !setConditionProtoField(rmsg, "if_source_generation_match", conds.GenerationMatch) {
+			return fmt.Errorf("storage: %s: ifSourceGenerationMatch not supported", method)
+		}
 	case conds.GenerationNotMatch != 0:
-		call.IfSourceGenerationNotMatch = proto.Int64(conds.GenerationNotMatch)
+		if !setConditionProtoField(rmsg, "if_source_generation_not_match", conds.GenerationNotMatch) {
+			return fmt.Errorf("storage: %s: ifSourceGenerationNotMatch not supported", method)
+		}
 	case conds.DoesNotExist:
-		call.IfSourceGenerationMatch = proto.Int64(0)
+		if !setConditionProtoField(rmsg, "if_source_generation_match", int64(0)) {
+			return fmt.Errorf("storage: %s: DoesNotExist not supported", method)
+		}
 	}
 	switch {
 	case conds.MetagenerationMatch != 0:
-		call.IfSourceMetagenerationMatch = proto.Int64(conds.MetagenerationMatch)
+		if !setConditionProtoField(rmsg, "if_source_metageneration_match", conds.MetagenerationMatch) {
+			return fmt.Errorf("storage: %s: ifSourceMetagenerationMatch not supported", method)
+		}
 	case conds.MetagenerationNotMatch != 0:
-		call.IfSourceMetagenerationNotMatch = proto.Int64(conds.MetagenerationNotMatch)
+		if !setConditionProtoField(rmsg, "if_source_metageneration_not_match", conds.MetagenerationNotMatch) {
+			return fmt.Errorf("storage: %s: ifSourceMetagenerationNotMatch not supported", method)
+		}
 	}
 	return nil
 }
@@ -2141,6 +2418,27 @@ func setIfMetagenerationMatch(cval reflect.Value, value interface{}) bool {
 // See also setGeneration.
 func setIfMetagenerationNotMatch(cval reflect.Value, value interface{}) bool {
 	return setCondition(cval.MethodByName("IfMetagenerationNotMatch"), value)
+}
+
+// More methods to set source object precondition fields (used by Rewrite and Move APIs).
+func setSourceGeneration(cval reflect.Value, value interface{}) bool {
+	return setCondition(cval.MethodByName("SourceGeneration"), value)
+}
+
+func setIfSourceGenerationMatch(cval reflect.Value, value interface{}) bool {
+	return setCondition(cval.MethodByName("IfSourceGenerationMatch"), value)
+}
+
+func setIfSourceGenerationNotMatch(cval reflect.Value, value interface{}) bool {
+	return setCondition(cval.MethodByName("IfSourceGenerationNotMatch"), value)
+}
+
+func setIfSourceMetagenerationMatch(cval reflect.Value, value interface{}) bool {
+	return setCondition(cval.MethodByName("IfSourceMetagenerationMatch"), value)
+}
+
+func setIfSourceMetagenerationNotMatch(cval reflect.Value, value interface{}) bool {
+	return setCondition(cval.MethodByName("IfSourceMetagenerationNotMatch"), value)
 }
 
 func setCondition(setter reflect.Value, value interface{}) bool {
@@ -2216,7 +2514,7 @@ type withBackoff struct {
 }
 
 func (wb *withBackoff) apply(config *retryConfig) {
-	config.backoff = gaxBackoffFromStruct(&wb.backoff)
+	config.backoff = &wb.backoff
 }
 
 // WithMaxAttempts configures the maximum number of times an API call can be made
@@ -2237,6 +2535,33 @@ type withMaxAttempts struct {
 
 func (wb *withMaxAttempts) apply(config *retryConfig) {
 	config.maxAttempts = &wb.maxAttempts
+}
+
+// WithMaxRetryDuration configures the maximum duration for which requests can be retried.
+// Once this deadline is reached, no further retry attempts will be made, and the last
+// error will be returned.
+// For example, if you set WithMaxRetryDuration(10*time.Second), retries will stop after
+// 10 seconds even if the maximum number of attempts hasn't been reached.
+// Without this setting, operations will continue retrying until either the maximum
+// number of attempts is exhausted or the passed context is terminated by cancellation
+// or timeout.
+// A value of 0 allows infinite retries (subject to other constraints).
+//
+// Note: This does not apply to Writer operations. For Writer operations,
+// use Writer.ChunkRetryDeadline to control per-chunk retry timeouts, and use
+// context timeout or cancellation to control the overall upload timeout.
+func WithMaxRetryDuration(maxRetryDuration time.Duration) RetryOption {
+	return &withMaxRetryDuration{
+		maxRetryDuration: maxRetryDuration,
+	}
+}
+
+type withMaxRetryDuration struct {
+	maxRetryDuration time.Duration
+}
+
+func (wb *withMaxRetryDuration) apply(config *retryConfig) {
+	config.maxRetryDuration = wb.maxRetryDuration
 }
 
 // RetryPolicy describes the available policies for which operations should be
@@ -2277,6 +2602,23 @@ func (ws *withPolicy) apply(config *retryConfig) {
 	config.policy = ws.policy
 }
 
+// RetryContext provides comprehensive context about a retry attempt.
+// It is passed to custom retry functions configured via WithErrorFuncWithContext.
+type RetryContext struct {
+	// Attempt is the current attempt number (1-based, so first call is attempt 1).
+	Attempt int
+	// InvocationID is a unique identifier for the current operation invocation.
+	// This will be same for all attempts of the same operation, used to correlate
+	// retries of the same operation together.
+	InvocationID string
+	// Operation describes the operation being performed (e.g., "GetObject", "DeleteObject").
+	Operation string
+	// Bucket is the name of the bucket involved in the operation, empty if not applicable.
+	Bucket string
+	// Object is the name of the object involved in the operation, empty if not applicable.
+	Object string
+}
+
 // WithErrorFunc allows users to pass a custom function to the retryer. Errors
 // will be retried if and only if `shouldRetry(err)` returns true.
 // By default, the following errors are retried (see ShouldRetry for the default
@@ -2304,86 +2646,88 @@ type withErrorFunc struct {
 }
 
 func (wef *withErrorFunc) apply(config *retryConfig) {
+	// Wrap legacy signature to new signature
+	config.shouldRetry = func(err error, retryCtx *RetryContext) bool {
+		return wef.shouldRetry(err)
+	}
+}
+
+// WithErrorFuncWithContext allows users to pass a custom function to the retryer
+// with access to comprehensive retry context. This option is currently experimental
+// and subject to change. Errors will be retried if and only if `shouldRetry(err, retryCtx)`
+// returns true.
+//
+// The RetryContext provides:
+// - Attempt: current attempt number (1-based)
+// - InvocationID: unique identifier for the operation invocation
+// - Operation: the operation being performed (e.g., "GetObject", "UpdateBucket")
+// - Bucket: name of the bucket involved in the operation
+// - Object: name of the object involved in the operation
+//
+// By default, the following errors are retried (see ShouldRetry for the default
+// function):
+//
+// - HTTP responses with codes 408, 429, 502, 503, and 504.
+//
+// - Transient network errors such as connection reset and io.ErrUnexpectedEOF.
+//
+// - Errors which are considered transient using the Temporary() interface.
+//
+// - Wrapped versions of these errors.
+//
+// This option can be used to retry on a different set of errors than the
+// default. Users can use the default ShouldRetry function inside their custom
+// function if they only want to make minor modifications to default behavior.
+// RetryContext can be used to improve observability by logging InvocationID to
+// correlate retries of the same operation together, or to implement more complex
+// retry logic such as conditional retries based on the operation type or attempt.
+// Note: the retryCtx may be nil for some unimplemented methods so always a good
+// practice to defensively check for nil before accessing its fields.
+func WithErrorFuncWithContext(shouldRetry func(err error, retryCtx *RetryContext) bool) RetryOption {
+	return &withErrorFuncWithContext{
+		shouldRetry: shouldRetry,
+	}
+}
+
+type withErrorFuncWithContext struct {
+	shouldRetry func(err error, retryCtx *RetryContext) bool
+}
+
+func (wef *withErrorFuncWithContext) apply(config *retryConfig) {
 	config.shouldRetry = wef.shouldRetry
 }
 
-type backoff interface {
-	Pause() time.Duration
-
-	SetInitial(time.Duration)
-	SetMax(time.Duration)
-	SetMultiplier(float64)
-
-	GetInitial() time.Duration
-	GetMax() time.Duration
-	GetMultiplier() float64
-}
-
-func gaxBackoffFromStruct(bo *gax.Backoff) *gaxBackoff {
-	if bo == nil {
-		return nil
-	}
-	b := &gaxBackoff{}
-	b.Backoff = *bo
-	return b
-}
-
-// gaxBackoff is a gax.Backoff that implements the backoff interface
-type gaxBackoff struct {
-	gax.Backoff
-}
-
-func (b *gaxBackoff) SetInitial(i time.Duration) {
-	b.Initial = i
-}
-
-func (b *gaxBackoff) SetMax(m time.Duration) {
-	b.Max = m
-}
-
-func (b *gaxBackoff) SetMultiplier(m float64) {
-	b.Multiplier = m
-}
-
-func (b *gaxBackoff) GetInitial() time.Duration {
-	return b.Initial
-}
-
-func (b *gaxBackoff) GetMax() time.Duration {
-	return b.Max
-}
-
-func (b *gaxBackoff) GetMultiplier() float64 {
-	return b.Multiplier
-}
-
 type retryConfig struct {
-	backoff     backoff
+	backoff     *gax.Backoff
 	policy      RetryPolicy
-	shouldRetry func(err error) bool
+	shouldRetry func(error, *RetryContext) bool
 	maxAttempts *int
+	// maxRetryDuration, if set, specifies a deadline after which the request
+	// will no longer be retried. A value of 0 allows infinite retries.
+	maxRetryDuration time.Duration
 }
 
 func (r *retryConfig) clone() *retryConfig {
 	if r == nil {
 		return nil
 	}
-	newConfig := &retryConfig{
-		backoff:     nil,
-		policy:      r.policy,
-		shouldRetry: r.shouldRetry,
-		maxAttempts: r.maxAttempts,
-	}
 
+	var bo *gax.Backoff
 	if r.backoff != nil {
-		bo := &gaxBackoff{}
-		bo.Initial = r.backoff.GetInitial()
-		bo.Max = r.backoff.GetMax()
-		bo.Multiplier = r.backoff.GetMultiplier()
-		newConfig.backoff = bo
+		bo = &gax.Backoff{
+			Initial:    r.backoff.Initial,
+			Max:        r.backoff.Max,
+			Multiplier: r.backoff.Multiplier,
+		}
 	}
 
-	return newConfig
+	return &retryConfig{
+		backoff:          bo,
+		policy:           r.policy,
+		shouldRetry:      r.shouldRetry,
+		maxAttempts:      r.maxAttempts,
+		maxRetryDuration: r.maxRetryDuration,
+	}
 }
 
 // composeSourceObj wraps a *raw.ComposeRequestSourceObjects, but adds the methods
@@ -2555,4 +2899,26 @@ func applyCondsProto(method string, gen int64, conds *Conditions, msg proto.Mess
 		}
 	}
 	return nil
+}
+
+// formatObjectErr checks if the provided error is NotFound and if so, wraps
+// it in an ErrObjectNotExist error. If not, formatObjectErr has no effect.
+func formatObjectErr(err error) error {
+	var e *googleapi.Error
+	if s, ok := status.FromError(err); (ok && s.Code() == codes.NotFound) ||
+		(errors.As(err, &e) && e.Code == http.StatusNotFound) {
+		return fmt.Errorf("%w: %w", ErrObjectNotExist, err)
+	}
+	return err
+}
+
+// formatBucketError checks if the provided error is NotFound and if so, wraps
+// it in an ErrBucketNotExist error. If not, formatBucketError has no effect.
+func formatBucketError(err error) error {
+	var e *googleapi.Error
+	if s, ok := status.FromError(err); (ok && s.Code() == codes.NotFound) ||
+		(errors.As(err, &e) && e.Code == http.StatusNotFound) {
+		return fmt.Errorf("%w: %w", ErrBucketNotExist, err)
+	}
+	return err
 }
