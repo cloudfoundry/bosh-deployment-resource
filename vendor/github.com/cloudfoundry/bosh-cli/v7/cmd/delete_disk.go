@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts"
+	. "github.com/cloudfoundry/bosh-cli/v7/cmd/opts" //nolint:staticcheck
 	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 	boshui "github.com/cloudfoundry/bosh-cli/v7/ui"
 )
@@ -19,6 +19,10 @@ func (c DeleteDiskCmd) Run(opts DeleteDiskOpts) error {
 	err := c.ui.AskForConfirmation()
 	if err != nil {
 		return err
+	}
+
+	if opts.Dynamic {
+		return c.director.DeleteDynamicDisk(opts.Args.CID)
 	}
 
 	disk, err := c.director.FindOrphanDisk(opts.Args.CID)

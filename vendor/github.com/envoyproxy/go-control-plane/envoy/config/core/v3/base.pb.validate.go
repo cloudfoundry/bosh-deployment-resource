@@ -77,7 +77,7 @@ type LocalityMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m LocalityMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -234,7 +234,7 @@ type BuildVersionMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m BuildVersionMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -370,7 +370,7 @@ type ExtensionMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m ExtensionMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -704,7 +704,7 @@ type NodeMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m NodeMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -913,7 +913,7 @@ type MetadataMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m MetadataMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1001,16 +1001,7 @@ func (m *RuntimeUInt32) validate(all bool) error {
 
 	// no validation rules for DefaultValue
 
-	if utf8.RuneCountInString(m.GetRuntimeKey()) < 1 {
-		err := RuntimeUInt32ValidationError{
-			field:  "RuntimeKey",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for RuntimeKey
 
 	if len(errors) > 0 {
 		return RuntimeUInt32MultiError(errors)
@@ -1026,7 +1017,7 @@ type RuntimeUInt32MultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RuntimeUInt32MultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1090,6 +1081,110 @@ var _ interface {
 	ErrorName() string
 } = RuntimeUInt32ValidationError{}
 
+// Validate checks the field values on RuntimeUInt64 with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *RuntimeUInt64) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RuntimeUInt64 with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RuntimeUInt64MultiError, or
+// nil if none found.
+func (m *RuntimeUInt64) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RuntimeUInt64) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DefaultValue
+
+	// no validation rules for RuntimeKey
+
+	if len(errors) > 0 {
+		return RuntimeUInt64MultiError(errors)
+	}
+
+	return nil
+}
+
+// RuntimeUInt64MultiError is an error wrapping multiple validation errors
+// returned by RuntimeUInt64.ValidateAll() if the designated constraints
+// aren't met.
+type RuntimeUInt64MultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RuntimeUInt64MultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RuntimeUInt64MultiError) AllErrors() []error { return m }
+
+// RuntimeUInt64ValidationError is the validation error returned by
+// RuntimeUInt64.Validate if the designated constraints aren't met.
+type RuntimeUInt64ValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RuntimeUInt64ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RuntimeUInt64ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RuntimeUInt64ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RuntimeUInt64ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RuntimeUInt64ValidationError) ErrorName() string { return "RuntimeUInt64ValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RuntimeUInt64ValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRuntimeUInt64.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RuntimeUInt64ValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RuntimeUInt64ValidationError{}
+
 // Validate checks the field values on RuntimePercent with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -1141,16 +1236,7 @@ func (m *RuntimePercent) validate(all bool) error {
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetRuntimeKey()) < 1 {
-		err := RuntimePercentValidationError{
-			field:  "RuntimeKey",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for RuntimeKey
 
 	if len(errors) > 0 {
 		return RuntimePercentMultiError(errors)
@@ -1166,7 +1252,7 @@ type RuntimePercentMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RuntimePercentMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1254,16 +1340,7 @@ func (m *RuntimeDouble) validate(all bool) error {
 
 	// no validation rules for DefaultValue
 
-	if utf8.RuneCountInString(m.GetRuntimeKey()) < 1 {
-		err := RuntimeDoubleValidationError{
-			field:  "RuntimeKey",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for RuntimeKey
 
 	if len(errors) > 0 {
 		return RuntimeDoubleMultiError(errors)
@@ -1279,7 +1356,7 @@ type RuntimeDoubleMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RuntimeDoubleMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1405,16 +1482,7 @@ func (m *RuntimeFeatureFlag) validate(all bool) error {
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetRuntimeKey()) < 1 {
-		err := RuntimeFeatureFlagValidationError{
-			field:  "RuntimeKey",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for RuntimeKey
 
 	if len(errors) > 0 {
 		return RuntimeFeatureFlagMultiError(errors)
@@ -1430,7 +1498,7 @@ type RuntimeFeatureFlagMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RuntimeFeatureFlagMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1555,7 +1623,7 @@ type KeyValueMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m KeyValueMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1619,6 +1687,156 @@ var _ interface {
 	ErrorName() string
 } = KeyValueValidationError{}
 
+// Validate checks the field values on KeyValuePair with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *KeyValuePair) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on KeyValuePair with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in KeyValuePairMultiError, or
+// nil if none found.
+func (m *KeyValuePair) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *KeyValuePair) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetKey()) < 1 {
+		err := KeyValuePairValidationError{
+			field:  "Key",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetKey()) > 16384 {
+		err := KeyValuePairValidationError{
+			field:  "Key",
+			reason: "value length must be at most 16384 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetValue()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, KeyValuePairValidationError{
+					field:  "Value",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, KeyValuePairValidationError{
+					field:  "Value",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetValue()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return KeyValuePairValidationError{
+				field:  "Value",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return KeyValuePairMultiError(errors)
+	}
+
+	return nil
+}
+
+// KeyValuePairMultiError is an error wrapping multiple validation errors
+// returned by KeyValuePair.ValidateAll() if the designated constraints aren't met.
+type KeyValuePairMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m KeyValuePairMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m KeyValuePairMultiError) AllErrors() []error { return m }
+
+// KeyValuePairValidationError is the validation error returned by
+// KeyValuePair.Validate if the designated constraints aren't met.
+type KeyValuePairValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e KeyValuePairValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e KeyValuePairValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e KeyValuePairValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e KeyValuePairValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e KeyValuePairValidationError) ErrorName() string { return "KeyValuePairValidationError" }
+
+// Error satisfies the builtin error interface
+func (e KeyValuePairValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sKeyValuePair.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = KeyValuePairValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = KeyValuePairValidationError{}
+
 // Validate checks the field values on KeyValueAppend with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -1641,23 +1859,12 @@ func (m *KeyValueAppend) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetEntry() == nil {
-		err := KeyValueAppendValidationError{
-			field:  "Entry",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if all {
-		switch v := interface{}(m.GetEntry()).(type) {
+		switch v := interface{}(m.GetRecord()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, KeyValueAppendValidationError{
-					field:  "Entry",
+					field:  "Record",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1665,21 +1872,23 @@ func (m *KeyValueAppend) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, KeyValueAppendValidationError{
-					field:  "Entry",
+					field:  "Record",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetEntry()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetRecord()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return KeyValueAppendValidationError{
-				field:  "Entry",
+				field:  "Record",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
 	}
+
+	// skipping validation for entry
 
 	if _, ok := KeyValueAppend_KeyValueAppendAction_name[int32(m.GetAction())]; !ok {
 		err := KeyValueAppendValidationError{
@@ -1706,7 +1915,7 @@ type KeyValueAppendMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m KeyValueAppendMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1846,7 +2055,7 @@ type KeyValueMutationMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m KeyValueMutationMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -1959,7 +2168,7 @@ type QueryParameterMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m QueryParameterMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2124,7 +2333,7 @@ type HeaderValueMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m HeaderValueMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2310,7 +2519,7 @@ type HeaderValueOptionMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m HeaderValueOptionMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2445,7 +2654,7 @@ type HeaderMapMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m HeaderMapMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2542,6 +2751,8 @@ func (m *WatchedDirectory) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for WatchModify
+
 	if len(errors) > 0 {
 		return WatchedDirectoryMultiError(errors)
 	}
@@ -2556,7 +2767,7 @@ type WatchedDirectoryMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m WatchedDirectoryMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2774,7 +2985,7 @@ type DataSourceMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m DataSourceMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -2998,7 +3209,7 @@ type RetryPolicyMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RetryPolicyMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -3178,7 +3389,7 @@ type RemoteDataSourceMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RemoteDataSourceMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -3378,7 +3589,7 @@ type AsyncDataSourceMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m AsyncDataSourceMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -3535,7 +3746,7 @@ type TransportSocketMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m TransportSocketMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -3677,7 +3888,7 @@ type RuntimeFractionalPercentMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RuntimeFractionalPercentMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -3780,7 +3991,7 @@ type ControlPlaneMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m ControlPlaneMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -3937,7 +4148,7 @@ type RetryPolicy_RetryPriorityMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RetryPolicy_RetryPriorityMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -4096,7 +4307,7 @@ type RetryPolicy_RetryHostPredicateMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m RetryPolicy_RetryHostPredicateMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}

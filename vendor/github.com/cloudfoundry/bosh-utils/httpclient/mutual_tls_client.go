@@ -7,17 +7,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pivotal-cf/paraphernalia/secure/tlsconfig"
+	"code.cloudfoundry.org/tlsconfig"
 )
 
-func NewMutualTLSClient(identity tls.Certificate, caCertPool *x509.CertPool, serverName string) *http.Client {
+func NewMutualTLSClient(identity tls.Certificate, caCertPool *x509.CertPool, serverName string) (*http.Client, error) {
 	tlsConfig := tlsconfig.Build(
 		tlsconfig.WithIdentity(identity),
 		tlsconfig.WithInternalServiceDefaults(),
 	)
 
-	clientConfig := tlsConfig.Client(tlsconfig.WithAuthority(caCertPool))
-	clientConfig.BuildNameToCertificate() //nolint:staticcheck
+	clientConfig, err := tlsConfig.Client(tlsconfig.WithAuthority(caCertPool))
+	if err != nil {
+		return nil, err
+	}
 	clientConfig.ServerName = serverName
 
 	return &http.Client{
@@ -25,7 +27,6 @@ func NewMutualTLSClient(identity tls.Certificate, caCertPool *x509.CertPool, ser
 			DialContext: (&net.Dialer{
 				Timeout:   30 * time.Second,
 				KeepAlive: 30 * time.Second,
-				DualStack: true,
 			}).DialContext,
 			MaxIdleConns:          100,
 			IdleConnTimeout:       90 * time.Second,
@@ -34,5 +35,5 @@ func NewMutualTLSClient(identity tls.Certificate, caCertPool *x509.CertPool, ser
 			TLSClientConfig:       clientConfig,
 		},
 		Timeout: 10 * time.Second,
-	}
+	}, nil
 }

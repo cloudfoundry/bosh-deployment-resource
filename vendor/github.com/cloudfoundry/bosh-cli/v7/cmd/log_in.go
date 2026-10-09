@@ -6,10 +6,10 @@ import (
 	boshdir "github.com/cloudfoundry/bosh-cli/v7/director"
 )
 
-// You only need **one** of these per package!
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
 //counterfeiter:generate . LoginStrategy
+//counterfeiter:generate github.com/cloudfoundry/bosh-agent/v2/agentclient/http.AgentClientFactory
 
 type LoginStrategy interface {
 	Try() error

@@ -8,8 +8,9 @@ import (
 	boshres "github.com/cloudfoundry/bosh-cli/v7/release/resource"
 )
 
-// You only need **one** of these per package!
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . Extractor
 
 type Extractor interface {
 	Extract(string) (Release, error)
@@ -43,11 +44,13 @@ type Release interface {
 	CommitHashWithMark(string) string
 	SetCommitHash(string)
 	SetUncommittedChanges(bool)
+	SetNoCompression(bool)
 
 	Jobs() []*boshjob.Job
 	Packages() []*boshpkg.Package
 	CompiledPackages() []*boshpkg.CompiledPackage
 	License() *boshlic.License
+	NoCompression() bool
 
 	IsCompiled() bool
 
@@ -70,6 +73,8 @@ type ArchiveIndicies struct {
 	Packages boshres.ArchiveIndex
 	Licenses boshres.ArchiveIndex
 }
+
+//counterfeiter:generate . Manager
 
 type Manager interface {
 	Add(Release)
