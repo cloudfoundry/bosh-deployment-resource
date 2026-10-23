@@ -17,20 +17,11 @@
 package monitoring
 
 import (
-	"iter"
-
 	monitoringpb "cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
-	gaxiter "github.com/googleapis/gax-go/v2/iterator"
 	"google.golang.org/api/iterator"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 )
-
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *AlertPolicyIterator) All() iter.Seq2[*monitoringpb.AlertPolicy, error] {
-	return gaxiter.RangeAdapter(it.Next)
-}
 
 // AlertPolicyIterator manages a stream of *monitoringpb.AlertPolicy.
 type AlertPolicyIterator struct {
@@ -77,12 +68,6 @@ func (it *AlertPolicyIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b
-}
-
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *GroupIterator) All() iter.Seq2[*monitoringpb.Group, error] {
-	return gaxiter.RangeAdapter(it.Next)
 }
 
 // GroupIterator manages a stream of *monitoringpb.Group.
@@ -132,12 +117,6 @@ func (it *GroupIterator) takeBuf() interface{} {
 	return b
 }
 
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *MetricDescriptorIterator) All() iter.Seq2[*metricpb.MetricDescriptor, error] {
-	return gaxiter.RangeAdapter(it.Next)
-}
-
 // MetricDescriptorIterator manages a stream of *metricpb.MetricDescriptor.
 type MetricDescriptorIterator struct {
 	items    []*metricpb.MetricDescriptor
@@ -183,12 +162,6 @@ func (it *MetricDescriptorIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b
-}
-
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *MonitoredResourceDescriptorIterator) All() iter.Seq2[*monitoredrespb.MonitoredResourceDescriptor, error] {
-	return gaxiter.RangeAdapter(it.Next)
 }
 
 // MonitoredResourceDescriptorIterator manages a stream of *monitoredrespb.MonitoredResourceDescriptor.
@@ -238,12 +211,6 @@ func (it *MonitoredResourceDescriptorIterator) takeBuf() interface{} {
 	return b
 }
 
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *MonitoredResourceIterator) All() iter.Seq2[*monitoredrespb.MonitoredResource, error] {
-	return gaxiter.RangeAdapter(it.Next)
-}
-
 // MonitoredResourceIterator manages a stream of *monitoredrespb.MonitoredResource.
 type MonitoredResourceIterator struct {
 	items    []*monitoredrespb.MonitoredResource
@@ -289,12 +256,6 @@ func (it *MonitoredResourceIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b
-}
-
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *NotificationChannelDescriptorIterator) All() iter.Seq2[*monitoringpb.NotificationChannelDescriptor, error] {
-	return gaxiter.RangeAdapter(it.Next)
 }
 
 // NotificationChannelDescriptorIterator manages a stream of *monitoringpb.NotificationChannelDescriptor.
@@ -344,12 +305,6 @@ func (it *NotificationChannelDescriptorIterator) takeBuf() interface{} {
 	return b
 }
 
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *NotificationChannelIterator) All() iter.Seq2[*monitoringpb.NotificationChannel, error] {
-	return gaxiter.RangeAdapter(it.Next)
-}
-
 // NotificationChannelIterator manages a stream of *monitoringpb.NotificationChannel.
 type NotificationChannelIterator struct {
 	items    []*monitoringpb.NotificationChannel
@@ -395,12 +350,6 @@ func (it *NotificationChannelIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b
-}
-
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *ServiceIterator) All() iter.Seq2[*monitoringpb.Service, error] {
-	return gaxiter.RangeAdapter(it.Next)
 }
 
 // ServiceIterator manages a stream of *monitoringpb.Service.
@@ -450,12 +399,6 @@ func (it *ServiceIterator) takeBuf() interface{} {
 	return b
 }
 
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *ServiceLevelObjectiveIterator) All() iter.Seq2[*monitoringpb.ServiceLevelObjective, error] {
-	return gaxiter.RangeAdapter(it.Next)
-}
-
 // ServiceLevelObjectiveIterator manages a stream of *monitoringpb.ServiceLevelObjective.
 type ServiceLevelObjectiveIterator struct {
 	items    []*monitoringpb.ServiceLevelObjective
@@ -501,12 +444,6 @@ func (it *ServiceLevelObjectiveIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b
-}
-
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *SnoozeIterator) All() iter.Seq2[*monitoringpb.Snooze, error] {
-	return gaxiter.RangeAdapter(it.Next)
 }
 
 // SnoozeIterator manages a stream of *monitoringpb.Snooze.
@@ -556,12 +493,6 @@ func (it *SnoozeIterator) takeBuf() interface{} {
 	return b
 }
 
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *TimeSeriesDataIterator) All() iter.Seq2[*monitoringpb.TimeSeriesData, error] {
-	return gaxiter.RangeAdapter(it.Next)
-}
-
 // TimeSeriesDataIterator manages a stream of *monitoringpb.TimeSeriesData.
 type TimeSeriesDataIterator struct {
 	items    []*monitoringpb.TimeSeriesData
@@ -607,12 +538,6 @@ func (it *TimeSeriesDataIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b
-}
-
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *TimeSeriesIterator) All() iter.Seq2[*monitoringpb.TimeSeries, error] {
-	return gaxiter.RangeAdapter(it.Next)
 }
 
 // TimeSeriesIterator manages a stream of *monitoringpb.TimeSeries.
@@ -662,12 +587,6 @@ func (it *TimeSeriesIterator) takeBuf() interface{} {
 	return b
 }
 
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *UptimeCheckConfigIterator) All() iter.Seq2[*monitoringpb.UptimeCheckConfig, error] {
-	return gaxiter.RangeAdapter(it.Next)
-}
-
 // UptimeCheckConfigIterator manages a stream of *monitoringpb.UptimeCheckConfig.
 type UptimeCheckConfigIterator struct {
 	items    []*monitoringpb.UptimeCheckConfig
@@ -713,12 +632,6 @@ func (it *UptimeCheckConfigIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b
-}
-
-// All returns an iterator. If an error is returned by the iterator, the
-// iterator will stop after that iteration.
-func (it *UptimeCheckIpIterator) All() iter.Seq2[*monitoringpb.UptimeCheckIp, error] {
-	return gaxiter.RangeAdapter(it.Next)
 }
 
 // UptimeCheckIpIterator manages a stream of *monitoringpb.UptimeCheckIp.
