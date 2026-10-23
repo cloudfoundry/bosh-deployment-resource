@@ -3,7 +3,7 @@ module github.com/cloudfoundry/bosh-deployment-resource
 go 1.27.2
 
 require (
-	github.com/cloudfoundry/bosh-cli/v7 v7.11.1
+	github.com/cloudfoundry/bosh-cli/v7 v7.11.0
 	github.com/cloudfoundry/bosh-utils v0.0.658
 	github.com/cloudfoundry/socks5-proxy v0.2.191
 	github.com/cppforlife/go-patch v0.2.0
@@ -23,7 +23,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.3.0 // indirect
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
 	cloud.google.com/go/iam v1.14.0 // indirect
-	cloud.google.com/go/monitoring v1.31.0 // indirect
+	cloud.google.com/go/monitoring v1.30.0 // indirect
 	cloud.google.com/go/storage v1.69.0 // indirect
 	code.cloudfoundry.org/clock v1.91.0 // indirect
 	code.cloudfoundry.org/tlsconfig v0.69.0 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cloudfoundry/bosh-agent/v2 v2.901.0 // indirect
 	github.com/cloudfoundry/bosh-davcli v0.0.514 // indirect
-	github.com/cloudfoundry/bosh-gcscli v0.0.422 // indirect
+	github.com/cloudfoundry/bosh-gcscli v0.0.419 // indirect
 	github.com/cloudfoundry/bosh-s3cli v0.0.443 // indirect
 	github.com/cloudfoundry/config-server v0.1.287 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect

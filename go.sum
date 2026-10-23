@@ -14,8 +14,8 @@ cloud.google.com/go/logging v1.20.0 h1:l7yzCB8/JSY5PHT9RsaqdT1jaBGbM6KlSJDX210Hl
 cloud.google.com/go/logging v1.20.0/go.mod h1:ALUaJQZM691Eeujy9kFx0xREq3AMPuGd+pTRZuTYv+w=
 cloud.google.com/go/longrunning v1.3.0 h1:lZ6c8SJJBmILp/Wnr3vGnBLa0q+cYfSHRCcUfVI2hpI=
 cloud.google.com/go/longrunning v1.3.0/go.mod h1:wpgLxCn+UA3/TZ1bj/fW39mfDpwVlMPu1xKJyoMt7V0=
-cloud.google.com/go/monitoring v1.31.0 h1:LCuAoYiq8snyL/eDAG/VC73uWFXeax8+YEfmoNGJUrY=
-cloud.google.com/go/monitoring v1.31.0/go.mod h1:7uk2dIJIf7ra64dI1VuQ0ttoFqvtKjdzq46u6zNP1hU=
+cloud.google.com/go/monitoring v1.30.0 h1:r/d+JUbyKmJ8b07iznuKfzVzrIXTWxHQ3lBRm3x2LlY=
+cloud.google.com/go/monitoring v1.30.0/go.mod h1:htlUR0QWVMrjFzZmN4LGnMAve9xB/eduwjmINxVZ8RM=
 cloud.google.com/go/storage v1.69.0 h1:jAAMC1411HEh78nKsU0Zns+eFj3TnhjAWIhg5Ud/XBM=
 cloud.google.com/go/storage v1.69.0/go.mod h1:PELYsxTYm2peE4mwLEC1+mS1dA/kUSRUxNv56rOy44g=
 cloud.google.com/go/trace v1.16.0 h1:GmQovzFc5F0CNfl0VLgL64aoTtu7xsM0YajW2GlG9+E=
@@ -86,12 +86,12 @@ github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJ
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
 github.com/cloudfoundry/bosh-agent/v2 v2.901.0 h1:OLI5MlQEZF5kWrl8Hv+eWaNDG0l/Sa2sgQTRmXJebOk=
 github.com/cloudfoundry/bosh-agent/v2 v2.901.0/go.mod h1:9LH2n9Yd/4JmztgmEcE7mpc7ionYY7HDGx/sm8Cs1Aw=
-github.com/cloudfoundry/bosh-cli/v7 v7.11.1 h1:iwhYZXYBTDrUyXnlo5uhrdoDspc/BqS+NBNjkmNuYvY=
-github.com/cloudfoundry/bosh-cli/v7 v7.11.1/go.mod h1:1rHMCP1/Gj2SdhJBisyrpfeVyX3HKWXiKZiIf8pFco4=
+github.com/cloudfoundry/bosh-cli/v7 v7.11.0 h1:tM6qlOOU6GCaQtm6seVlrNzFbeRE0CyKJBU5NLQdLVg=
+github.com/cloudfoundry/bosh-cli/v7 v7.11.0/go.mod h1:XrTRVqAAolDHjf4AJTUsisJZ04fz4E30PbuW1aMhNbo=
 github.com/cloudfoundry/bosh-davcli v0.0.514 h1:u1U844e10FXuzA5CztGRqbKa18mdXK/Zn2qFtpvJ9+k=
 github.com/cloudfoundry/bosh-davcli v0.0.514/go.mod h1:Or5Tmpou1rFy74EwgyBQlH86p31lptBXYe5FkEzJxoo=
-github.com/cloudfoundry/bosh-gcscli v0.0.422 h1:IHOEk8sjsjzqkI19HCi0YmiWCPKQVluxDA7iG1Q3XqM=
-github.com/cloudfoundry/bosh-gcscli v0.0.422/go.mod h1:OlLs+UOIsKKZH2MwAHLqvrEz1wUwtSOQLSzGYj2UnsY=
+github.com/cloudfoundry/bosh-gcscli v0.0.419 h1:UdFeRFQz8q+IpduR65YFj0thsGed+LSISGO6CDwAEpk=
+github.com/cloudfoundry/bosh-gcscli v0.0.419/go.mod h1:8wIJC+6PrA+HUkxVeTx5a0+8Y+zjp2j2ZBNeNva7QoQ=
 github.com/cloudfoundry/bosh-s3cli v0.0.443 h1:dbg4421Pj5EiEPgoV/xY8iqOsegUDwg07AKmW9TbYLU=
 github.com/cloudfoundry/bosh-s3cli v0.0.443/go.mod h1:cGX0TlUanB5siHUl8iEq9XDoMrkyK6RRnW61JuvfKn4=
 github.com/cloudfoundry/bosh-utils v0.0.658 h1:Rct3s1bLCBi3w/NMEF65Z+b1rCRzRbalTCGRVPL6tKc=
