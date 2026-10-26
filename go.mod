@@ -3,16 +3,16 @@ module github.com/cloudfoundry/bosh-deployment-resource
 go 1.27.2
 
 require (
-	github.com/cloudfoundry/bosh-cli/v7 v7.11.0
-	github.com/cloudfoundry/bosh-utils v0.0.658
-	github.com/cloudfoundry/socks5-proxy v0.2.191
+	github.com/cloudfoundry/bosh-cli/v7 v7.11.1
+	github.com/cloudfoundry/bosh-utils v0.0.661
+	github.com/cloudfoundry/socks5-proxy v0.2.192
 	github.com/cppforlife/go-patch v0.2.0
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/onsi/ginkgo/v2 v2.33.1
 	github.com/onsi/gomega v1.44.0
 	golang.org/x/oauth2 v0.37.0
-	google.golang.org/api v0.301.0
+	google.golang.org/api v0.304.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -23,9 +23,9 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.3.0 // indirect
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
 	cloud.google.com/go/iam v1.14.0 // indirect
-	cloud.google.com/go/monitoring v1.30.0 // indirect
+	cloud.google.com/go/monitoring v1.31.0 // indirect
 	cloud.google.com/go/storage v1.69.0 // indirect
-	code.cloudfoundry.org/clock v1.91.0 // indirect
+	code.cloudfoundry.org/clock v1.92.0 // indirect
 	code.cloudfoundry.org/tlsconfig v0.69.0 // indirect
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.62.0 // indirect
@@ -55,10 +55,10 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheggaaa/pb/v3 v3.2.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/cloudfoundry/bosh-agent/v2 v2.901.0 // indirect
-	github.com/cloudfoundry/bosh-davcli v0.0.514 // indirect
-	github.com/cloudfoundry/bosh-gcscli v0.0.419 // indirect
-	github.com/cloudfoundry/bosh-s3cli v0.0.443 // indirect
+	github.com/cloudfoundry/bosh-agent/v2 v2.903.0 // indirect
+	github.com/cloudfoundry/bosh-davcli v0.0.518 // indirect
+	github.com/cloudfoundry/bosh-gcscli v0.0.422 // indirect
+	github.com/cloudfoundry/bosh-s3cli v0.0.447 // indirect
 	github.com/cloudfoundry/config-server v0.1.287 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect
@@ -72,7 +72,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20261008003335-7bae8d8c4c9e // indirect
+	github.com/google/pprof v0.0.0-20261016150608-1facf8f91b50 // indirect
 	github.com/google/s2a-go v0.1.11 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.23 // indirect
@@ -107,7 +107,7 @@ require (
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	golang.org/x/tools v0.51.0 // indirect
+	golang.org/x/tools v0.52.0 // indirect
 	google.golang.org/genproto v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
