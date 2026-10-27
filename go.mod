@@ -12,7 +12,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.33.1
 	github.com/onsi/gomega v1.44.0
 	golang.org/x/oauth2 v0.37.0
-	google.golang.org/api v0.304.0
+	google.golang.org/api v0.305.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -25,7 +25,7 @@ require (
 	cloud.google.com/go/iam v1.14.0 // indirect
 	cloud.google.com/go/monitoring v1.31.0 // indirect
 	cloud.google.com/go/storage v1.69.0 // indirect
-	code.cloudfoundry.org/clock v1.92.0 // indirect
+	code.cloudfoundry.org/clock v1.93.0 // indirect
 	code.cloudfoundry.org/tlsconfig v0.69.0 // indirect
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.62.0 // indirect
@@ -55,9 +55,9 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheggaaa/pb/v3 v3.2.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/cloudfoundry/bosh-agent/v2 v2.903.0 // indirect
+	github.com/cloudfoundry/bosh-agent/v2 v2.906.0 // indirect
 	github.com/cloudfoundry/bosh-davcli v0.0.518 // indirect
-	github.com/cloudfoundry/bosh-gcscli v0.0.422 // indirect
+	github.com/cloudfoundry/bosh-gcscli v0.0.426 // indirect
 	github.com/cloudfoundry/bosh-s3cli v0.0.447 // indirect
 	github.com/cloudfoundry/config-server v0.1.287 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
@@ -108,9 +108,9 @@ require (
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
-	google.golang.org/genproto v0.0.0-20261005182115-fad411399dd8 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
+	google.golang.org/genproto v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
