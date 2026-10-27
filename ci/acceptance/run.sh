@@ -7,7 +7,7 @@ started=false
 export RESOURCE_IMAGE="bosh-deployment-resource:acceptance"
 export IBOSH="$work_dir/ibosh"
 export BOSH_BIN="$work_dir/bosh"
-# Pin to the image that was verified together with the v0.3 ibosh release.
+# Digest of the instant-bosh image published from main; the revision is not labeled.
 export INSTANT_BOSH_IMAGE="ghcr.io/rkoster/instant-bosh@sha256:369a5250348f9a9b0882e284b8d29cdfa234940a5672f20bc00c6b692d792222"
 
 cleanup() {
@@ -33,12 +33,12 @@ docker build --platform linux/amd64 \
   --build-arg "go_version=$(awk '/^go / {print $2}' "$repo_dir/go.mod")" \
   -f "$repo_dir/ci/acceptance/Dockerfile" -t "$RESOURCE_IMAGE" "$repo_dir"
 
-curl --fail --location --retry 3 \
-  https://github.com/rkoster/instant-bosh/releases/download/v0.3/instant-bosh_Linux_x86_64.tar.gz \
-  -o "$work_dir/ibosh.tar.gz"
-printf '%s  %s\n' 34a4ac291a07a8a285886523477a779cfcd11c86b49e8e2b0c2a28afcdd70a57 \
-  "$work_dir/ibosh.tar.gz" | sha256sum --check
-tar -xzf "$work_dir/ibosh.tar.gz" -C "$work_dir" ibosh
+# The v0.3 release predates the docker subcommands, so build a pinned main commit.
+git clone --quiet https://github.com/rkoster/instant-bosh.git "$work_dir/instant-bosh"
+git -C "$work_dir/instant-bosh" checkout --quiet e1f2a43442c91cae69c7eb12e334921c37ecc2ea
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GOFLAGS=-buildvcs=false \
+  -v "$work_dir/instant-bosh:/src" -w /src golang:1.25 go build -o /src/ibosh ./cmd/ibosh
+mv "$work_dir/instant-bosh/ibosh" "$IBOSH"
 
 curl --fail --location --retry 3 \
   https://github.com/cloudfoundry/bosh-cli/releases/download/v7.11.0/bosh-cli-7.11.0-linux-amd64 \

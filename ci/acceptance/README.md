@@ -18,10 +18,11 @@ resources already exist, so it does not destroy another environment.
 bash ci/acceptance/run.sh
 ```
 
-The test pins instant-bosh CLI v0.3, bosh CLI v7.11.0, the Director image digest,
-and the Dummy BOSH Release v2 checksum. The Director image does not expose a
-revision label, so the digest was pinned from the current `latest` and `main`
-tags and is not proven to match the v0.3 CLI source. A Docker Desktop host on
+The test builds the instant-bosh CLI from pinned commit `e1f2a43` (the v0.3
+release predates the `docker` subcommands) and pins bosh CLI v7.11.0, the Director
+image digest, and the Dummy BOSH Release v2 checksum. The Director image does not
+expose a revision label, so the digest was pinned from the current `latest` and
+`main` tags and is not proven to match that commit. A Docker Desktop host on
 macOS is not a supported target.
 
 The `Docker CPI acceptance` workflow runs on pushes to
