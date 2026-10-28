@@ -47,6 +47,9 @@ printf '%s  %s\n' 3ad84c3967672070b7f70f91f8da76abcbb604d588787b4f98457338cc9fc8
   "$BOSH_BIN" | sha256sum --check
 chmod +x "$BOSH_BIN"
 
+# The Director's pre-start hook chgrps the bind-mounted host socket to GID 1000.
+sudo setfacl -m "u:$(id -u):rw" /var/run/docker.sock
+
 started=true
 timeout --kill-after=30 1500 "$IBOSH" docker start --image "$INSTANT_BOSH_IMAGE"
 timeout --kill-after=30 1200 bash "$repo_dir/ci/acceptance/test-resource.sh"
