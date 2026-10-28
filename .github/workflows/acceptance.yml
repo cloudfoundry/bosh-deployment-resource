@@ -1,0 +1,27 @@
+name: Docker CPI acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - ci/docker-cpi-acceptance
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-cpi-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance:
+    if: github.repository == 'benjaminguttmann-avtq/bosh-deployment-resource'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@v4
+      - name: Install acl
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y acl
+      - name: Test resource against disposable instant-bosh Director
+        run: bash ci/acceptance/run.sh
