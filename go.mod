@@ -4,7 +4,7 @@ go 1.27.2
 
 require (
 	github.com/cloudfoundry/bosh-cli/v7 v7.11.1
-	github.com/cloudfoundry/bosh-utils v0.0.661
+	github.com/cloudfoundry/bosh-utils v0.0.665
 	github.com/cloudfoundry/socks5-proxy v0.2.192
 	github.com/cppforlife/go-patch v0.2.0
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
@@ -12,7 +12,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.33.1
 	github.com/onsi/gomega v1.44.0
 	golang.org/x/oauth2 v0.37.0
-	google.golang.org/api v0.305.0
+	google.golang.org/api v0.306.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -55,7 +55,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheggaaa/pb/v3 v3.2.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/cloudfoundry/bosh-agent/v2 v2.906.0 // indirect
+	github.com/cloudfoundry/bosh-agent/v2 v2.909.0 // indirect
 	github.com/cloudfoundry/bosh-davcli v0.0.518 // indirect
 	github.com/cloudfoundry/bosh-gcscli v0.0.426 // indirect
 	github.com/cloudfoundry/bosh-s3cli v0.0.447 // indirect
@@ -110,7 +110,7 @@ require (
 	golang.org/x/tools v0.52.0 // indirect
 	google.golang.org/genproto v0.0.0-20261012220534-4341edf3f941 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261019180522-ce908d29299b // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
