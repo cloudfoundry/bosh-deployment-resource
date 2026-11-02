@@ -1,6 +1,6 @@
 module github.com/cloudfoundry/bosh-deployment-resource
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/cloudfoundry/bosh-cli/v7 v7.11.1
