@@ -24,4 +24,4 @@ jobs:
       - name: Install acl
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y acl
       - name: Test resource against disposable instant-bosh Director
-        run: bash ci/acceptance/run.sh
+        run: bash .github/acceptance/run.sh
