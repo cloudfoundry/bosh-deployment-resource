@@ -27,11 +27,11 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-bash "$repo_dir/ci/acceptance/preflight.sh"
+bash "$repo_dir/.github/acceptance/preflight.sh"
 
 docker build --platform linux/amd64 \
   --build-arg "go_version=$(awk '/^go / {print $2}' "$repo_dir/go.mod")" \
-  -f "$repo_dir/ci/acceptance/Dockerfile" -t "$RESOURCE_IMAGE" "$repo_dir"
+  -f "$repo_dir/.github/acceptance/Dockerfile" -t "$RESOURCE_IMAGE" "$repo_dir"
 
 # The v0.3 release predates the docker subcommands, so build a pinned main commit.
 git clone --quiet https://github.com/rkoster/instant-bosh.git "$work_dir/instant-bosh"
@@ -52,4 +52,4 @@ sudo setfacl -m "u:$(id -u):rw" /var/run/docker.sock
 
 started=true
 timeout --kill-after=30 1500 "$IBOSH" docker start --image "$INSTANT_BOSH_IMAGE"
-timeout --kill-after=30 1200 bash "$repo_dir/ci/acceptance/test-resource.sh"
+timeout --kill-after=30 1200 bash "$repo_dir/.github/acceptance/test-resource.sh"

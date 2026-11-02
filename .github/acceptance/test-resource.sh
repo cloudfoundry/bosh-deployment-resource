@@ -15,7 +15,7 @@ test -n "${BOSH_ALL_PROXY:-}"
 proxy_key_path=${BOSH_ALL_PROXY#*private-key=}
 test -f "$proxy_key_path"
 
-cp "$repo_dir/ci/acceptance/deployment.yml" "$test_dir/sources/deployment.yml"
+cp "$repo_dir/.github/acceptance/deployment.yml" "$test_dir/sources/deployment.yml"
 curl --fail --location --retry 3 \
   https://github.com/vmware-archive/dummy-boshrelease/releases/download/v2/dummy-2.tgz \
   -o "$test_dir/sources/release.tgz"

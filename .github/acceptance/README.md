@@ -15,7 +15,7 @@ checkout or on a shared host. The preflight refuses to continue when instant-bos
 resources already exist, so it does not destroy another environment.
 
 ```bash
-bash ci/acceptance/run.sh
+bash .github/acceptance/run.sh
 ```
 
 The test builds the instant-bosh CLI from pinned commit `e1f2a43` (the v0.3
