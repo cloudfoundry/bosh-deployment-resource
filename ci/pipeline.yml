@@ -21,7 +21,7 @@ resources:
 - name: bosh-deployment-resource
   type: git
   source:
-    branch: master
+    branch: main
     uri: git@github.com:cloudfoundry/bosh-deployment-resource
     ignore_paths: [ci/*]
     private_key: {{bosh-deployment-resource-git-deploy-private-key}}
@@ -59,7 +59,7 @@ resources:
 - name: bosh-deployment-resource-ci
   type: git
   source:
-    branch: master
+    branch: main
     uri: https://github.com/cloudfoundry/bosh-deployment-resource
     paths: [ci/*]
 
