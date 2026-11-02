@@ -1,7 +1,6 @@
 name: Docker CPI acceptance
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - ci/docker-cpi-acceptance
