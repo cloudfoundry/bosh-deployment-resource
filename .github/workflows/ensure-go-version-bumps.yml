@@ -31,8 +31,8 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "chore: bump Go version to ${{ steps.setup-go.outputs.go-version }} + go mod tidy"
-          committer: "CI Bot <bots@cloudfoundry.org>"
-          author: "CI Bot <bots@cloudfoundry.org>"
+          committer: "bosh-admin-bot <38732822+bosh-admin-bot@users.noreply.github.com>"
+          author: "bosh-admin-bot <38732822+bosh-admin-bot@users.noreply.github.com>"
           title: "chore: bump Go version to ${{ steps.setup-go.outputs.go-version }}"
           branch: bump-go-version
           body: "Automated PR to bump Go version to `${{ steps.setup-go.outputs.go-version }}` + go mod tidy"
