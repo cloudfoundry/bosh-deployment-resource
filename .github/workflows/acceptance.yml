@@ -1,9 +1,14 @@
 name: Docker CPI acceptance
 
 on:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'main'
   push:
     branches:
-      - ci/docker-cpi-acceptance
+      - 'main'
 
 permissions:
   contents: read
