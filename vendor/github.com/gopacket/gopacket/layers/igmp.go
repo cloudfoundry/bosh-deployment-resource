@@ -285,6 +285,9 @@ func (i *IGMPv1or2) CanDecode() gopacket.LayerClass {
 
 // DecodeFromBytes decodes the given bytes into this layer.
 func (i *IGMP) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
+	// start from a clean layer: DecodingLayerParser reuses one per packet
+	*i = IGMP{}
+
 	if len(data) < 1 {
 		return errors.New("IGMP packet is too small")
 	}

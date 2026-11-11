@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/crc32"
+	"math"
 	"strings"
 
 	"github.com/gopacket/gopacket"
@@ -1344,6 +1345,9 @@ type RadioTap struct {
 func (m *RadioTap) LayerType() gopacket.LayerType { return LayerTypeRadioTap }
 
 func (m *RadioTap) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
+	// start from a clean layer: DecodingLayerParser reuses one per packet
+	*m = RadioTap{}
+
 	dataLen := uint16(len(data))
 	if dataLen < 8 {
 		df.SetTruncated()
@@ -1592,7 +1596,25 @@ func (v VendorNamespace) decodeVendorNamespace(data []byte, offset uint16, prese
 	return v, offset
 }
 
+// radioTapNamespaceMaxLength is an upper bound for what RadioTapNamespace.serializeTo
+// writes: 81 bytes of fields and at most 25 bytes of alignment padding.
+const radioTapNamespaceMaxLength = 128
+
+// growRadioTapBuffer makes sure that n bytes can be written to buf at offset.
+// Offsets into the header are limited to 16 bits, like its length field.
+func growRadioTapBuffer(buf []byte, offset uint16, n int) ([]byte, error) {
+	size := int(offset) + n
+	if size > math.MaxUint16 {
+		return nil, errors.New("RadioTap header too long to serialize")
+	}
+	if size > len(buf) {
+		buf = append(buf, make([]byte, size-len(buf))...)
+	}
+	return buf, nil
+}
+
 func (m RadioTap) SerializeTo(b gopacket.SerializeBuffer, opts gopacket.SerializeOptions) error {
+	// enough for most headers, grown below when the layer needs more
 	buf := make([]byte, 1024)
 
 	buf[0] = m.Version
@@ -1602,6 +1624,10 @@ func (m RadioTap) SerializeTo(b gopacket.SerializeBuffer, opts gopacket.Serializ
 
 	// encode full present bitmap
 	offset := uint16(4)
+	buf, err := growRadioTapBuffer(buf, offset, 4*len(m.Present))
+	if err != nil {
+		return err
+	}
 	for _, present := range m.Present {
 		binary.LittleEndian.PutUint32(buf[offset:offset+4], uint32(present))
 		offset += 4
@@ -1615,9 +1641,16 @@ func (m RadioTap) SerializeTo(b gopacket.SerializeBuffer, opts gopacket.Serializ
 	vendorNamespaceIndex := 0
 	for _, present := range m.Present {
 		if radioTapNamespace {
+			if buf, err = growRadioTapBuffer(buf, offset, radioTapNamespaceMaxLength); err != nil {
+				return err
+			}
 			offset = m.RadioTapValues[radioTapNamespaceIndex].serializeTo(buf, offset, present)
 			radioTapNamespaceIndex += 1
 		} else if vendorNamespace {
+			// alignment, the namespace header and SkipLength bytes of contents
+			if buf, err = growRadioTapBuffer(buf, offset, 1+8+int(m.VendorValues[vendorNamespaceIndex].SkipLength)); err != nil {
+				return err
+			}
 			offset = m.VendorValues[vendorNamespaceIndex].serializeTo(buf, offset, present)
 			vendorNamespaceIndex += 1
 		} else {
