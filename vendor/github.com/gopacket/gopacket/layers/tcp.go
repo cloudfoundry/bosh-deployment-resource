@@ -141,12 +141,22 @@ func (t TCPOption) String() string {
 		}
 
 	case TCPOptionKindMultipathTCP:
+		// The per-subtype pointer is nil when DecodeFromBytes rejected the
+		// option before filling it in, or when the option was built by hand,
+		// so each case that reads through one falls back to the generic
+		// line below instead, as MSS and Timestamps do for short OptionData.
 		switch t.OptionMultipath {
 		case MPTCPSubtypeMPCAPABLE:
+			if t.OptionMPTCPMpCapable == nil {
+				break
+			}
 			return fmt.Sprintf("MPTCPOption(%s Version %v)",
 				t.OptionMultipath,
 				t.OptionMPTCPMpCapable.Version)
 		case MPTCPSubtypeMPJOIN:
+			if t.OptionMPTCPMpJoin == nil {
+				break
+			}
 			return fmt.Sprintf("MPTCPOption(%s Backup %v;Address ID %v)",
 				t.OptionMultipath,
 				t.OptionMPTCPMpJoin.Backup,
@@ -155,17 +165,26 @@ func (t TCPOption) String() string {
 			return fmt.Sprintf("MPTCPOption(%s)",
 				t.OptionMultipath)
 		case MPTCPSubtypeMPPRIO:
+			if t.OptionMPTCPMpPrio == nil {
+				break
+			}
 			return fmt.Sprintf("MPTCPOption(%s Backup %v;Address ID %v)",
 				t.OptionMultipath,
 				t.OptionMPTCPMpPrio.Backup,
 				t.OptionMPTCPMpPrio.AddrID)
 		case MPTCPSubtypeADDADDR:
+			if t.OptionMPTCPAddAddr == nil {
+				break
+			}
 			return fmt.Sprintf("MPTCPOption(%s Address ID %v;Address %v;Port %v)",
 				t.OptionMultipath,
 				t.OptionMPTCPAddAddr.AddrID,
 				t.OptionMPTCPAddAddr.Address,
 				t.OptionMPTCPAddAddr.Port)
 		case MPTCPSubtypeREMOVEADDR:
+			if t.OptionMTCPRemAddr == nil {
+				break
+			}
 			return fmt.Sprintf("MPTCPOption(%s Address ID %v)",
 				t.OptionMultipath,
 				t.OptionMTCPRemAddr.AddrIDs)
@@ -173,6 +192,9 @@ func (t TCPOption) String() string {
 			return fmt.Sprintf("MPTCPOption(%s)",
 				t.OptionMultipath)
 		case MPTCPSubtypeMPTCPRST:
+			if t.OptionMPTCPMPTcpRst == nil {
+				break
+			}
 			return fmt.Sprintf("MPTCPOption(%s Transient %v; Reason %v)",
 				t.OptionMultipath,
 				t.OptionMPTCPMPTcpRst.T,
@@ -319,6 +341,7 @@ func (tcp *TCP) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 		tcp.Options = tcp.Options[:0]
 	}
 	tcp.Padding = tcp.Padding[:0]
+	tcp.Multipath = false
 	if tcp.DataOffset < 5 {
 		return fmt.Errorf("Invalid TCP data offset %d < 5", tcp.DataOffset)
 	}
@@ -364,6 +387,9 @@ OPTIONS:
 				df.SetTruncated()
 				return fmt.Errorf("Invalid MPTCP option length %d exceeds remaining %d bytes", opt.OptionLength, len(data))
 			}
+			// SerializeTo sizes and writes every option from OptionData, so
+			// keep the raw value next to the decoded subtype struct.
+			opt.OptionData = data[2:opt.OptionLength]
 			opt.OptionMultipath = MPTCPSubtype(data[2] >> 4)
 			switch opt.OptionMultipath {
 			case MPTCPSubtypeMPCAPABLE:
@@ -653,7 +679,8 @@ func (t *TCP) VerifyChecksum() (error, gopacket.ChecksumVerificationResult) {
 	}
 	correct := gopacket.FoldChecksum(verification - uint32(existing))
 	return nil, gopacket.ChecksumVerificationResult{
-		Valid:   correct == existing,
+		// RFC 1071 receiver test: 0xffff is as valid as 0x0000
+		Valid:   gopacket.FoldChecksum(verification) == 0,
 		Correct: uint32(correct),
 		Actual:  uint32(existing),
 	}
