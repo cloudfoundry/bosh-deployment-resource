@@ -26,15 +26,15 @@ expose a revision label, so the digest was pinned from the current `latest` and
 macOS is not a supported target.
 
 The `Docker CPI acceptance` workflow runs on pushes to
-`ci/docker-cpi-acceptance` in `benjaminguttmann-avtq/bosh-deployment-resource`.
+`ci/docker-cpi-acceptance` in `cloudfoundry/bosh-deployment-resource`.
 Commit and push the workflow and scripts to start the first run. Actions must be
 enabled in the fork. `workflow_dispatch` is also supported after the workflow is
 registered on the default branch.
 
 ```bash
-gh run list --repo benjaminguttmann-avtq/bosh-deployment-resource \
+gh run list --repo cloudfoundry/bosh-deployment-resource \
   --workflow acceptance.yml --branch ci/docker-cpi-acceptance
-gh run watch RUN_ID --repo benjaminguttmann-avtq/bosh-deployment-resource
+gh run watch RUN_ID --repo cloudfoundry/bosh-deployment-resource
 ```
 
 ## Assertions
