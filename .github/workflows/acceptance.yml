@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   acceptance:
-    if: github.repository == 'benjaminguttmann-avtq/bosh-deployment-resource'
+    if: github.repository == 'cloudfoundry/bosh-deployment-resource'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
