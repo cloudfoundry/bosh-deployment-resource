@@ -4,7 +4,7 @@ go 1.27.4
 
 require (
 	github.com/cloudfoundry/bosh-cli/v7 v7.11.3
-	github.com/cloudfoundry/bosh-utils v0.0.675
+	github.com/cloudfoundry/bosh-utils v0.0.676
 	github.com/cloudfoundry/socks5-proxy v0.2.197
 	github.com/cppforlife/go-patch v0.2.0
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4
@@ -24,9 +24,9 @@ require (
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
 	cloud.google.com/go/iam v1.15.1 // indirect
 	cloud.google.com/go/monitoring v1.32.1 // indirect
-	cloud.google.com/go/storage v1.70.0 // indirect
-	code.cloudfoundry.org/clock v1.96.0 // indirect
-	code.cloudfoundry.org/tlsconfig v0.72.0 // indirect
+	cloud.google.com/go/storage v1.71.0 // indirect
+	code.cloudfoundry.org/clock v1.97.0 // indirect
+	code.cloudfoundry.org/tlsconfig v0.73.0 // indirect
 	code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.62.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.62.0 // indirect
@@ -34,10 +34,10 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.48.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.27 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.33.18 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.21.0 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.33.19 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.21.1 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.9 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.23.24 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.23.25 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.12 // indirect
@@ -55,10 +55,10 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheggaaa/pb/v3 v3.3.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/cloudfoundry/bosh-agent/v2 v2.926.0 // indirect
-	github.com/cloudfoundry/bosh-davcli v0.0.527 // indirect
-	github.com/cloudfoundry/bosh-gcscli v0.0.438 // indirect
-	github.com/cloudfoundry/bosh-s3cli v0.0.454 // indirect
+	github.com/cloudfoundry/bosh-agent/v2 v2.928.0 // indirect
+	github.com/cloudfoundry/bosh-davcli v0.0.528 // indirect
+	github.com/cloudfoundry/bosh-gcscli v0.0.439 // indirect
+	github.com/cloudfoundry/bosh-s3cli v0.0.455 // indirect
 	github.com/cloudfoundry/config-server v0.1.287 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20250423223041-4ad5fea42851 // indirect
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect

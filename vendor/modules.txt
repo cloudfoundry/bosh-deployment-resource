@@ -41,17 +41,17 @@ cloud.google.com/go/iam/apiv1/iampb
 cloud.google.com/go/monitoring/apiv3/v2
 cloud.google.com/go/monitoring/apiv3/v2/monitoringpb
 cloud.google.com/go/monitoring/internal
-# cloud.google.com/go/storage v1.70.0
+# cloud.google.com/go/storage v1.71.0
 ## explicit; go 1.26.0
 cloud.google.com/go/storage
 cloud.google.com/go/storage/experimental
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/storagepb
-# code.cloudfoundry.org/clock v1.96.0
+# code.cloudfoundry.org/clock v1.97.0
 ## explicit; go 1.26.0
 code.cloudfoundry.org/clock
-# code.cloudfoundry.org/tlsconfig v0.72.0
+# code.cloudfoundry.org/tlsconfig v0.73.0
 ## explicit; go 1.27.3
 code.cloudfoundry.org/tlsconfig
 # code.cloudfoundry.org/workpool v0.0.0-20250911194158-1489753f182e
@@ -100,11 +100,11 @@ github.com/aws/aws-sdk-go-v2/internal/timeouts
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream/eventstreamapi
-# github.com/aws/aws-sdk-go-v2/config v1.33.18
+# github.com/aws/aws-sdk-go-v2/config v1.33.19
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/config
 github.com/aws/aws-sdk-go-v2/config/internal/ini
-# github.com/aws/aws-sdk-go-v2/credentials v1.21.0
+# github.com/aws/aws-sdk-go-v2/credentials v1.21.1
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/credentials
 github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds
@@ -118,7 +118,7 @@ github.com/aws/aws-sdk-go-v2/credentials/stscreds
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds/internal/config
-# github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.23.24
+# github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.23.25
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/feature/s3/manager
 # github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.12
@@ -235,8 +235,8 @@ github.com/cheggaaa/pb/v3/termutil
 # github.com/clipperhouse/uax29/v2 v2.7.0
 ## explicit; go 1.18
 github.com/clipperhouse/uax29/v2/graphemes
-# github.com/cloudfoundry/bosh-agent/v2 v2.926.0
-## explicit; go 1.26.10
+# github.com/cloudfoundry/bosh-agent/v2 v2.928.0
+## explicit; go 1.26.11
 github.com/cloudfoundry/bosh-agent/v2/agentclient
 github.com/cloudfoundry/bosh-agent/v2/agentclient/applyspec
 github.com/cloudfoundry/bosh-agent/v2/agentclient/http
@@ -295,20 +295,20 @@ github.com/cloudfoundry/bosh-cli/v7/ui
 github.com/cloudfoundry/bosh-cli/v7/ui/fmt
 github.com/cloudfoundry/bosh-cli/v7/ui/table
 github.com/cloudfoundry/bosh-cli/v7/ui/task
-# github.com/cloudfoundry/bosh-davcli v0.0.527
-## explicit; go 1.26.10
+# github.com/cloudfoundry/bosh-davcli v0.0.528
+## explicit; go 1.26.11
 github.com/cloudfoundry/bosh-davcli/client
 github.com/cloudfoundry/bosh-davcli/config
 github.com/cloudfoundry/bosh-davcli/signer
-# github.com/cloudfoundry/bosh-gcscli v0.0.438
-## explicit; go 1.26.10
+# github.com/cloudfoundry/bosh-gcscli v0.0.439
+## explicit; go 1.26.11
 github.com/cloudfoundry/bosh-gcscli/client
 github.com/cloudfoundry/bosh-gcscli/config
-# github.com/cloudfoundry/bosh-s3cli v0.0.454
-## explicit; go 1.26.10
+# github.com/cloudfoundry/bosh-s3cli v0.0.455
+## explicit; go 1.26.11
 github.com/cloudfoundry/bosh-s3cli/client
 github.com/cloudfoundry/bosh-s3cli/config
-# github.com/cloudfoundry/bosh-utils v0.0.675
+# github.com/cloudfoundry/bosh-utils v0.0.676
 ## explicit; go 1.26.11
 github.com/cloudfoundry/bosh-utils/blobstore
 github.com/cloudfoundry/bosh-utils/crypto
