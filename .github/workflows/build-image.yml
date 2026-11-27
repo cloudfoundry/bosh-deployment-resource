@@ -153,7 +153,6 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern=v{{version}},value=${{ env.RELEASE_TAG }}
-            type=raw,value=latest
 
       - name: Build and push image
         uses: docker/build-push-action@v7
@@ -165,3 +164,40 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  promote-latest:
+    name: Promote latest
+    needs: publish
+    runs-on: ubuntu-latest
+    # Serialized and re-derived from the tag list, so an older or prerelease build cannot move latest backwards.
+    concurrency:
+      group: promote-latest-image
+      cancel-in-progress: false
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Point latest at the newest stable release
+        env:
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          newest="$(git ls-remote --tags --refs "$REPOSITORY_URL" 'v*' \
+            | awk '{ sub("refs/tags/", "", $2); print $2 }' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V | tail -n 1)"
+          if [ -z "$newest" ]; then
+            echo "No stable release tag found; latest unchanged." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if ! docker buildx imagetools inspect "$IMAGE_NAME:$newest" >/dev/null 2>&1; then
+            echo "Image for $newest is not published yet; latest unchanged." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          docker buildx imagetools create --tag "$IMAGE_NAME:latest" "$IMAGE_NAME:$newest"
+          echo "latest now points to $newest (this build: $RELEASE_TAG)." >> "$GITHUB_STEP_SUMMARY"
