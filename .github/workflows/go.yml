@@ -2,11 +2,18 @@ name: go
 on:
   push:
   pull_request:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
@@ -15,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod

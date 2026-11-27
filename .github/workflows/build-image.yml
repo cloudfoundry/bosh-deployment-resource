@@ -12,18 +12,36 @@ on:
         type: string
   workflow_call:
     inputs:
-      tag:
+      ref:
+        description: Release tag to publish, or commit SHA to verify
         required: true
         type: string
+      verify_only:
+        description: Run all checks without publishing
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 env:
   IMAGE_NAME: docker.io/cloudfoundry/bosh-deployment-resource
-  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+  RELEASE_TAG: ${{ inputs.ref || inputs.tag || github.ref_name }}
 
 jobs:
+  unit:
+    name: Unit tests
+    uses: ./.github/workflows/go.yml
+    with:
+      ref: ${{ inputs.ref || inputs.tag || github.ref_name }}
+
+  acceptance:
+    name: Acceptance tests
+    uses: ./.github/workflows/acceptance.yml
+    with:
+      ref: ${{ inputs.ref || inputs.tag || github.ref_name }}
+
   test:
     name: Test ${{ matrix.platform }}
     runs-on: ubuntu-latest
@@ -103,8 +121,10 @@ jobs:
 
   publish:
     name: Publish image
-    if: github.repository == 'cloudfoundry/bosh-deployment-resource'
+    if: github.repository == 'cloudfoundry/bosh-deployment-resource' && !inputs.verify_only
     needs:
+      - unit
+      - acceptance
       - test
       - scan
     runs-on: ubuntu-latest

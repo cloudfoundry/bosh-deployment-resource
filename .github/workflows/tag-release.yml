@@ -13,16 +13,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  tag:
+  # Pins the main commit so the verified and the tagged commit are identical.
+  prepare:
     if: github.repository == 'cloudfoundry/bosh-deployment-resource' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ github.sha }}
+    steps:
+      - run: echo "Release candidate $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    needs: prepare
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build-image.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+      verify_only: true
+
+  tag:
+    needs:
+      - prepare
+      - verify
     runs-on: ubuntu-latest
     outputs:
       new_tag: ${{ steps.tag.outputs.new_tag }}
     steps:
-      - name: Checkout latest default branch
+      - name: Checkout release candidate
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.repository.default_branch }}
+          ref: ${{ needs.prepare.outputs.sha }}
           fetch-depth: 0
 
       - name: Create and push next release tag
@@ -30,6 +50,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v7
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          commit_sha: ${{ needs.prepare.outputs.sha }}
           release_branches: ${{ github.event.repository.default_branch }}
           tag_prefix: v
           create_annotated_tag: true
@@ -38,7 +59,7 @@ jobs:
       - name: Summarize release
         if: steps.tag.outputs.new_tag != ''
         env:
-          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_SHA: ${{ needs.prepare.outputs.sha }}
           NEW_TAG: ${{ steps.tag.outputs.new_tag }}
         run: |
           echo "Tagged $COMMIT_SHA as $NEW_TAG." >> "$GITHUB_STEP_SUMMARY"
@@ -51,5 +72,5 @@ jobs:
       contents: read
     uses: ./.github/workflows/build-image.yml
     with:
-      tag: ${{ needs.tag.outputs.new_tag }}
+      ref: ${{ needs.tag.outputs.new_tag }}
     secrets: inherit
