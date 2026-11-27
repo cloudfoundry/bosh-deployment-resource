@@ -4,27 +4,29 @@ on:
   pull_request:
   workflow_call:
     inputs:
-      ref:
-        required: true
-        type: string
+      disable_cache:
+        description: Skip Go and lint caches, for release runs
+        required: false
+        type: boolean
+        default: false
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.ref }}
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+          cache: ${{ !inputs.disable_cache }}
       - uses: golangci/golangci-lint-action@v9
+        with:
+          skip-cache: ${{ inputs.disable_cache == true }}
   test-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.ref }}
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+          cache: ${{ !inputs.disable_cache }}
       - run: go run github.com/onsi/ginkgo/v2/ginkgo -r -race -p -randomize-all -randomize-suites .

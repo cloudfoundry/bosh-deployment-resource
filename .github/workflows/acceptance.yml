@@ -10,16 +10,13 @@ on:
     branches:
       - 'main'
   workflow_call:
-    inputs:
-      ref:
-        required: true
-        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: docker-cpi-acceptance-${{ inputs.ref || github.ref }}
+  # github.workflow is the caller's name in reusable runs, so release runs don't cancel main pushes.
+  group: docker-cpi-acceptance-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,8 +27,6 @@ jobs:
     steps:
       - name: Check out candidate
         uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.ref }}
       - name: Install acl
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y acl
       - name: Test resource against disposable instant-bosh Director

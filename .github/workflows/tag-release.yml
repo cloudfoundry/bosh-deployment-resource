@@ -13,28 +13,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Pins the main commit so the verified and the tagged commit are identical.
-  prepare:
-    if: github.repository == 'cloudfoundry/bosh-deployment-resource' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    runs-on: ubuntu-latest
-    outputs:
-      sha: ${{ github.sha }}
-    steps:
-      - run: echo "Release candidate $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-
+  # github.sha is fixed for the run, so the verified, tagged and published commit is the same.
   verify:
-    needs: prepare
+    if: github.repository == 'cloudfoundry/bosh-deployment-resource' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     permissions:
       contents: read
     uses: ./.github/workflows/build-image.yml
     with:
-      ref: ${{ needs.prepare.outputs.sha }}
       verify_only: true
 
   tag:
-    needs:
-      - prepare
-      - verify
+    needs: verify
     runs-on: ubuntu-latest
     outputs:
       new_tag: ${{ steps.tag.outputs.new_tag }}
@@ -42,7 +31,6 @@ jobs:
       - name: Checkout release candidate
         uses: actions/checkout@v7
         with:
-          ref: ${{ needs.prepare.outputs.sha }}
           fetch-depth: 0
 
       - name: Create and push next release tag
@@ -50,7 +38,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v7
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          commit_sha: ${{ needs.prepare.outputs.sha }}
+          commit_sha: ${{ github.sha }}
           release_branches: ${{ github.event.repository.default_branch }}
           tag_prefix: v
           create_annotated_tag: true
@@ -59,7 +47,7 @@ jobs:
       - name: Summarize release
         if: steps.tag.outputs.new_tag != ''
         env:
-          COMMIT_SHA: ${{ needs.prepare.outputs.sha }}
+          COMMIT_SHA: ${{ github.sha }}
           NEW_TAG: ${{ steps.tag.outputs.new_tag }}
         run: |
           echo "Tagged $COMMIT_SHA as $NEW_TAG." >> "$GITHUB_STEP_SUMMARY"
@@ -72,5 +60,5 @@ jobs:
       contents: read
     uses: ./.github/workflows/build-image.yml
     with:
-      ref: ${{ needs.tag.outputs.new_tag }}
+      tag: ${{ needs.tag.outputs.new_tag }}
     secrets: inherit

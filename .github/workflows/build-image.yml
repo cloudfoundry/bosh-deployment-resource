@@ -4,18 +4,15 @@ on:
   push:
     tags:
       - 'v*'
+  # Run manually on a release tag via "Use workflow from"; the tag itself is checked out, never a free-form ref.
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Release tag to build, for example v2.14.1
-        required: true
-        type: string
   workflow_call:
     inputs:
-      ref:
-        description: Release tag to publish, or commit SHA to verify
-        required: true
+      tag:
+        description: Release tag name for the image; the caller's commit is what gets built
+        required: false
         type: string
+        default: ''
       verify_only:
         description: Run all checks without publishing
         required: false
@@ -27,20 +24,18 @@ permissions:
 
 env:
   IMAGE_NAME: docker.io/cloudfoundry/bosh-deployment-resource
-  RELEASE_TAG: ${{ inputs.ref || inputs.tag || github.ref_name }}
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   unit:
     name: Unit tests
     uses: ./.github/workflows/go.yml
     with:
-      ref: ${{ inputs.ref || inputs.tag || github.ref_name }}
+      disable_cache: true
 
   acceptance:
     name: Acceptance tests
     uses: ./.github/workflows/acceptance.yml
-    with:
-      ref: ${{ inputs.ref || inputs.tag || github.ref_name }}
 
   test:
     name: Test ${{ matrix.platform }}
@@ -54,10 +49,8 @@ jobs:
           - platform: linux/arm64
             architecture: arm64
     steps:
-      - name: Check out release tag
+      - name: Check out source
         uses: actions/checkout@v7
-        with:
-          ref: ${{ env.RELEASE_TAG }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -91,10 +84,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Check out release tag
+      - name: Check out source
         uses: actions/checkout@v7
-        with:
-          ref: ${{ env.RELEASE_TAG }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -118,10 +109,11 @@ jobs:
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
+          cache: 'false'
 
   publish:
     name: Publish image
-    if: github.repository == 'cloudfoundry/bosh-deployment-resource' && !inputs.verify_only
+    if: github.repository == 'cloudfoundry/bosh-deployment-resource' && !inputs.verify_only && (inputs.tag != '' || startsWith(github.ref, 'refs/tags/v'))
     needs:
       - unit
       - acceptance
@@ -129,10 +121,8 @@ jobs:
       - scan
     runs-on: ubuntu-latest
     steps:
-      - name: Check out release tag
+      - name: Check out source
         uses: actions/checkout@v7
-        with:
-          ref: ${{ env.RELEASE_TAG }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
