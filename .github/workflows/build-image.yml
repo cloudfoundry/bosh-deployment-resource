@@ -1,0 +1,196 @@
+name: Build and publish resource image
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # Run manually on a release tag via "Use workflow from"; the tag itself is checked out, never a free-form ref.
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag name for the image; the caller's commit is what gets built
+        required: false
+        type: string
+        default: ''
+      verify_only:
+        description: Run all checks without publishing
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: docker.io/cloudfoundry/bosh-deployment-resource
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  unit:
+    name: Unit tests
+    uses: ./.github/workflows/go.yml
+    with:
+      disable_cache: true
+
+  acceptance:
+    name: Acceptance tests
+    uses: ./.github/workflows/acceptance.yml
+
+  test:
+    name: Test ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            architecture: amd64
+          - platform: linux/arm64
+            architecture: arm64
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build test image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: resource
+          pull: true
+          platforms: ${{ matrix.platform }}
+          tags: bosh-deployment-resource:test-${{ matrix.architecture }}
+          load: true
+
+      - name: Test resource entrypoints
+        env:
+          IMAGE: bosh-deployment-resource:test-${{ matrix.architecture }}
+          EXPECTED_ARCH: ${{ matrix.architecture }}
+        run: |
+          test "$(docker image inspect --format '{{.Architecture}}' "$IMAGE")" = "$EXPECTED_ARCH"
+          test "$(printf '{"source":{"skip_check":true}}' | docker run --rm -i "$IMAGE" /opt/resource/check)" = '[]'
+          for entrypoint in in out; do
+            docker run --rm "$IMAGE" test -x "/opt/resource/$entrypoint"
+          done
+
+  scan:
+    name: Scan image
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image for scanning
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: resource
+          pull: true
+          platforms: linux/amd64
+          tags: bosh-deployment-resource:scan
+          load: true
+
+      - name: Scan image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: bosh-deployment-resource:scan
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          cache: 'false'
+
+  publish:
+    name: Publish image
+    if: github.repository == 'cloudfoundry/bosh-deployment-resource' && !inputs.verify_only && (inputs.tag != '' || startsWith(github.ref, 'refs/tags/v'))
+    needs:
+      - unit
+      - acceptance
+      - test
+      - scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          # latest is set only by promote-latest; the image tag must equal the Git tag, also for prereleases.
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=${{ env.RELEASE_TAG }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: resource
+          pull: true
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  promote-latest:
+    name: Promote latest
+    needs: publish
+    runs-on: ubuntu-latest
+    # Serialized and re-derived from the tag list, so an older or prerelease build cannot move latest backwards.
+    concurrency:
+      group: promote-latest-image
+      cancel-in-progress: false
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Point latest at the newest stable release
+        env:
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          newest="$(git ls-remote --tags --refs "$REPOSITORY_URL" 'v*' \
+            | awk '{ sub("refs/tags/", "", $2); print $2 }' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V | tail -n 1)"
+          if [ -z "$newest" ]; then
+            echo "No stable release tag found; latest unchanged." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if ! docker buildx imagetools inspect "$IMAGE_NAME:$newest" >/dev/null 2>&1; then
+            echo "Image for $newest is not published yet; latest unchanged." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          docker buildx imagetools create --tag "$IMAGE_NAME:latest" "$IMAGE_NAME:$newest"
+          echo "latest now points to $newest (this build: $RELEASE_TAG)." >> "$GITHUB_STEP_SUMMARY"
