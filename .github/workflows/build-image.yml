@@ -151,8 +151,11 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE_NAME }}
+          # latest is set only by promote-latest; the image tag must equal the Git tag, also for prereleases.
+          flavor: |
+            latest=false
           tags: |
-            type=semver,pattern=v{{version}},value=${{ env.RELEASE_TAG }}
+            type=raw,value=${{ env.RELEASE_TAG }}
 
       - name: Build and push image
         uses: docker/build-push-action@v7
